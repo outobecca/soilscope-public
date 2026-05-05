@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="100%" height="100%">
+  <defs>
+    <!-- Glow Filter -->
+    <!-- Gradients for Soil Layers -->
+    <linearGradient id="soil-bedrock" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a35" />
+      <stop offset="100%" stop-color="#14141d" />
+    </linearGradient>
+    <linearGradient id="soil-sub" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5c4530" />
+      <stop offset="100%" stop-color="#3d2e20" />
+    </linearGradient>
+    <linearGradient id="soil-top" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3f592d" />
+      <stop offset="100%" stop-color="#2b3d1f" />
+    </linearGradient>
+    <linearGradient id="soil-surface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5c8042" />
+      <stop offset="100%" stop-color="#3a5426" />
+    </linearGradient>
+    <!-- Gradients for Plant -->
+    <linearGradient id="plant-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#00796b" />
+      <stop offset="50%" stop-color="#43a047" />
+      <stop offset="100%" stop-color="#aeea00" />
+    </linearGradient>
+    <!-- Gradients for Atmosphere & Weather -->
+    <radialGradient id="sun-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="30%" stop-color="#ffea00" />
+      <stop offset="100%" stop-color="#ff9100" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="dome-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="#00aaff" stop-opacity="0" />
+      <stop offset="100%" stop-color="#00ffcc" stop-opacity="0.15" />
+    </radialGradient>
+    <!-- UI Panel Background -->
+    <linearGradient id="panel-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1929" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#060d14" stop-opacity="0.65" />
+    </linearGradient>
+  </defs>
+  <!-- Ambient Shadow for Floating Island -->
+  <ellipse cx="600" cy="600" rx="320" ry="25" fill="#000000" opacity="0.4" />
+  <!-- ========================================== -->
+  <!-- ATMOSPHERE DOME & ENVIRONMENT              -->
+  <!-- ========================================== -->
+  <g id="atmosphere-environment">
+    <!-- Glass Dome Background -->
+    <path d="M 200 380 A 400 300 0 0 1 1000 380 Z" fill="url(#dome-grad)" />
+    <!-- Dome Wireframe / Radar Grid -->
+    <path d="M 600 80 A 200 300 0 0 0 400 380 M 600 80 A 200 300 0 0 1 800 380 M 600 80 L 600 380" fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.2" />
+    <path d="M 250 280 A 350 80 0 0 1 950 280 M 330 180 A 270 60 0 0 1 870 180" fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.2" />
+    <!-- Sun / Energy Source -->
+    <circle cx="820" cy="160" r="60" fill="url(#sun-grad)" />
+    <circle cx="820" cy="160" r="20" fill="#ffffff" />
+    <!-- Clouds -->
+    <g fill="#ffffff" opacity="0.85">
+      <circle cx="360" cy="180" r="25" />
+      <circle cx="400" cy="165" r="35" />
+      <circle cx="440" cy="185" r="20" />
+      <rect x="360" y="170" width="80" height="35" rx="17.5" />
+    </g>
+    <!-- Rain Simulation (Dashed Lines) -->
+    <path d="M 380 210 L 360 350 M 400 210 L 380 360 M 420 210 L 400 340 M 440 210 L 420 320" fill="none" stroke="#00aaff" stroke-width="2" stroke-dasharray="6,6" opacity="0.6" />
+    <!-- Vapor / Transpiration Simulation -->
+    <path d="M 520 260 Q 490 200, 530 140 T 510 60" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3" />
+    <path d="M 680 260 Q 710 200, 670 140 T 690 60" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.3" />
+  </g>
+  <!-- ========================================== -->
+  <!-- SOIL CROSS-SECTION (FLOATING ISLAND)       -->
+  <!-- ========================================== -->
+  <g id="soil-cross-section">
+    <!-- Bedrock Layer -->
+    <path d="M 200 380 A 400 60 0 0 0 1000 380 C 1000 550, 800 580, 600 580 C 400 580, 200 550, 200 380 Z" fill="url(#soil-bedrock)" stroke="#3a3a4a" stroke-width="1" />
+    <!-- Subsoil Layer -->
+    <path d="M 200 380 A 400 60 0 0 0 1000 380 C 1000 500, 800 520, 600 520 C 400 520, 200 500, 200 380 Z" fill="url(#soil-sub)" stroke="#6e543c" stroke-width="1" />
+    <!-- Topsoil Layer -->
+    <path d="M 200 380 A 400 60 0 0 0 1000 380 C 1000 440, 800 450, 600 450 C 400 450, 200 440, 200 380 Z" fill="url(#soil-top)" stroke="#4e6e37" stroke-width="1" />
+    <!-- Soil Surface -->
+    <ellipse cx="600" cy="380" rx="400" ry="60" fill="url(#soil-surface)" />
+    <!-- Surface Simulation Grid (Perspective) -->
+    <g opacity="0.35">
+      <!-- Concentric Ellipses -->
+      <ellipse cx="600" cy="380" rx="300" ry="45" fill="none" stroke="#00ffcc" stroke-width="1.5" />
+      <ellipse cx="600" cy="380" rx="200" ry="30" fill="none" stroke="#00ffcc" stroke-width="1.5" />
+      <ellipse cx="600" cy="380" rx="100" ry="15" fill="none" stroke="#00ffcc" stroke-width="1.5" />
+      <!-- Radial Lines -->
+      <path d="M 600 380 L 1000 380 M 600 380 L 946 410 M 600 380 L 800 432 M 600 380 L 600 440 M 600 380 L 400 432 M 600 380 L 254 410 M 600 380 L 200 380 M 600 380 L 254 350 M 600 380 L 400 328 M 600 380 L 600 320 M 600 380 L 800 328 M 600 380 L 946 350" fill="none" stroke="#00ffcc" stroke-width="1.5" />
+    </g>
+    <!-- Soil Minerals & Water Droplets -->
+    <g opacity="0.6">
+      <polygon points="400,500 410,490 420,505 405,510" fill="#888888" />
+      <polygon points="700,480 715,475 720,490 705,495" fill="#aaaaaa" />
+      <polygon points="550,530 560,520 575,525 565,540" fill="#666666" />
+      <polygon points="350,440 360,435 365,445 355,450" fill="#999999" />
+      <polygon points="850,420 860,410 870,425 855,430" fill="#777777" />
+      <circle cx="450" cy="460" r="3.5" fill="#00aaff" />
+      <circle cx="480" cy="480" r="2.5" fill="#00aaff" />
+      <circle cx="750" cy="450" r="4.5" fill="#00aaff" />
+      <circle cx="720" cy="510" r="3" fill="#00aaff" />
+      <circle cx="380" cy="410" r="2" fill="#00aaff" />
+      <circle cx="820" cy="460" r="3" fill="#00aaff" />
+    </g>
+    <!-- Root System -->
+    <g fill="none" stroke="#d4a373" stroke-linecap="round">
+      <path d="M 600 380 Q 610 420, 590 470 T 605 540" stroke-width="7" />
+      <path d="M 602 410 Q 640 430, 660 470" stroke-width="4" />
+      <path d="M 595 440 Q 550 460, 530 500" stroke-width="4" />
+      <path d="M 592 480 Q 570 510, 580 550" stroke-width="2.5" />
+      <path d="M 640 445 Q 670 440, 690 460" stroke-width="2" />
+      <path d="M 560 475 Q 520 480, 500 470" stroke-width="2" />
+    </g>
+  </g>
+  <!-- ========================================== -->
+  <!-- CENTRAL PLANT                              -->
+  <!-- ========================================== -->
+  <g id="central-plant">
+    <!-- Ambient Glow behind Plant -->
+    <circle cx="600" cy="250" r="150" fill="#00ffcc" opacity="0.1" />
+    <!-- Stem -->
+    <path d="M 593 380 Q 585 250, 598 120 L 602 120 Q 595 250, 607 380 Z" fill="url(#plant-grad)" />
+    <!-- Leaves -->
+    <g fill="url(#plant-grad)">
+      <!-- Bottom Left -->
+      <path d="M 595 350 Q 450 340, 380 370 Q 480 390, 595 350 Z" />
+      <!-- Bottom Right -->
+      <path d="M 605 340 Q 750 320, 820 350 Q 720 380, 605 340 Z" />
+      <!-- Mid Left -->
+      <path d="M 595 280 Q 480 220, 380 240 Q 480 300, 595 280 Z" />
+      <!-- Mid Right -->
+      <path d="M 605 260 Q 720 190, 820 210 Q 720 270, 605 260 Z" />
+      <!-- Top Left -->
+      <path d="M 597 190 Q 500 120, 420 120 Q 500 180, 597 190 Z" />
+      <!-- Top Right -->
+      <path d="M 603 160 Q 680 90, 760 100 Q 680 150, 603 160 Z" />
+      <!-- Crown -->
+      <path d="M 598 120 Q 550 50, 600 20 Q 650 50, 602 120 Z" />
+    </g>
+    <!-- Leaf Veins (Simulation Detail) -->
+    <g fill="none" stroke="#a7f3d0" stroke-width="1.5" opacity="0.6">
+      <path d="M 595 350 Q 480 355, 380 370" />
+      <path d="M 605 340 Q 720 335, 820 350" />
+      <path d="M 595 280 Q 480 250, 380 240" />
+      <path d="M 605 260 Q 720 225, 820 210" />
+      <path d="M 597 190 Q 500 150, 420 120" />
+      <path d="M 603 160 Q 680 120, 760 100" />
+      <path d="M 600 120 L 600 20" />
+    </g>
+  </g>
+  <!-- Glass Dome Front Highlight -->
+  <path d="M 200 380 A 400 300 0 0 1 1000 380 A 400 300 0 0 0 200 380 Z" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.5" />
+  <path d="M 250 320 A 350 250 0 0 1 550 90 A 340 240 0 0 0 280 320 Z" fill="#ffffff" opacity="0.1" />
+  <!-- ========================================== -->
+  <!-- SIMULATOR UI PANELS & DATA OVERLAYS        -->
+  <!-- ========================================== -->
+  <!-- Connecting Lines -->
+  <g fill="none" stroke="#00ffcc" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.8">
+    <!-- Atmosphere to Dome -->
+    <path d="M 280 140 L 330 140 L 360 170" />
+    <!-- Plant to Leaf -->
+    <path d="M 920 140 L 850 140 L 780 200 L 720 200" />
+    <!-- Soil to Roots -->
+    <path d="M 920 450 L 850 450 L 800 500 L 660 500" />
+  </g>
+  <!-- Glowing Data Nodes (Connection Points) -->
+  <g fill="#00ffcc">
+    <circle cx="360" cy="170" r="4" />
+    <circle cx="720" cy="200" r="4" />
+    <circle cx="660" cy="500" r="4" />
+    <!-- Root Nodes -->
+    <circle cx="530" cy="500" r="3" />
+    <circle cx="605" cy="540" r="3" />
+    <circle cx="690" cy="460" r="3" />
+    <!-- Leaf Nodes -->
+    <circle cx="480" cy="255" r="3" />
+    <circle cx="500" cy="150" r="3" />
+    <circle cx="480" cy="355" r="3" />
+  </g>
+  <!-- Left Panel: ATMOSPHERE -->
+  <g transform="translate(40, 60)">
+    <rect width="240" height="160" rx="12" fill="url(#panel-bg)" stroke="#00ffcc" stroke-width="1.5" />
+    <text x="20" y="30" fill="#00ffcc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" letter-spacing="2">ATMOSPHERE</text>
+    <!-- Line Chart -->
+    <line x1="20" y1="120" x2="220" y2="120" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" />
+    <line x1="20" y1="90" x2="220" y2="90" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" />
+    <line x1="20" y1="60" x2="220" y2="60" stroke="#ffffff" stroke-opacity="0.15" stroke-width="1" />
+    <path d="M 20 120 L 50 90 L 80 100 L 110 60 L 140 80 L 170 40 L 210 50" fill="none" stroke="#ff007f" stroke-width="2.5" />
+    <circle cx="210" cy="50" r="4" fill="#ffffff" />
+    <text x="20" y="145" fill="#ffffff" font-family="monospace" font-size="11" opacity="0.9">CO2: 412.5 ppm</text>
+    <text x="140" y="145" fill="#ffffff" font-family="monospace" font-size="11" opacity="0.9">O2: 20.9%</text>
+  </g>
+  <!-- Top Right Panel: PLANT VITALITY -->
+  <g transform="translate(920, 60)">
+    <rect width="240" height="160" rx="12" fill="url(#panel-bg)" stroke="#00ffcc" stroke-width="1.5" />
+    <text x="20" y="30" fill="#00ffcc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" letter-spacing="2">PLANT VITALITY</text>
+    <!-- Radial Progress Charts -->
+    <g transform="translate(80, 90)">
+      <!-- Outer Ring (H2O) -->
+      <circle cx="0" cy="0" r="40" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="6" />
+      <circle cx="0" cy="0" r="40" fill="none" stroke="#96c93d" stroke-width="6" stroke-dasharray="200 251" stroke-linecap="round" transform="rotate(-90)" />
+      <!-- Inner Ring (ATP) -->
+      <circle cx="0" cy="0" r="28" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="6" />
+      <circle cx="0" cy="0" r="28" fill="none" stroke="#00ffcc" stroke-width="6" stroke-dasharray="130 175" stroke-linecap="round" transform="rotate(-90)" />
+      <!-- Center Text -->
+      <text x="0" y="5" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="bold" text-anchor="middle">92%</text>
+    </g>
+    <!-- Legend -->
+    <circle cx="150" cy="75" r="5" fill="#96c93d" />
+    <text x="165" y="80" fill="#ffffff" font-family="monospace" font-size="11">H2O Flux</text>
+    <circle cx="150" cy="105" r="5" fill="#00ffcc" />
+    <text x="165" y="110" fill="#ffffff" font-family="monospace" font-size="11">ATP Prod</text>
+  </g>
+  <!-- Bottom Right Panel: SOIL METRICS -->
+  <g transform="translate(920, 360)">
+    <rect width="240" height="180" rx="12" fill="url(#panel-bg)" stroke="#00ffcc" stroke-width="1.5" />
+    <text x="20" y="30" fill="#00ffcc" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold" letter-spacing="2">SOIL METRICS</text>
+    <!-- Bar Chart -->
+    <line x1="20" y1="140" x2="220" y2="140" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1.5" />
+    <!-- Nitrogen -->
+    <rect x="40" y="60" width="30" height="80" fill="#ffaa00" rx="4" />
+    <text x="55" y="160" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">N</text>
+    <text x="55" y="50" fill="#ffffff" font-family="monospace" font-size="10" text-anchor="middle">85</text>
+    <!-- Phosphorus -->
+    <rect x="100" y="90" width="30" height="50" fill="#00aaff" rx="4" />
+    <text x="115" y="160" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">P</text>
+    <text x="115" y="80" fill="#ffffff" font-family="monospace" font-size="10" text-anchor="middle">42</text>
+    <!-- Potassium -->
+    <rect x="160" y="40" width="30" height="100" fill="#00ffcc" rx="4" />
+    <text x="175" y="160" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" text-anchor="middle">K</text>
+    <text x="175" y="30" fill="#ffffff" font-family="monospace" font-size="10" text-anchor="middle">110</text>
+  </g>
+  <!-- ========================================== -->
+  <!-- BACKGROUND TECH ELEMENTS (FLOATING)        -->
+  <!-- ========================================== -->
+  <g fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.4">
+    <!-- Hexagons -->
+    <path d="M 150 450 L 165 458.66 L 165 475.98 L 150 484.64 L 135 475.98 L 135 458.66 Z" />
+    <path d="M 850 250 L 865 258.66 L 865 275.98 L 850 284.64 L 835 275.98 L 835 258.66 Z" opacity="0.6" />
+    <path d="M 350 50 L 365 58.66 L 365 75.98 L 350 84.64 L 335 75.98 L 335 58.66 Z" />
+    <path d="M 1050 300 L 1065 308.66 L 1065 325.98 L 1050 334.64 L 1035 325.98 L 1035 308.66 Z" opacity="0.3" />
+  </g>
+  <!-- Binary / Data Snippets -->
+  <g fill="#00ffcc" font-family="monospace" font-size="10" opacity="0.5">
+    <text x="135" y="505">01101001</text>
+    <text x="835" y="305">10010110</text>
+    <text x="335" y="105">SIM_ACTIVE</text>
+    <text x="1035" y="355">SYS.OK</text>
+  </g>
+</svg>

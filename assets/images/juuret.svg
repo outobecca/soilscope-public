@@ -1,0 +1,330 @@
+<svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Gradients for Rhizosphere and Soil -->
+        <radialGradient id="soilGrad" cx="45%" cy="50%" r="55%">
+            <stop offset="30%" stop-color="#3E2723" stop-opacity="0.9"/>
+            <stop offset="70%" stop-color="#4E342E" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#4E342E" stop-opacity="0"/>
+        </radialGradient>
+        
+        <radialGradient id="exudateGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#C0CA33" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#9E9D24" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- Gradients for Root Cross-Section -->
+        <radialGradient id="cortexGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="50%" stop-color="#F5F5F5"/>
+            <stop offset="95%" stop-color="#E0E0E0"/>
+            <stop offset="100%" stop-color="#D7CCC8"/>
+        </radialGradient>
+
+        <radialGradient id="xylemGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#F44336"/>
+            <stop offset="70%" stop-color="#D32F2F"/>
+            <stop offset="100%" stop-color="#B71C1C"/>
+        </radialGradient>
+
+        <radialGradient id="phloemGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4FC3F7"/>
+            <stop offset="100%" stop-color="#1565C0"/>
+        </radialGradient>
+
+        <linearGradient id="rootBaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#81C784"/>
+            <stop offset="15%" stop-color="#D7CCC8"/>
+            <stop offset="100%" stop-color="#A1887F"/>
+        </linearGradient>
+
+        <!-- Filters for Glow Effects -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+        
+        <filter id="heavyGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="15" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+
+        <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+            <feDropShadow dx="10" dy="15" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+        </filter>
+
+        <!-- Reusable Elements -->
+        <g id="microbe-bacillus">
+            <rect x="-6" y="-3" width="12" height="6" rx="3" fill="#00E5FF" filter="url(#glow)"/>
+        </g>
+        <g id="microbe-coccus">
+            <circle cx="0" cy="0" r="3" fill="#FF4081" filter="url(#glow)"/>
+        </g>
+        
+        <line id="cortex-spoke" x1="1000" y1="100" x2="1000" y2="290" stroke="#BCAAA4" stroke-width="2" opacity="0.4"/>
+    </defs>
+
+    <!-- ========================================== -->
+    <!-- LEFT SIDE: RHIZOSPHERE & ROOT SYSTEM       -->
+    <!-- ========================================== -->
+
+    <!-- Rhizosphere Soil Blob (Transparent Edges) -->
+    <path d="M 150 50 C 500 -50, 750 200, 700 500 C 650 850, 450 950, 250 900 C 0 850, -50 600, 50 300 Z" fill="url(#soilGrad)"/>
+
+    <!-- Soil Particles & Aggregates -->
+    <g fill="#5D4037" opacity="0.6">
+        <circle cx="120" cy="200" r="15"/>
+        <circle cx="550" cy="350" r="25"/>
+        <circle cx="480" cy="700" r="18"/>
+        <circle cx="150" cy="650" r="22"/>
+        <circle cx="200" cy="800" r="12"/>
+        <circle cx="600" cy="550" r="30"/>
+        <path d="M 400 150 Q 420 130 440 160 Q 430 180 400 170 Z"/>
+        <path d="M 180 450 Q 160 480 190 500 Q 210 470 180 450 Z"/>
+    </g>
+
+    <!-- Mycorrhizal Fungi Network (Hyphae) -->
+    <g fill="none" stroke="#FFF59D" stroke-width="1.5" opacity="0.5" filter="url(#glow)">
+        <path d="M 350 250 Q 450 200 500 280 T 600 300"/>
+        <path d="M 500 280 Q 550 220 620 250"/>
+        <path d="M 330 550 Q 250 600 200 550 T 100 600"/>
+        <path d="M 480 750 Q 550 800 600 750 T 680 820"/>
+        <path d="M 220 850 Q 150 880 100 820"/>
+    </g>
+
+    <!-- Root Exudates (Chemical Halos) -->
+    <circle cx="520" cy="420" r="60" fill="url(#exudateGlow)"/>
+    <circle cx="150" cy="550" r="70" fill="url(#exudateGlow)"/>
+    <circle cx="480" cy="750" r="80" fill="url(#exudateGlow)"/>
+    <circle cx="220" cy="850" r="50" fill="url(#exudateGlow)"/>
+    <circle cx="380" cy="850" r="60" fill="url(#exudateGlow)"/>
+
+    <!-- Microbial Life in the Rhizosphere -->
+    <g>
+        <!-- Bacilli -->
+        <use href="#microbe-bacillus" x="500" y="400" transform="rotate(45 500 400)"/>
+        <use href="#microbe-bacillus" x="530" y="430" transform="rotate(-20 530 430)"/>
+        <use href="#microbe-bacillus" x="140" y="530" transform="rotate(70 140 530)"/>
+        <use href="#microbe-bacillus" x="160" y="560" transform="rotate(10 160 560)"/>
+        <use href="#microbe-bacillus" x="460" y="730" transform="rotate(-45 460 730)"/>
+        <use href="#microbe-bacillus" x="490" y="770" transform="rotate(30 490 770)"/>
+        <use href="#microbe-bacillus" x="210" y="840" transform="rotate(80 210 840)"/>
+        
+        <!-- Cocci Clusters -->
+        <use href="#microbe-coccus" x="540" y="390"/>
+        <use href="#microbe-coccus" x="545" y="395"/>
+        <use href="#microbe-coccus" x="538" y="400"/>
+        
+        <use href="#microbe-coccus" x="130" y="570"/>
+        <use href="#microbe-coccus" x="125" y="565"/>
+        <use href="#microbe-coccus" x="135" y="560"/>
+
+        <use href="#microbe-coccus" x="500" y="720"/>
+        <use href="#microbe-coccus" x="508" y="725"/>
+        
+        <use href="#microbe-coccus" x="390" y="830"/>
+        <use href="#microbe-coccus" x="395" y="838"/>
+        <use href="#microbe-coccus" x="402" y="832"/>
+    </g>
+
+    <!-- Root System Paths -->
+    <!-- Root Hairs (Background Layer) -->
+    <g fill="none" stroke="#FFF3E0" stroke-width="1.5" opacity="0.6">
+        <!-- Along Lateral 1 -->
+        <path d="M 400 280 Q 420 260 430 290"/>
+        <path d="M 420 295 Q 450 270 460 300"/>
+        <path d="M 450 320 Q 480 300 490 330"/>
+        <path d="M 480 350 Q 510 330 520 360"/>
+        <!-- Along Lateral 2 -->
+        <path d="M 280 400 Q 250 380 240 410"/>
+        <path d="M 240 420 Q 210 390 200 430"/>
+        <path d="M 200 450 Q 170 430 160 470"/>
+        <path d="M 170 490 Q 140 470 130 510"/>
+        <!-- Along Lateral 3 -->
+        <path d="M 380 580 Q 410 560 420 590"/>
+        <path d="M 410 610 Q 440 590 450 620"/>
+        <path d="M 430 650 Q 470 630 480 670"/>
+        <path d="M 450 690 Q 490 670 500 710"/>
+        <!-- Along Main Root -->
+        <path d="M 340 600 Q 310 590 300 620"/>
+        <path d="M 350 650 Q 320 640 310 670"/>
+        <path d="M 360 750 Q 330 740 320 770"/>
+        <path d="M 370 800 Q 340 790 330 820"/>
+    </g>
+
+    <!-- Main Roots (Layered for 3D effect) -->
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Outer Dark Stroke -->
+        <g stroke="#8D6E63" stroke-width="24">
+            <path d="M 355 250 Q 480 300 520 420"/> <!-- Lateral 1 -->
+            <path d="M 345 380 Q 200 420 150 550"/> <!-- Lateral 2 -->
+            <path d="M 340 550 Q 450 600 480 750"/> <!-- Lateral 3 -->
+            <path d="M 360 700 Q 250 750 220 850"/> <!-- Lateral 4 -->
+            <path d="M 350 50 Q 370 300 330 550 T 380 850"/> <!-- Main Taproot -->
+        </g>
+        <!-- Inner Light Stroke -->
+        <g stroke="#EFEBE9" stroke-width="14">
+            <path d="M 355 250 Q 480 300 520 420"/>
+            <path d="M 345 380 Q 200 420 150 550"/>
+            <path d="M 340 550 Q 450 600 480 750"/>
+            <path d="M 360 700 Q 250 750 220 850"/>
+            <path d="M 350 50 Q 370 300 330 550 T 380 850" stroke="url(#rootBaseGrad)"/>
+        </g>
+    </g>
+
+    <!-- Root Hairs (Foreground Layer) -->
+    <g fill="none" stroke="#FFF3E0" stroke-width="1.5" opacity="0.8">
+        <path d="M 500 380 Q 530 370 540 400"/>
+        <path d="M 510 400 Q 540 390 550 420"/>
+        <path d="M 160 520 Q 130 510 120 540"/>
+        <path d="M 150 540 Q 120 530 110 560"/>
+        <path d="M 470 720 Q 500 710 510 740"/>
+        <path d="M 480 740 Q 510 730 520 760"/>
+        <path d="M 240 810 Q 210 800 200 830"/>
+        <path d="M 230 830 Q 200 820 190 850"/>
+    </g>
+
+
+    <!-- ========================================== -->
+    <!-- CONNECTION / MAGNIFICATION EFFECT          -->
+    <!-- ========================================== -->
+
+    <!-- Highlight Box on Lateral Root -->
+    <rect x="360" y="580" width="90" height="90" rx="8" fill="none" stroke="#FFCA28" stroke-width="3" stroke-dasharray="6 6" filter="url(#glow)"/>
+
+    <!-- Translucent Viewing Cone -->
+    <!-- Connects the highlight box (360,580 to 450,670) to the cross-section tangents -->
+    <!-- Cross-section center: (1000, 450), radius: 350 -->
+    <!-- Tangents approx at (753, 203) and (753, 697) -->
+    <polygon points="450,580 753,203 753,697 450,670" fill="#FFCA28" opacity="0.08"/>
+
+    <!-- Connecting Dashed Lines -->
+    <path d="M 450 580 L 753 203" fill="none" stroke="#FFCA28" stroke-width="2" stroke-dasharray="8 8" opacity="0.8"/>
+    <path d="M 450 670 L 753 697" fill="none" stroke="#FFCA28" stroke-width="2" stroke-dasharray="8 8" opacity="0.8"/>
+
+
+    <!-- ========================================== -->
+    <!-- RIGHT SIDE: BOTANICAL CROSS-SECTION        -->
+    <!-- ========================================== -->
+
+    <g filter="url(#dropShadow)">
+        <!-- Epidermis & Cortex Base -->
+        <circle cx="1000" cy="450" r="350" fill="url(#cortexGrad)" stroke="#795548" stroke-width="8"/>
+
+        <!-- Root Hairs extending from Epidermis -->
+        <g fill="none" stroke="#795548" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 1340 370 Q 1390 350 1380 300"/>
+            <path d="M 1320 590 Q 1380 620 1360 680"/>
+            <path d="M 720 240 Q 660 200 680 140"/>
+            <path d="M 860 770 Q 820 830 850 880"/>
+            <path d="M 1150 135 Q 1180 80 1230 90"/>
+        </g>
+
+        <!-- Cortex Cellular Structure (Concentric dashed rings + radial lines) -->
+        <g stroke="#BCAAA4" stroke-width="3" opacity="0.4">
+            <circle cx="1000" cy="450" r="320" stroke-dasharray="20 8"/>
+            <circle cx="1000" cy="450" r="290" stroke-dasharray="18 7"/>
+            <circle cx="1000" cy="450" r="260" stroke-dasharray="16 6"/>
+            <circle cx="1000" cy="450" r="230" stroke-dasharray="14 6"/>
+            <circle cx="1000" cy="450" r="200" stroke-dasharray="12 5"/>
+            <circle cx="1000" cy="450" r="170" stroke-dasharray="10 5"/>
+        </g>
+
+        <!-- Radial Spokes for Cortex Cells -->
+        <use href="#cortex-spoke" transform="rotate(0 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(15 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(30 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(45 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(60 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(75 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(90 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(105 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(120 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(135 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(150 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(165 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(180 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(195 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(210 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(225 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(240 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(255 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(270 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(285 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(300 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(315 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(330 1000 450)"/>
+        <use href="#cortex-spoke" transform="rotate(345 1000 450)"/>
+
+        <!-- Endodermis (with Casparian Strip) -->
+        <circle cx="1000" cy="450" r="145" fill="#E8F5E9" stroke="#388E3C" stroke-width="16" stroke-dasharray="18 4"/>
+        
+        <!-- Pericycle -->
+        <circle cx="1000" cy="450" r="130" fill="#C8E6C9" stroke="#81C784" stroke-width="6"/>
+
+        <!-- Stele Background -->
+        <circle cx="1000" cy="450" r="127" fill="#F1F8E9"/>
+
+        <!-- Xylem (Tetrarch Star Shape) -->
+        <path d="M 1000 330 
+                 C 1015 435, 1015 435, 1120 450 
+                 C 1015 465, 1015 465, 1000 570 
+                 C 985 465, 985 465, 880 450 
+                 C 985 435, 985 435, 1000 330 Z" 
+              fill="url(#xylemGrad)" stroke="#B71C1C" stroke-width="3"/>
+
+        <!-- Metaxylem Vessels (Large central vessels) -->
+        <g fill="#FFCDD2" stroke="#C62828" stroke-width="3">
+            <circle cx="1000" cy="450" r="22"/>
+            <circle cx="1000" cy="400" r="14"/>
+            <circle cx="1000" cy="500" r="14"/>
+            <circle cx="1050" cy="450" r="14"/>
+            <circle cx="950" cy="450" r="14"/>
+        </g>
+
+        <!-- Protoxylem Vessels (Small vessels at the tips) -->
+        <g fill="#FFCDD2" stroke="#C62828" stroke-width="2">
+            <circle cx="1000" cy="365" r="8"/>
+            <circle cx="1000" cy="345" r="5"/>
+            
+            <circle cx="1000" cy="535" r="8"/>
+            <circle cx="1000" cy="555" r="5"/>
+            
+            <circle cx="1085" cy="450" r="8"/>
+            <circle cx="1105" cy="450" r="5"/>
+            
+            <circle cx="915" cy="450" r="8"/>
+            <circle cx="895" cy="450" r="5"/>
+        </g>
+
+        <!-- Phloem Clusters (Between Xylem Arms) -->
+        <g>
+            <!-- Top Right Cluster -->
+            <circle cx="1060" cy="390" r="16" fill="url(#phloemGrad)"/>
+            <circle cx="1080" cy="410" r="12" fill="url(#phloemGrad)"/>
+            <circle cx="1045" cy="370" r="10" fill="url(#phloemGrad)"/>
+            <circle cx="1075" cy="380" r="8" fill="url(#phloemGrad)"/>
+            <circle cx="1050" cy="410" r="9" fill="url(#phloemGrad)"/>
+
+            <!-- Bottom Right Cluster -->
+            <circle cx="1060" cy="510" r="16" fill="url(#phloemGrad)"/>
+            <circle cx="1080" cy="490" r="12" fill="url(#phloemGrad)"/>
+            <circle cx="1045" cy="530" r="10" fill="url(#phloemGrad)"/>
+            <circle cx="1075" cy="520" r="8" fill="url(#phloemGrad)"/>
+            <circle cx="1050" cy="490" r="9" fill="url(#phloemGrad)"/>
+
+            <!-- Bottom Left Cluster -->
+            <circle cx="940" cy="510" r="16" fill="url(#phloemGrad)"/>
+            <circle cx="920" cy="490" r="12" fill="url(#phloemGrad)"/>
+            <circle cx="955" cy="530" r="10" fill="url(#phloemGrad)"/>
+            <circle cx="925" cy="520" r="8" fill="url(#phloemGrad)"/>
+            <circle cx="950" cy="490" r="9" fill="url(#phloemGrad)"/>
+
+            <!-- Top Left Cluster -->
+            <circle cx="940" cy="390" r="16" fill="url(#phloemGrad)"/>
+            <circle cx="920" cy="410" r="12" fill="url(#phloemGrad)"/>
+            <circle cx="955" cy="370" r="10" fill="url(#phloemGrad)"/>
+            <circle cx="925" cy="380" r="8" fill="url(#phloemGrad)"/>
+            <circle cx="950" cy="410" r="9" fill="url(#phloemGrad)"/>
+        </g>
+    </g>
+
+</svg>

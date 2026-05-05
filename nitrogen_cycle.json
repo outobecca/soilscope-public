@@ -1,0 +1,86 @@
+{
+  "domain": "Biophysical Simulation",
+  "model": "NitrogenCycle_MVP",
+  "pools": {
+    "description": "Single Source of Truth states in Riverpod. All N must be accounted for here.",
+    "organic_nitrogen": {
+      "type": "stable_and_labile",
+      "components": ["POM", "DOM", "Necromass"],
+      "visual": "Soil aggregates and Hotspots"
+    },
+    "ammonium_NH4": {
+      "type": "labile_cation",
+      "mobility": "low",
+      "soil_interaction": "Binds to Cation Exchange Capacity (CEC)",
+      "cpk_color": "#0000FF",
+      "charge": "+1"
+    },
+    "nitrate_NO3": {
+      "type": "labile_anion",
+      "mobility": "high",
+      "soil_interaction": "Prone to leaching with water flux",
+      "cpk_color": "#0000FF",
+      "charge": "-1"
+    },
+    "microbial_biomass_N": {
+      "type": "biological",
+      "description": "Nitrogen temporarily immobilized by microbes"
+    },
+    "plant_biomass_N": {
+      "type": "biological",
+      "description": "Nitrogen assimilated into plant tissues"
+    }
+  },
+  "processes": {
+    "description": "Transformations between pools. Must follow strict environmental conditions.",
+    "mineralization": {
+      "source": "organic_nitrogen",
+      "target": "ammonium_NH4",
+      "catalyst": "microbial_enzymes",
+      "conditions": {
+        "c_n_ratio": "< 20",
+        "soil_moisture": "aerobic_optimal",
+        "temperature": "biologically_active"
+      }
+    },
+    "nitrification": {
+      "source": "ammonium_NH4",
+      "target": "nitrate_NO3",
+      "catalyst": ["Nitrosomonas", "Nitrobacter"],
+      "conditions": {
+        "oxygen": "strictly_aerobic",
+        "water_filled_pore_space": "< 60%"
+      },
+      "inhibitors": ["waterlogging", "anaerobic_conditions", "low_pH"]
+    },
+    "denitrification": {
+      "source": "nitrate_NO3",
+      "target": "atmosphere_N2_N2O",
+      "conditions": {
+        "oxygen": "anaerobic",
+        "water_filled_pore_space": "> 80%",
+        "labile_carbon": "high_availability"
+      },
+      "visual_trigger": "Gas emission particles escaping to atmosphere"
+    },
+    "immobilization": {
+      "source": ["ammonium_NH4", "nitrate_NO3"],
+      "target": "microbial_biomass_N",
+      "conditions": {
+        "c_n_ratio": "> 25"
+      },
+      "visual_trigger": "Particles physically anchored to microbial clusters"
+    },
+    "plant_uptake": {
+      "source": ["nitrate_NO3", "ammonium_NH4"],
+      "target": "plant_biomass_N",
+      "mechanisms": ["mass_flow_via_transpiration", "diffusion", "root_interception"],
+      "visual_trigger": "Particles enter root and travel up xylem"
+    }
+  },
+  "simulation_rules": {
+    "mass_balance": "Total System N = organic_nitrogen + ammonium_NH4 + nitrate_NO3 + microbial_biomass_N + plant_biomass_N + leached_N + denitrified_N",
+    "atomic_updates": "All pool updates MUST execute inside a single transaction/solver tick to prevent state desync.",
+    "leaching_logic": "NO3- travels downwards with gravity/water. NH4+ stays anchored near generation point due to CEC."
+  }
+}

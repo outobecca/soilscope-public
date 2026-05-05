@@ -1,0 +1,65 @@
+{
+  "simulation_engine": "MFCKT_Physics_Bindings",
+  "description": "Strict mapping of scientific theories to Riverpod state and Flame rendering.",
+  "theories": {
+    "spac_water_movement": {
+      "theory": "Soil-Plant-Atmosphere Continuum (SPAC)",
+      "formula": "Jw = (Psi_soil - Psi_atm) / (R_root + R_xylem + R_stomata)",
+      "riverpod_state": {
+        "logic": "Calculates Delta Psi between SoilMoistureProvider and VPD.",
+        "data_structure": "Updates a pre-allocated Float64List buffer with new water flux values per sub-step."
+      },
+      "flame_binding": {
+        "animation_speed": "Particle velocity.length is directly multiplied by Jw (higher transpiration pull = faster movement).",
+        "pathing": "Water particles (z-index 60) follow bezier curves from soil to root hitbox.",
+        "lifecycle": "Execute removeFromParent() upon hitting root hitbox, transferring mass to plant internal pool."
+      }
+    },
+    "microbial_kinetics": {
+      "theory": "Michaelis-Menten Kinetics for Mineralization",
+      "formula": "V = (V_max * [S]) / (K_m + [S])",
+      "riverpod_state": {
+        "logic": "MicrobialEnzymesSolver reads carbon [S] from POM pool and resolves the mineralized N and C output.",
+        "data_structure": "Atomic state update decrementing POM and incrementing NH4+ pool."
+      },
+      "flame_binding": {
+        "visual_feedback": "Hotspot/microbe cluster (z-index 30) scale and pulse animation intensity is driven by reaction rate V.",
+        "particle_spawn": "Solver validation triggers world.add() for new NH4+ particles precisely at the hotspot coordinates, respecting max render limits."
+      }
+    },
+    "nitrogen_immobilization": {
+      "theory": "C:N Ratio Driven Immobilization",
+      "formula": "N_immob = Delta_C * ((1 / C:N_microbe) - (1 / C:N_substrate))",
+      "riverpod_state": {
+        "logic": "NitrogenCycleSolver monitors local C:N ratio. If N_immob > 0, mineral N is transferred to microbial_biomass_N via atomic transaction."
+      },
+      "flame_binding": {
+        "capture_animation": "Physics update(dt) reads isImmobilized flag. If true, free-floating N particles (z-index 60) override root pathing and Lerp towards the nearest microbial hotspot (z-index 20).",
+        "lifecycle": "Upon collision with hotspot, particle executes removeFromParent()."
+      }
+    },
+    "root_chemotaxis": {
+      "theory": "Nutrient Gradient Driven Root Growth",
+      "formula": "v_root = k * grad([N]) + gravity",
+      "riverpod_state": {
+        "logic": "Maintains spatial map of nutrient distribution based on Poisson Disk hotspot coordinates and their pool sizes."
+      },
+      "flame_binding": {
+        "growth_direction": "Root tip nodes (z-index 50) calculate next coordinate by overriding pure gravity if local grad([N]) is high.",
+        "visual_feedback": "Root visually curves towards nutrient-rich soil aggregates."
+      }
+    },
+    "mass_conservation": {
+      "theory": "Absolute Zero-Sum Rule",
+      "formula": "dM/dt = M_in - M_out",
+      "riverpod_state": {
+        "logic": "Every tick validates that N_total remains constant across all pools."
+      },
+      "flame_binding": {
+        "strict_spawn": "world.add() is ONLY permitted when source_pool strictly decrements.",
+        "strict_despawn": "removeFromParent() is ONLY permitted when target hitbox is reached and target_pool strictly increments.",
+        "constraint": "ZERO ZOMBIE PARTICLES. Visual mass must always equal logical mass."
+      }
+    }
+  }
+}

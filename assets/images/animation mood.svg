@@ -1,0 +1,321 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" style="background-color: #0b101e; font-family: 'Courier New', Courier, monospace;">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="60%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0b101e" />
+    </linearGradient>
+    <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#291f19" />
+      <stop offset="30%" stop-color="#1c1410" />
+      <stop offset="100%" stop-color="#0a0705" />
+    </linearGradient>
+    <!-- Plant Gradients -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="leafGradRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="leafGradLeft" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="rootGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+    <!-- Data/Energy Flow Gradients -->
+    <linearGradient id="waterFlow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#60a5fa" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="carbonFlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#f472b6" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#fbcfe8" stop-opacity="0.2"/>
+    </linearGradient>
+    <!-- Glow Filters -->
+    <!-- Patterns -->
+    <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+      <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+    <pattern id="microGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#0ea5e9" stroke-opacity="0.1" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="hexGrid" width="28" height="48.497" patternUnits="userSpaceOnUse" patternTransform="scale(0.5)">
+      <path d="M14 0 L28 8.083 L28 24.249 L14 32.332 L0 24.249 L0 8.083 Z" fill="none" stroke="#f59e0b" stroke-opacity="0.15" stroke-width="1"/>
+      <path d="M14 48.497 L28 40.414 L28 24.249 L14 32.332 L0 24.249 L0 40.414 Z" fill="none" stroke="#f59e0b" stroke-opacity="0.15" stroke-width="1"/>
+    </pattern>
+    <!-- Markers for Flow Arrows -->
+  </defs>
+  <!-- ================= BACKGROUND & GRIDS ================= -->
+  <rect width="1000" height="1000" fill="url(#skyGrad)" />
+  <rect width="1000" height="1000" fill="url(#grid)" />
+  <!-- Soil Section -->
+  <path d="M0,600 Q250,580 500,610 T1000,590 L1000,1000 L0,1000 Z" fill="url(#soilGrad)" />
+  <path d="M0,600 Q250,580 500,610 T1000,590 L1000,1000 L0,1000 Z" fill="url(#hexGrid)" />
+  <!-- Soil Surface Line -->
+  <path d="M0,600 Q250,580 500,610 T1000,590" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="10 5" opacity="0.6"/>
+  <text x="20" y="620" fill="#8b5cf6" font-size="12" font-weight="bold" letter-spacing="2">SURFACE BOUNDARY LAYER (Z=0)</text>
+  <!-- Water Table Indicator -->
+  <path d="M0,850 Q300,830 600,860 T1000,840" fill="none" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect x="0" y="850" width="1000" height="150" fill="#0ea5e9" opacity="0.05" />
+  <text x="20" y="845" fill="#0ea5e9" font-size="12" font-weight="bold">SATURATED ZONE (WATER TABLE)</text>
+  <!-- ================= ATMOSPHERE (SUN & CLOUDS) ================= -->
+  <!-- Sun / Solar Radiation Source -->
+  <g transform="translate(850, 150)">
+    <circle cx="0" cy="0" r="40" fill="#f59e0b" opacity="0.8"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4 6" opacity="0.6"/>
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#fbbf24" stroke-width="1" stroke-dasharray="2 8" opacity="0.4"/>
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#fbbf24" stroke-width="0.5" stroke-dasharray="1 10" opacity="0.3"/>
+    <text x="-35" y="5" fill="#fff" font-size="14" font-weight="bold">SOLAR</text>
+    <text x="-35" y="20" fill="#fbbf24" font-size="10">RAD_SRC</text>
+    <!-- Solar Rays -->
+    <path d="M -70,30 L -250,150" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="8 8" opacity="0.8"/>
+    <path d="M -80,60 L -300,280" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="8 8" opacity="0.6"/>
+    <path d="M -50,80 L -150,350" fill="none" stroke="#facc15" stroke-width="2" stroke-dasharray="8 8" opacity="0.5"/>
+  </g>
+  <!-- Atmospheric Data Nodes / Clouds -->
+  <g opacity="0.7">
+    <path d="M100,150 Q130,120 170,140 Q210,110 240,150 Q270,160 250,190 Q210,210 170,190 Q120,210 100,180 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="1" stroke-dasharray="3 3"/>
+    <circle cx="170" cy="160" r="4" fill="#38bdf8"/>
+    <text x="185" y="155" fill="#38bdf8" font-size="10">ATM_NODE_01</text>
+    <text x="185" y="170" fill="#94a3b8" font-size="10">VPD: 1.4 kPa</text>
+    <text x="185" y="185" fill="#94a3b8" font-size="10">CO2: 412 ppm</text>
+  </g>
+  <!-- ================= PLANT STRUCTURE ================= -->
+  <g id="plant_system">
+    <!-- Roots -->
+    <g id="root_network" fill="none" stroke="url(#rootGrad)" stroke-linecap="round">
+      <!-- Main Taproot (Multi-segmented for tapering) -->
+      <path d="M500,605 C515,680 495,740 480,800" stroke-width="14"/>
+      <path d="M480,800 C465,860 510,900 520,950" stroke-width="8"/>
+      
+      <!-- Primary Laterals -->
+      <path d="M508,645 C560,660 590,690 620,750" stroke-width="7"/>
+      <path d="M492,670 C440,690 410,730 380,800" stroke-width="6"/>
+      <path d="M488,730 C430,760 380,800 350,880" stroke-width="5"/>
+      <path d="M500,820 C560,850 620,880 650,920" stroke-width="5"/>
+      
+      <!-- Secondary Laterals -->
+      <path d="M580,685 C610,670 640,660 670,665" stroke-width="3"/>
+      <path d="M605,725 C640,715 670,715 700,740" stroke-width="3"/>
+      <path d="M425,710 C380,695 340,695 310,715" stroke-width="3"/>
+      <path d="M385,780 C340,775 300,785 270,810" stroke-width="3"/>
+      <path d="M545,865 C580,890 595,920 605,960" stroke-width="3"/>
+      <path d="M425,845 C385,870 365,900 355,945" stroke-width="3"/>
+      
+      <!-- Tertiary Fine Roots -->
+      <path d="M660,665 C685,655 710,655 730,670" stroke-width="1.5" opacity="0.6"/>
+      <path d="M315,705 C280,685 250,690 230,710" stroke-width="1.5" opacity="0.6"/>
+      <path d="M635,900 C660,910 680,935 690,965" stroke-width="1.5" opacity="0.6"/>
+      <path d="M365,875 C340,865 310,875 285,900" stroke-width="1.5" opacity="0.6"/>
+    </g>
+    <!-- Stem (Multi-segmented for tapering) -->
+    <path d="M500,610 C495,500 505,450 502,400" fill="none" stroke="url(#stemGrad)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M502,400 C498,350 495,300 500,180" fill="none" stroke="url(#stemGrad)" stroke-width="10" stroke-linecap="round"/>
+    <path d="M500,610 C495,500 505,450 502,400 C498,350 495,300 500,180" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+    
+    <!-- Leaves (Varied shapes, midribs, and placements) -->
+    <g id="leaves">
+      <!-- Leaf 1 (Bottom Right) -->
+      <g transform="translate(503, 520) rotate(-10) scale(1.1)">
+        <path d="M0,0 C30,-15 80,-10 120,25 C80,35 30,25 0,0 Z" fill="url(#leafGradRight)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q60,5 115,22" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6"/>
+        <path d="M25,3 L35,-4 M50,7 L65,-1 M75,12 L90,5" fill="none" stroke="#6ee7b7" stroke-width="0.8" opacity="0.4"/>
+      </g>
+      <!-- Leaf 2 (Bottom Left) -->
+      <g transform="translate(497, 480) rotate(20) scale(1.0)">
+        <path d="M0,0 C-30,-15 -80,-10 -120,25 C-80,35 -30,25 0,0 Z" fill="url(#leafGradLeft)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q-60,5 -115,22" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6"/>
+        <path d="M-25,3 L-35,-4 M-50,7 L-65,-1 M-75,12 L-90,5" fill="none" stroke="#6ee7b7" stroke-width="0.8" opacity="0.4"/>
+      </g>
+      <!-- New Leaf 2b (Mid Left) -->
+      <g transform="translate(498, 430) rotate(-15) scale(0.9)">
+        <path d="M0,0 C-25,-10 -60,-5 -90,20 C-60,30 -25,20 0,0 Z" fill="url(#leafGradLeft)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q-45,4 -85,18" fill="none" stroke="#6ee7b7" stroke-width="1.2" opacity="0.5"/>
+      </g>
+      <!-- Leaf 3 (Mid Right) -->
+      <g transform="translate(502, 360) rotate(-30) scale(1.2)">
+        <path d="M0,0 C40,-25 100,-15 140,30 C90,40 40,30 0,0 Z" fill="url(#leafGradRight)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q70,5 135,28" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6"/>
+        <path d="M30,4 L45,-6 M60,10 L80,1 M90,16 L110,8" fill="none" stroke="#6ee7b7" stroke-width="0.8" opacity="0.4"/>
+      </g>
+      <!-- Leaf 4 (Mid Left) -->
+      <g transform="translate(499, 290) rotate(35) scale(1.1)">
+        <path d="M0,0 C-35,-20 -90,-10 -130,30 C-80,40 -35,30 0,0 Z" fill="url(#leafGradLeft)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q-65,5 -125,28" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6"/>
+        <path d="M-30,4 L-45,-6 M-60,10 L-80,1 M-90,16 L-110,8" fill="none" stroke="#6ee7b7" stroke-width="0.8" opacity="0.4"/>
+      </g>
+      <!-- New Leaf 4b (Upper Right) -->
+      <g transform="translate(501, 240) rotate(10) scale(0.85)">
+        <path d="M0,0 C20,-10 50,-5 -70,15 C50,20 20,15 0,0 Z" fill="url(#leafGradRight)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q35,3 65,13" fill="none" stroke="#6ee7b7" stroke-width="1.0" opacity="0.5"/>
+      </g>
+      <!-- Leaf 5 (Top Right) -->
+      <g transform="translate(500, 190) rotate(-50) scale(0.9)">
+        <path d="M0,0 C25,-15 70,-10 100,20 C60,25 25,20 0,0 Z" fill="url(#leafGradRight)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q45,4 95,18" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.6"/>
+      </g>
+      <!-- New Leaf 5b (Top Left) -->
+      <g transform="translate(499, 185) rotate(45) scale(0.8)">
+        <path d="M0,0 C-20,-12 -60,-8 -85,18 C-55,22 -20,18 0,0 Z" fill="url(#leafGradLeft)" stroke="#10b981" stroke-width="1"/>
+        <path d="M0,0 Q-40,3 -80,16" fill="none" stroke="#6ee7b7" stroke-width="1.2" opacity="0.5"/>
+      </g>
+    </g>
+  </g>
+  <!-- ================= ANIMATION LAYER / SIMULATOR OVERLAYS ================= -->
+  <!-- Root Data Nodes & Water Uptake Flow -->
+  <g id="root_simulation">
+    <!-- Water Flow Lines (Upward) - Smoothed -->
+    <path d="M520,950 C510,900 465,860 480,800 C495,740 515,680 500,605" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="8 8" opacity="0.8"/>
+    <path d="M620,750 C590,690 560,660 508,645" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 6" opacity="0.8"/>
+    <path d="M380,800 C410,730 440,690 492,670" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 6" opacity="0.8"/>
+    <!-- Root Nodes -->
+    <circle cx="520" cy="950" r="5" fill="#38bdf8"/>
+    <circle cx="620" cy="750" r="4" fill="#38bdf8"/>
+    <circle cx="380" cy="800" r="4" fill="#38bdf8"/>
+    <circle cx="650" cy="920" r="4" fill="#38bdf8"/>
+    <circle cx="350" cy="880" r="4" fill="#38bdf8"/>
+    <!-- Soil Moisture Sensors -->
+    <g transform="translate(700, 700)">
+      <rect x="0" y="0" width="120" height="40" fill="#0f172a" stroke="#38bdf8" stroke-width="1" opacity="0.8"/>
+      <text x="10" y="15" fill="#38bdf8" font-size="10">θ (SOIL MOIST)</text>
+      <text x="10" y="30" fill="#fff" font-size="12" font-weight="bold">0.32 m³/m³</text>
+      <path d="M-20,50 L0,20" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="2 2"/>
+      <circle cx="-20" cy="50" r="3" fill="#38bdf8"/>
+    </g>
+    <g transform="translate(200, 850)">
+      <rect x="0" y="0" width="120" height="40" fill="#0f172a" stroke="#38bdf8" stroke-width="1" opacity="0.8"/>
+      <text x="10" y="15" fill="#38bdf8" font-size="10">Ψ (WATER POT)</text>
+      <text x="10" y="30" fill="#fff" font-size="12" font-weight="bold">-0.5 MPa</text>
+      <path d="M140,30 L120,20" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="2 2"/>
+      <circle cx="140" cy="30" r="3" fill="#38bdf8"/>
+    </g>
+  </g>
+  <!-- Stem & Leaf Simulation (Carbon/Water Flux) -->
+  <g id="plant_simulation">
+    <!-- Xylem/Phloem Flow (Smoothed) -->
+    <path d="M495,610 C490,500 500,450 497,400 C493,350 490,300 495,180" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 6" opacity="0.9"/>
+    <path d="M505,180 C500,300 503,350 507,400 C510,450 500,500 505,610" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="6 6" opacity="0.9"/>
+    <!-- Leaf Nodes -->
+    <circle cx="502" cy="480" r="4" fill="#10b981"/>
+    <circle cx="498" cy="420" r="4" fill="#10b981"/>
+    <circle cx="501" cy="320" r="4" fill="#10b981"/>
+    <circle cx="499" cy="250" r="4" fill="#10b981"/>
+    <circle cx="500" cy="180" r="4" fill="#10b981"/>
+    <!-- Gas Exchange Arrows (CO2 in, H2O out) -->
+    <!-- Mid Right Leaf -->
+    <path d="M650,250 Q620,280 580,310" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="655" y="245" fill="#ec4899" font-size="10" font-weight="bold">CO2 FLUX</text>
+    <path d="M550,340 Q580,380 620,390" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="625" y="400" fill="#22d3ee" font-size="10" font-weight="bold">H2O TRANSPIRATION</text>
+    <!-- Mid Left Leaf -->
+    <path d="M300,200 Q340,220 380,240" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="240" y="195" fill="#ec4899" font-size="10" font-weight="bold">CO2 FLUX</text>
+    <path d="M400,280 Q350,320 300,310" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="180" y="315" fill="#22d3ee" font-size="10" font-weight="bold">H2O TRANSPIRATION</text>
+  </g>
+  <!-- ================= HUD / UI ELEMENTS ================= -->
+  <!-- Top Left: Main Dashboard -->
+  <g transform="translate(30, 30)">
+    <!-- Frame -->
+    <path d="M0,20 L0,0 L20,0 M230,0 L250,0 L250,20 M250,130 L250,150 L230,150 M20,150 L0,150 L0,130" fill="none" stroke="#38bdf8" stroke-width="2"/>
+    <rect x="0" y="0" width="250" height="150" fill="#0f172a" opacity="0.6" />
+    <!-- Title -->
+    <text x="15" y="25" fill="#fff" font-size="14" font-weight="bold" letter-spacing="1">SPA SIMULATOR v3.1</text>
+    <line x1="15" y1="35" x2="235" y2="35" stroke="#38bdf8" stroke-width="1" opacity="0.5"/>
+    <!-- Metrics -->
+    <text x="15" y="55" fill="#94a3b8" font-size="11">SIM_TIME:</text>
+    <text x="100" y="55" fill="#34d399" font-size="11">T+14:32:00</text>
+    <text x="15" y="75" fill="#94a3b8" font-size="11">AIR_TEMP:</text>
+    <text x="100" y="75" fill="#fff" font-size="11">24.5 °C</text>
+    <text x="15" y="95" fill="#94a3b8" font-size="11">PAR_INC :</text>
+    <text x="100" y="95" fill="#facc15" font-size="11">1250 µmol/m²/s</text>
+    <text x="15" y="115" fill="#94a3b8" font-size="11">SYS_STAT:</text>
+    <text x="100" y="115" fill="#38bdf8" font-size="11">NOMINAL (ANIM_ON)</text>
+    <!-- Mini Graph -->
+    <rect x="15" y="125" width="220" height="15" fill="#1e293b" />
+    <polyline points="15,135 40,130 65,138 90,128 115,135 140,126 165,132 190,127 215,135 235,128" fill="none" stroke="#facc15" stroke-width="1.5"/>
+  </g>
+  <!-- Right Side: Plant Physiology Panel -->
+  <g transform="translate(720, 400)">
+    <path d="M0,20 L0,0 L20,0 M230,0 L250,0 L250,20 M250,180 L250,200 L230,200 M20,200 L0,200 L0,180" fill="none" stroke="#10b981" stroke-width="2"/>
+    <rect x="0" y="0" width="250" height="200" fill="#0f172a" opacity="0.6" />
+    <text x="15" y="25" fill="#10b981" font-size="12" font-weight="bold">PHYSIOLOGY METRICS</text>
+    <line x1="15" y1="35" x2="235" y2="35" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+    <!-- Stomatal Conductance Bar Chart -->
+    <text x="15" y="55" fill="#94a3b8" font-size="10">STOMATAL CONDUCTANCE (gs)</text>
+    <rect x="15" y="65" width="220" height="40" fill="#1e293b" />
+    <rect x="20" y="70" width="15" height="30" fill="#34d399" />
+    <rect x="40" y="75" width="15" height="25" fill="#34d399" />
+    <rect x="60" y="68" width="15" height="32" fill="#34d399" />
+    <rect x="80" y="80" width="15" height="20" fill="#34d399" />
+    <rect x="100" y="72" width="15" height="28" fill="#34d399" />
+    <rect x="120" y="65" width="15" height="35" fill="#34d399" />
+    <rect x="140" y="70" width="15" height="30" fill="#34d399" />
+    <rect x="160" y="78" width="15" height="22" fill="#34d399" />
+    <rect x="180" y="85" width="15" height="15" fill="#34d399" />
+    <rect x="200" y="82" width="15" height="18" fill="#34d399" />
+    <!-- Photosynthesis Rate -->
+    <text x="15" y="125" fill="#94a3b8" font-size="10">NET ASSIMILATION (An)</text>
+    <text x="15" y="145" fill="#ec4899" font-size="16" font-weight="bold">18.4</text>
+    <text x="55" y="145" fill="#94a3b8" font-size="10">µmol CO2/m²/s</text>
+    <!-- Water Potential -->
+    <text x="15" y="170" fill="#94a3b8" font-size="10">LEAF WATER POTENTIAL</text>
+    <text x="15" y="185" fill="#38bdf8" font-size="14" font-weight="bold">-1.2 MPa</text>
+  </g>
+  <!-- Network / Mesh Overlay (Connecting Nodes) -->
+  <g id="mesh_network" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.15">
+    <path d="M170,160 L500,180 L501,320 L620,390" />
+    <path d="M500,180 L499,250 L300,310" />
+    <path d="M499,250 L501,320 L498,420 L502,480 L500,605" />
+    <path d="M500,605 L620,750 L650,920" />
+    <path d="M500,605 L380,800 L350,880" />
+    <path d="M380,800 L520,950 L620,750" />
+  </g>
+  <!-- Floating Data Packets (Animation effect representation) -->
+  <g id="data_packets">
+    <!-- Phloem packets -->
+    <circle cx="505" cy="250" r="2" fill="#ec4899"/>
+    <circle cx="505" cy="350" r="2" fill="#ec4899"/>
+    <circle cx="505" cy="450" r="2" fill="#ec4899"/>
+    <circle cx="505" cy="550" r="2" fill="#ec4899"/>
+    <!-- Xylem packets -->
+    <circle cx="495" cy="580" r="2" fill="#38bdf8"/>
+    <circle cx="495" cy="480" r="2" fill="#38bdf8"/>
+    <circle cx="495" cy="380" r="2" fill="#38bdf8"/>
+    <circle cx="495" cy="280" r="2" fill="#38bdf8"/>
+    <!-- Root packets -->
+    <circle cx="510" cy="750" r="2" fill="#38bdf8"/>
+    <circle cx="490" cy="850" r="2" fill="#38bdf8"/>
+    <circle cx="440" cy="700" r="2" fill="#38bdf8"/>
+    <circle cx="580" cy="670" r="2" fill="#38bdf8"/>
+  </g>
+  <!-- Crosshairs / Targeting UI -->
+  <g stroke="#38bdf8" stroke-width="1" opacity="0.5">
+    <!-- Center Plant Crosshair -->
+    <line x1="480" y1="500" x2="490" y2="500" />
+    <line x1="510" y1="500" x2="520" y2="500" />
+    <line x1="500" y1="480" x2="500" y2="490" />
+    <line x1="500" y1="510" x2="500" y2="520" />
+    <circle cx="500" cy="500" r="15" fill="none" stroke-dasharray="2 4"/>
+    <!-- Soil Crosshair -->
+    <line x1="480" y1="700" x2="490" y2="700" />
+    <line x1="510" y1="700" x2="520" y2="700" />
+    <line x1="500" y1="680" x2="500" y2="690" />
+    <line x1="500" y1="710" x2="500" y2="720" />
+    <circle cx="500" cy="700" r="15" fill="none" stroke-dasharray="2 4"/>
+  </g>
+  <!-- Bottom Data Ticker -->
+  <rect x="0" y="970" width="1000" height="30" fill="#0f172a" opacity="0.9" />
+  <line x1="0" y1="970" x2="1000" y2="970" stroke="#38bdf8" stroke-width="1" opacity="0.5"/>
+  <text x="20" y="989" fill="#38bdf8" font-size="12" font-weight="bold">STATUS: RUNNING</text>
+  <text x="180" y="989" fill="#94a3b8" font-size="12">|  ITERATION: 45920  |  DELTA_T: 0.1s  |  ENERGY_BAL: CONVERGED  |  MASS_BAL: CONVERGED  |  MODULES: SOIL_1D, LEAF_FARQUHAR, ROOT_VUG</text>
+</svg>

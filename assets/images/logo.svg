@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Atmosphere / Sky Gradients -->
+    <radialGradient id="skyRadial" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#1A365D"/>
+      <stop offset="100%" stop-color="#0A192F"/>
+    </radialGradient>
+    <linearGradient id="sunGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+    <!-- Soil Gradients -->
+    <linearGradient id="soilGrad1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4E342E"/>
+      <stop offset="100%" stop-color="#2E1511"/>
+    </linearGradient>
+    <linearGradient id="soilGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5D4037"/>
+      <stop offset="100%" stop-color="#3E2723"/>
+    </linearGradient>
+    <linearGradient id="soilGrad3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#795548"/>
+      <stop offset="100%" stop-color="#4E342E"/>
+    </linearGradient>
+    <!-- Plant Gradients -->
+    <linearGradient id="leafGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00E676"/>
+      <stop offset="100%" stop-color="#1B5E20"/>
+    </linearGradient>
+    <linearGradient id="leafHighlight" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#69F0AE"/>
+      <stop offset="100%" stop-color="#00E676"/>
+    </linearGradient>
+    <linearGradient id="rootGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF9100"/>
+      <stop offset="100%" stop-color="#FF3D00"/>
+    </linearGradient>
+    <!-- Tech / Frame Gradients -->
+    <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="50%" stop-color="#0077FF"/>
+      <stop offset="100%" stop-color="#00B4DB"/>
+    </linearGradient>
+    <!-- Filters -->
+    <!-- Clip Paths -->
+    <clipPath id="hexClip">
+      <polygon points="256,66 420.54,161 420.54,351 256,446 91.46,351 91.46,161" />
+    </clipPath>
+    <clipPath id="soilClip">
+      <path d="M 0 280 Q 128 250 256 280 T 512 280 L 512 512 L 0 512 Z" />
+    </clipPath>
+  </defs>
+  <!-- OUTER ORBITAL RINGS (Simulator HUD) -->
+  <g>
+    <circle cx="256" cy="256" r="230" fill="none" stroke="#00B4DB" stroke-width="2" stroke-dasharray="4 12" opacity="0.6"/>
+    <circle cx="256" cy="256" r="240" fill="none" stroke="#0083B0" stroke-width="4" stroke-dasharray="100 20 40 20" opacity="0.8"/>
+    <circle cx="256" cy="256" r="215" fill="none" stroke="#00E5FF" stroke-width="1" opacity="0.3"/>
+    <!-- Outer Ring Data Blocks -->
+    <path d="M 256 16 A 240 240 0 0 1 310 22" fill="none" stroke="#00E5FF" stroke-width="6"/>
+    <path d="M 256 496 A 240 240 0 0 1 202 490" fill="none" stroke="#00E5FF" stroke-width="6"/>
+    <path d="M 16 256 A 240 240 0 0 1 22 202" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.7"/>
+    <path d="M 496 256 A 240 240 0 0 0 490 310" fill="none" stroke="#00E5FF" stroke-width="4" opacity="0.7"/>
+  </g>
+  <!-- MAIN HEXAGON CONTAINER -->
+  <g clip-path="url(#hexClip)">
+    <!-- Atmosphere Background -->
+    <rect x="0" y="0" width="512" height="512" fill="url(#skyRadial)" />
+    <!-- Atmosphere Polar Grid (Simulator Aspect) -->
+    <g opacity="0.15">
+      <circle cx="256" cy="160" r="60" fill="none" stroke="#00E5FF" stroke-width="1.5"/>
+      <circle cx="256" cy="160" r="100" fill="none" stroke="#00E5FF" stroke-width="1.5"/>
+      <circle cx="256" cy="160" r="140" fill="none" stroke="#00E5FF" stroke-width="1.5"/>
+      <circle cx="256" cy="160" r="180" fill="none" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="160" x2="56" y2="-40" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="160" x2="456" y2="-40" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="160" x2="56" y2="360" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="160" x2="456" y2="360" stroke="#00E5FF" stroke-width="1.5"/>
+    </g>
+    <!-- Digital Sun -->
+    <circle cx="256" cy="160" r="45" fill="url(#sunGrad)"/>
+    <circle cx="256" cy="160" r="55" fill="none" stroke="#FFD700" stroke-width="1" stroke-dasharray="4 6" opacity="0.8"/>
+    <circle cx="256" cy="160" r="70" fill="none" stroke="#FF8C00" stroke-width="2" stroke-dasharray="15 20 5 20" opacity="0.5"/>
+    <!-- Evapotranspiration / Atmosphere Data Particles -->
+    <g fill="#FFF" opacity="0.6">
+      <circle cx="140" cy="110" r="2"/>
+      <circle cx="370" cy="130" r="2.5"/>
+      <circle cx="190" cy="70" r="1.5"/>
+      <circle cx="310" cy="60" r="2"/>
+      <rect x="120" y="140" width="15" height="3" fill="#00E5FF"/>
+      <rect x="120" y="146" width="8" height="3" fill="#00E5FF"/>
+      <rect x="360" y="180" width="20" height="3" fill="#00E5FF"/>
+      <rect x="360" y="186" width="12" height="3" fill="#00E5FF"/>
+    </g>
+    <!-- SOIL SECTION -->
+    <!-- Horizon 1 (Back) -->
+    <path d="M 0 280 Q 128 250 256 280 T 512 280 L 512 512 L 0 512 Z" fill="url(#soilGrad3)"/>
+    <!-- Horizon 2 (Mid) -->
+    <path d="M 0 320 Q 128 350 256 320 T 512 320 L 512 512 L 0 512 Z" fill="url(#soilGrad2)"/>
+    <!-- Horizon 3 (Front) -->
+    <path d="M 0 370 Q 128 340 256 370 T 512 370 L 512 512 L 0 512 Z" fill="url(#soilGrad1)"/>
+    <!-- Soil Perspective Grid (Simulator Aspect) -->
+    <g clip-path="url(#soilClip)" opacity="0.25">
+      <line x1="0" y1="300" x2="512" y2="300" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="0" y1="330" x2="512" y2="330" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="0" y1="365" x2="512" y2="365" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="0" y1="405" x2="512" y2="405" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="0" y1="450" x2="512" y2="450" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="256" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="150" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="44" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="-62" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="362" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="468" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+      <line x1="256" y1="280" x2="574" y2="512" stroke="#00E5FF" stroke-width="1.5"/>
+    </g>
+    <!-- Soil Sensors / Minerals -->
+    <g fill="#00E5FF" opacity="0.7">
+      <circle cx="160" cy="340" r="3"/>
+      <circle cx="380" cy="380" r="4"/>
+      <circle cx="200" cy="430" r="2.5"/>
+      <circle cx="320" cy="310" r="2"/>
+      <circle cx="120" cy="400" r="3.5"/>
+      <circle cx="420" cy="440" r="2"/>
+    </g>
+    <!-- ROOTS -->
+    <g fill="none" stroke="url(#rootGrad)" stroke-linecap="round">
+      <!-- Main Taproot -->
+      <path d="M 256 280 C 256 330 240 370 245 420 C 248 440 255 460 255 480" stroke-width="4.5"/>
+      <!-- Branches -->
+      <path d="M 256 310 C 285 320 310 350 300 395" stroke-width="2.5"/>
+      <path d="M 248 350 C 215 360 190 380 200 425" stroke-width="2.5"/>
+      <path d="M 295 340 C 325 350 350 370 340 405" stroke-width="1.5"/>
+      <path d="M 245 390 C 215 400 180 410 170 445" stroke-width="1.5"/>
+      <path d="M 250 430 C 275 440 290 460 285 485" stroke-width="1.5"/>
+    </g>
+    <!-- Root Nodes -->
+    <g fill="#FFD54F">
+      <circle cx="255" cy="480" r="4"/>
+      <circle cx="300" cy="395" r="3.5"/>
+      <circle cx="200" cy="425" r="3.5"/>
+      <circle cx="340" cy="405" r="2.5"/>
+      <circle cx="170" cy="445" r="2.5"/>
+      <circle cx="285" cy="485" r="2.5"/>
+    </g>
+    <!-- PLANT -->
+    <!-- Stem -->
+    <path d="M 256 280 Q 250 210 256 140" fill="none" stroke="url(#leafGrad)" stroke-width="6" stroke-linecap="round"/>
+    <!-- Leaves -->
+    <g>
+      <!-- Leaf 1 (Bottom Right) -->
+      <path d="M 256 250 C 300 260 340 230 350 180 C 310 180 270 210 256 250 Z" fill="url(#leafGrad)"/>
+      <path d="M 256 250 C 300 260 340 230 350 180 C 320 210 290 230 256 250 Z" fill="url(#leafHighlight)" opacity="0.9"/>
+      <path d="M 256 250 Q 300 220 350 180" fill="none" stroke="#00E676" stroke-width="1.5"/>
+      <!-- Leaf 2 (Bottom Left) -->
+      <path d="M 255 220 C 210 230 170 200 160 150 C 200 150 240 180 255 220 Z" fill="url(#leafGrad)"/>
+      <path d="M 255 220 C 210 230 170 200 160 150 C 190 180 220 200 255 220 Z" fill="url(#leafHighlight)" opacity="0.9"/>
+      <path d="M 255 220 Q 210 190 160 150" fill="none" stroke="#00E676" stroke-width="1.5"/>
+      <!-- Leaf 3 (Top Right) -->
+      <path d="M 256 180 C 290 180 320 150 320 110 C 290 110 260 140 256 180 Z" fill="url(#leafGrad)"/>
+      <path d="M 256 180 C 290 180 320 150 320 110 C 300 130 280 150 256 180 Z" fill="url(#leafHighlight)" opacity="0.9"/>
+      <path d="M 256 180 Q 290 150 320 110" fill="none" stroke="#00E676" stroke-width="1.5"/>
+      <!-- Leaf 4 (Top Left) -->
+      <path d="M 255 150 C 230 150 200 120 200 80 C 230 80 250 110 255 150 Z" fill="url(#leafGrad)"/>
+      <path d="M 255 150 C 230 150 200 120 200 80 C 220 100 240 120 255 150 Z" fill="url(#leafHighlight)" opacity="0.9"/>
+      <path d="M 255 150 Q 230 120 200 80" fill="none" stroke="#00E676" stroke-width="1.5"/>
+    </g>
+    <!-- Plant Tech Nodes & Data Lines (Simulator Aspect) -->
+    <circle cx="256" cy="135" r="6" fill="#69F0AE"/>
+    <g fill="#FFF">
+      <circle cx="350" cy="180" r="3.5"/>
+      <circle cx="160" cy="150" r="3.5"/>
+      <circle cx="320" cy="110" r="3.5"/>
+      <circle cx="200" cy="80" r="3.5"/>
+    </g>
+    <g stroke="#FFF" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6">
+      <line x1="256" y1="135" x2="350" y2="180"/>
+      <line x1="256" y1="135" x2="160" y2="150"/>
+      <line x1="256" y1="135" x2="320" y2="110"/>
+      <line x1="256" y1="135" x2="200" y2="80"/>
+    </g>
+    <!-- Cycle Flow Indicators (Water/Vapor/Energy) -->
+    <!-- Uptake -->
+    <path d="M 245 280 L 245 200" fill="none" stroke="#00E5FF" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+    <circle cx="245" cy="260" r="2" fill="#00E5FF"/>
+    <circle cx="245" cy="220" r="2" fill="#00E5FF"/>
+    <!-- Transpiration -->
+    <path d="M 200 80 Q 180 50 150 60" fill="none" stroke="#E0F7FA" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+    <path d="M 320 110 Q 350 80 380 90" fill="none" stroke="#E0F7FA" stroke-width="2" stroke-dasharray="4 4" opacity="0.8"/>
+    <circle cx="180" cy="65" r="2" fill="#FFF"/>
+    <circle cx="350" cy="95" r="2" fill="#FFF"/>
+  </g>
+  <!-- HEXAGON BORDERS (HUD Frame) -->
+  <g>
+    <!-- Main Thick Border -->
+    <polygon points="256,66 420.54,161 420.54,351 256,446 91.46,351 91.46,161" fill="none" stroke="url(#frameGrad)" stroke-width="8" stroke-linejoin="round"/>
+    <!-- Inner Thin Tech Border -->
+    <polygon points="256,76 411.88,166 411.88,346 256,436 100.12,346 100.12,166" fill="none" stroke="#00E5FF" stroke-width="2" opacity="0.7" stroke-linejoin="round"/>
+    <!-- Corner Tech Nodes -->
+    <g fill="#0A192F" stroke="#00E5FF" stroke-width="2.5">
+      <circle cx="256" cy="66" r="6"/>
+      <circle cx="420.54" cy="161" r="6"/>
+      <circle cx="420.54" cy="351" r="6"/>
+      <circle cx="256" cy="446" r="6"/>
+      <circle cx="91.46" cy="351" r="6"/>
+      <circle cx="91.46" cy="161" r="6"/>
+    </g>
+  </g>
+</svg>

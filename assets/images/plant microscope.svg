@@ -1,0 +1,485 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" style="background-color: #0f172a; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Background Grid -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="none" />
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1" opacity="0.5" />
+    </pattern>
+    <!-- Gradients -->
+    <linearGradient id="stemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#166534" />
+      <stop offset="50%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+    <linearGradient id="rootGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#78350f" />
+      <stop offset="50%" stop-color="#d97706" />
+      <stop offset="100%" stop-color="#451a03" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="100%" stop-color="#166534" />
+    </linearGradient>
+    <linearGradient id="soilGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#291e16" />
+      <stop offset="10%" stop-color="#1c140d" />
+      <stop offset="100%" stop-color="#0a0704" />
+    </linearGradient>
+    <!-- Glow Filters -->
+    <!-- Markers for Flow Arrows -->
+    <!-- Clip Paths for Magnifiers -->
+    <clipPath id="leafClip">
+      <circle cx="950" cy="250" r="175" />
+    </clipPath>
+    <clipPath id="stemClip">
+      <circle cx="250" cy="550" r="175" />
+    </clipPath>
+    <clipPath id="rootClip">
+      <circle cx="950" cy="950" r="175" />
+    </clipPath>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="1200" fill="#0f172a" />
+  <rect width="1200" height="1200" fill="url(#grid)" />
+  <!-- Soil Background -->
+  <path d="M 0 850 L 1200 850 L 1200 1200 L 0 1200 Z" fill="url(#soilGrad)" />
+  <line x1="0" y1="850" x2="1200" y2="850" stroke="#452a18" stroke-width="6" />
+  <!-- Soil Particles / Texture -->
+  <g fill="#38261a" opacity="0.5">
+    <circle cx="150" cy="900" r="15" />
+    <circle cx="350" cy="1050" r="25" />
+    <circle cx="850" cy="950" r="10" />
+    <circle cx="1050" cy="1100" r="30" />
+    <circle cx="650" cy="1150" r="20" />
+    <path d="M 200 1000 Q 220 980 240 1010 Z" />
+    <path d="M 750 1080 Q 780 1050 800 1090 Z" />
+  </g>
+  <!-- ========================================== -->
+  <!-- CENTRAL PLANT STRUCTURE                    -->
+  <!-- ========================================== -->
+  <!-- Root System -->
+  <g id="central-roots" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main Taproot -->
+    <path d="M 580 850 C 580 950 560 1050 595 1150 C 620 1050 620 950 620 850 Z" fill="url(#rootGrad)" />
+    <!-- Lateral Roots -->
+    <path d="M 585 900 Q 480 920 420 1000 Q 400 1030 410 1060" stroke="url(#rootGrad)" stroke-width="12" fill="none" />
+    <path d="M 460 960 Q 420 970 380 950" stroke="url(#rootGrad)" stroke-width="6" fill="none" />
+    <path d="M 615 930 Q 720 960 780 1050 Q 800 1080 790 1120" stroke="url(#rootGrad)" stroke-width="14" fill="none" />
+    <path d="M 730 1000 Q 780 990 820 1020" stroke="url(#rootGrad)" stroke-width="8" fill="none" />
+    <path d="M 590 1020 Q 520 1050 480 1120" stroke="url(#rootGrad)" stroke-width="10" fill="none" />
+    <path d="M 605 1080 Q 660 1100 690 1160" stroke="url(#rootGrad)" stroke-width="8" fill="none" />
+  </g>
+  <!-- Stem -->
+  <path d="M 580 250 L 580 850 L 620 850 L 620 250 Z" fill="url(#stemGrad)" />
+  <!-- Leaves -->
+  <g id="central-leaves">
+    <!-- Bottom Left Leaf -->
+    <path d="M 580 650 C 450 600 350 700 300 650 C 380 580 500 580 580 620 Z" fill="url(#leafGrad)" />
+    <path d="M 580 635 Q 450 610 300 650" stroke="#14532d" stroke-width="3" fill="none" />
+    <!-- Middle Right Leaf -->
+    <path d="M 620 500 C 750 450 850 550 900 500 C 820 430 700 430 620 470 Z" fill="url(#leafGrad)" />
+    <path d="M 620 485 Q 750 460 900 500" stroke="#14532d" stroke-width="3" fill="none" />
+    <!-- Top Left Leaf -->
+    <path d="M 580 350 C 450 300 380 400 320 350 C 400 280 500 280 580 320 Z" fill="url(#leafGrad)" />
+    <path d="M 580 335 Q 450 310 320 350" stroke="#14532d" stroke-width="3" fill="none" />
+    <!-- Top Right Leaf (Targeted) -->
+    <path d="M 620 280 C 720 220 800 300 850 250 C 780 180 680 200 620 250 Z" fill="url(#leafGrad)" />
+    <path d="M 620 265 Q 720 230 850 250" stroke="#14532d" stroke-width="3" fill="none" />
+    <!-- Apex Leaf -->
+    <path d="M 580 250 C 550 150 600 100 600 100 C 600 100 650 150 620 250 Z" fill="url(#leafGrad)" />
+    <path d="M 600 250 L 600 100" stroke="#14532d" stroke-width="3" fill="none" />
+  </g>
+  <!-- ========================================== -->
+  <!-- TEACHING ANIMATION FLOW ARROWS             -->
+  <!-- ========================================== -->
+  <g id="flow-arrows">
+    <!-- Water Flow (Cyan) - Upward -->
+    <path d="M 420 1060 Q 410 1030 420 1000 Q 480 920 585 900" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 790 1120 Q 800 1080 780 1050 Q 720 960 615 930" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 590 880 L 590 680" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 590 650 L 590 400" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 590 370 L 590 280 Q 650 250 720 260" stroke="#22d3ee" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <!-- Sugar Flow (Yellow) - Downward -->
+    <path d="M 400 330 Q 500 300 580 340" stroke="#facc15" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 800 480 Q 700 450 620 490" stroke="#facc15" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 610 380 L 610 600" stroke="#facc15" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 610 630 L 610 830" stroke="#facc15" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+    <path d="M 610 860 L 610 950 Q 660 980 730 1000" stroke="#facc15" stroke-width="4" stroke-dasharray="8,8" fill="none" />
+  </g>
+  <!-- ========================================== -->
+  <!-- TARGET RINGS & CONNECTION LINES            -->
+  <!-- ========================================== -->
+  <g id="targets" stroke="#38bdf8" fill="none">
+    <!-- Leaf Target -->
+    <circle cx="730" cy="245" r="25" stroke-width="4" />
+    <circle cx="730" cy="245" r="8" fill="#38bdf8" />
+    <path d="M 755 245 L 770 245" stroke-width="4" stroke-dasharray="6,6" />
+    <!-- Stem Target -->
+    <circle cx="600" cy="550" r="25" stroke-width="4" />
+    <circle cx="600" cy="550" r="8" fill="#38bdf8" />
+    <path d="M 575 550 L 430 550" stroke-width="4" stroke-dasharray="6,6" />
+    <!-- Root Target -->
+    <circle cx="750" cy="1025" r="25" stroke-width="4" />
+    <circle cx="750" cy="1025" r="8" fill="#38bdf8" />
+    <path d="M 775 1025 L 850 990" stroke-width="4" stroke-dasharray="6,6" />
+  </g>
+  <!-- ========================================== -->
+  <!-- MAGNIFIER 1: LEAF ANATOMY (TOP RIGHT)      -->
+  <!-- ========================================== -->
+  <g id="mag-leaf">
+    <!-- Outer Ring -->
+    <circle cx="950" cy="250" r="185" fill="#0f172a" stroke="#38bdf8" stroke-width="10" />
+    <circle cx="950" cy="250" r="175" fill="#1e293b" />
+    <g clip-path="url(#leafClip)">
+      <!-- Cuticle -->
+      <rect x="750" y="100" width="400" height="12" fill="#7dd3fc" opacity="0.8" />
+      <!-- Upper Epidermis -->
+      <g fill="#fef08a" stroke="#ca8a04" stroke-width="2">
+        <rect x="760" y="112" width="35" height="25" rx="4" />
+        <rect x="795" y="112" width="35" height="25" rx="4" />
+        <rect x="830" y="112" width="35" height="25" rx="4" />
+        <rect x="865" y="112" width="35" height="25" rx="4" />
+        <rect x="900" y="112" width="35" height="25" rx="4" />
+        <rect x="935" y="112" width="35" height="25" rx="4" />
+        <rect x="970" y="112" width="35" height="25" rx="4" />
+        <rect x="1005" y="112" width="35" height="25" rx="4" />
+        <rect x="1040" y="112" width="35" height="25" rx="4" />
+        <rect x="1075" y="112" width="35" height="25" rx="4" />
+        <rect x="1110" y="112" width="35" height="25" rx="4" />
+      </g>
+      <!-- Palisade Mesophyll -->
+      <g fill="#22c55e" stroke="#14532d" stroke-width="2">
+        <!-- Generate multiple tall cells -->
+        <rect x="765" y="140" width="25" height="80" rx="10" />
+        <rect x="795" y="140" width="25" height="80" rx="10" />
+        <rect x="825" y="140" width="25" height="80" rx="10" />
+        <rect x="855" y="140" width="25" height="80" rx="10" />
+        <rect x="885" y="140" width="25" height="80" rx="10" />
+        <rect x="915" y="140" width="25" height="80" rx="10" />
+        <rect x="945" y="140" width="25" height="80" rx="10" />
+        <rect x="975" y="140" width="25" height="80" rx="10" />
+        <rect x="1005" y="140" width="25" height="80" rx="10" />
+        <rect x="1035" y="140" width="25" height="80" rx="10" />
+        <rect x="1065" y="140" width="25" height="80" rx="10" />
+        <rect x="1095" y="140" width="25" height="80" rx="10" />
+      </g>
+      <!-- Chloroplasts in Palisade -->
+      <g fill="#14532d">
+        <circle cx="777" cy="155" r="3"/><circle cx="777" cy="175" r="3"/><circle cx="777" cy="195" r="3"/>
+        <circle cx="807" cy="160" r="3"/><circle cx="807" cy="180" r="3"/><circle cx="807" cy="200" r="3"/>
+        <circle cx="837" cy="150" r="3"/><circle cx="837" cy="170" r="3"/><circle cx="837" cy="190" r="3"/>
+        <circle cx="867" cy="155" r="3"/><circle cx="867" cy="185" r="3"/><circle cx="867" cy="205" r="3"/>
+        <circle cx="897" cy="165" r="3"/><circle cx="897" cy="185" r="3"/><circle cx="897" cy="210" r="3"/>
+        <circle cx="927" cy="155" r="3"/><circle cx="927" cy="175" r="3"/><circle cx="927" cy="195" r="3"/>
+        <circle cx="957" cy="160" r="3"/><circle cx="957" cy="180" r="3"/><circle cx="957" cy="200" r="3"/>
+        <circle cx="987" cy="150" r="3"/><circle cx="987" cy="170" r="3"/><circle cx="987" cy="190" r="3"/>
+        <circle cx="1017" cy="155" r="3"/><circle cx="1017" cy="185" r="3"/><circle cx="1017" cy="205" r="3"/>
+        <circle cx="1047" cy="165" r="3"/><circle cx="1047" cy="185" r="3"/><circle cx="1047" cy="210" r="3"/>
+        <circle cx="1077" cy="155" r="3"/><circle cx="1077" cy="175" r="3"/><circle cx="1077" cy="195" r="3"/>
+        <circle cx="1107" cy="160" r="3"/><circle cx="1107" cy="180" r="3"/><circle cx="1107" cy="200" r="3"/>
+      </g>
+      <!-- Spongy Mesophyll -->
+      <g fill="#16a34a" stroke="#14532d" stroke-width="2">
+        <path d="M 780 240 Q 800 230 810 250 Q 820 270 790 280 Q 760 270 780 240 Z" />
+        <path d="M 830 250 Q 860 240 870 270 Q 850 290 820 280 Q 810 260 830 250 Z" />
+        <path d="M 780 300 Q 810 290 820 320 Q 800 340 770 330 Q 760 310 780 300 Z" />
+        <path d="M 850 310 Q 880 300 890 330 Q 870 350 840 340 Q 830 320 850 310 Z" />
+        <path d="M 1020 240 Q 1040 230 1050 250 Q 1060 270 1030 280 Q 1000 270 1020 240 Z" />
+        <path d="M 1070 250 Q 1100 240 1110 270 Q 1090 290 1060 280 Q 1050 260 1070 250 Z" />
+        <path d="M 1020 300 Q 1050 290 1060 320 Q 1040 340 1010 330 Q 1000 310 1020 300 Z" />
+        <path d="M 1090 310 Q 1120 300 1130 330 Q 1110 350 1080 340 Q 1070 320 1090 310 Z" />
+      </g>
+      <!-- Vascular Bundle (Vein) -->
+      <g transform="translate(930, 280)">
+        <!-- Bundle Sheath -->
+        <circle cx="0" cy="0" r="45" fill="#fef08a" stroke="#ca8a04" stroke-width="3" />
+        <circle cx="0" cy="0" r="35" fill="#0f172a" />
+        <!-- Xylem (Top half) -->
+        <g fill="#ef4444" stroke="#7f1d1d" stroke-width="2">
+          <circle cx="-15" cy="-15" r="8" />
+          <circle cx="5" cy="-20" r="10" />
+          <circle cx="20" cy="-10" r="7" />
+          <circle cx="-5" cy="-5" r="6" />
+          <circle cx="12" cy="-2" r="8" />
+        </g>
+        <!-- Phloem (Bottom half) -->
+        <g fill="#3b82f6" stroke="#1e3a8a" stroke-width="1.5">
+          <circle cx="-15" cy="15" r="5" />
+          <circle cx="-5" cy="20" r="6" />
+          <circle cx="8" cy="18" r="5" />
+          <circle cx="20" cy="12" r="4" />
+          <circle cx="-8" cy="10" r="4" />
+          <circle cx="5" cy="8" r="5" />
+        </g>
+      </g>
+      <!-- Lower Epidermis -->
+      <g fill="#fef08a" stroke="#ca8a04" stroke-width="2">
+        <rect x="760" y="360" width="35" height="25" rx="4" />
+        <rect x="795" y="360" width="35" height="25" rx="4" />
+        <rect x="830" y="360" width="35" height="25" rx="4" />
+        <rect x="865" y="360" width="35" height="25" rx="4" />
+        <!-- Gap for Stoma -->
+        <rect x="970" y="360" width="35" height="25" rx="4" />
+        <rect x="1005" y="360" width="35" height="25" rx="4" />
+        <rect x="1040" y="360" width="35" height="25" rx="4" />
+        <rect x="1075" y="360" width="35" height="25" rx="4" />
+        <rect x="1110" y="360" width="35" height="25" rx="4" />
+      </g>
+      <!-- Lower Cuticle -->
+      <rect x="750" y="385" width="150" height="6" fill="#7dd3fc" opacity="0.8" />
+      <rect x="970" y="385" width="180" height="6" fill="#7dd3fc" opacity="0.8" />
+      <!-- Guard Cells (Stoma) -->
+      <g fill="#4ade80" stroke="#14532d" stroke-width="2">
+        <path d="M 900 360 C 900 350 920 350 925 370 C 930 390 910 390 900 385 Z" />
+        <path d="M 970 360 C 970 350 950 350 945 370 C 940 390 960 390 970 385 Z" />
+      </g>
+      <!-- Gas Exchange Arrows -->
+      <path d="M 935 410 L 935 360" stroke="#f87171" stroke-width="3" fill="none" />
+      <text x="945" y="415" fill="#f87171" font-size="12" font-weight="bold">CO₂</text>
+      <path d="M 935 330 L 935 290" stroke="#22d3ee" stroke-width="3" fill="none" />
+    </g>
+    <!-- Labels -->
+    <rect x="860" y="50" width="180" height="24" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1" opacity="0.9" />
+    <text x="950" y="67" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">LEAF CROSS-SECTION</text>
+    <text x="1135" y="125" fill="#e2e8f0" font-size="12">Cuticle</text>
+    <line x1="1130" y1="120" x2="1080" y2="115" stroke="#e2e8f0" stroke-width="1" />
+    <text x="1135" y="180" fill="#e2e8f0" font-size="12">Palisade</text>
+    <line x1="1130" y1="175" x2="1090" y2="170" stroke="#e2e8f0" stroke-width="1" />
+    <text x="1135" y="290" fill="#e2e8f0" font-size="12">Vein</text>
+    <line x1="1130" y1="285" x2="980" y2="285" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+  <!-- ========================================== -->
+  <!-- MAGNIFIER 2: STEM ANATOMY (MID LEFT)       -->
+  <!-- ========================================== -->
+  <g id="mag-stem">
+    <!-- Outer Ring -->
+    <circle cx="250" cy="550" r="185" fill="#0f172a" stroke="#38bdf8" stroke-width="10" />
+    <circle cx="250" cy="550" r="175" fill="#1e293b" />
+    <g clip-path="url(#stemClip)">
+      <!-- Pith (Center) -->
+      <circle cx="250" cy="550" r="40" fill="#334155" />
+      <g fill="none" stroke="#475569" stroke-width="2">
+        <circle cx="250" cy="550" r="10" />
+        <circle cx="230" cy="530" r="12" />
+        <circle cx="270" cy="530" r="15" />
+        <circle cx="230" cy="570" r="14" />
+        <circle cx="270" cy="570" r="11" />
+        <circle cx="215" cy="550" r="13" />
+        <circle cx="285" cy="550" r="12" />
+      </g>
+      <!-- Vascular Bundles (Arranged in a ring) -->
+      <!-- We will rotate a single bundle group 8 times -->
+      <g id="vascular-bundle">
+        <!-- Xylem (Inner) -->
+        <g fill="#ef4444" stroke="#7f1d1d" stroke-width="2">
+          <circle cx="250" cy="485" r="12" />
+          <circle cx="240" cy="470" r="8" />
+          <circle cx="260" cy="470" r="8" />
+          <circle cx="250" cy="458" r="6" />
+        </g>
+        <!-- Phloem (Outer) -->
+        <g fill="#3b82f6" stroke="#1e3a8a" stroke-width="1.5">
+          <polygon points="245,440 255,440 260,430 250,420 240,430" />
+          <polygon points="235,435 245,435 245,425 235,425" />
+          <polygon points="255,435 265,435 265,425 255,425" />
+          <circle cx="250" cy="430" r="3" fill="#60a5fa" />
+        </g>
+        <!-- Sclerenchyma Cap -->
+        <path d="M 235 420 Q 250 405 265 420 Q 250 415 235 420 Z" fill="#f97316" />
+      </g>
+      <use href="#vascular-bundle" transform="rotate(45, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(90, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(135, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(180, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(225, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(270, 250, 550)" />
+      <use href="#vascular-bundle" transform="rotate(315, 250, 550)" />
+      <!-- Cambium Ring -->
+      <circle cx="250" cy="550" r="105" fill="none" stroke="#22c55e" stroke-width="4" />
+      <!-- Cortex -->
+      <circle cx="250" cy="550" r="145" fill="none" stroke="#84cc16" stroke-width="30" opacity="0.4" />
+      <!-- Cortex Cells Pattern -->
+      <g fill="none" stroke="#65a30d" stroke-width="1" opacity="0.6">
+        <circle cx="250" cy="415" r="8" /><circle cx="270" cy="418" r="7" /><circle cx="230" cy="418" r="7" />
+        <circle cx="250" cy="685" r="8" /><circle cx="270" cy="682" r="7" /><circle cx="230" cy="682" r="7" />
+        <circle cx="115" cy="550" r="8" /><circle cx="118" cy="530" r="7" /><circle cx="118" cy="570" r="7" />
+        <circle cx="385" cy="550" r="8" /><circle cx="382" cy="530" r="7" /><circle cx="382" cy="570" r="7" />
+      </g>
+      <!-- Epidermis -->
+      <circle cx="250" cy="550" r="165" fill="none" stroke="#4ade80" stroke-width="12" />
+      <!-- Epidermis cell divisions -->
+      <g stroke="#14532d" stroke-width="2">
+        <line x1="250" y1="379" x2="250" y2="391" />
+        <line x1="250" y1="709" x2="250" y2="721" />
+        <line x1="85" y1="550" x2="97" y2="550" />
+        <line x1="403" y1="550" x2="415" y2="550" />
+        <line x1="133" y1="433" x2="142" y2="442" />
+        <line x1="367" y1="667" x2="358" y2="658" />
+        <line x1="367" y1="433" x2="358" y2="442" />
+        <line x1="133" y1="667" x2="142" y2="658" />
+      </g>
+    </g>
+    <!-- Labels -->
+    <rect x="160" y="350" width="180" height="24" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1" opacity="0.9" />
+    <text x="250" y="367" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">STEM CROSS-SECTION</text>
+    <text x="50" y="425" fill="#e2e8f0" font-size="12">Epidermis</text>
+    <line x1="110" y1="420" x2="140" y2="440" stroke="#e2e8f0" stroke-width="1" />
+    <text x="50" y="475" fill="#e2e8f0" font-size="12">Phloem</text>
+    <line x1="95" y1="470" x2="150" y2="470" stroke="#e2e8f0" stroke-width="1" />
+    <text x="50" y="515" fill="#e2e8f0" font-size="12">Cambium</text>
+    <line x1="105" y1="510" x2="150" y2="510" stroke="#e2e8f0" stroke-width="1" />
+    <text x="50" y="555" fill="#e2e8f0" font-size="12">Xylem</text>
+    <line x1="90" y1="550" x2="170" y2="550" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+  <!-- ========================================== -->
+  <!-- MAGNIFIER 3: ROOT TISSUE (BOTTOM RIGHT)    -->
+  <!-- ========================================== -->
+  <g id="mag-root">
+    <!-- Outer Ring -->
+    <circle cx="950" cy="950" r="185" fill="#0f172a" stroke="#38bdf8" stroke-width="10" />
+    <circle cx="950" cy="950" r="175" fill="#17100b" />
+    <g clip-path="url(#rootClip)">
+      <!-- Soil Particles in Background -->
+      <g fill="#291e16">
+        <circle cx="1050" cy="850" r="20" />
+        <circle cx="1100" cy="900" r="35" />
+        <circle cx="1080" cy="1000" r="25" />
+        <circle cx="1120" cy="1050" r="15" />
+      </g>
+      <!-- Stele (Center of root, far left of magnifier) -->
+      <rect x="775" y="775" width="60" height="350" fill="#1e3a8a" />
+      <!-- Xylem in Stele -->
+      <g fill="#ef4444" stroke="#7f1d1d" stroke-width="2">
+        <circle cx="805" cy="820" r="15" />
+        <circle cx="805" cy="860" r="15" />
+        <circle cx="805" cy="900" r="15" />
+        <circle cx="805" cy="940" r="15" />
+        <circle cx="805" cy="980" r="15" />
+        <circle cx="805" cy="1020" r="15" />
+        <circle cx="805" cy="1060" r="15" />
+      </g>
+      <!-- Phloem in Stele -->
+      <g fill="#3b82f6">
+        <circle cx="825" cy="840" r="6" />
+        <circle cx="825" cy="880" r="6" />
+        <circle cx="825" cy="920" r="6" />
+        <circle cx="825" cy="960" r="6" />
+        <circle cx="825" cy="1000" r="6" />
+        <circle cx="825" cy="1040" r="6" />
+      </g>
+      <!-- Endodermis -->
+      <g fill="#fde047" stroke="#ca8a04" stroke-width="2">
+        <rect x="835" y="775" width="25" height="30" />
+        <rect x="835" y="805" width="25" height="30" />
+        <rect x="835" y="835" width="25" height="30" />
+        <rect x="835" y="865" width="25" height="30" />
+        <rect x="835" y="895" width="25" height="30" />
+        <rect x="835" y="925" width="25" height="30" />
+        <rect x="835" y="955" width="25" height="30" />
+        <rect x="835" y="985" width="25" height="30" />
+        <rect x="835" y="1015" width="25" height="30" />
+        <rect x="835" y="1045" width="25" height="30" />
+        <rect x="835" y="1075" width="25" height="30" />
+      </g>
+      <!-- Casparian Strip (Glowing Red Band) -->
+      <rect x="845" y="775" width="8" height="350" fill="#ef4444" />
+      <!-- Cortex -->
+      <g fill="#bef264" stroke="#65a30d" stroke-width="2" opacity="0.9">
+        <!-- Column 1 -->
+        <rect x="860" y="780" width="40" height="50" rx="10" />
+        <rect x="860" y="830" width="40" height="50" rx="10" />
+        <rect x="860" y="880" width="40" height="50" rx="10" />
+        <rect x="860" y="930" width="40" height="50" rx="10" />
+        <rect x="860" y="980" width="40" height="50" rx="10" />
+        <rect x="860" y="1030" width="40" height="50" rx="10" />
+        <rect x="860" y="1080" width="40" height="50" rx="10" />
+        <!-- Column 2 -->
+        <rect x="900" y="795" width="45" height="55" rx="12" />
+        <rect x="900" y="850" width="45" height="55" rx="12" />
+        <rect x="900" y="905" width="45" height="55" rx="12" />
+        <rect x="900" y="960" width="45" height="55" rx="12" />
+        <rect x="900" y="1015" width="45" height="55" rx="12" />
+        <rect x="900" y="1070" width="45" height="55" rx="12" />
+        <!-- Column 3 -->
+        <rect x="945" y="780" width="40" height="50" rx="10" />
+        <rect x="945" y="830" width="40" height="50" rx="10" />
+        <rect x="945" y="880" width="40" height="50" rx="10" />
+        <rect x="945" y="930" width="40" height="50" rx="10" />
+        <rect x="945" y="980" width="40" height="50" rx="10" />
+        <rect x="945" y="1030" width="40" height="50" rx="10" />
+        <rect x="945" y="1080" width="40" height="50" rx="10" />
+      </g>
+      <!-- Epidermis & Root Hair -->
+      <g fill="#fef08a" stroke="#ca8a04" stroke-width="2">
+        <rect x="985" y="780" width="30" height="40" rx="4" />
+        <rect x="985" y="820" width="30" height="40" rx="4" />
+        <rect x="985" y="860" width="30" height="40" rx="4" />
+        <!-- Root Hair Cell -->
+        <path d="M 985 900 L 1015 900 L 1015 910 C 1050 910 1080 920 1120 915 C 1130 915 1130 935 1120 935 C 1080 940 1050 930 1015 930 L 1015 940 L 985 940 Z" />
+        <rect x="985" y="940" width="30" height="40" rx="4" />
+        <rect x="985" y="980" width="30" height="40" rx="4" />
+        <rect x="985" y="1020" width="30" height="40" rx="4" />
+        <rect x="985" y="1060" width="30" height="40" rx="4" />
+      </g>
+      <!-- Water Absorption Animation (Cyan Arrows) -->
+      <path d="M 1130 925 L 1030 925 Q 980 925 960 955 L 860 955 Q 850 955 850 940 L 815 940" stroke="#22d3ee" stroke-width="3" stroke-dasharray="6,6" fill="none" />
+      <!-- H2O Molecules -->
+      <g>
+        <circle cx="1080" cy="880" r="6" fill="#22d3ee" />
+        <circle cx="1075" cy="875" r="3" fill="#ffffff" />
+        <circle cx="1085" cy="875" r="3" fill="#ffffff" />
+        <circle cx="1050" cy="960" r="6" fill="#22d3ee" />
+        <circle cx="1045" cy="955" r="3" fill="#ffffff" />
+        <circle cx="1055" cy="955" r="3" fill="#ffffff" />
+      </g>
+    </g>
+    <!-- Labels -->
+    <rect x="860" y="750" width="180" height="24" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1" opacity="0.9" />
+    <text x="950" y="767" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle" letter-spacing="1">ROOT TISSUE</text>
+    <text x="1135" y="895" fill="#e2e8f0" font-size="12">Root Hair</text>
+    <line x1="1130" y1="890" x2="1080" y2="910" stroke="#e2e8f0" stroke-width="1" />
+    <text x="1135" y="1015" fill="#e2e8f0" font-size="12">Cortex</text>
+    <line x1="1130" y1="1010" x2="960" y2="1010" stroke="#e2e8f0" stroke-width="1" />
+    <text x="1135" y="1065" fill="#e2e8f0" font-size="12">Casparian Strip</text>
+    <line x1="1130" y1="1060" x2="855" y2="1060" stroke="#e2e8f0" stroke-width="1" />
+  </g>
+  <!-- ========================================== -->
+  <!-- SUN & PHOTOSYNTHESIS ICONS                 -->
+  <!-- ========================================== -->
+  <g id="sun-icon" transform="translate(150, 150)">
+    <circle cx="0" cy="0" r="40" fill="#facc15" />
+    <g stroke="#facc15" stroke-width="6" stroke-linecap="round">
+      <line x1="0" y1="-55" x2="0" y2="-75" />
+      <line x1="0" y1="55" x2="0" y2="75" />
+      <line x1="-55" y1="0" x2="-75" y2="0" />
+      <line x1="55" y1="0" x2="75" y2="0" />
+      <line x1="-39" y1="-39" x2="-53" y2="-53" />
+      <line x1="39" y1="39" x2="53" y2="53" />
+      <line x1="-39" y1="39" x2="-53" y2="53" />
+      <line x1="39" y1="-39" x2="53" y2="-53" />
+    </g>
+    <!-- Light Rays to Plant -->
+    <path d="M 60 60 L 300 250" stroke="#facc15" stroke-width="2" stroke-dasharray="10,10" fill="none" opacity="0.6" />
+    <path d="M 80 20 L 450 150" stroke="#facc15" stroke-width="2" stroke-dasharray="10,10" fill="none" opacity="0.6" />
+  </g>
+  <!-- ========================================== -->
+  <!-- BIOLOGY KEY / LEGEND                       -->
+  <!-- ========================================== -->
+  <g id="legend" transform="translate(40, 40)">
+    <rect x="0" y="0" width="260" height="180" rx="10" fill="#1e293b" stroke="#334155" stroke-width="2" opacity="0.95" />
+    <text x="130" y="30" fill="#ffffff" font-size="16" font-weight="bold" text-anchor="middle" letter-spacing="1">TEACHING KEY</text>
+    <line x1="20" y1="40" x2="240" y2="40" stroke="#334155" stroke-width="2" />
+    <!-- Xylem -->
+    <rect x="20" y="55" width="16" height="16" rx="3" fill="#ef4444" stroke="#7f1d1d" stroke-width="2" />
+    <text x="45" y="68" fill="#e2e8f0" font-size="14">Xylem Tissue</text>
+    <!-- Phloem -->
+    <rect x="20" y="85" width="16" height="16" rx="3" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2" />
+    <text x="45" y="98" fill="#e2e8f0" font-size="14">Phloem Tissue</text>
+    <!-- Water Flow -->
+    <path d="M 20 123 L 40 123" stroke="#22d3ee" stroke-width="3" stroke-dasharray="4,4" fill="none" />
+    <text x="55" y="128" fill="#e2e8f0" font-size="14">Water &amp; Minerals Flow</text>
+    <!-- Sugar Flow -->
+    <path d="M 20 153 L 40 153" stroke="#facc15" stroke-width="3" stroke-dasharray="4,4" fill="none" />
+    <text x="55" y="158" fill="#e2e8f0" font-size="14">Photosynthate Flow</text>
+  </g>
+</svg>

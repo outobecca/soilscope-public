@@ -1,0 +1,53 @@
+{
+  "project": "SoilScope",
+  "domain": "Soil-Plant-Atmosphere Continuum Simulation",
+  "core_principles": {
+    "separation_of_concerns": "Flame is STRICTLY for rendering. Riverpod is the Single Source of Truth for state, math, and mass conservation.",
+    "mass_conservation": "Particles CANNOT be created out of nothing. Visual spawn must strictly correlate with Riverpod state decrement.",
+    "visual_standards": "Strict CPK color coding for all elements and molecules. No exceptions."
+  },
+  "z_index_hierarchy": {
+    "description": "Strict rendering priorities to prevent UI overlap and visual clutter.",
+    "levels": {
+      "0": "Background_Soil",
+      "10": "Soil_Structures_and_Aggregates",
+      "20": "Hotspot_Nodes_Passive",
+      "30": "Mycorrhizal_Network_and_Bacterial_Bases",
+      "50": "Plant_Root_System",
+      "60": "Active_Moving_Particles_Nutrients_Water",
+      "70": "Plant_Stem_and_Leaves",
+      "1000": "UI_HUD_Tooltips_and_ExpandedHotspots"
+    }
+  },
+  "component_lifecycle": {
+    "description": "Rules to prevent memory leaks, GC stutter, and zombie particles.",
+    "spawn": "Enforce Object Pool limits. Abort world.add() if max_particle_limit is reached.",
+    "update_loop": "ZERO-ALLOCATION RULE. Do not create new Map() or object instances inside update(dt). Use pre-allocated Float64List or custom mutable classes.",
+    "arrival_and_consume": [
+      "1. Detect collision/arrival at target hitbox (e.g., root surface).",
+      "2. IMMEDIATELY call removeFromParent() to clear from render tree.",
+      "3. Trigger Riverpod state update (e.g., ref.read(provider.notifier).absorb()).",
+      "4. Execute cancel() on all StreamSubscriptions inside onRemove() to prevent zombie listeners."
+    ]
+  },
+  "animation_flows": {
+    "nitrogen_cycle": {
+      "priority": "MVP_CRITICAL",
+      "path": "POM -> Mineralization -> Bezier curve pathfinding -> Nearest root -> Xylem -> Stem.",
+      "strict_constraint": "Zero Zombie Particles. Molecules MUST NOT freeze or accumulate statically on leaves or roots."
+    },
+    "symbiotic_network": {
+      "hotspots": "Apply minimum distance threshold (Poisson disk). Prevent overlapping coordinates.",
+      "mycelium": "Must generate FROM plant root TO hotspot. Cannot spawn in empty space isolated from the root system.",
+      "microbes": "80% physically anchored to hotspot clusters, max 20% free-floating in soil."
+    },
+    "atmosphere": {
+      "movement": "Apply x-axis wind drift and Brownian motion (noise). NO rigid, linear pathways."
+    }
+  },
+  "forbidden_actions": {
+    "debug_mode": "NEVER set debugMode = true in production components.",
+    "visual_effects": "NEVER use MaskFilter.blur with opacity > 0.15 for rhizosphere glow. Do not obscure soil data.",
+    "code_generation": "NEVER truncate code. Do not use '// rest of the code' placeholders."
+  }
+}
