@@ -100,16 +100,36 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     }
   }
 
-  Widget _buildLeftSidebar() {
+  void _toggleLeftSidebar() {
+    setState(() {
+      _isLeftSidebarOpen = !_isLeftSidebarOpen;
+      if (_isLeftSidebarOpen && MediaQuery.of(context).size.width < 600) {
+        _isRightSidebarOpen = false;
+      }
+    });
+  }
+
+  void _toggleRightSidebar() {
+    setState(() {
+      _isRightSidebarOpen = !_isRightSidebarOpen;
+      if (_isRightSidebarOpen && MediaQuery.of(context).size.width < 600) {
+        _isLeftSidebarOpen = false;
+      }
+    });
+  }
+
+  Widget _buildLeftSidebar(bool isMobile, double screenWidth) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final sidebarWidth = isMobile ? screenWidth : 320.0;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isLeftSidebarOpen ? 320 : 0,
+      width: _isLeftSidebarOpen ? sidebarWidth : 0,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.85),
+        color: theme.colorScheme.surface.withValues(alpha: isMobile ? 0.98 : 0.85),
         border: Border(
           right: BorderSide(
             color: theme.colorScheme.outlineVariant,
@@ -119,13 +139,14 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       ),
       child: OverflowBox(
         alignment: Alignment.topLeft,
-        minWidth: 320,
-        maxWidth: 320,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        minWidth: sidebarWidth,
+        maxWidth: sidebarWidth,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 children: [
                   Expanded(
@@ -162,20 +183,23 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
 
-  Widget _buildRightSidebar() {
+  Widget _buildRightSidebar(bool isMobile, double screenWidth) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final sidebarWidth = isMobile ? screenWidth : 320.0;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isRightSidebarOpen ? 320 : 0,
+      width: _isRightSidebarOpen ? sidebarWidth : 0,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.85),
+        color: theme.colorScheme.surface.withValues(alpha: isMobile ? 0.98 : 0.85),
         border: Border(
           left: BorderSide(
             color: theme.colorScheme.outlineVariant,
@@ -185,13 +209,14 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       ),
       child: OverflowBox(
         alignment: Alignment.topRight,
-        minWidth: 320,
-        maxWidth: 320,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        minWidth: sidebarWidth,
+        maxWidth: sidebarWidth,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 children: [
                   IconButton(
@@ -249,6 +274,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -257,6 +283,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Scaffold(
       body: Stack(
@@ -264,102 +292,114 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           // 1. FULL SCREEN SIMULATION
           const Positioned.fill(child: FlameSimulationView()),
 
-          // 2. LEFT SIDEBAR (DASHBOARD)
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: _buildLeftSidebar(),
-          ),
-
-          // 3. RIGHT SIDEBAR (CONTROLS)
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: _buildRightSidebar(),
-          ),
-
-          // 4. TOP BAR (MISSION & SIDEBAR TOGGLES)
+          // 2. TOP BAR (MISSION & SIDEBAR TOGGLES)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!_isLeftSidebarOpen)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: FilledButton.tonalIcon(
-                            onPressed: () => setState(() => _isLeftSidebarOpen = true),
-                            icon: const Icon(Icons.menu),
-                            label: Text(l10n.dashboard.toUpperCase()),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!_isLeftSidebarOpen)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: isMobile
+                                ? IconButton.filledTonal(
+                                    onPressed: _toggleLeftSidebar,
+                                    icon: const Icon(Icons.menu),
+                                  )
+                                : FilledButton.tonalIcon(
+                                    onPressed: _toggleLeftSidebar,
+                                    icon: const Icon(Icons.menu),
+                                    label: Text(l10n.dashboard.toUpperCase()),
+                                  ),
                           ),
-                        ),
-                      if (!_isLeftSidebarOpen) const SizedBox(width: 12),
-                      const Expanded(child: GamificationBar()),
-                      if (!_isRightSidebarOpen) const SizedBox(width: 12),
-                      if (!_isRightSidebarOpen)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: FilledButton.tonalIcon(
-                            onPressed: () => setState(() => _isRightSidebarOpen = true),
-                            icon: const Icon(Icons.settings),
-                            label: Text(l10n.controls.toUpperCase()),
+                        if (!_isLeftSidebarOpen) const SizedBox(width: 12),
+                        const Expanded(child: GamificationBar()),
+                        if (!_isRightSidebarOpen) const SizedBox(width: 12),
+                        if (!_isRightSidebarOpen)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: isMobile
+                                ? IconButton.filledTonal(
+                                    onPressed: _toggleRightSidebar,
+                                    icon: const Icon(Icons.settings),
+                                  )
+                                : FilledButton.tonalIcon(
+                                    onPressed: _toggleRightSidebar,
+                                    icon: const Icon(Icons.settings),
+                                    label: Text(l10n.controls.toUpperCase()),
+                                  ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
 
 
-          // 5. TIMELINE SLIDER
+          // 3. TIMELINE SLIDER
           Positioned(
-            left: _isLeftSidebarOpen ? 336 : 16,
-            right: _isRightSidebarOpen ? 336 : 16,
+            left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
+            right: (_isRightSidebarOpen && !isMobile) ? 336 : 16,
             bottom: 120, // Above quick actions
             child: const Center(
               child: TimelineSliderWidget(),
             ),
           ),
 
-          // 5.5 QUICK ACTIONS (BOTTOM)
+          // 4. QUICK ACTIONS (BOTTOM)
           Positioned(
-            left: _isLeftSidebarOpen ? 336 : 16,
-            right: _isRightSidebarOpen ? 336 : 16,
+            left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
+            right: (_isRightSidebarOpen && !isMobile) ? 336 : 16,
             bottom: 16,
             child: const Center(
               child: FlutterQuickActions(),
             ),
           ),
 
-          // 6. OVERLAYS (NOTIFICATIONS)
+          // 5. OVERLAYS (NOTIFICATIONS)
           const Positioned(
             top: 16,
             right: 16,
-            child: EventNotificationOverlay(),
+            child: SafeArea(child: EventNotificationOverlay()),
           ),
 
-          // 7. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)
+          // 6. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)
           Positioned(
-            right: _isRightSidebarOpen ? 340 : 20,
+            right: (_isRightSidebarOpen && !isMobile) ? 340 : 20,
             top: 140,
-            child: HoverTooltip(),
+            child: SafeArea(child: HoverTooltip()),
           ),
 
-          // 8. TUTORIAL OVERLAY
+          // 7. TUTORIAL OVERLAY
           const Positioned.fill(
             child: TutorialOverlayWidget(),
+          ),
+
+          // 8. LEFT SIDEBAR (DASHBOARD) - Placed last in Stack to cover everything when full width on mobile
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: _buildLeftSidebar(isMobile, screenWidth),
+          ),
+
+          // 9. RIGHT SIDEBAR (CONTROLS) - Placed last in Stack to cover everything when full width on mobile
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: _buildRightSidebar(isMobile, screenWidth),
           ),
         ],
       ),
