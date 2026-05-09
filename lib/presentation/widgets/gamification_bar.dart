@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/simulation_provider.dart';
 import '../../domain/models/biophysical_state.dart';
+import '../../core/app_theme.dart';
 
 class GamificationBar extends ConsumerWidget {
   const GamificationBar({super.key});
@@ -50,7 +51,7 @@ class GamificationBar extends ConsumerWidget {
     final soilColor = soilHealth > 70 ? Colors.greenAccent : (soilHealth > 40 ? Colors.orangeAccent : Colors.redAccent);
     final plantColor = plantHealth > 70 ? Colors.cyanAccent : (plantHealth > 40 ? Colors.amberAccent : Colors.redAccent);
 
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
 
     return Align(
       alignment: Alignment.topCenter,

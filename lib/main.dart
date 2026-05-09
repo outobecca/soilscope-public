@@ -103,7 +103,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   void _toggleLeftSidebar() {
     setState(() {
       _isLeftSidebarOpen = !_isLeftSidebarOpen;
-      if (_isLeftSidebarOpen && MediaQuery.of(context).size.width < 600) {
+      if (_isLeftSidebarOpen && MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint) {
         _isRightSidebarOpen = false;
       }
     });
@@ -112,7 +112,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   void _toggleRightSidebar() {
     setState(() {
       _isRightSidebarOpen = !_isRightSidebarOpen;
-      if (_isRightSidebarOpen && MediaQuery.of(context).size.width < 600) {
+      if (_isRightSidebarOpen && MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint) {
         _isLeftSidebarOpen = false;
       }
     });
@@ -284,7 +284,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 600;
+    final isMobile = screenWidth < AppTheme.mobileBreakpoint;
 
     return Scaffold(
       body: Stack(
