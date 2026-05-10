@@ -1520,9 +1520,8 @@ class AnimatedPlantComponent extends PositionComponent
     final visualZ =
         n.z + math.cos(index * 0.67 + plantId.hashCode % 100) * 0.003;
 
-    final collarNode = _plantData?.rootSystem.isNotEmpty == true
-        ? _plantData!.rootSystem.first
-        : null;
+    final p = _plantData;
+    final collarNode = (p != null && p.rootSystem.isNotEmpty) ? p.rootSystem.first : null;
     final collarX = collarNode?.x ?? 0.5;
     final collarZ = collarNode?.z ?? 0.0;
 
