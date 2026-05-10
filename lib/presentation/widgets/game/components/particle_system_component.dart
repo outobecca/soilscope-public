@@ -131,7 +131,7 @@ class MolecularParticleFieldComponent extends Component
     if (activeCycle != ObservationCycle.none && isPartOfActiveCycle) {
       return true;
     } else if (highlightedSymbol != null && highlightedSymbol.isNotEmpty) {
-      final s = highlightedSymbol.toUpperCase();
+      final s = highlightedSymbol;
       if (s == 'N' || s == 'NITROGEN') {
         return type == ParticleType.nitrate ||
             type == ParticleType.ammonium ||
@@ -264,7 +264,7 @@ class MolecularParticleFieldComponent extends Component
     final visibleRect = game.camera.visibleWorldRect.inflate(50.0);
     final flowMode = game.ref.read(particleFlowModeProvider);
     final session = game.ref.read(simulationSessionProvider);
-    final highlightedSymbol = session.selectedElementSymbol;
+    final highlightedSymbol = session.selectedElementSymbol?.toUpperCase();
 
     canvas.save();
     try {
@@ -339,7 +339,7 @@ class MolecularParticleFieldComponent extends Component
         }
 
         // LOD Optimization: Draw simple dots at very low zoom
-        if (isLowLOD && !isPaused && !isPinned && !isHovered) {
+        if (renderZoom < 0.6 && !isPaused && !isPinned && !isHovered) {
           _drawSimplifiedParticle(
             canvas,
             pos,
