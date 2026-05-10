@@ -10,6 +10,8 @@ import 'soil_component_mixin.dart';
 /// Visualizes acidity (red/yellow) to alkalinity (blue/purple).
 class PHGradientComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin {
+  final Paint _gradientPaint = Paint();
+
   PHGradientComponent() : super(priority: 3);
 
   @override
@@ -28,7 +30,7 @@ class PHGradientComponent extends Component
       // pH mapping: 4 (acidic) -> 10 (alkaline)
       final Color phColor = _getColorForPH(layer.ph);
 
-      final paint = Paint()
+      final paint = _gradientPaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

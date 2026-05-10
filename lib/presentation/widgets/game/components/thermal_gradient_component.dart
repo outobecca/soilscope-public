@@ -8,6 +8,7 @@ import 'soil_component_mixin.dart';
 /// Draws a subtle colored overlay representing temperature distribution.
 class ThermalGradientComponent extends Component
     with HasGameReference<SoilScopeGame>, SoilComponentMixin {
+  final Paint _gradientPaint = Paint();
   @override
   void render(Canvas canvas) {
     final state = game.ref.read(simulationProvider);
@@ -28,7 +29,7 @@ class ThermalGradientComponent extends Component
       final tempC = layer.temperature - 273.15;
       final color = _getTemperatureColor(tempC);
 
-      final paint = Paint()
+      final paint = _gradientPaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

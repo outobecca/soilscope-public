@@ -10,6 +10,8 @@ import 'soil_component_mixin.dart';
 /// Visualizes the "breathing state" from aerobic (blue/green) to anaerobic (gray/black).
 class RedoxGradientComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin {
+  final Paint _gradientPaint = Paint();
+
   RedoxGradientComponent() : super(priority: 2);
 
   @override
@@ -28,7 +30,7 @@ class RedoxGradientComponent extends Component
       // Eh mapping to colors: 600mV (aerobic) -> -200mV (anaerobic)
       final Color ehColor = _getColorForEh(layer.redoxPotential);
 
-      final paint = Paint()
+      final paint = _gradientPaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

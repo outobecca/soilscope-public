@@ -12,6 +12,13 @@ import 'soil_component_mixin.dart';
 /// (sand, silt, clay) and biological hotspots.
 class SoilTexturePatternComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, SoilComponentMixin {
+  final Paint _overlayPaint = Paint();
+  final Paint _sandPaint = Paint();
+  final Paint _siltPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _clayPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _clayLinePaint = Paint();
+  final Paint _hotspotPaint = Paint();
+
   SoilTexturePatternComponent() : super(priority: 4);
 
   
@@ -39,7 +46,7 @@ class SoilTexturePatternComponent extends Component
         final pulse = 0.5 + 0.5 * math.sin(game.currentTime() * 4);
         canvas.drawRect(
           Rect.fromLTRB(backgroundX, currentY, backgroundX + backgroundWidth, endY),
-          Paint()..color = Colors.white.withValues(alpha: 0.05 * pulse),
+          _overlayPaint..color = Colors.white.withValues(alpha: 0.05 * pulse),
         );
       }
 
@@ -69,13 +76,13 @@ class SoilTexturePatternComponent extends Component
       final radius = (1.2 + rand.nextDouble() * 2.2) / zoom;
       final isWhite = rand.nextDouble() > 0.6;
       final color = isWhite ? Colors.white : const Color(0xFFFFC107);
-      canvas.drawCircle(Offset(x, y), radius, Paint()..color = color.withValues(alpha: 0.08 + rand.nextDouble() * 0.12));
+      canvas.drawCircle(Offset(x, y), radius, _sandPaint..color = color.withValues(alpha: 0.08 + rand.nextDouble() * 0.12));
     }
   }
 
   void _drawSiltTexture(Canvas canvas, double startY, double endY, double xStart, double width, double zoom, math.Random rand, double saturation) {
     final rowCount = ((endY - startY) / 10).toInt().clamp(10, 100);
-    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0 / zoom;
+    final paint = _siltPaint..strokeWidth = 1.0 / zoom;
     for (int i = 0; i < rowCount; i++) {
       final y = startY + (i + 0.5) * (endY - startY) / rowCount;
       paint.color = (i % 2 == 0 ? Colors.white : Colors.black).withValues(alpha: 0.1);
@@ -89,7 +96,7 @@ class SoilTexturePatternComponent extends Component
 
   void _drawClayTexture(Canvas canvas, double startY, double endY, double xStart, double width, double zoom, math.Random rand, double saturation) {
     final pedCount = ((endY - startY) * width / 250).toInt().clamp(100, 20000);
-    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.2 / zoom;
+    final paint = _clayPaint..strokeWidth = 1.2 / zoom;
     for (int i = 0; i < pedCount; i++) {
       final cx = xStart + rand.nextDouble() * width;
       final cy = startY + rand.nextDouble() * (endY - startY);
@@ -102,7 +109,7 @@ class SoilTexturePatternComponent extends Component
       path.lineTo(cx - size/4, cy + size/2);
       path.close();
       canvas.drawPath(path, paint);
-      canvas.drawLine(Offset(cx - size/2, cy), Offset(cx + size/2, cy + size/10), paint..color = Colors.white.withValues(alpha: 0.04));
+      canvas.drawLine(Offset(cx - size/2, cy), Offset(cx + size/2, cy + size/10), _clayLinePaint..color = Colors.white.withValues(alpha: 0.04));
     }
   }
 
@@ -110,7 +117,7 @@ class SoilTexturePatternComponent extends Component
     final spotCount = (biomass / 15).toInt().clamp(2, 10);
     // CRITICAL: Blur should not explode at low zoom. Clamp it.
     final blurValue = (8.0 / zoom).clamp(4.0, 15.0);
-    final spotPaint = Paint()..maskFilter = MaskFilter.blur(BlurStyle.normal, blurValue);
+    final spotPaint = _hotspotPaint..maskFilter = MaskFilter.blur(BlurStyle.normal, blurValue);
     
     for (int i = 0; i < spotCount; i++) {
       final x = xStart + rand.nextDouble() * width;
