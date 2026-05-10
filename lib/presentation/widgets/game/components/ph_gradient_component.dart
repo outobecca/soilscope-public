@@ -9,8 +9,14 @@ import 'soil_component_mixin.dart';
 /// Renders a color gradient representing soil pH levels.
 /// Visualizes acidity (red/yellow) to alkalinity (blue/purple).
 class PHGradientComponent extends Component
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin {
+    with
+        HasGameReference<SoilScopeGame>,
+        TapCallbacks,
+        HoverCallbacks,
+        SoilComponentMixin {
   PHGradientComponent() : super(priority: 3);
+
+  final _paint = Paint();
 
   @override
   void render(Canvas canvas) {
@@ -24,21 +30,27 @@ class PHGradientComponent extends Component
     double currentY = surfaceY;
     for (final layer in state.profile.layers) {
       final layerHeight = layer.thickness * scaleY;
-      
+
       // pH mapping: 4 (acidic) -> 10 (alkaline)
       final Color phColor = _getColorForPH(layer.ph);
 
-      final paint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            phColor.withValues(alpha: 0.12),
-            phColor.withValues(alpha: 0.05),
-          ],
-        ).createShader(Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight));
+      _paint.shader =
+          LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              phColor.withValues(alpha: 0.12),
+              phColor.withValues(alpha: 0.05),
+            ],
+          ).createShader(
+            Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight),
+          );
 
-      drawFullWidthSoilRect(canvas, Rect.fromLTWH(0, currentY, 0, layerHeight), paint);
+      drawFullWidthSoilRect(
+        canvas,
+        Rect.fromLTWH(0, currentY, 0, layerHeight),
+        _paint,
+      );
       currentY += layerHeight;
     }
   }
@@ -72,16 +84,18 @@ class PHGradientComponent extends Component
 
   void _showPHInfo({bool pinned = false}) {
     final l = game.l10n;
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: l.phTitle.toUpperCase(),
-        description: l.phDescription,
-        stats: {
-          l.optimalLabel: "6.0 - 7.2",
-          l.significanceLabel: l.nutrientAvailability,
-        },
-        isPinned: pinned,
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: l.phTitle.toUpperCase(),
+            description: l.phDescription,
+            stats: {
+              l.optimalLabel: "6.0 - 7.2",
+              l.significanceLabel: l.nutrientAvailability,
+            },
+            isPinned: pinned,
+          ),
+        );
   }
 }
