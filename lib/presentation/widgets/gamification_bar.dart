@@ -532,7 +532,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: objectives.map((obj) {
-                    final isMet = metObjectiveIds.contains(obj.id);
+                    final isMet = metIdsSet.contains(obj.id);
                     final color = isMet
                         ? Colors.greenAccent
                         : Colors.grey.shade400;
