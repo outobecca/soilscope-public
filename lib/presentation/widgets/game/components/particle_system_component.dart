@@ -339,7 +339,7 @@ class MolecularParticleFieldComponent extends Component
         }
 
         // LOD Optimization: Draw simple dots at very low zoom
-        if (renderZoom < 0.6 && !isPaused && !isPinned && !isHovered) {
+        if (isLowLOD && !isPaused && !isPinned && !isHovered) {
           _drawSimplifiedParticle(
             canvas,
             pos,
