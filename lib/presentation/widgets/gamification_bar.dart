@@ -149,8 +149,7 @@ class _GamificationUIState {
       plantHealth = ((rwc * 0.6 + turgor * 0.4) * 100.0).clamp(0.0, 100.0);
     }
 
-    final int objectivesCount = state.currentScenario?.objectives.length ?? 0;
-    final int totalObjectives = objectivesCount > 0 ? objectivesCount : 1;
+    final int totalObjectives = state.currentScenario?.objectives.length ?? 1;
     final int metObjectives = state.score.metObjectiveIds.length;
     final double xpProgress = (metObjectives / totalObjectives).clamp(0.0, 1.0);
     final int currentLevel = 1 + metObjectives;
@@ -532,7 +531,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: objectives.map((obj) {
-                    final isMet = metIdsSet.contains(obj.id);
+                    final isMet = metObjectiveIds.contains(obj.id);
                     final color = isMet
                         ? Colors.greenAccent
                         : Colors.grey.shade400;
