@@ -149,7 +149,8 @@ class _GamificationUIState {
       plantHealth = ((rwc * 0.6 + turgor * 0.4) * 100.0).clamp(0.0, 100.0);
     }
 
-    final int totalObjectives = state.currentScenario?.objectives.length ?? 1;
+    final int objectivesCount = state.currentScenario?.objectives.length ?? 0;
+    final int totalObjectives = objectivesCount > 0 ? objectivesCount : 1;
     final int metObjectives = state.score.metObjectiveIds.length;
     final double xpProgress = (metObjectives / totalObjectives).clamp(0.0, 1.0);
     final int currentLevel = 1 + metObjectives;
