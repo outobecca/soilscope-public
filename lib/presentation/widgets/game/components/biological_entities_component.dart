@@ -144,8 +144,9 @@ class BiologicalEntitiesComponent extends Component
 
       for (int i = 0; i < toAdd; i++) {
         // Double-check the limit during generation to prevent race conditions or loops
-        if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes)
+        if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes) {
           break;
+        }
 
         final centerX =
             SceneCoordinateMapper.mapShootPosition(
@@ -181,8 +182,9 @@ class BiologicalEntitiesComponent extends Component
 
   void _initEarthworms(BiophysicalState state) {
     if (children.query<AnimatedEarthwormComponent>().length >= 3 ||
-        state.plants.isEmpty)
+        state.plants.isEmpty) {
       return;
+    }
     final plant = state.plants.first;
     final surfaceY = game.soilSurfaceY;
     final soilWidth = SoilScopeGame.soilColumnWidth;

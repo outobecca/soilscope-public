@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
+import '../../../../domain/models/plant.dart';
 import 'inspection_target.dart';
 import 'magnifier_group_component.dart';
 import 'process_magnifier.dart';

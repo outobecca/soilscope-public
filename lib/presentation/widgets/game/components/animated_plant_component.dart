@@ -77,17 +77,14 @@ class AnimatedPlantComponent extends PositionComponent
     ..color = Colors.black.withValues(alpha: 0.15)
     ..style = PaintingStyle.stroke
     ..strokeCap = StrokeCap.round;
-  final Paint _secondaryVeinPaint = Paint()
-    ..color = Colors.black.withValues(alpha: 0.08)
-    ..style = PaintingStyle.stroke;
+
   final Paint _leafHighlightPaint = Paint()
     ..color = Colors.white.withValues(alpha: 0.1)
     ..style = PaintingStyle.stroke;
   final Paint _leafPulsePaint = Paint()
     ..style = PaintingStyle.stroke
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-  final Paint _stomataPaint = Paint()
-    ..color = Colors.white.withValues(alpha: 0.05);
+
 
   /// Returns current global world positions of root exudates for microbial chemotaxis.
   List<Vector2> get exudateWorldPositions {
@@ -303,12 +300,6 @@ class AnimatedPlantComponent extends PositionComponent
     final surfaceY = game.soilSurfaceY;
     final soilX = game.soilLeftX;
 
-    final collarWorldX =
-        SceneCoordinateMapper.mapRootX(0.5, worldWidth, baseX: plant.baseX) +
-        soilX;
-
-    final collarWorldY = SceneCoordinateMapper.mapRootY(
-      0.0,
     final collarNode = plant.rootSystem.isNotEmpty
         ? plant.rootSystem.first
         : null;
@@ -988,14 +979,6 @@ class AnimatedPlantComponent extends PositionComponent
       final index = _hoveredRootIndex ?? _pinnedRootIndex!;
       if (index < plant.rootSystem.length) {
         final node = plant.rootSystem[index];
-        final rx =
-            SceneCoordinateMapper.mapRootX(
-              node.x,
-              worldWidth,
-              baseX: plant.baseX,
-            ) -
-            (position.x - game.soilLeftX);
-        final ry = SceneCoordinateMapper.mapRootY(node.z, 0.0, soilHeight);
         final pos = _mapRootToLocal(
           node,
           index,
@@ -2057,17 +2040,6 @@ class AnimatedPlantComponent extends PositionComponent
 
     // Lateral veins (Secondary)
     if (scale > 0.15) {
-      _secondaryVeinPaint.strokeWidth = 0.6 * scale;
-    final veinPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4 * scale
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(Offset.zero, Offset(leafLen * 0.9, 0), veinPaint);
-
-    // Lateral veins (Secondary)
-    if (scale > 0.15) {
       final secondaryVeinPaint = Paint()
         ..color = Colors.black.withValues(alpha: 0.08)
         ..style = PaintingStyle.stroke
@@ -2079,13 +2051,11 @@ class AnimatedPlantComponent extends PositionComponent
         canvas.drawLine(
           Offset(vx, 0),
           Offset(vx + 4 * scale, -vy),
-          _secondaryVeinPaint,
           secondaryVeinPaint,
         );
         canvas.drawLine(
           Offset(vx, 0),
           Offset(vx + 4 * scale, vy),
-          _secondaryVeinPaint,
           secondaryVeinPaint,
         );
       }
@@ -2114,8 +2084,8 @@ class AnimatedPlantComponent extends PositionComponent
         ..color = Colors.white.withValues(alpha: 0.05);
       for (int i = 0; i < 3; i++) {
         final sx = 15 * scale + i * 10 * scale;
-        canvas.drawCircle(Offset(sx, 2 * scale), 1.0 * scale, _stomataPaint);
-        canvas.drawCircle(Offset(sx, -2 * scale), 1.0 * scale, _stomataPaint);
+        canvas.drawCircle(Offset(sx, 2 * scale), 1.0 * scale, stomataPaint);
+        canvas.drawCircle(Offset(sx, -2 * scale), 1.0 * scale, stomataPaint);
       }
     }
 
