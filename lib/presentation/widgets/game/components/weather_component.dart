@@ -7,13 +7,12 @@ import 'soil_component_mixin.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 
-
 /// Animated weather component handling rain particles, sky colors, and clouds.
 class WeatherComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, SoilComponentMixin {
   final List<_RainDrop> _rainDrops = [];
   final List<_Cloud> _clouds = [];
-  final math.Random _random = math.Random();
+  final math.Random _random = math.Random.secure();
   bool _isPinned = false;
   final bool animated;
 
@@ -30,7 +29,8 @@ class WeatherComponent extends PositionComponent
 
     // Expand to cover the full visual background area for interaction
     size.x = SoilScopeGame.visualColumnWidth;
-    position.x = -SoilScopeGame.visualColumnWidth / 2 + SoilScopeGame.logicalSize.x / 2;
+    position.x =
+        -SoilScopeGame.visualColumnWidth / 2 + SoilScopeGame.logicalSize.x / 2;
   }
 
   void _initClouds() {
@@ -38,9 +38,15 @@ class WeatherComponent extends PositionComponent
     // Use backgroundWidth for wide cloud distribution
     final width = backgroundWidth;
     final startX = backgroundX;
-    _clouds.add(_Cloud(pos: Vector2(startX + width * 0.2, 50), radius: 80, speed: 12));
-    _clouds.add(_Cloud(pos: Vector2(startX + width * 0.6, 30), radius: 100, speed: 8));
-    _clouds.add(_Cloud(pos: Vector2(startX + width * 0.9, 80), radius: 60, speed: 18));
+    _clouds.add(
+      _Cloud(pos: Vector2(startX + width * 0.2, 50), radius: 80, speed: 12),
+    );
+    _clouds.add(
+      _Cloud(pos: Vector2(startX + width * 0.6, 30), radius: 100, speed: 8),
+    );
+    _clouds.add(
+      _Cloud(pos: Vector2(startX + width * 0.9, 80), radius: 60, speed: 18),
+    );
   }
 
   @override
@@ -84,7 +90,8 @@ class WeatherComponent extends PositionComponent
 
     for (final drop in _rainDrops) {
       drop.position.y += drop.speed * dt;
-      if (drop.position.y > size.y + 500) { // Allow fall below surface visually
+      if (drop.position.y > size.y + 500) {
+        // Allow fall below surface visually
         drop.position.y = -drop.length;
         drop.position.x = startX + _random.nextDouble() * width;
       }
@@ -131,7 +138,12 @@ class WeatherComponent extends PositionComponent
     }
   }
 
-  void _drawCloudCluster(Canvas canvas, Offset center, double baseRadius, Paint paint) {
+  void _drawCloudCluster(
+    Canvas canvas,
+    Offset center,
+    double baseRadius,
+    Paint paint,
+  ) {
     for (int i = 0; i < 5; i++) {
       final offX = math.cos(i * 1.25) * baseRadius * 0.4;
       final offY = math.sin(i * 1.25) * baseRadius * 0.15;
@@ -151,36 +163,50 @@ class WeatherComponent extends PositionComponent
     event.handled = true;
 
     if (_isPinned) {
-      game.ref.read(simulationSessionProvider.notifier).selectLayer("atmosphere");
+      game.ref
+          .read(simulationSessionProvider.notifier)
+          .selectLayer("atmosphere");
       game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(
-        HoverInfo(
-          title: game.l10n.atmosphere.toUpperCase(),
-          description: game.l10n.atmosphereDesc,
-          stats: {
-            game.l10n.temperature: '${(game.simulationState!.airTemperature - 273.15).toStringAsFixed(1)} °C',
-            game.l10n.relativeHumidity: '${((game.simulationState?.relativeHumidity ?? 0.6) * 100).toStringAsFixed(0)}%',
-            'SADEMÄÄRÄ (PRECIP)': '${(game.simulationState?.precipitation ?? 0).toStringAsFixed(1)} mm/h',
-          },
-          isPinned: true,
-          legends: [
-            LegendItem(icon: Icons.cloud_rounded, color: Colors.cyanAccent, label: game.l10n.atmosphere),
-          ],
-        ),
-      );
+      game.ref
+          .read(uIStateProvider.notifier)
+          .setHoverInfo(
+            HoverInfo(
+              title: game.l10n.atmosphere.toUpperCase(),
+              description: game.l10n.atmosphereDesc,
+              stats: {
+                game.l10n.temperature:
+                    '${(game.simulationState!.airTemperature - 273.15).toStringAsFixed(1)} °C',
+                game.l10n.relativeHumidity:
+                    '${((game.simulationState?.relativeHumidity ?? 0.6) * 100).toStringAsFixed(0)}%',
+                'SADEMÄÄRÄ (PRECIP)':
+                    '${(game.simulationState?.precipitation ?? 0).toStringAsFixed(1)} mm/h',
+              },
+              isPinned: true,
+              legends: [
+                LegendItem(
+                  icon: Icons.cloud_rounded,
+                  color: Colors.cyanAccent,
+                  label: game.l10n.atmosphere,
+                ),
+              ],
+            ),
+          );
     } else {
       game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
     }
   }
-
 }
 
 class _RainDrop {
   final Vector2 position;
   final double speed;
   final double length;
-  _RainDrop({required this.position, required this.speed, required this.length});
+  _RainDrop({
+    required this.position,
+    required this.speed,
+    required this.length,
+  });
 }
 
 class _Cloud {
