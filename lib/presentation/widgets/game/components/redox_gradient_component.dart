@@ -9,6 +9,9 @@ import 'soil_component_mixin.dart';
 /// Renders a dynamic color gradient representing soil redox potential (Eh).
 /// Visualizes the "breathing state" from aerobic (blue/green) to anaerobic (gray/black).
 class RedoxGradientComponent extends Component
+    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin {
+  final Paint _gradientPaint = Paint();
+
     with
         HasGameReference<SoilScopeGame>,
         TapCallbacks,

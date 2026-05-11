@@ -14,6 +14,11 @@ class WettingFrontComponent extends Component
   
   @override
   Set<ObservationCycle> get memberOfCycles => {ObservationCycle.water};
+  final Paint _wetZonePaint = Paint();
+  final Paint _glowPaint = Paint()..style = PaintingStyle.stroke..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+  final Paint _sharpPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _dropPaint = Paint();
+
   WettingFrontComponent() : super(priority: 10);
 
   bool _isPinned = false;
@@ -98,7 +103,7 @@ class WettingFrontComponent extends Component
   void _drawWetZone(Canvas canvas, double surfaceY, double frontY, double soilX, double soilWidth, double zoom, double cycleOpacity) {
     if (frontY <= surfaceY) return;
     final rect = Rect.fromLTWH(soilX, surfaceY, soilWidth, frontY - surfaceY);
-    final paint = Paint()
+    final paint = _wetZonePaint
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
@@ -119,21 +124,18 @@ class WettingFrontComponent extends Component
       final wave3 = math.sin(x * 0.2 + time * 3.0) * 2;
       frontPath.lineTo(x, frontY + (wave1 + wave2 + wave3) / zoom);
     }
-    final glowPaint = Paint()
+    final glowPaint = _glowPaint
       ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.3 * cycleOpacity)
-      ..strokeWidth = 6.0 / zoom
-      ..style = PaintingStyle.stroke
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+      ..strokeWidth = 6.0 / zoom;
     canvas.drawPath(frontPath, glowPaint);
-    final sharpPaint = Paint()
+    final sharpPaint = _sharpPaint
       ..color = const Color(0xFF38BDF8).withValues(alpha: 0.8 * cycleOpacity)
-      ..strokeWidth = 1.5 / zoom
-      ..style = PaintingStyle.stroke;
+      ..strokeWidth = 1.5 / zoom;
     canvas.drawPath(frontPath, sharpPaint);
   }
 
   void _drawDropletIndicators(Canvas canvas, double frontY, double soilX, double soilWidth, double zoom, double time, double cycleOpacity) {
-    final dropPaint = Paint()..color = const Color(0xFFE0F2FE).withValues(alpha: 0.7 * cycleOpacity);
+    final dropPaint = _dropPaint..color = const Color(0xFFE0F2FE).withValues(alpha: 0.7 * cycleOpacity);
     for (double x = soilX + 25; x < soilX + soilWidth; x += 65) {
       final seed = x.toInt();
       final progress = ((time * 0.8 + seed * 0.13) % 2.0) / 2.0;
