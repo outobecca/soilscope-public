@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/simulation_provider.dart';
+import '../../domain/models/biophysical_state.dart';
+import '../../core/app_theme.dart';
 
 class GamificationBar extends ConsumerWidget {
   const GamificationBar({super.key});
@@ -49,12 +51,14 @@ class GamificationBar extends ConsumerWidget {
     final soilColor = soilHealth > 70 ? Colors.greenAccent : (soilHealth > 40 ? Colors.orangeAccent : Colors.redAccent);
     final plantColor = plantHealth > 70 ? Colors.cyanAccent : (plantHealth > 40 ? Colors.amberAccent : Colors.redAccent);
 
+    final isMobile = MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
+        constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 900),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -64,7 +68,7 @@ class GamificationBar extends ConsumerWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(isMobile ? 16 : 24),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.12),
               width: 1.5,
@@ -77,39 +81,53 @@ class GamificationBar extends ConsumerWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // SOIL HEALTH METER
-              _buildHealthMeter(
+          child: isMobile
+            ? _buildMobileLayout(
                 context,
-                title: "MAA TERVEYS",
-                value: soilHealth,
-                color: soilColor,
-                gradient: const LinearGradient(
-                  colors: [Colors.brown, Colors.greenAccent],
-                ),
-                icon: Icons.grass_rounded,
-              ),
+                soilHealth: soilHealth,
+                waterSat: waterSat,
+                microbeFlux: microbeFlux,
+                plantHealth: plantHealth,
+                soilColor: soilColor,
+                plantColor: plantColor,
+                currentLevel: currentLevel,
+                xpProgress: xpProgress,
+                state: state,
+                buffs: buffs,
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  // SOIL HEALTH METER
+                  _buildHealthMeter(
+                    context,
+                    title: "MAA TERVEYS",
+                    value: soilHealth,
+                    color: soilColor,
+                    gradient: const LinearGradient(
+                      colors: [Colors.brown, Colors.greenAccent],
+                    ),
+                    icon: Icons.grass_rounded,
+                  ),
 
-              // WATER SATURATION
-              _buildHealthMeter(
-                context,
-                title: "KOSTEUS",
-                value: waterSat,
-                color: Colors.blueAccent,
-                gradient: const LinearGradient(
-                  colors: [Colors.blue, Colors.cyanAccent],
-                ),
-                icon: Icons.water_drop_rounded,
-              ),
-              
-              // CENTER XP & LEVEL
-              Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                  // WATER SATURATION
+                  _buildHealthMeter(
+                    context,
+                    title: "KOSTEUS",
+                    value: waterSat,
+                    color: Colors.blueAccent,
+                    gradient: const LinearGradient(
+                      colors: [Colors.blue, Colors.cyanAccent],
+                    ),
+                    icon: Icons.water_drop_rounded,
+                  ),
+
+                  // CENTER XP & LEVEL
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     // Level Shield
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -245,33 +263,126 @@ class GamificationBar extends ConsumerWidget {
             ),
           ),
 
-              // MICROBE FLUX
-              _buildHealthMeter(
-                context,
-                title: "MIKROBIT",
-                value: microbeFlux,
-                color: Colors.pinkAccent,
-                gradient: const LinearGradient(
-                  colors: [Colors.purple, Colors.pinkAccent],
-                ),
-                icon: Icons.hub_rounded,
-              ),
+                  // MICROBE FLUX
+                  _buildHealthMeter(
+                    context,
+                    title: "MIKROBIT",
+                    value: microbeFlux,
+                    color: Colors.pinkAccent,
+                    gradient: const LinearGradient(
+                      colors: [Colors.purple, Colors.pinkAccent],
+                    ),
+                    icon: Icons.hub_rounded,
+                  ),
 
-              // PLANT HEALTH METER
-              _buildHealthMeter(
-                context,
-                title: "KASVI VITALITEETTI",
-                value: plantHealth,
-                color: plantColor,
-                gradient: const LinearGradient(
-                  colors: [Colors.teal, Colors.cyanAccent],
-                ),
-                icon: Icons.local_florist_rounded,
+                  // PLANT HEALTH METER
+                  _buildHealthMeter(
+                    context,
+                    title: "KASVI VITALITEETTI",
+                    value: plantHealth,
+                    color: plantColor,
+                    gradient: const LinearGradient(
+                      colors: [Colors.teal, Colors.cyanAccent],
+                    ),
+                    icon: Icons.local_florist_rounded,
+                  ),
+                ],
               ),
-            ],
-          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context, {
+    required double soilHealth,
+    required double waterSat,
+    required double microbeFlux,
+    required double plantHealth,
+    required Color soilColor,
+    required Color plantColor,
+    required int currentLevel,
+    required double xpProgress,
+    required BiophysicalState state,
+    required List<Map<String, dynamic>> buffs,
+  }) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMiniMeter(context, "MAA", soilHealth, soilColor, Icons.grass_rounded),
+            _buildMiniMeter(context, "VESI", waterSat, Colors.blueAccent, Icons.water_drop_rounded),
+            _buildMiniMeter(context, "MIKR", microbeFlux, Colors.pinkAccent, Icons.hub_rounded),
+            _buildMiniMeter(context, "KASVI", plantHealth, plantColor, Icons.local_florist_rounded),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1B4B),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFC084FC)),
+              ),
+              child: Text(
+                'Lvl $currentLevel',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFFE9D5FF),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Stack(
+                children: [
+                  Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 600),
+                    height: 6,
+                    width: MediaQuery.of(context).size.width * xpProgress * 0.5,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
+                      ),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniMeter(BuildContext context, String title, double value, Color color, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 14),
+        const SizedBox(width: 4),
+        Text(
+          '${value.toStringAsFixed(0)}%',
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 

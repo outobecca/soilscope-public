@@ -12,7 +12,14 @@ class RedoxGradientComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin {
   final Paint _gradientPaint = Paint();
 
+    with
+        HasGameReference<SoilScopeGame>,
+        TapCallbacks,
+        HoverCallbacks,
+        SoilComponentMixin {
   RedoxGradientComponent() : super(priority: 2);
+
+  final _paint = Paint();
 
   @override
   void render(Canvas canvas) {
@@ -26,21 +33,27 @@ class RedoxGradientComponent extends Component
     double currentY = surfaceY;
     for (final layer in state.profile.layers) {
       final layerHeight = layer.thickness * scaleY;
-      
+
       // Eh mapping to colors: 600mV (aerobic) -> -200mV (anaerobic)
       final Color ehColor = _getColorForEh(layer.redoxPotential);
 
-      final paint = _gradientPaint
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            ehColor.withValues(alpha: 0.15),
-            ehColor.withValues(alpha: 0.08),
-          ],
-        ).createShader(Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight));
+      _paint.shader =
+          LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              ehColor.withValues(alpha: 0.15),
+              ehColor.withValues(alpha: 0.08),
+            ],
+          ).createShader(
+            Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight),
+          );
 
-      drawFullWidthSoilRect(canvas, Rect.fromLTWH(0, currentY, 0, layerHeight), paint);
+      drawFullWidthSoilRect(
+        canvas,
+        Rect.fromLTWH(0, currentY, 0, layerHeight),
+        _paint,
+      );
       currentY += layerHeight;
     }
   }
@@ -73,16 +86,18 @@ class RedoxGradientComponent extends Component
 
   void _showRedoxInfo({bool pinned = false}) {
     final l = game.l10n;
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: l.redoxPotentialTitle.toUpperCase(),
-        description: l.redoxLadderDesc,
-        stats: {
-          "Scale": "600 to -200 mV",
-          "Significance": "O₂ Availability",
-        },
-        isPinned: pinned,
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: l.redoxPotentialTitle.toUpperCase(),
+            description: l.redoxLadderDesc,
+            stats: {
+              "Scale": "600 to -200 mV",
+              "Significance": "O₂ Availability",
+            },
+            isPinned: pinned,
+          ),
+        );
   }
 }

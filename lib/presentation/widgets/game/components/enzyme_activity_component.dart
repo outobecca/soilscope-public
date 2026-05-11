@@ -13,7 +13,7 @@ import 'scene_coordinate_mapper.dart';
 class EnzymeActivityComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
   final List<_EnzymeWave> _waves = [];
-  final math.Random _random = math.Random();
+  final math.Random _random = math.Random.secure();
   double _spawnTimer = 0;
   bool _isPinned = false;
 
@@ -30,12 +30,17 @@ class EnzymeActivityComponent extends PositionComponent
     if (state == null || !state.isRunning) return;
 
     // Spawning tied to microbial population and metabolic potential
-    final totalBiomass = state.profile.layers.fold<double>(0, (sum, l) => sum + l.microbialBiomass);
-    final avgEps = state.profile.layers.fold<double>(0, (sum, l) => sum + l.epsContent) / state.profile.layers.length;
-    
+    final totalBiomass = state.profile.layers.fold<double>(
+      0,
+      (sum, l) => sum + l.microbialBiomass,
+    );
+    final avgEps =
+        state.profile.layers.fold<double>(0, (sum, l) => sum + l.epsContent) /
+        state.profile.layers.length;
+
     // Higher biomass and EPS -> more frequent ripples
     final spawnInterval = (1.5 / (totalBiomass * 0.5 + 0.2)).clamp(0.4, 3.0);
-    
+
     _spawnTimer += dt;
     if (_spawnTimer > spawnInterval) {
       _spawnTimer = 0;
@@ -69,9 +74,17 @@ class EnzymeActivityComponent extends PositionComponent
       final tip = rootTips[_random.nextInt(rootTips.length)];
       final soilWidth = SoilScopeGame.soilColumnWidth;
       final soilX = game.soilLeftX;
-      
-      final tipX = SceneCoordinateMapper.mapRootX(tip.x, soilWidth, baseX: state.plant.baseX) + soilX;
-      final tipY = game.soilSurfaceY + SceneCoordinateMapper.mapRootY(tip.z, 0, game.soilColumnHeight);
+
+      final tipX =
+          SceneCoordinateMapper.mapRootX(
+            tip.x,
+            soilWidth,
+            baseX: state.plant.baseX,
+          ) +
+          soilX;
+      final tipY =
+          game.soilSurfaceY +
+          SceneCoordinateMapper.mapRootY(tip.z, 0, game.soilColumnHeight);
 
       _waves.add(
         _EnzymeWave(
@@ -242,5 +255,6 @@ class _EnzymeWave {
     double fadeIn = (lifetime / 0.2).clamp(0.0, 1.0);
     return math.min(fadeIn, fadeOut);
   }
+
   bool get isDone => lifetime >= maxLifetime;
 }
