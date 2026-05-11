@@ -13,7 +13,6 @@ class ProcessMagnifier extends PositionComponent
     with HasGameReference<SoilScopeGame> {
 
   final Paint _sharedFillPaint = Paint()..style = PaintingStyle.fill;
-  // shared stroke paint removed
   final Paint _glowPaint = Paint();
   final Paint _circlePaint = Paint();
   final Paint _blurSimPaint = Paint();
