@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 /// AppTheme defines the "Nordic Academic" aesthetic for SoilScope.
 /// It combines clean, muted colors with professional typography and Material 3 elements.
 class AppTheme {
+  // Constants
+  static const double mobileBreakpoint = 600.0;
+
   // Nordic Colors
   static const Color nordicBlue = Color(0xFF1E293B);
   static const Color nordicSnow = Color(0xFFF8FAFC);
