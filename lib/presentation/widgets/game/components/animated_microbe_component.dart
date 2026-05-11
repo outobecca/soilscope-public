@@ -52,6 +52,14 @@ class AnimatedMicrobeComponent extends PositionComponent
   // Performance Guard: Max clusters per world
   static const int maxClusters = 50;
 
+  final Paint _coreGlowPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+  final Paint _coreShadowPaint = Paint();
+  final Paint _coreBodyPaint = Paint();
+  final Paint _coreHighlightPaint = Paint();
+  final Paint _swarmPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _nutrientPaint = Paint();
+  final Paint _nutrientHighlightPaint = Paint();
+
   AnimatedMicrobeComponent({required Vector2 position, this.seed = 0})
     : super(position: position, size: Vector2.all(120), anchor: Anchor.center, priority: 80) {
     _time = seed.toDouble();
@@ -393,36 +401,32 @@ class AnimatedMicrobeComponent extends PositionComponent
     canvas.drawCircle(
       center, 
       coreRadius * 2.5, 
-      Paint()
-        ..color = baseColor.withValues(alpha: 0.15 * currentOpacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0)
+      (_coreGlowPaint..color = baseColor.withValues(alpha: 0.15 * currentOpacity))
     );
     // Shadow
     canvas.drawCircle(
       center + const Offset(0.5, 0.5),
       coreRadius,
-      Paint()..color = Colors.black.withValues(alpha: 0.3 * currentOpacity)
+      (_coreShadowPaint..color = Colors.black.withValues(alpha: 0.3 * currentOpacity))
     );
     // Core body
     canvas.drawCircle(
       center, 
       coreRadius, 
-      Paint()..color = baseColor.withValues(alpha: 0.9 * currentOpacity)
+      (_coreBodyPaint..color = baseColor.withValues(alpha: 0.9 * currentOpacity))
     );
     // Shading highlight
     canvas.drawCircle(
       center - const Offset(1.0, 1.0),
       coreRadius * 0.4,
-      Paint()..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)
+      (_coreHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
     );
 
     // 2. Swarm Effect: Multiple tiny dots representing individuals
     final dotCount = (6 * biomassIntensity).toInt().clamp(3, 12);
     final dotRadius = 1.0 / zoom;
     
-    final swarmPaint = Paint()
-      ..color = baseColor.withValues(alpha: 0.5 * currentOpacity)
-      ..style = PaintingStyle.fill;
+    final swarmPaint = _swarmPaint..color = baseColor.withValues(alpha: 0.5 * currentOpacity);
 
     for (int i = 0; i < dotCount; i++) {
       final angle = (_time * 1.5) + (i * math.pi * 2 / dotCount) + (seed * i);
@@ -442,12 +446,12 @@ class AnimatedMicrobeComponent extends PositionComponent
       canvas.drawCircle(
         nutrientPos, 
         1.5 / zoom, 
-        Paint()..color = color.withValues(alpha: 0.8 * currentOpacity)
+        (_nutrientPaint..color = color.withValues(alpha: 0.8 * currentOpacity))
       );
       canvas.drawCircle(
         nutrientPos - const Offset(0.3, 0.3),
         0.5 / zoom,
-        Paint()..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)
+        (_nutrientHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
       );
     }
 

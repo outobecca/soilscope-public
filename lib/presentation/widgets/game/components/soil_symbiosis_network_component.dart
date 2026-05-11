@@ -28,6 +28,14 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     ObservationCycle.carbon,
   };
 
+  final Paint _glowPaint = Paint();
+  final Paint _threadPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _shadowPaint = Paint();
+  final Paint _bodyPaint = Paint();
+  final Paint _corePaint = Paint();
+  final Paint _specularPaint = Paint();
+  final Paint _pulseGlowPaint = Paint();
+
   SoilSymbiosisNetworkComponent() : super(priority: 2000);
 
   @override
@@ -110,7 +118,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       nodes.add(edge.b);
     }
 
-    final paint = Paint()..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom);
+    final paint = _glowPaint..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom);
     for (final node in nodes) {
       final pulse = 0.8 + 0.2 * math.sin(time * 3.0 + node.pos.dx);
       final color = node.type == 'root_tip' ? Colors.white : const Color(0xFF2DD4BF);
@@ -230,7 +238,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final c1 = Offset.lerp(start, cp, 0.5)!;
     final c2 = Offset.lerp(cp, end, 0.5)!;
 
-    final paint = Paint()..style = PaintingStyle.stroke;
+    final paint = _threadPaint;
     final strokeBase = (2.5 + activity * 2.0) / zoom; // Thicker threads
 
     // DRAW HYPHAL BUNDLE (Multiple strands for "Better Visualized" food web)
@@ -343,35 +351,35 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         final pos = tangent.position;
 
         // 1. Shadow
-        canvas.drawCircle(pos + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.1 * opacity));
+        canvas.drawCircle(pos + const Offset(1, 1), radius, _shadowPaint..color = Colors.black.withValues(alpha: 0.1 * opacity));
         
         // 2. Glow (Boosted by flowMode)
         canvas.drawCircle(
           pos, 
           glowSize, 
-          Paint()
+          (_pulseGlowPaint
             ..color = pColor.withValues(alpha: 0.4 * opacity)
-            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 / zoom)
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 / zoom))
         );
 
         // 3. Main Body
         canvas.drawCircle(
           pos,
           radius,
-          Paint()..color = Colors.white.withValues(alpha: 0.9 * opacity),
+          (_bodyPaint..color = Colors.white.withValues(alpha: 0.9 * opacity)),
         );
         
         canvas.drawCircle(
           pos,
           radius * 0.7,
-          Paint()..color = pColor.withValues(alpha: 0.8 * opacity),
+          _corePaint..color = pColor.withValues(alpha: 0.8 * opacity),
         );
 
         // 4. Specular Highlight
         canvas.drawCircle(
           pos - Offset(radius * 0.3, radius * 0.3),
           radius * 0.4,
-          Paint()..color = Colors.white.withValues(alpha: 0.9 * opacity),
+          (_specularPaint..color = Colors.white.withValues(alpha: 0.9 * opacity)),
         );
       }
     }

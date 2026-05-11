@@ -19,6 +19,7 @@ import 'riverpod_lifecycle_mixin.dart';
 /// Anchors exactly to the root collar using [SceneCoordinateMapper].
 ///
 /// FIX: Synchronizes stem and root collar world coordinates.
+/// Synchronizes stem and root collar world coordinates.
 /// Features high-fidelity tapered stem and organic root smoothing.
 class AnimatedPlantComponent extends PositionComponent
     with
@@ -308,6 +309,22 @@ class AnimatedPlantComponent extends PositionComponent
 
     final collarWorldY = SceneCoordinateMapper.mapRootY(
       0.0,
+    final collarNode = plant.rootSystem.isNotEmpty
+        ? plant.rootSystem.first
+        : null;
+    final collarX = collarNode?.x ?? 0.5;
+    final collarZ = collarNode?.z ?? 0.0;
+
+    final collarWorldX =
+        SceneCoordinateMapper.mapRootX(
+          collarX,
+          worldWidth,
+          baseX: plant.baseX,
+        ) +
+        soilX;
+
+    final collarWorldY = SceneCoordinateMapper.mapRootY(
+      collarZ,
       surfaceY,
       game.soilColumnHeight,
     );
@@ -395,15 +412,14 @@ class AnimatedPlantComponent extends PositionComponent
     ) {
       final node = plant.rootSystem[i];
       if (node.isTip) {
-        final x =
-            SceneCoordinateMapper.mapRootX(
-              node.x,
-              worldWidth,
-              baseX: plant.baseX,
-            ) -
-            (position.x - game.soilLeftX);
-        final y = SceneCoordinateMapper.mapRootY(node.z, 0.0, soilHeight);
-        _tipGlows.add(_RootTipGlow(position: Offset(x, y)));
+        final pos = _mapRootToLocal(
+          node,
+          i,
+          plant.baseX,
+          worldWidth,
+          soilHeight,
+        );
+        _tipGlows.add(_RootTipGlow(position: pos));
       }
     }
   }
@@ -719,6 +735,99 @@ class AnimatedPlantComponent extends PositionComponent
 
       _drawGrowthTip(canvas, topX, topY, shootScale, turgor);
 
+      // Draw Branches with smooth unfolding
+      for (int i = 0; i < branchCount + 1; i++) {
+        if (i >= 12) break;
+        final heightFactor = 0.15 + (i / 12.0) * 0.75;
+        if (heightFactor > 0.9) continue;
+
+        // Only draw the partial branch if it's the last one
+        final isLast = i == branchCount;
+        final unfoldingScale = isLast ? lastBranchPartial : 1.0;
+        if (unfoldingScale < 0.05) continue;
+
+        final t = heightFactor;
+        final bStartX = _cubicBezier(0, cp1X, cp2X, topX, t);
+        final bStartY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+
+        final bIsLeft = i % 2 == 0;
+        final bLength = 65.0 * shootScale * (1.1 - t * 0.5) * unfoldingScale;
+        // Sway is stronger at the top
+        final heightSway = sway * (1.0 + t * 0.5);
+        final bAngle =
+            (bIsLeft ? -math.pi / 2.8 : math.pi / 2.8) *
+                (0.8 + (1.0 - turgor) * 0.5) +
+            droopAngle +
+            heightSway;
+
+        final bEndX = bStartX + math.sin(bAngle) * bLength;
+        final bEndY = bStartY - math.cos(bAngle) * bLength;
+
+        final bPaint = Paint()
+          ..color = activeStemColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4.0 * shootScale * (1.1 - t * 0.6) * unfoldingScale
+          ..strokeCap = StrokeCap.round;
+
+        canvas.drawLine(Offset(bStartX, bStartY), Offset(bEndX, bEndY), bPaint);
+
+        // Branch leaf
+        final bLeafScale = shootScale * 0.9 * unfoldingScale;
+        _drawLeaf(
+          canvas,
+          Vector2(bEndX, bEndY),
+          droopAngle,
+          heightSway,
+          bLeafScale,
+          turgor,
+          bIsLeft,
+          seed: i + 50,
+          highlighted: inspectorType == 'Leaf',
+        );
+      }
+
+      // Main Stem Leaves with smooth unfolding
+      final leafProgress = 2.0 + (biomass / 120.0);
+      final leafCount = leafProgress.floor().clamp(2, 14);
+      final lastLeafPartial = (leafProgress - leafProgress.floor()).clamp(
+        0.0,
+        1.0,
+      );
+
+      for (int i = 0; i < leafCount + 1; i++) {
+        if (i >= 14) break;
+        final heightFactor = 0.1 + (i / 14.0) * 0.85;
+        final isLeft = i % 2 == 0;
+
+        final isLast = i == leafCount;
+        final unfoldingScale = isLast ? lastLeafPartial : 1.0;
+        if (unfoldingScale < 0.05) continue;
+
+        final leafScale =
+            (1.2 - (i / 14.0) * 0.5) * shootScale * unfoldingScale;
+        final t = heightFactor;
+        final lX = _cubicBezier(0, cp1X, cp2X, topX, t);
+        final lY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+        final heightSway = sway * (1.0 + t * 0.6);
+
+        _drawLeaf(
+          canvas,
+          Vector2(lX, lY),
+          droopAngle,
+          heightSway,
+          leafScale,
+          turgor,
+          isLeft,
+          seed: i,
+          highlighted: inspectorType == 'Leaf',
+        );
+      }
+      // Growth tip glow (Meristem)
+      final tipGlow = Paint()
+        ..color = const Color(0xFFA7F3D0).withValues(alpha: 0.3 * turgor)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+      canvas.drawCircle(Offset(topX, topY), 8.0 * shootScale, tipGlow);
+
       if (!session.isMicroscopeEnabled) {
         _drawLabels(canvas, plant, worldWidth, soilHeight, zoom);
       }
@@ -887,9 +996,16 @@ class AnimatedPlantComponent extends PositionComponent
             ) -
             (position.x - game.soilLeftX);
         final ry = SceneCoordinateMapper.mapRootY(node.z, 0.0, soilHeight);
+        final pos = _mapRootToLocal(
+          node,
+          index,
+          plant.baseX,
+          worldWidth,
+          soilHeight,
+        );
 
         canvas.drawCircle(
-          Offset(rx, ry),
+          pos,
           8 / zoom,
           Paint()
             ..color = Colors.white.withValues(alpha: 0.3)
@@ -1233,16 +1349,16 @@ class AnimatedPlantComponent extends PositionComponent
       }
       taperedPath.close();
 
-      // --- Color: warm orange for taproot, lighter peach for laterals ---
+      // --- Color: creamy white/beige for taproot, paler whitish for laterals ---
       final branchColor = isTaproot
           ? Color.lerp(
-              const Color(0xFFFB923C),
-              const Color(0xFFFED7AA),
+              const Color(0xFFFDE68A),
+              const Color(0xFFFEF3C7),
               (node.z).clamp(0.0, 1.0),
             )!
           : Color.lerp(
-              const Color(0xFFFED7AA),
-              const Color(0xFFF5E6D3),
+              const Color(0xFFFEF3C7),
+              const Color(0xFFFAFAF9),
               (node.z).clamp(0.0, 1.0),
             )!;
 
@@ -1306,14 +1422,16 @@ class AnimatedPlantComponent extends PositionComponent
     final int hairCount = (4 + depth * 8).toInt().clamp(3, 10);
 
     final paint = Paint()
-      ..color = const Color(0xFFFED7AA).withValues(alpha: 0.22)
+      ..color = const Color(0xFFFEF3C7).withValues(alpha: 0.22)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.4 / zoom;
 
     for (int i = 1; i <= hairCount; i++) {
       final t = i / (hairCount + 1);
       final tangent = metric.getTangentForOffset(metricLength * t);
-      if (tangent == null) continue;
+      if (tangent == null) {
+        continue;
+      }
 
       final pos = tangent.position;
       final normal = Offset(-tangent.vector.dy, tangent.vector.dx);
@@ -1619,9 +1737,18 @@ class AnimatedPlantComponent extends PositionComponent
     // Horizontal spread: (visualX - 0.5) * worldWidth * _rootSpreadFactor (Standardized to 0.45)
     // Vertical depth: visualZ * soilHeight
     // CLAMP: Ensure local Z is always >= 0 to keep roots underground
+    final p = _plantData;
+    final collarNode = (p != null && p.rootSystem.isNotEmpty) ? p.rootSystem.first : null;
+    final collarX = collarNode?.x ?? 0.5;
+    final collarZ = collarNode?.z ?? 0.0;
+
+    // Return coordinates RELATIVE to the component's origin (the actual root collar)
+    // Horizontal spread: (visualX - collarX) * worldWidth * _rootSpreadFactor (Standardized to 0.45)
+    // Vertical depth: (visualZ - collarZ) * soilHeight
+    // CLAMP: Ensure local Z is always >= 0 to keep roots underground relative to collar
     return Offset(
-      (visualX - 0.5) * worldWidth * 0.45,
-      (visualZ * soilHeight).clamp(0.0, soilHeight - 10.0).toDouble(),
+      (visualX - collarX) * worldWidth * 0.45,
+      ((visualZ - collarZ) * soilHeight).clamp(0.0, soilHeight).toDouble(),
     );
   }
 
@@ -1931,6 +2058,20 @@ class AnimatedPlantComponent extends PositionComponent
     // Lateral veins (Secondary)
     if (scale > 0.15) {
       _secondaryVeinPaint.strokeWidth = 0.6 * scale;
+    final veinPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4 * scale
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(Offset.zero, Offset(leafLen * 0.9, 0), veinPaint);
+
+    // Lateral veins (Secondary)
+    if (scale > 0.15) {
+      final secondaryVeinPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.08)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.6 * scale;
 
       for (int i = 1; i <= 4; i++) {
         final vx = (i / 5.0) * leafLen;
@@ -1939,11 +2080,13 @@ class AnimatedPlantComponent extends PositionComponent
           Offset(vx, 0),
           Offset(vx + 4 * scale, -vy),
           _secondaryVeinPaint,
+          secondaryVeinPaint,
         );
         canvas.drawLine(
           Offset(vx, 0),
           Offset(vx + 4 * scale, vy),
           _secondaryVeinPaint,
+          secondaryVeinPaint,
         );
       }
     }
@@ -1967,6 +2110,8 @@ class AnimatedPlantComponent extends PositionComponent
     final stomatalOpening =
         (game.simulationState?.plant.psiLeaf ?? -0.3).abs() < 1.0 ? 1.0 : 0.2;
     if (scale > 0.3 && stomatalOpening > 0.5) {
+      final stomataPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.05);
       for (int i = 0; i < 3; i++) {
         final sx = 15 * scale + i * 10 * scale;
         canvas.drawCircle(Offset(sx, 2 * scale), 1.0 * scale, _stomataPaint);

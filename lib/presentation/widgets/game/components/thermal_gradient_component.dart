@@ -8,6 +8,8 @@ import 'soil_component_mixin.dart';
 /// Draws a subtle colored overlay representing temperature distribution.
 class ThermalGradientComponent extends Component
     with HasGameReference<SoilScopeGame>, SoilComponentMixin {
+  final _paint = Paint();
+
   @override
   void render(Canvas canvas) {
     final state = game.ref.read(simulationProvider);
@@ -22,23 +24,29 @@ class ThermalGradientComponent extends Component
 
     for (final layer in state.profile.layers) {
       final double layerHeight = layer.thickness * scaleY;
-      
+
       // Map temperature to color (K -> Color)
       // Reference: 273.15 (0C) is blueish, 298.15 (25C) is orange
       final tempC = layer.temperature - 273.15;
       final color = _getTemperatureColor(tempC);
 
-      final paint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0.05),
-            color.withValues(alpha: 0.15),
-          ],
-        ).createShader(Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight));
+      _paint.shader =
+          LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              color.withValues(alpha: 0.05),
+              color.withValues(alpha: 0.15),
+            ],
+          ).createShader(
+            Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight),
+          );
 
-      drawFullWidthSoilRect(canvas, Rect.fromLTWH(0, currentY, 0, layerHeight), paint);
+      drawFullWidthSoilRect(
+        canvas,
+        Rect.fromLTWH(0, currentY, 0, layerHeight),
+        _paint,
+      );
       currentY += layerHeight;
     }
   }
