@@ -109,7 +109,14 @@ class SoilTexturePatternComponent extends Component
       path.lineTo(cx - size/4, cy + size/2);
       path.close();
       canvas.drawPath(path, paint);
-      canvas.drawLine(Offset(cx - size/2, cy), Offset(cx + size/2, cy + size/10), _clayLinePaint..color = Colors.white.withValues(alpha: 0.04));
+      canvas.drawLine(
+        Offset(cx - size/2, cy),
+        Offset(cx + size/2, cy + size/10),
+        _clayLinePaint
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2 / zoom
+          ..color = Colors.white.withValues(alpha: 0.04),
+      );
     }
   }
 
