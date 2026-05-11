@@ -191,10 +191,12 @@ class _GamificationUIState {
 
     if (hasTopsoil) {
       final topsoil = state.profile.layers.first;
-      waterSat = ((topsoil.waterContent / topsoil.porosity) * 100).clamp(
-        0.0,
-        100.0,
-      );
+      if (topsoil.porosity > 0) {
+        waterSat = ((topsoil.waterContent / topsoil.porosity) * 100).clamp(
+          0.0,
+          100.0,
+        );
+      }
       microbeFlux = (topsoil.microbialBiomass * 1.5).clamp(0.0, 100.0);
     }
 
