@@ -794,7 +794,7 @@ class AnimatedPlantComponent extends PositionComponent
         turgor,
         bIsLeft,
         seed: i + 50,
-        highlighted: inspectorType == 'Leaf',
+        highlighted: inspectorType == 'leaf',
       );
     }
   }
