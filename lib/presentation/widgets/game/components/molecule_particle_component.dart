@@ -522,6 +522,24 @@ class MoleculeParticleComponent extends PositionComponent
 
   void _showMoleculeInfo({bool pinned = false}) {
     final info = _getMoleculeInfo();
+    
+    // Determine the dominant element symbol for CPK coloring
+    String? symbol;
+    switch (type) {
+      case MoleculeType.ammonium || MoleculeType.nitrate || MoleculeType.organicNitrogen || MoleculeType.nitrousOxide:
+        symbol = 'N';
+        break;
+      case MoleculeType.carbon || MoleculeType.labileCarbon || MoleculeType.stableCarbon || MoleculeType.methane || MoleculeType.co2:
+        symbol = 'C';
+        break;
+      case MoleculeType.oxygen || MoleculeType.water || MoleculeType.waterVapor:
+        symbol = 'O';
+        break;
+      case MoleculeType.phosphate: symbol = 'P'; break;
+      case MoleculeType.potassium: symbol = 'K'; break;
+      case MoleculeType.calcium: symbol = 'Ca'; break;
+      case MoleculeType.magnesium: symbol = 'Mg'; break;
+    }
 
     game.ref
         .read(uIStateProvider.notifier)
@@ -533,6 +551,9 @@ class MoleculeParticleComponent extends PositionComponent
             formula: info['formula'] as String?,
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
+            accentColor: _getMoleculeColor(type),
+            elementSymbol: symbol,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }
@@ -617,8 +638,8 @@ class MoleculeParticleComponent extends PositionComponent
         };
       case MoleculeType.organicNitrogen:
         return {
-          'title': l.organicN.toUpperCase(),
-          'description': l.solubleNutrientDesc,
+          'title': l.moleculeOrganicNitrogenTitle,
+          'description': l.moleculeOrganicNitrogenDesc,
           'stats': {
             l.type: 'DON / Proteins',
             l.source: 'Necromass',
@@ -627,75 +648,75 @@ class MoleculeParticleComponent extends PositionComponent
         };
       case MoleculeType.methane:
         return {
-          'title': 'METHANE (CH₄)',
-          'description': l.methaneDescription,
+          'title': l.moleculeMethaneTitle,
+          'description': l.moleculeMethaneDesc,
           'stats': {
             l.type: 'Gas',
-            l.source: 'Methanogenesis',
-            l.climateEffect: 'High (28x CO2)',
+            l.source: l.methanogenesis,
+            l.climateEffect: '${l.effectLabel}: 28x CO2',
           },
         };
       case MoleculeType.nitrousOxide:
         return {
-          'title': 'NITROUS OXIDE (N₂O)',
-          'description': l.bubbleN2oDescription,
+          'title': l.moleculeNitrousOxideTitle,
+          'description': l.moleculeNitrousOxideDesc,
           'stats': {
             l.type: 'Gas',
-            l.source: l.denitrificationTitle,
-            l.climateEffect: 'Critical (298x CO2)',
+            l.source: l.denitrifiers,
+            l.climateEffect: '${l.effectLabel}: 298x CO2',
           },
         };
       case MoleculeType.phosphate:
         return {
-          'title': 'PHOSPHATE (PO₄³⁻)',
-          'description': 'Essential for energy transfer (ATP). Very low mobility in soil.',
+          'title': l.ionPhosphateTitle,
+          'description': l.ionPhosphateDescription,
           'stats': {
             l.ionLabel: 'PO₄³⁻',
             l.charge: '-3 (Anioni)',
             l.mobility: l.veryWeak,
-            l.role: 'Energy / DNA',
+            l.role: l.energy,
           },
         };
       case MoleculeType.potassium:
         return {
-          'title': 'POTASSIUM (K⁺)',
-          'description': 'Regulates water balance and stomatal movement.',
+          'title': l.ionPotassiumTitle,
+          'description': l.ionPotassiumDescription,
           'stats': {
             l.ionLabel: 'K⁺',
             l.charge: '+1 (Kationi)',
-            l.mobility: 'Medium',
-            l.role: 'Osmoregulation',
+            l.mobility: l.mobilityModerate,
+            l.role: l.stomataRegulation,
           },
         };
       case MoleculeType.calcium:
         return {
-          'title': 'CALCIUM (Ca²⁺)',
-          'description': 'Essential for cell wall structure and signaling.',
+          'title': l.ionCalciumTitle,
+          'description': l.ionCalciumDescription,
           'stats': {
             l.ionLabel: 'Ca²⁺',
             l.charge: '+2 (Kationi)',
-            l.mobility: 'Low',
-            l.role: 'Structure',
+            l.mobility: l.mobilitySlow,
+            l.role: l.cellWallSignal,
           },
         };
       case MoleculeType.magnesium:
         return {
-          'title': 'MAGNESIUM (Mg²⁺)',
-          'description': 'Central atom of chlorophyll, essential for photosynthesis.',
+          'title': l.ionMagnesiumTitle,
+          'description': l.ionMagnesiumDescription,
           'stats': {
             l.ionLabel: 'Mg²⁺',
             l.charge: '+2 (Kationi)',
-            l.mobility: 'Moderate',
-            l.role: 'Chlorophyll',
+            l.mobility: l.mobilityGood,
+            l.role: l.photosynthesis,
           },
         };
       case MoleculeType.waterVapor:
         return {
-          'title': 'WATER VAPOR (H₂O)',
-          'description': 'Gaseous water exiting leaves during transpiration.',
+          'title': l.moleculeWaterVaporTitle,
+          'description': l.moleculeWaterVaporDesc,
           'stats': {
-            l.type: 'Gas',
-            l.source: 'Transpiration',
+            l.type: l.gasLabel,
+            l.source: l.transpirationLabel,
           },
         };
     }

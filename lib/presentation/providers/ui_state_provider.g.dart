@@ -40,7 +40,7 @@ final class UIStateProvider extends $NotifierProvider<UIState, HoverInfo?> {
   }
 }
 
-String _$uIStateHash() => r'1be0fb8d0d921b996dd2cf74d6d78dda0aa4790c';
+String _$uIStateHash() => r'ac9737fb0c1fdde12cf622aea64d4a47cb1b569a';
 
 abstract class _$UIState extends $Notifier<HoverInfo?> {
   HoverInfo? build();
@@ -92,7 +92,7 @@ final class ActiveCycleProvider
   }
 }
 
-String _$activeCycleHash() => r'd9ef9cfd59b885e57644ae0143d6c5e46b3e1a36';
+String _$activeCycleHash() => r'97570a29721e8667a61267816a3c4d91c24c93a0';
 
 abstract class _$ActiveCycle extends $Notifier<ObservationCycle> {
   ObservationCycle build();

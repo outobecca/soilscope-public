@@ -16,7 +16,7 @@ import '../../../l10n/app_localizations.dart';
 import 'components/soil_layer_component.dart';
 import 'components/soil_background_layer.dart';
 import 'components/background_noise_component.dart';
-import 'components/animation_layer.dart';
+import 'components/simulation_animation_layer_component.dart';
 import 'components/animated_plant_component.dart';
 import 'components/weather_component.dart';
 import 'components/scene_coordinate_mapper.dart';
@@ -93,6 +93,16 @@ class SoilScopeGame extends FlameGame
     }
   }
 
+  Vector2 worldToScreen(Vector2 worldPos) {
+    final zoom = camera.viewfinder.zoom;
+    final camPos = camera.viewfinder.position;
+    final viewportSize = camera.viewport.size;
+    return Vector2(
+      (worldPos.x - camPos.x) * zoom + viewportSize.x / 2,
+      (worldPos.y - camPos.y) * zoom + viewportSize.y / 2,
+    );
+  }
+
   double _massFlowAccumulator = 0;
 
   void _updateMassFlow(double dt) {
@@ -160,7 +170,7 @@ class SoilScopeGame extends FlameGame
     world.add(SoilBackgroundLayer()..priority = -200);
     
     // The main simulation layers
-    world.add(SimulationAnimationLayer()..priority = 200);
+    world.add(SimulationAnimationLayerComponent()..priority = 200);
 
     // Soil Symbiosis Network (Between passive hotspots/layers and active particles/roots)
     world.add(SoilSymbiosisNetworkComponent()..priority = 2000);
@@ -460,7 +470,7 @@ class SoilScopeGame extends FlameGame
     }
 
     // 2. Update Animations
-    final animLayer = world.children.query<SimulationAnimationLayer>().firstOrNull;
+    final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
     if (animLayer != null) {
       animLayer.updateState(state);
     }
@@ -494,7 +504,7 @@ class SoilScopeGame extends FlameGame
 
   void triggerPlantGrowth() {
     final animLayer = world.children
-        .query<SimulationAnimationLayer>()
+        .query<SimulationAnimationLayerComponent>()
         .firstOrNull;
     if (animLayer != null) {
       final plants = animLayer.children.query<AnimatedPlantComponent>();

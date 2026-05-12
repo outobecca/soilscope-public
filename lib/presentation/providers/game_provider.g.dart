@@ -42,7 +42,7 @@ final class SoilScopeGameProviderProvider
 }
 
 String _$soilScopeGameProviderHash() =>
-    r'20bb4039bc0f8892d784bbbfaefe6d2b3f6c42bf';
+    r'fbdf8f0b54bd4b91c46ac06a2b2845ed0a97ea61';
 
 abstract class _$SoilScopeGameProvider extends $Notifier<SoilScopeGame?> {
   SoilScopeGame? build();

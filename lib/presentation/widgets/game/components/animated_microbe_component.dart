@@ -11,7 +11,6 @@ import 'scene_coordinate_mapper.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
-import 'animated_plant_component.dart';
 import 'data_hotspot_component.dart';
 import 'soil_layer_component.dart';
 import 'particle_system_component.dart';
@@ -330,22 +329,22 @@ class AnimatedMicrobeComponent extends PositionComponent
       }
     }
 
-    // 2. Evaluate Root Exudates (Consistent energy source)
-    final plantComps = game.world.children.query<AnimatedPlantComponent>();
-    for (final plant in plantComps) {
-      for (final pos in plant.exudateWorldPositions) {
-        final dist = position.distanceTo(pos);
-        if (dist > 300) continue;
+    // 2. Evaluate Molecule Particles (Dynamic chemotaxis)
+    final molecules = game.world.children.whereType<MoleculeParticleComponent>();
+    for (final mol in molecules) {
+      if (mol.type != MoleculeType.labileCarbon) continue;
+      
+      final dist = position.distanceTo(mol.position);
+      if (dist > 300) continue;
 
-        // Roots provide labile carbon (high energy, low nitrogen)
-        double rootBenefit = 2.5; 
-        if (isNitrogenLimited) rootBenefit *= 0.6; // Less attractive if N is needed
+      // Labile carbon is high energy
+      double benefit = 3.0; 
+      if (isNitrogenLimited) benefit *= 0.7;
 
-        final fitness = rootBenefit / (dist / 80.0).clamp(1.0, 10.0);
-        if (fitness > maxFitness) {
-          maxFitness = fitness;
-          bestTarget = pos;
-        }
+      final fitness = benefit / (dist / 80.0).clamp(1.0, 10.0);
+      if (fitness > maxFitness) {
+        maxFitness = fitness;
+        bestTarget = mol.position;
       }
     }
 
@@ -459,20 +458,23 @@ class AnimatedMicrobeComponent extends PositionComponent
   }
 
   void _showMicrobeInfo({bool pinned = false}) {
+    final l = game.l10n;
     final state = game.simulationState;
     if (state == null || state.profile.layers.isEmpty) return;
     final layer = state.profile.layers.first;
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
-        title: "MICROBIAL CLUSTER",
-        description: "Represents a high-density colony of soil microbes performing biochemical decomposition.",
+        title: l.microbialClusterTitle,
+        description: l.microbialClusterDesc,
         stats: {
-          'Simulated Units': '500+',
-          'Metabolic Activity': '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
-          'Biomass Density': '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
-          'Immobilized Nutrients': '${_absorbedNutrients.length} units',
+          l.simulatedUnits: '500+',
+          l.metabolicActivity: '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
+          l.biomassDensity: '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
+          l.immobilizedNutrients: '${_absorbedNutrients.length} units',
         },
         isPinned: pinned,
+        accentColor: const Color(0xFFFACC15), // Golden Yellow
+        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),
     );
   }

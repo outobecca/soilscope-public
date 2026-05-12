@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math' as math;
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../../core/simulation_constants.dart';
 import 'particle_physics_solver.dart';
 
@@ -78,7 +79,7 @@ void particleIsolateEntry(SendPort mainSendPort) {
   List<double>? currentVisibleRect;
   double currentWindDrift = 10.0;
   double currentWindNoise = 15.0;
-  
+
   Timer? timer;
   Stopwatch stopwatch = Stopwatch();
 
@@ -89,9 +90,9 @@ void particleIsolateEntry(SendPort mainSendPort) {
       final offset = i * 10;
       double finalState = p.isImmobilized ? -p.life : p.life;
       if (p.state >= 10.0) {
-         finalState += 100.0; // Marker for xylem
+        finalState += 100.0; // Marker for xylem
       } else if (p.state > 0) {
-         finalState += p.state * 10.0;
+        finalState += p.state * 10.0;
       }
 
       buffer[offset] = p.id.toDouble();
@@ -105,7 +106,9 @@ void particleIsolateEntry(SendPort mainSendPort) {
       buffer[offset + 8] = p.y0;
       buffer[offset + 9] = p.t;
     }
-    mainSendPort.send(TransferableTypedData.fromList([buffer.buffer.asInt8List()]));
+    mainSendPort.send(
+      TransferableTypedData.fromList([buffer.buffer.asInt8List()]),
+    );
   }
 
   childReceivePort.listen((message) {
@@ -118,35 +121,38 @@ void particleIsolateEntry(SendPort mainSendPort) {
 
       stopwatch.start();
       timer?.cancel();
-      timer = Timer.periodic(const Duration(milliseconds: SimulationConstants.physicsTickMs), (t) {
-        if (!isRunning) return;
+      timer = Timer.periodic(
+        const Duration(milliseconds: SimulationConstants.physicsTickMs),
+        (t) {
+          if (!isRunning) return;
 
-        final dt = SimulationConstants.physicsTickMs / 1000.0;
-        final time = stopwatch.elapsedMilliseconds / 1000.0;
+          final dt = SimulationConstants.physicsTickMs / 1000.0;
+          final time = stopwatch.elapsedMilliseconds / 1000.0;
 
-        ParticlePhysicsSolver.updateParticles(
-          particles,
-          dt,
-          time,
-          minX,
-          maxX,
-          worldHeight,
-          surfaceY,
-          temperatureK: currentTemperature,
-          hotspots: currentHotspots,
-          friction: currentFriction,
-          isAnaerobic: currentIsAnaerobic,
-          waterFlux: currentWaterFlux,
-          cnRatio: currentCnRatio,
-          visibleRect: currentVisibleRect,
-          windDrift: currentWindDrift,
-          windNoise: currentWindNoise,
-        );
+          ParticlePhysicsSolver.updateParticles(
+            particles,
+            dt,
+            time,
+            minX,
+            maxX,
+            worldHeight,
+            surfaceY,
+            temperatureK: currentTemperature,
+            hotspots: currentHotspots,
+            friction: currentFriction,
+            isAnaerobic: currentIsAnaerobic,
+            waterFlux: currentWaterFlux,
+            cnRatio: currentCnRatio,
+            visibleRect: currentVisibleRect,
+            windDrift: currentWindDrift,
+            windNoise: currentWindNoise,
+          );
 
-        // Remove dead particles
-        particles.removeWhere((p) => p.life <= 0);
-        sendSnapshot();
-      });
+          // Remove dead particles
+          particles.removeWhere((p) => p.life <= 0);
+          sendSnapshot();
+        },
+      );
     } else if (message is StopParticles) {
       isRunning = false;
       timer?.cancel();
@@ -202,11 +208,20 @@ class ParticlePhysicsIsolateManager {
   final StreamController<Float32List> _outputController =
       StreamController.broadcast();
   Stream<Float32List> get particleStream => _outputController.stream;
+  bool _initialized = false;
+  int _msgCount = 0;
 
   int getParticleCount(int typeIndex) => _counts[typeIndex] ?? 0;
 
   Future<void> init() async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      debugPrint(
+        'ParticlePhysicsIsolateManager: Running in Web Mode (Main Thread)',
+      );
+      return;
+    }
+    if (_initialized) return;
+    _initialized = true;
 
     _receivePort = ReceivePort();
     _isolate = await Isolate.spawn(
@@ -223,18 +238,169 @@ class ParticlePhysicsIsolateManager {
         _pendingCommands.clear();
       } else if (message is TransferableTypedData) {
         final floatList = message.materialize().asFloat32List();
-        // Update local counts from snapshot
-        _counts.clear();
-        for (int i = 0; i < floatList.length; i += 10) {
-          final type = floatList[i + 5].toInt();
-          _counts[type] = (_counts[type] ?? 0) + 1;
+        _msgCount++;
+        if (_msgCount % 10 == 0) {
+          // Update local counts from snapshot (less frequent to save CPU)
+          _counts.clear();
+          for (int i = 0; i < floatList.length; i += 10) {
+            final type = floatList[i + 5].toInt();
+            _counts[type] = (_counts[type] ?? 0) + 1;
+          }
         }
-        _outputController.add(floatList);
+        if (!_outputController.isClosed) {
+          _outputController.add(floatList);
+        }
       }
     });
   }
 
+  bool _isWebRunning = false;
+  Float32List _webParticleData = Float32List(0);
+  double _webLastTickTime = 0;
+
+  // Web environment state
+  double _webTemperature = 293.15;
+  double _webFriction = 1.0;
+  double _webWaterFlux = 0.0;
+
+  void _processWebCommand(ParticleCommand cmd) {
+    if (cmd is StartParticles) {
+      if (!_isWebRunning) {
+        _isWebRunning = true;
+        _runWebLoop();
+      }
+    } else if (cmd is StopParticles) {
+      _isWebRunning = false;
+    } else if (cmd is AddParticles) {
+      // Convert List<List<double>> to Float32List
+      final count = cmd.newParticles.length;
+      final newData = Float32List(count * 10);
+      for (int i = 0; i < count; i++) {
+        final pData = cmd.newParticles[i];
+        if (pData.length < 7) continue;
+        final offset = i * 10;
+        newData[offset] = pData[0];     // id
+        newData[offset + 1] = pData[2]; // x
+        newData[offset + 2] = pData[3]; // y
+        newData[offset + 3] = pData[4]; // vx
+        newData[offset + 4] = pData[5]; // vy
+        newData[offset + 5] = pData[1]; // type index
+        newData[offset + 6] = pData[6]; // life
+        // Fill remaining with 0 or defaults
+        for (int j = 7; j < 10; j++) {
+          newData[offset + j] = j < pData.length ? pData[j] : 0.0;
+        }
+      }
+
+      final newList = Float32List(_webParticleData.length + newData.length);
+      newList.setAll(0, _webParticleData);
+      newList.setAll(_webParticleData.length, newData);
+      _webParticleData = newList;
+    } else if (cmd is SetParticles) {
+      final count = cmd.particles.length;
+      final newData = Float32List(count * 10);
+      for (int i = 0; i < count; i++) {
+        final pData = cmd.particles[i];
+        if (pData.length < 7) continue;
+        final offset = i * 10;
+        newData[offset] = pData[0];     // id
+        newData[offset + 1] = pData[2]; // x
+        newData[offset + 2] = pData[3]; // y
+        newData[offset + 3] = pData[4]; // vx
+        newData[offset + 4] = pData[5]; // vy
+        newData[offset + 5] = pData[1]; // type index
+        newData[offset + 6] = pData[6]; // life
+        for (int j = 7; j < 10; j++) {
+          newData[offset + j] = j < pData.length ? pData[j] : 0.0;
+        }
+      }
+      _webParticleData = newData;
+    } else if (cmd is UpdateEnvironment) {
+      _webTemperature = cmd.temperature;
+      _webFriction = cmd.friction;
+      _webWaterFlux = cmd.waterFlux;
+    } else if (cmd is RemoveParticles) {
+      if (_webParticleData.isEmpty) return;
+
+      final List<double> filtered = [];
+      int removedCount = 0;
+      for (int i = 0; i < _webParticleData.length; i += 10) {
+        final typeIndex = _webParticleData[i + 6].toInt();
+        if (typeIndex == cmd.typeIndex && removedCount < cmd.count) {
+          removedCount++;
+          continue;
+        }
+        for (int j = 0; j < 10; j++) {
+          filtered.add(_webParticleData[i + j]);
+        }
+      }
+      _webParticleData = Float32List.fromList(filtered);
+    }
+  }
+
+  void _runWebLoop() async {
+    _webLastTickTime = DateTime.now().millisecondsSinceEpoch / 1000.0;
+    while (_isWebRunning) {
+      final now = DateTime.now().millisecondsSinceEpoch / 1000.0;
+      final dt = (now - _webLastTickTime).clamp(0.001, 0.1);
+      _webLastTickTime = now;
+
+      if (_webParticleData.isNotEmpty) {
+        // Simple Euler integration for Web mode fallback
+        // Particle format: [id, x, y, vx, vy, life, type, charge, mass, radius] (stride 10)
+        for (int i = 0; i < _webParticleData.length; i += 10) {
+          // Apply Brownian motion based on temperature (jitter)
+          final tempC = _webTemperature - 273.15;
+          final jitter = math.max(0.0, tempC) * 0.005;
+          _webParticleData[i + 3] += (math.Random().nextDouble() - 0.5) * jitter;
+          _webParticleData[i + 4] += (math.Random().nextDouble() - 0.5) * jitter;
+
+          // Apply water flux (vertical drift)
+          _webParticleData[i + 2] += _webWaterFlux * dt * 50.0; // Scaled for visual effect
+
+          // Apply velocity (Euler)
+          _webParticleData[i + 1] += _webParticleData[i + 3] * dt;
+          _webParticleData[i + 2] += _webParticleData[i + 4] * dt;
+
+          // Apply friction
+          _webParticleData[i + 3] *= (1.0 - _webFriction * dt);
+          _webParticleData[i + 4] *= (1.0 - _webFriction * dt);
+        }
+
+        // Emit data & update counts
+        _msgCount++;
+        if (_msgCount % 10 == 0) {
+          _counts.clear();
+          final List<double> living = [];
+          for (int i = 0; i < _webParticleData.length; i += 10) {
+            final life = _webParticleData[i + 6].abs();
+            // If life is tiny or 0, consider it dead
+            if (life < 0.01) continue;
+
+            final type = _webParticleData[i + 5].toInt();
+            _counts[type] = (_counts[type] ?? 0) + 1;
+            for (int j = 0; j < 10; j++) {
+              living.add(_webParticleData[i + j]);
+            }
+          }
+          _webParticleData = Float32List.fromList(living);
+        }
+
+        if (!_outputController.isClosed) {
+          _outputController.add(_webParticleData);
+        }
+      }
+
+      await Future.delayed(const Duration(milliseconds: 32)); // ~30 FPS
+    }
+  }
+
   void _sendCommand(ParticleCommand cmd) {
+    if (kIsWeb) {
+      _processWebCommand(cmd);
+      return;
+    }
+
     if (_childSendPort != null) {
       _childSendPort?.send(cmd);
     } else {

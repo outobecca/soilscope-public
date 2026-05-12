@@ -14,7 +14,21 @@ class GamificationBar extends ConsumerWidget {
     final state = ref.watch(simulationProvider);
     final uiState = _GamificationUIState.fromState(state);
 
-    if (!uiState.hasTopsoil) return const SizedBox.shrink();
+    if (!uiState.hasTopsoil) {
+      return const Align(
+        alignment: Alignment.topCenter,
+        child: Card(
+          color: Colors.black54,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              "VALMISTELLAAN MAAPERÄÄ...",
+              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      );
+    }
 
     final isMobile = MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
 

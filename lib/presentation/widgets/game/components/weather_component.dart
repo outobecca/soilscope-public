@@ -178,7 +178,7 @@ class WeatherComponent extends PositionComponent
                     '${(game.simulationState!.airTemperature - 273.15).toStringAsFixed(1)} °C',
                 game.l10n.relativeHumidity:
                     '${((game.simulationState?.relativeHumidity ?? 0.6) * 100).toStringAsFixed(0)}%',
-                'SADEMÄÄRÄ (PRECIP)':
+                game.l10n.precipitation.toUpperCase():
                     '${(game.simulationState?.precipitation ?? 0).toStringAsFixed(1)} mm/h',
               },
               isPinned: true,

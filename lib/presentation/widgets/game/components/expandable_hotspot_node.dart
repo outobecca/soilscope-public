@@ -58,8 +58,8 @@ class ExpandableHotspotNode extends PositionComponent
   @override
   bool containsLocalPoint(Vector2 point) {
     if (_isExpanded) {
-      // Expanded hit area (covers the radial menu but not too greedy)
-      return (point - size / 2).length < 90.0;
+      // Reduced hit area for better selectability of neighboring nodes
+      return (point - size / 2).length < 75.0;
     }
     return super.containsLocalPoint(point);
   }
@@ -121,6 +121,9 @@ class ExpandableHotspotNode extends PositionComponent
   void _toggleExpansion() {
     _isExpanded = !_isExpanded;
     
+    // Boost priority when expanded to sit above neighboring unexpanded hotspots
+    priority = _isExpanded ? 1100 : 1001;
+    
     if (_isExpanded) {
       _expand();
     } else {
@@ -129,7 +132,7 @@ class ExpandableHotspotNode extends PositionComponent
   }
 
   void _expand() {
-    _baseIndicator.paint.color = Colors.white.withValues(alpha: 0.8);
+    _baseIndicator.paint.color = Colors.white.withValues(alpha: 0.95);
     
     final double radius = 60.0;
     final double angleStep = (2 * math.pi) / metrics.length;

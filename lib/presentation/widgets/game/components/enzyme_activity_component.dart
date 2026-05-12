@@ -225,6 +225,8 @@ class EnzymeActivityComponent extends PositionComponent
               l.type: l.biogeochemical,
             },
             isPinned: pinned,
+            accentColor: Colors.purpleAccent,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

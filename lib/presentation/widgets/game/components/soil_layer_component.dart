@@ -14,8 +14,8 @@ import 'molecule_particle_component.dart';
 import 'expandable_hotspot_node.dart';
 import 'scene_coordinate_mapper.dart';
 import '../soil_scope_game.dart';
+import 'process_label_component.dart';
 import '../../../../core/cpk_standards.dart';
-
 import '../../../../core/simulation_constants.dart';
 import 'soil_component_mixin.dart';
 import 'layer_tech_node_mixin.dart';
@@ -310,6 +310,16 @@ class SoilLayerComponent extends PositionComponent
             opacity: redoxOpacity,
             speed: SimulationConstants.particleBaseSpeed + (nitRate * SimulationConstants.fluxToSpeedScale).clamp(5.0, 50.0),
           );
+
+          // Occasional process notification
+          if (math.Random().nextDouble() < 0.001) {
+             game.world.add(ProcessLabel(
+               type: ProcessMarkerType.nitrification,
+               color: CPKStandards.colorN,
+               position: Vector2(position.x + math.Random().nextDouble() * size.x, position.y + math.Random().nextDouble() * size.y),
+               showTitle: true,
+             ));
+          }
         }
       }
     } catch (_) {}

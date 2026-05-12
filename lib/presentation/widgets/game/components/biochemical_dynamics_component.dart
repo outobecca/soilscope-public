@@ -12,9 +12,11 @@ import 'soil_layer_component.dart';
 import 'soil_symbiosis_network_component.dart';
 import 'animated_plant_component.dart';
 import 'riverpod_lifecycle_mixin.dart';
-import 'animation_layer.dart';
+import 'simulation_animation_layer_component.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../core/biophysics_utils.dart';
+import '../../../../core/cpk_standards.dart';
+import 'process_label_component.dart';
 
 /// Orchestrates small-scale biochemical animations like root exudates,
 /// enzymatic hotspots, and gas bubbles for all plants.
@@ -66,9 +68,10 @@ class BiochemicalDynamicsComponent extends Component
     final state = game.simulationState;
     if (state == null) return;
 
-    final existingCount = game.world.children
-        .query<MoleculeParticleComponent>()
-        .length;
+    final pool = game.moleculePool;
+    if (pool == null) return;
+    
+    final existingCount = pool.activeCount;
     if (existingCount > 25) return;
 
     final worldWidth = SoilScopeGame.soilColumnWidth;
@@ -161,9 +164,10 @@ class BiochemicalDynamicsComponent extends Component
     if (state == null) return;
 
     final flowMode = game.ref.read(particleFlowModeProvider);
-    final existingCount = game.world.children
-        .query<MoleculeParticleComponent>()
-        .length;
+    final pool = game.moleculePool;
+    if (pool == null) return;
+    
+    final existingCount = pool.activeCount;
     final maxParticles = flowMode ? 60 : 15;
     if (existingCount > maxParticles) return;
 
@@ -171,6 +175,7 @@ class BiochemicalDynamicsComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final soilHeight = game.soilColumnHeight;
 
+    // We only need hotspots for root uptake flows, not for the general cycle
     final hotspots = game.world.children
         .whereType<SoilLayerComponent>()
         .expand((l) => l.children.whereType<DataHotspotComponent>())
@@ -195,6 +200,16 @@ class BiochemicalDynamicsComponent extends Component
           seed: _random.nextInt(100),
           lifeTime: 4.0,
         );
+
+        // Notify process
+        if (_random.nextDouble() < 0.003) {
+          game.world.add(ProcessLabel(
+            type: ProcessMarkerType.nitrification,
+            color: CPKStandards.colorN,
+            position: Vector2(rx, ry),
+            showTitle: true,
+          ));
+        }
       }
 
       // --- 2. DENITRIFICATION TRANSFORMATION (NO3 -> N2O) ---
@@ -215,9 +230,46 @@ class BiochemicalDynamicsComponent extends Component
           seed: _random.nextInt(100),
           lifeTime: 5.0,
         );
+
+        // Notify process
+        if (_random.nextDouble() < 0.003) {
+          game.world.add(ProcessLabel(
+            type: ProcessMarkerType.denitrification,
+            color: CPKStandards.colorN,
+            position: Vector2(rx, ry),
+            showTitle: true,
+          ));
+        }
       }
 
-      // --- 3. LEACHING FLOW (Downwards NO3- movement) ---
+      // --- 3. MINERALIZATION TRANSFORMATION (Org-N -> NH4) ---
+      // Occurs primarily in topsoil with high microbial activity
+      final double microbialActivity = layer.microbialBiomass / 500.0;
+      if (layer.organicNitrogen > 5.0 && microbialActivity > 0.2 && _random.nextDouble() < 0.03 * dt) {
+        final rx = game.soilLeftX + _random.nextDouble() * worldWidth;
+        final ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+
+        game.moleculePool?.spawn(
+          type: MoleculeType.organicNitrogen,
+          transformTarget: MoleculeType.ammonium,
+          position: Vector2(rx, ry),
+          velocity: Vector2((_random.nextDouble() - 0.5) * 5, -2),
+          seed: _random.nextInt(100),
+          lifeTime: 6.0,
+        );
+
+        // Notify process
+        if (_random.nextDouble() < 0.002) {
+          game.world.add(ProcessLabel(
+            type: ProcessMarkerType.mineralization,
+            color: CPKStandards.colorN,
+            position: Vector2(rx, ry),
+            showTitle: true,
+          ));
+        }
+      }
+
+      // --- 4. LEACHING FLOW (Downwards NO3- movement) ---
       if (layer.verticalFlux > 1e-7 &&
           layer.nitrateContent > 5.0 &&
           _random.nextDouble() < 0.1 * dt) {
@@ -325,7 +377,7 @@ class BiochemicalDynamicsComponent extends Component
 
           // 2. Plant Vascular Path
           final plantComp = game.world.children
-              .query<SimulationAnimationLayer>()
+              .query<SimulationAnimationLayerComponent>()
               .firstOrNull
               ?.children
               .query<AnimatedPlantComponent>()
@@ -354,9 +406,10 @@ class BiochemicalDynamicsComponent extends Component
     final state = game.simulationState;
     if (state == null || state.plants.isEmpty) return;
 
-    final existingCount = game.world.children
-        .query<MoleculeParticleComponent>()
-        .length;
+    final pool = game.moleculePool;
+    if (pool == null) return;
+
+    final existingCount = pool.activeCount;
     if (existingCount > 20) return;
 
     final worldWidth = SoilScopeGame.soilColumnWidth;
@@ -448,7 +501,7 @@ class BiochemicalDynamicsComponent extends Component
         // Water path: Soil -> Root Tip -> Stem -> Foliage
         final List<Vector2> waterPath = [];
         final plantComp = game.world.children
-            .query<SimulationAnimationLayer>()
+            .query<SimulationAnimationLayerComponent>()
             .firstOrNull
             ?.children
             .query<AnimatedPlantComponent>()

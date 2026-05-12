@@ -9,7 +9,7 @@ enum MagnifierType { leaf, stem, root, rhizosphere, microbe, soilStructure, apic
 
 /// High-fidelity microscope (Nanovision) component.
 /// Provides detailed cross-sectional visualization of biophysical processes.
-class ProcessMagnifier extends PositionComponent
+class ProcessMagnifierComponent extends PositionComponent
     with HasGameReference<SoilScopeGame> {
 
   final Paint _sharedFillPaint = Paint()..style = PaintingStyle.fill;
@@ -78,7 +78,7 @@ class ProcessMagnifier extends PositionComponent
   // Reference to the world hotspot for orientation
   Vector2? _hotspotWorldPosition;
 
-  ProcessMagnifier({
+  ProcessMagnifierComponent({
     required this.type,
     required Vector2 position,
     Vector2? hotspotWorldPosition,

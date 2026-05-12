@@ -551,16 +551,17 @@ class MolecularParticleFieldComponent extends Component
         break;
     }
 
-    game.ref
-        .read(uIStateProvider.notifier)
-        .setHoverInfo(
-          HoverInfo(
-            title: title,
-            description: desc,
-            stats: stats,
-            isPinned: pinned,
-          ),
-        );
+    Future.microtask(() {
+      if (!isMounted) return;
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(
+            HoverInfo(
+              title: title,
+              description: desc,
+              stats: stats,
+              isPinned: pinned,
+            ),
+          );
+    });
   }
 
   void _drawGlow(Canvas canvas, Offset pos, double radius, Color color) {

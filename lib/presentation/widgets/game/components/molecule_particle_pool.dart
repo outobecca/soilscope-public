@@ -56,6 +56,8 @@ class MoleculeParticlePool extends Component {
     return p;
   }
 
+  int get activeCount => _active.length;
+
   @override
   void update(double dt) {
     super.update(dt);

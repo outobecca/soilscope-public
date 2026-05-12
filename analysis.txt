@@ -1,0 +1,12 @@
+Analyzing soilscope-public...
+
+  error - lib/presentation/widgets/game/components/bubble_component.dart:207:51 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/bubble_component.dart:208:51 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/bubble_component.dart:209:51 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/bubble_component.dart:210:51 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/gas_exchange_indicator.dart:341:18 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/gas_exchange_indicator.dart:355:18 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/gas_exchange_indicator.dart:362:18 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/presentation/widgets/game/components/gas_exchange_indicator.dart:369:18 - Undefined name 'CPKStandards'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+
+8 issues found.

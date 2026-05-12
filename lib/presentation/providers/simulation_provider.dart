@@ -41,14 +41,25 @@ class Simulation extends _$Simulation {
   BiophysicalState _stripHistory(BiophysicalState s) =>
       s.copyWith(history: const []);
 
+  bool _disposed = false;
+  BiophysicalState? _pendingState;
+
   @override
   BiophysicalState build() {
+    // Reset lifecycle flags on rebuild — critical for correctness.
+    // Without this, a provider rebuild creates new isolate managers
+    // but skips their init (because _isInitialized was still true)
+    // and drops all state updates (because _disposed was still true).
+    _disposed = false;
+    _pendingState = null;
+
     _isolateManager = SimulationIsolateManager();
     particleIsolate = ParticlePhysicsIsolateManager();
     _initIsolate();
     particleIsolate.init();
 
     ref.onDispose(() {
+      _disposed = true;
       _stateSubscription?.cancel();
       _isolateManager.dispose();
       particleIsolate.dispose();
@@ -249,7 +260,13 @@ class Simulation extends _$Simulation {
         _history.removeAt(0);
       }
 
-      state = entry.copyWith(history: List.unmodifiable(_history));
+      _pendingState = entry;
+      Future.microtask(() {
+        if (!_disposed && _pendingState != null) {
+          state = _pendingState!.copyWith(history: List.unmodifiable(_history));
+          _pendingState = null;
+        }
+      });
       
       _tickCount++;
       if (_tickCount >= 50) {
@@ -289,7 +306,7 @@ class Simulation extends _$Simulation {
 
   void start() {
     state = state.copyWith(isRunning: true);
-    _isolateManager.updateState(_stripHistory(state), state.precipitation);
+    _syncIsolate(); // Ensure isolate has the latest state before starting
     _isolateManager.start();
     particleIsolate.start(
       _particleMinX,
@@ -418,8 +435,12 @@ class Simulation extends _$Simulation {
       return l;
     }).toList();
 
-    state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-    _syncIsolate();
+    Future.microtask(() {
+      if (!_disposed) {
+        state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+        _syncIsolate();
+      }
+    });
   }
 
   /// Convenience wrapper for updating a single soil layer parameter by string name.
@@ -477,7 +498,9 @@ class Simulation extends _$Simulation {
       return p;
     }).toList();
 
-    state = state.copyWith(plants: updatedPlants);
+    Future.microtask(() {
+      if (!_disposed) state = state.copyWith(plants: updatedPlants);
+    });
   }
 
   /// Consumes potassium from the soil pool (e.g., when spawning particles).
@@ -498,8 +521,12 @@ class Simulation extends _$Simulation {
     }
 
     if (changed) {
-      state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-      _syncIsolate();
+      Future.microtask(() {
+        if (!_disposed) {
+          state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+          _syncIsolate();
+        }
+      });
       return true;
     }
     return false;
@@ -524,8 +551,12 @@ class Simulation extends _$Simulation {
       return l;
     }).toList();
 
-    state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-    _syncIsolate();
+    Future.microtask(() {
+      if (!_disposed) {
+        state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+        _syncIsolate();
+      }
+    });
     return true;
   }
 
@@ -566,8 +597,12 @@ class Simulation extends _$Simulation {
     }
 
     if (changed) {
-      state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-      _syncIsolate();
+      Future.microtask(() {
+        if (!_disposed) {
+          state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+          _syncIsolate();
+        }
+      });
       return true;
     }
     return false;

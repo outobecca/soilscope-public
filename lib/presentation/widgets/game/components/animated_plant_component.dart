@@ -15,12 +15,8 @@ import 'scene_coordinate_mapper.dart';
 import 'molecule_particle_component.dart';
 import 'riverpod_lifecycle_mixin.dart';
 
-/// Animated plant component showing shoot and root dynamics.
-/// Anchors exactly to the root collar using [SceneCoordinateMapper].
-///
-/// FIX: Synchronizes stem and root collar world coordinates.
-/// Synchronizes stem and root collar world coordinates.
-/// Features high-fidelity tapered stem and organic root smoothing.
+/// Primary visual entity representing a dynamic plant system.
+/// Handles high-fidelity growth animations and biophysical interactions.
 class AnimatedPlantComponent extends PositionComponent
     with
         HasGameReference<SoilScopeGame>,
@@ -28,27 +24,7 @@ class AnimatedPlantComponent extends PositionComponent
         HoverCallbacks,
         RiverpodLifecycleMixin {
   final String plantId;
-  double _growthBoost = 0.0;
-  bool _isPinned = false;
   final math.Random _random = math.Random();
-
-  Plant? _plant;
-  bool _isRunning = false;
-  double _solarRadiation = 0.0;
-
-  final List<_RootTipGlow> _tipGlows = [];
-  final List<_ExudateParticle> _exudates = [];
-  final List<_RootFlowParticle> _rootFlows = [];
-  final List<_ShootFlowParticle> _shootFlows = [];
-  final List<_VaporParticle> _vapor = [];
-  double _vaporTimer = 0;
-  int _previousRootCount = 0;
-
-  static const int maxTipGlows = 25;
-  static const int maxExudates = 50;
-  static const int maxRootFlows = 40;
-  static const int maxShootFlows = 30;
-  static const int maxVaporParticles = 60;
 
   // Physiological Smoothing State
   double _smoothTurgor = 1.0;
@@ -56,6 +32,17 @@ class AnimatedPlantComponent extends PositionComponent
   double _smoothBiomass = 50.0;
   double _smoothAge = 0.0;
   double _senescence = 0.0; // 0 (fresh) to 1 (senescent/yellow)
+  double _solarRadiation = 800; // Average solar radiation in W/m^2
+  double _growthBoost = 0.0;
+  bool _isPinned = false;
+  Plant? _plant;
+  bool _isRunning = false;
+
+  final List<_RootTipGlow> _tipGlows = [];
+  double _vaporTimer = 0;
+  int _previousRootCount = 0;
+
+  static const int maxTipGlows = 25;
 
   int? _hoveredRootIndex;
   int? _pinnedRootIndex;
@@ -85,12 +72,6 @@ class AnimatedPlantComponent extends PositionComponent
     ..style = PaintingStyle.stroke
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
 
-
-  /// Returns current global world positions of root exudates for microbial chemotaxis.
-  List<Vector2> get exudateWorldPositions {
-    return _exudates.map((e) => Vector2(e.position.dx, e.position.dy)).toList();
-  }
-
   AnimatedPlantComponent({
     required this.plantId,
     super.position,
@@ -114,15 +95,14 @@ class AnimatedPlantComponent extends PositionComponent
 
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
-      final rawY = SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight);
       final nodeWorldPos = Vector2(
         SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) +
             soilX,
-        rawY,
+        SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
       );
-      final d = nodeWorldPos.distanceToSquared(startWorld);
-      if (d < minDist) {
-        minDist = d;
+      final dist = startWorld.distanceTo(nodeWorldPos);
+      if (dist < minDist) {
+        minDist = dist;
         nearest = node;
       }
     }
@@ -130,22 +110,14 @@ class AnimatedPlantComponent extends PositionComponent
     if (nearest == null) return null;
 
     final List<Vector2> path = [];
-
-    // 2. Build root path up to collar (node 0)
     RootNode? curr = nearest;
     while (curr != null) {
-      final rawY = SceneCoordinateMapper.mapRootY(curr.z, surfaceY, soilHeight);
-      path.add(
-        Vector2(
-          SceneCoordinateMapper.mapRootX(
-                curr.x,
-                worldWidth,
-                baseX: plant.baseX,
-              ) +
-              soilX,
-          rawY,
-        ),
+      final nodePos = Vector2(
+        SceneCoordinateMapper.mapRootX(curr.x, worldWidth, baseX: plant.baseX) +
+            soilX,
+        SceneCoordinateMapper.mapRootY(curr.z, surfaceY, soilHeight),
       );
+      path.add(nodePos);
       if (curr.parentIndex != null &&
           curr.parentIndex! < plant.rootSystem.length) {
         curr = plant.rootSystem[curr.parentIndex!];
@@ -162,10 +134,9 @@ class AnimatedPlantComponent extends PositionComponent
     final h = 450.0 * shootScale;
 
     // Stem Bezier points (local to collar)
-    final topX =
-        0.0; // math.sin(droop + sway) * h * 0.4; // Simplified for pathing
+    final topX = 0.0; 
     final topY = -h;
-    final cp1X = 0.0; // math.sin(droop + sway) * h * 0.1;
+    final cp1X = 0.0;
     final cp1Y = -h * 0.4;
     final cp2X = topX * 0.8;
     final cp2Y = topY * 0.7;
@@ -243,10 +214,10 @@ class AnimatedPlantComponent extends PositionComponent
       );
 
       if (hitboxIndex < _activeHitboxes.length) {
-        _tmpVec.setValues(localPos.dx, localPos.dy);
+        _tmpVec.setFrom(localPos);
         _activeHitboxes[hitboxIndex].position.setFrom(_tmpVec);
       } else {
-        _tmpVec.setValues(localPos.dx, localPos.dy);
+        _tmpVec.setFrom(localPos);
         final hb = CircleHitbox(
           radius: 6.0, // Reduced absorption reach
           position: _tmpVec.clone(),
@@ -272,18 +243,6 @@ class AnimatedPlantComponent extends PositionComponent
     // Enforce max counts
     while (_tipGlows.length > maxTipGlows) {
       _tipGlows.removeAt(0);
-    }
-    while (_exudates.length > maxExudates) {
-      _exudates.removeAt(0);
-    }
-    while (_rootFlows.length > maxRootFlows) {
-      _rootFlows.removeAt(0);
-    }
-    while (_shootFlows.length > maxShootFlows) {
-      _shootFlows.removeAt(0);
-    }
-    while (_vapor.length > maxVaporParticles) {
-      _vapor.removeAt(0);
     }
   }
 
@@ -343,10 +302,6 @@ class AnimatedPlantComponent extends PositionComponent
     _tipGlows.removeWhere((g) => g.isDone);
 
     _spawnExudates(plant, dt);
-    for (final ex in _exudates) {
-      ex.update(dt);
-    }
-    _exudates.removeWhere((e) => e.isDone);
 
     // Physiological Smoothing & Interpolation
     // We use a damping factor to make transitions (like wilting) feel organic
@@ -376,21 +331,7 @@ class AnimatedPlantComponent extends PositionComponent
     _spawnRootFlows(plant, dt);
     _spawnShootFlows(dt);
     _spawnNutrientMolecules(plant, dt);
-    for (final rf in _rootFlows) {
-      rf.update(dt);
-    }
-    _rootFlows.removeWhere((rf) => rf.isDone);
-
-    for (final sf in _shootFlows) {
-      sf.update(dt);
-    }
-    _shootFlows.removeWhere((sf) => sf.isDone);
-
     _spawnVapor(plant, dt);
-    for (final v in _vapor) {
-      v.update(dt);
-    }
-    _vapor.removeWhere((v) => v.isDone);
   }
 
   void _onNewRootGrowth(Plant plant) {
@@ -420,20 +361,16 @@ class AnimatedPlantComponent extends PositionComponent
 
     final state = game.simulationState!;
     if (state.profile.layers.isEmpty) return;
-    final layer = state.profile.layers.first;
-    // Photosynthesis efficiency and vitality drive the C-pumping rate
-    // We use the cached _solarRadiation for performance
     final solarFactor = (_solarRadiation / 1000.0).clamp(0.1, 1.0);
     final carbonAvailability =
         plant.stomatalConductance *
         (1.0 - plant.waterStressIndex).clamp(0.1, 1.0) *
         solarFactor;
-    final waterContent = layer.waterContent; // Drives diffusion/capillary reach
 
     // Release rate threshold based on carbon availability
     final spawnThreshold = 0.05 + carbonAvailability * 0.15;
 
-    if (_random.nextDouble() < spawnThreshold && _exudates.length < 25) {
+    if (_random.nextDouble() < spawnThreshold) {
       final nodes = plant.rootSystem;
       if (nodes.isEmpty) return;
 
@@ -452,40 +389,40 @@ class AnimatedPlantComponent extends PositionComponent
         game.soilColumnHeight,
       );
 
-      _exudates.add(
-        _ExudateParticle(
-          position: pos,
-          // Initial "burst" out of the root
-          velocity: Offset(
-            (_random.nextDouble() - 0.5) * 6,
-            _random.nextDouble() * 4,
-          ),
-          type: _random.nextDouble() < 0.6
-              ? _ExudateType.sugar
-              : _ExudateType.organicAcid,
-          waterContent: waterContent,
+      game.moleculePool?.spawn(
+        position: pos.clone(),
+        type: MoleculeType.labileCarbon,
+        velocity: Vector2(
+          (_random.nextDouble() - 0.5) * 10,
+          (_random.nextDouble() - 0.5) * 10 + 5,
         ),
+        lifeTime: 3.0,
       );
     }
   }
 
   void _spawnRootFlows(Plant plant, double dt) {
     // Phloem-driven carbon moving DOWN the roots
-    if (_random.nextDouble() < 0.15 && _rootFlows.length < 30) {
+    if (_random.nextDouble() < 0.15 * dt * 60) {
       final branches = _groupNodesIntoBranches(plant.rootSystem);
       if (branches.isEmpty) return;
 
       final branchList = branches.values.toList();
       final branch = branchList[_random.nextInt(branchList.length)];
+      
+      final List<Vector2> worldPath = branch.map((node) {
+        final rawY = SceneCoordinateMapper.mapRootY(node.z, game.soilSurfaceY, game.soilColumnHeight);
+        return Vector2(
+          SceneCoordinateMapper.mapRootX(node.x, SoilScopeGame.soilColumnWidth, baseX: plant.baseX) + game.soilLeftX,
+          rawY,
+        );
+      }).toList();
 
-      _rootFlows.add(
-        _RootFlowParticle(
-          branch: branch,
-          speed: 0.4 + _random.nextDouble() * 0.4,
-          type: _random.nextDouble() < 0.7
-              ? _ExudateType.sugar
-              : _ExudateType.organicAcid,
-        ),
+      game.moleculePool?.spawn(
+        position: worldPath.first,
+        type: MoleculeType.labileCarbon,
+        path: worldPath,
+        lifeTime: 8.0,
       );
     }
   }
@@ -638,9 +575,6 @@ class AnimatedPlantComponent extends PositionComponent
       );
       _drawRootPressure(canvas, plant.rootSystem, plant.baseX, turgor);
       _drawTipAnimations(canvas);
-      _drawExudates(canvas);
-      _drawRootFlows(canvas);
-      _drawVapor(canvas);
 
       _drawTaperedStem(
         canvas,
@@ -651,8 +585,6 @@ class AnimatedPlantComponent extends PositionComponent
         turgor,
         highlighted: inspectorType == 'Stem',
       );
-
-      _drawShootFlows(canvas, currentHeight, droopAngle, sway);
 
       // Branch and Leaf sync based on Side Roots
       final sideRootCount = plant.rootSystem
@@ -988,7 +920,7 @@ class AnimatedPlantComponent extends PositionComponent
         );
 
         canvas.drawCircle(
-          pos,
+          pos.toOffset(),
           8 / zoom,
           Paint()
             ..color = Colors.white.withValues(alpha: 0.3)
@@ -1200,7 +1132,7 @@ class AnimatedPlantComponent extends PositionComponent
     final soilHeight = game.soilColumnHeight;
     final time = game.currentTime();
 
-    Offset map(RootNode n, int index) =>
+    Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
     // --- 1. Identify taproot chain (the most vertical descendant at each node) ---
@@ -1242,8 +1174,8 @@ class AnimatedPlantComponent extends PositionComponent
           taprootNodeIndices.contains(i) &&
           taprootNodeIndices.contains(node.parentIndex!);
 
-      final o1 = map(parentNode, node.parentIndex!);
-      final o2 = map(node, i);
+      final o1 = map(parentNode, node.parentIndex!).toOffset();
+      final o2 = map(node, i).toOffset();
       final dx = o2.dx - o1.dx;
       final dy = o2.dy - o1.dy;
       final segLen = math.sqrt(dx * dx + dy * dy);
@@ -1467,7 +1399,7 @@ class AnimatedPlantComponent extends PositionComponent
     final pulseSpeed = 1.5 + vitality * 3.0;
     final pulse = 0.5 + 0.5 * math.sin(time * pulseSpeed);
 
-    Offset map(RootNode n, int index) =>
+    Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
     // Rhizosphere glow using multi-layered RadialGradients
@@ -1480,7 +1412,7 @@ class AnimatedPlantComponent extends PositionComponent
           vitality;
 
       if (activity > 0.1) {
-        final rPos = map(node, i);
+        final rPos = _mapRootToLocal(node, i, baseX, worldWidth, soilHeight).toOffset();
         // Reach depends on water content (capillary movement) - TIGHTENED for decluttering
         final reachBase = 12.0 + waterContent * 15.0; // Reduced from 22 + 25
 
@@ -1527,6 +1459,8 @@ class AnimatedPlantComponent extends PositionComponent
 
         canvas.drawCircle(rPos, glowRadius, radPaint);
 
+        canvas.drawCircle(rPos, 12 / zoom, Paint()..color = Colors.transparent);
+
         // 3. Enzymatic Mining Particles (Representing symbiosis/nutrient release)
         if (node.isTip && activity > 0.6 && i % 3 == 0) {
           _drawMiningParticles(canvas, rPos, time + i, activity);
@@ -1543,7 +1477,7 @@ class AnimatedPlantComponent extends PositionComponent
       final n = nodes[i];
       if (n.isTip) {
         canvas.drawCircle(
-          map(n, i),
+          map(n, i).toOffset(),
           (8 + pulse * 4) / zoom,
           tipPaint..color = tipPaint.color.withValues(alpha: 0.1),
         );
@@ -1598,14 +1532,14 @@ class AnimatedPlantComponent extends PositionComponent
 
     final rand = math.Random(42);
 
-    Offset map(RootNode n, int index) =>
+    Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
     for (int i = 0; i < nodes.length; i++) {
       final node = nodes[i];
       if (rand.nextDouble() > 0.3) continue; // Sparse crumbs
 
-      final pos = map(node, i);
+      final pos = map(node, i).toOffset();
       final size = (2.0 + rand.nextDouble() * 3.0) / zoom;
       final offset = Offset(
         (rand.nextDouble() - 0.5) * 12 / zoom,
@@ -1645,7 +1579,7 @@ class AnimatedPlantComponent extends PositionComponent
       ..strokeJoin = StrokeJoin.round
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, 20 / zoom);
 
-    Offset map(RootNode n, int index) =>
+    Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
     for (int i = 0; i < nodes.length; i++) {
@@ -1658,7 +1592,7 @@ class AnimatedPlantComponent extends PositionComponent
       final o1 = map(parentNode, node.parentIndex!);
       final o2 = map(node, i);
 
-      canvas.drawLine(o1, o2, shadowPaint..strokeWidth = 45 / zoom);
+      canvas.drawLine(o1.toOffset(), o2.toOffset(), shadowPaint..strokeWidth = 45 / zoom);
     }
   }
 
@@ -1675,7 +1609,7 @@ class AnimatedPlantComponent extends PositionComponent
     final time = game.currentTime();
 
     // Pulse traveling UP (from tip to collar)
-    final pulsePaint = Paint()
+    final pathPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -1683,7 +1617,7 @@ class AnimatedPlantComponent extends PositionComponent
 
     final branches = _groupNodesIntoBranches(nodes);
 
-    Offset map(RootNode n, int index) =>
+    Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
     for (final branch in branches.values) {
@@ -1692,17 +1626,17 @@ class AnimatedPlantComponent extends PositionComponent
       // Calculate pulse position along the branch (upward)
       final progress = (time * 0.8 + branch.hashCode % 10 / 10.0) % 1.0;
       final reversedProgress = 1.0 - progress;
-      final index = (reversedProgress * (branch.length - 1)).floor();
+      final i = (reversedProgress * (branch.length - 1)).floor();
 
-      if (index >= 0 && index < branch.length - 1) {
-        final start = map(branch[index], index);
-        final end = map(branch[index + 1], index + 1);
-        canvas.drawLine(start, end, pulsePaint..strokeWidth = 3.0 / zoom);
+      if (i > 0 && i < branch.length) {
+        final p1 = map(branch[i - 1], i - 1).toOffset();
+        final p2 = map(branch[i], i).toOffset();
+        canvas.drawLine(p1, p2, pathPaint..strokeWidth = 3.0 / zoom);
       }
     }
   }
 
-  Offset _mapRootToLocal(
+  Vector2 _mapRootToLocal(
     RootNode n,
     int index,
     double baseX,
@@ -1716,20 +1650,12 @@ class AnimatedPlantComponent extends PositionComponent
     final visualZ =
         n.z + math.cos(index * 0.67 + plantId.hashCode % 100) * 0.003;
 
-    // Return coordinates RELATIVE to the component's origin (the root collar at 0.5, 0.0)
-    // Horizontal spread: (visualX - 0.5) * worldWidth * _rootSpreadFactor (Standardized to 0.45)
-    // Vertical depth: visualZ * soilHeight
-    // CLAMP: Ensure local Z is always >= 0 to keep roots underground
     final p = _plantData;
     final collarNode = (p != null && p.rootSystem.isNotEmpty) ? p.rootSystem.first : null;
     final collarX = collarNode?.x ?? 0.5;
     final collarZ = collarNode?.z ?? 0.0;
 
-    // Return coordinates RELATIVE to the component's origin (the actual root collar)
-    // Horizontal spread: (visualX - collarX) * worldWidth * _rootSpreadFactor (Standardized to 0.45)
-    // Vertical depth: (visualZ - collarZ) * soilHeight
-    // CLAMP: Ensure local Z is always >= 0 to keep roots underground relative to collar
-    return Offset(
+    return Vector2(
       (visualX - collarX) * worldWidth * 0.45,
       ((visualZ - collarZ) * soilHeight).clamp(0.0, soilHeight).toDouble(),
     );
@@ -1767,7 +1693,7 @@ class AnimatedPlantComponent extends PositionComponent
         ..strokeWidth = 1.0 / zoom;
 
       canvas.drawCircle(
-        glow.position,
+        glow.position.toOffset(),
         (3 + progress * 12) / zoom,
         ringPaint,
       ); // Reduced radius
@@ -1777,115 +1703,31 @@ class AnimatedPlantComponent extends PositionComponent
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom);
 
       canvas.drawCircle(
-        glow.position,
+        glow.position.toOffset(),
         (3 + glow.pulse * 1.5) / zoom,
         corePaint,
       ); // Reduced radius
     }
   }
 
-  void _drawExudates(Canvas canvas) {
-    final zoom = game.camera.viewfinder.zoom;
-    for (final ex in _exudates) {
-      final color = ex.type == _ExudateType.sugar ? Colors.amber : Colors.lime;
-      canvas.drawCircle(
-        ex.position,
-        (ex.radius * 0.8) / zoom,
-        Paint()..color = color.withValues(alpha: ex.alpha * 0.5),
-      );
-    }
-  }
-
-  void _drawRootFlows(Canvas canvas) {
-    final zoom = game.camera.viewfinder.zoom;
-    final worldWidth = SoilScopeGame.soilColumnWidth;
-    final soilHeight = game.soilColumnHeight;
-    final plant = _plantData;
-    if (plant == null) return;
-
-    for (final rf in _rootFlows) {
-      // Find position along the branch
-      final int nodes = rf.branch.length;
-      final double exactIndex = rf.progress * (nodes - 1);
-      final int i1 = exactIndex.floor();
-      final int i2 = (i1 + 1).clamp(0, nodes - 1);
-      final double t = exactIndex - i1;
-
-      final p1 = _mapRootToLocal(
-        rf.branch[i1],
-        i1,
-        plant.baseX,
-        worldWidth,
-        soilHeight,
-      );
-      final p2 = _mapRootToLocal(
-        rf.branch[i2],
-        i2,
-        plant.baseX,
-        worldWidth,
-        soilHeight,
-      );
-
-      final pos = Offset(
-        p1.dx + (p2.dx - p1.dx) * t,
-        p1.dy + (p2.dy - p1.dy) * t,
-      );
-
-      final color = rf.type == _ExudateType.sugar ? Colors.amber : Colors.lime;
-      canvas.drawCircle(
-        pos,
-        2.5 / zoom,
-        Paint()
-          ..color = color.withValues(alpha: rf.alpha * 0.8)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom),
-      );
-    }
-  }
-
-  void _drawVapor(Canvas canvas) {
-    final zoom = game.camera.viewfinder.zoom;
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 / zoom);
-
-    for (final v in _vapor) {
-      canvas.drawCircle(
-        v.position,
-        (4.0 * v.alpha) / zoom,
-        paint..color = Colors.white.withValues(alpha: v.alpha * 0.15),
-      );
-    }
-  }
-
-  void _drawShootFlows(Canvas canvas, double h, double droop, double sway) {
-    final zoom = game.camera.viewfinder.zoom;
-    final topX = math.sin(droop + sway) * h * 0.4;
-    final topY = -h;
-    final cp1X = math.sin(droop + sway) * h * 0.1;
-    final cp1Y = -h * 0.4;
-    final cp2X = topX * 0.8;
-    final cp2Y = topY * 0.7;
-
-    for (final sf in _shootFlows) {
-      final currentX = _cubicBezier(0, cp1X, cp2X, topX, sf.progress);
-      final currentY = _cubicBezier(0, cp1Y, cp2Y, topY, sf.progress);
-      final pos = Offset(currentX, currentY);
-
-      canvas.drawCircle(
-        pos,
-        3.0 / zoom,
-        Paint()
-          ..color = const Color(0xFF3B82F6)
-              .withValues(alpha: sf.alpha * 0.8) // Blue for Ammonium (N)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom),
-      );
-    }
-  }
-
   void _spawnShootFlows(double dt) {
-    if (_random.nextDouble() < 0.20 && _shootFlows.length < 25) {
-      _shootFlows.add(
-        _ShootFlowParticle(speed: 0.3 + _random.nextDouble() * 0.4),
+    // Xylem flow moving UP to leaves
+    if (_random.nextDouble() < 0.1 * dt * 60) {
+       final shootPos = SceneCoordinateMapper.mapShootPosition(
+        _plantData?.baseX ?? 0.5,
+        SoilScopeGame.soilColumnWidth,
+        game.soilSurfaceY,
+      );
+      shootPos.x += game.soilLeftX;
+      
+      final visualHeight = SceneCoordinateMapper.plantVisualHeight(_plantData!);
+      final targetY = game.soilSurfaceY - visualHeight * 0.8;
+      
+      game.moleculePool?.spawn(
+        position: shootPos,
+        type: MoleculeType.water,
+        targetPosition: Vector2(shootPos.x + (_random.nextDouble() - 0.5) * 40, targetY),
+        lifeTime: 4.0,
       );
     }
   }
@@ -1910,14 +1752,14 @@ class AnimatedPlantComponent extends PositionComponent
       final x = math.sin(angle) * 30 * shootScale;
       final y = -currentHeight * (0.3 + _random.nextDouble() * 0.6);
 
-      _vapor.add(
-        _VaporParticle(
-          position: Offset(x, y),
-          velocity: Offset(
-            (_random.nextDouble() - 0.5) * 10,
-            -20 - _random.nextDouble() * 30,
-          ),
+      game.moleculePool?.spawn(
+        position: position + Vector2(x, y),
+        type: MoleculeType.water,
+        velocity: Vector2(
+          (_random.nextDouble() - 0.5) * 10,
+          -20 - _random.nextDouble() * 30,
         ),
+        lifeTime: 1.5,
       );
     }
   }
@@ -2119,7 +1961,7 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (point.distanceTo(Vector2(pos.dx, pos.dy)) < 24.0) return true;
+      if (point.distanceTo(pos) < 24.0) return true;
     }
     return false;
   }
@@ -2129,7 +1971,7 @@ class AnimatedPlantComponent extends PositionComponent
     final plant = _plantData;
     if (plant == null) return;
 
-    final localPos = event.localPosition.toOffset();
+    final localPos = event.localPosition;
 
     // Update root hovering index
     _hoveredRootIndex = null;
@@ -2142,7 +1984,7 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if ((localPos - pos).distance < 24.0) {
+      if (localPos.distanceTo(pos) < 24.0) {
         _hoveredRootIndex = i;
         if (!isHovered) _showPlantInfo(pinned: false);
         return;
@@ -2158,7 +2000,7 @@ class AnimatedPlantComponent extends PositionComponent
     final plant = _plantData;
     if (plant == null) return;
 
-    final localPos = event.localPosition.toOffset();
+    final localPos = event.localPosition;
 
     // Check for root node selection (increased radius)
     for (int i = 0; i < plant.rootSystem.length; i++) {
@@ -2170,11 +2012,13 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if ((localPos - pos).distance < 24.0) {
+      if (localPos.distanceTo(pos) < 24.0) {
         _pinnedRootIndex = i;
+        final info = _getRootInfo(node, plant);
+        info['screenPosition'] = game.worldToScreen(absolutePositionOf(pos)).toOffset();
         game.ref
             .read(uIStateProvider.notifier)
-            .showInfo(_getRootInfo(node, plant));
+            .showInfo(info);
         return;
       }
     }
@@ -2184,11 +2028,11 @@ class AnimatedPlantComponent extends PositionComponent
     _showPlantInfo(pinned: _isPinned);
 
     if (_isPinned) {
-      final isShoot = localPos.dy < 0;
+      final isShoot = localPos.y < 0;
       if (isShoot) {
         game.ref
             .read(simulationSessionProvider.notifier)
-            .selectInspector(localPos.dy < -100 ? 'leaf' : 'stem');
+            .selectInspector(localPos.y < -100 ? 'leaf' : 'stem');
       } else {
         game.ref
             .read(simulationSessionProvider.notifier)
@@ -2214,16 +2058,18 @@ class AnimatedPlantComponent extends PositionComponent
   }
 
   Map<String, dynamic> _getRootInfo(RootNode node, Plant plant) {
+    final l = game.l10n;
     final isTap = node.parentIndex == null;
     return {
       'title': isTap
-          ? ' Carrot Taproot'.toUpperCase()
-          : ' Fine Root'.toUpperCase(),
-      'description': "Root structure absorbing water and nutrients.",
+          ? l.carrotTaprootTitle.toUpperCase()
+          : l.fineRootTitle.toUpperCase(),
+      'description': l.rootStructureDesc,
       'stats': {
-        'Depth': '${(node.z * 100).toStringAsFixed(1)} cm',
-        'Radius': '${(node.radius * 1000).toStringAsFixed(2)} mm',
+        l.depthLabel: '${(node.z * 100).toStringAsFixed(1)} cm',
+        l.radiusLabel: '${(node.radius * 1000).toStringAsFixed(2)} mm',
       },
+      'accentColor': const Color(0xFF10B981), // Emerald
     };
   }
 
@@ -2242,110 +2088,22 @@ class AnimatedPlantComponent extends PositionComponent
               l.heightLabel: '${(plant.height * 100).toStringAsFixed(1)} cm',
               l.turgorPressure:
                   '${(plant.turgorPressure * 100).toStringAsFixed(0)}%',
-              'Biomass': '${plant.totalBiomass.toStringAsFixed(1)} mg',
+              l.biomassLabel: '${plant.totalBiomass.toStringAsFixed(1)} mg',
             },
             isPinned: pinned,
+            accentColor: const Color(0xFF10B981), // Emerald
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }
 }
 
 class _RootTipGlow {
-  final Offset position;
+  final Vector2 position;
   double life = 0;
   _RootTipGlow({required this.position});
   void update(double dt) => life += dt;
   double get alpha => (1.0 - life / 2.0).clamp(0.0, 1.0);
   double get pulse => math.sin(life * 6);
   bool get isDone => life > 2.0;
-}
-
-enum _ExudateType { sugar, organicAcid }
-
-class _ExudateParticle {
-  Offset position;
-  Offset velocity;
-  final _ExudateType type;
-  final double waterContent;
-  double life = 0;
-  final math.Random _random = math.Random();
-
-  _ExudateParticle({
-    required this.position,
-    required this.velocity,
-    required this.type,
-    this.waterContent = 0.2,
-  });
-  void update(double dt) {
-    life += dt;
-
-    // Fick's Law simulation: Random walk diffusion + capillary bias
-    // Diffusion is higher in wetter soil
-    final diffusionStrength = 5.0 + waterContent * 15.0;
-    final diffusion = Offset(
-      (_random.nextDouble() - 0.5) * diffusionStrength,
-      (_random.nextDouble() - 0.5) * diffusionStrength,
-    );
-
-    // Gravity and capillary downward bias
-    final gravityBias = Offset(0, 8.0 * waterContent);
-
-    position += (velocity + diffusion + gravityBias) * dt;
-
-    // Dampen initial velocity (dissolution into matrix)
-    velocity *= 0.95;
-  }
-
-  double get alpha => (1.0 - life / 3.0).clamp(0.0, 1.0);
-  double get radius => type == _ExudateType.sugar ? 2.5 : 2.0;
-  bool get isDone => life > 3.0;
-}
-
-class _VaporParticle {
-  Offset position;
-  Offset velocity;
-  double life = 0;
-  _VaporParticle({required this.position, required this.velocity});
-  void update(double dt) {
-    life += dt;
-    position += velocity * dt;
-    velocity = Offset(velocity.dx * 0.95, velocity.dy - 10 * dt);
-  }
-
-  double get alpha => (1.0 - life / 1.5).clamp(0.0, 1.0);
-  bool get isDone => life > 1.5;
-}
-
-class _RootFlowParticle {
-  final List<RootNode> branch;
-  final double speed;
-  final _ExudateType type;
-  double progress = 0;
-
-  _RootFlowParticle({
-    required this.branch,
-    required this.speed,
-    required this.type,
-  });
-
-  void update(double dt) {
-    progress += dt * speed;
-  }
-
-  double get alpha => (1.0 - progress).clamp(0.0, 1.0);
-  bool get isDone => progress >= 1.0;
-}
-
-class _ShootFlowParticle {
-  final double speed;
-  double progress = 0;
-
-  _ShootFlowParticle({required this.speed});
-
-  void update(double dt) {
-    progress += dt * speed;
-  }
-
-  double get alpha => (1.0 - progress).clamp(0.0, 1.0);
-  bool get isDone => progress >= 1.0;
 }

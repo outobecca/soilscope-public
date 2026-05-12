@@ -77,10 +77,11 @@ class NitrousOxideBubbleComponent extends Component
 
   @override
   void onHoverEnter() {
+    final l = game.l10n;
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
-        title: "N₂O EMISSIONS",
-        description: "Nitrous oxide gas escaping the soil through denitrification in anaerobic (waterlogged) conditions.",
+        title: l.moleculeNitrousOxideTitle,
+        description: l.moleculeNitrousOxideDesc,
         accentColor: Colors.pinkAccent,
       ),
     );

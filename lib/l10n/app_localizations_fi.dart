@@ -584,7 +584,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get co2Label => 'CO2';
 
   @override
-  String get vpdLabel => 'VPD:';
+  String get vpdLabel => 'VPD (Höyrynpaine-alijäämä)';
 
   @override
   String get physical => 'Fysikaalinen';
@@ -673,7 +673,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get transformationDesc => 'NH₄⁺ ➔ NO₃⁻ transformaatio';
 
   @override
-  String get denitrificationDesc => 'N₂O hävikki (Anaerobinen)';
+  String get denitrificationDesc => 'Nitraatin pelkistyminen kaasumaiseksi typeksi (N₂O, N₂) hapettomissa olosuhteissa.';
 
   @override
   String get active => 'Aktiivinen';
@@ -1040,7 +1040,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get upward => 'Ylöspäin';
 
   @override
-  String get intoRoot => 'Juureen';
+  String get intoRoot => 'Ilmakehä → Maa';
 
   @override
   String get intoLeaves => 'Lehtiin';
@@ -1121,7 +1121,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get anaerobiosisWaterlogging => 'Anaerobioosi märkyydessä';
 
   @override
-  String get microbialRespiration => 'Mikrobien hengitys';
+  String get microbialRespiration => 'Mikrobihengitys';
 
   @override
   String get soilBiologicalActivity => 'Maan biologinen aktiivisuus';
@@ -1175,7 +1175,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get topsoilHorizon => 'Ruokamulta';
 
   @override
-  String get subsoilHorizon => 'Jankko';
+  String get subsoilHorizon => 'Maa → Ilmakehä';
 
   @override
   String get parentMaterialHorizon => 'Pohjamaa';
@@ -1412,19 +1412,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get bubbleN2oDescription => 'Typpioksiduulia vapautuu, kun denitrifikaatiobakteerit pelkistävät nitraattia hapettomissa olosuhteissa. Tätä tapahtuu erityisesti vettyneessä maassa. N2O on voimakas kasvihuonekaasu (298x CO2) - merkki ongelmasta!';
 
   @override
-  String get ionNitrateDescription => 'Nitraatti on kasveille tärkein typen muoto. Se liikkuu helposti maaveden mukana ja on siksi altis huuhtoutumiselle. Liiallinen kastelu tai kova sade voi pestä nitraatin pohjaveteen - aiheuttaen vesistöjen rehevöitymistä.';
+  String get ionNitrateDescription => 'Negatiivisesti varautunut, erittäin liikkuva typpi-ioni. Nitraatti liikkuu veden mukana ja voi huuhtoutua tai poistua kaasuna.';
 
   @override
-  String get ionPhosphateDescription => 'Fosfaatti on ATP:n ja DNA:n rakennusaine. Se sitoutuu voimakkaasti rautaan, alumiiniin ja kalsiumiin, joten sen liikkuvuus on heikko. Mykoritsasienet auttavat kasvia fosfaatin hankinnassa.';
+  String get ionPhosphateDescription => 'Negatiivisesti varautunut fosfori-ioni. Välttämätön energialle (ATP), mutta liikkuu maassa erittäin hitaasti vahvan sitoutumisen vuoksi.';
 
   @override
-  String get ionPotassiumDescription => 'Kalium säätelee ilmarakojen avautumista ja kasvin vesitasapainoa. Se sitoutuu savimineraalien väliin (CEC) ja vapautuu ionivaihdon kautta. Korkea kaliumtaso voi häiritä magnesiumin ottoa.';
+  String get ionPotassiumDescription => 'Positiivinen ioni, joka säätelee kasvin vesitasapainoa ja ilmarakoja. Pysyy maassa kationinvaihtokapasiteetin (CEC) avulla.';
 
   @override
-  String get ionCalciumDescription => 'Kalsium on soluseinien pektiinin sidosaine ja toimii viestimolekyylinä. Se ei liiku kasvissa uudelleen, joten nuoret kasvinosat tarvitsevat jatkuvaa saantia. Kalkitus nostaa maan pH:ta.';
+  String get ionCalciumDescription => 'Keskeinen soluseinien vakaudelle ja viestinnälle. Liikkuu hitaasti veden virtauksen mukana.';
 
   @override
-  String get ionMagnesiumDescription => 'Magnesium on lehtivihreän keskusatomi - ilman sitä ei ole fotosynteesiä! Se liikkuu hyvin kasvissa ja siirtyy vanhoista lehdistä nuoriin tarpeen mukaan. Korkea kaliumtaso voi häiritä magnesiumin ottoa.';
+  String get ionMagnesiumDescription => 'Lehtivihreämolekyylin keskusosa. Elintärkeä fotosynteesille.';
 
   @override
   String get bacteriaDescription => 'Maaperän bakteerit ovat nopeimpia hajottajia ja ravinteiden kierron moottoreita. Ne toimivat juurten lähellä (ritsosfääri), hajottavat orgaanista ainesta ja vapauttavat ravinteita kasveille. Nitrifikaatiobakteerit muuttavat ammoniumin nitraatiksi.';
@@ -1541,13 +1541,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get mineralizationTitle => 'Mineralisaatio';
 
   @override
-  String get mineralizationDesc => 'Mikrobit hajottavat orgaanista ainesta ja vapauttavat ravinteita (N, P, S) maaliuokseen.';
+  String get mineralizationDesc => 'Orgaanisen aineen muuntuminen kasveille käyttökelpoisiksi epäorgaanisiksi ravinteiksi.';
 
   @override
   String get nitrificationTitle => 'Nitrifikaatio';
 
   @override
-  String get nitrificationDesc => 'Kaksivaiheinen hapetusreaktio: ammoniakki → nitriitti → nitraatti. Vaatii aerobiset olot.';
+  String get nitrificationDesc => 'Ammoniumtypen muuntuminen nitraatiksi erikoistuneiden bakteerien toimesta.';
 
   @override
   String get denitrificationTitle => 'Denitrifikaatio';
@@ -1556,7 +1556,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get adsorptionTitle => 'Adsorptio';
 
   @override
-  String get adsorptionDesc => 'Ravinteet tarttuvat maapartikkelien (savi, humus) pinnoille sähköisillä voimilla.';
+  String get adsorptionDesc => 'Ravinteiden sitoutuminen maahiukkasten pinnoille (esim. kationinvaihtokapasiteetti CEC).';
 
   @override
   String get desorptionTitle => 'Desorptio';
@@ -1568,31 +1568,31 @@ class AppLocalizationsFi extends AppLocalizations {
   String get ionNitrateTitle => 'NITRAATTI (NO₃⁻)';
 
   @override
-  String get ionNitrateName => 'NO₃⁻ (nitraatti)';
+  String get ionNitrateName => 'Nitraatti';
 
   @override
   String get ionPhosphateTitle => 'FOSFAATTI (H₂PO₄⁻)';
 
   @override
-  String get ionPhosphateName => 'H₂PO₄⁻ / HPO₄²⁻';
+  String get ionPhosphateName => 'Fosfaatti';
 
   @override
   String get ionPotassiumTitle => 'KALIUM (K⁺)';
 
   @override
-  String get ionPotassiumName => 'K⁺ (kalium)';
+  String get ionPotassiumName => 'Kalium';
 
   @override
   String get ionCalciumTitle => 'KALSIUM (Ca²⁺)';
 
   @override
-  String get ionCalciumName => 'Ca²⁺ (kalsium)';
+  String get ionCalciumName => 'Kalsium';
 
   @override
   String get ionMagnesiumTitle => 'MAGNESIUM (Mg²⁺)';
 
   @override
-  String get ionMagnesiumName => 'Mg²⁺ (magnesium)';
+  String get ionMagnesiumName => 'Magnesium';
 
   @override
   String negativeCharge(String value) {
@@ -2350,6 +2350,111 @@ class AppLocalizationsFi extends AppLocalizations {
   String get moleculeCO2Desc => 'Mikrobien ja juurten hengityksen lopputuote. Korkea CO2-taso maassa kertoo aktiivisesta biologiasta.';
 
   @override
+  String get moleculeOrganicNitrogenTitle => 'ORGAANINEN TYPPI (N_org)';
+
+  @override
+  String get moleculeOrganicNitrogenDesc => 'Orgaaniseen aineeseen, kuten proteiineihin, sitoutunut typpi. Mikrobien on mineralisoitava se ammoniumiksi ennen kuin kasvit voivat käyttää sitä.';
+
+  @override
+  String get moleculeNitrousOxideTitle => 'DITYPPIOKSIDI (N₂O)';
+
+  @override
+  String get moleculeNitrousOxideDesc => 'Voimakas kasvihuonekaasu, jota mikrobit tuottavat märässä, hapettomassa maassa. Sillä on n. 300-kertainen lämmitysvaikutus hiilidioksidiin verrattuna.';
+
+  @override
+  String get moleculeMethaneTitle => 'METAANI (CH₄)';
+
+  @override
+  String get moleculeMethaneDesc => 'Kaasu, jota syntyy hapettomissa oloissa. Merkittävä ilmastovaikutus.';
+
+  @override
+  String get moleculeWaterVaporTitle => 'VESIHÖYRY (H₂O_g)';
+
+  @override
+  String get moleculeWaterVaporDesc => 'Kaasumainen vesi, joka poistuu maasta haihdunnan tai kasvin transpiraation kautta.';
+
+  @override
+  String get microbialClusterTitle => 'MIKROBIKESKTYMÄ';
+
+  @override
+  String get microbialClusterDesc => 'Edustaa maaperän mikrobien tiheää pesäkettä, joka suorittaa biokemiallista hajotusta.';
+
+  @override
+  String get carrotTaprootTitle => 'PORKKANAN PÄÄJUURI';
+
+  @override
+  String get fineRootTitle => 'HIENOJUURI';
+
+  @override
+  String get rootStructureDesc => 'Juuren rakenne, joka ottaa vettä ja ravinteita.';
+
+  @override
+  String get mobilityVeryGood => 'Erittäin hyvä';
+
+  @override
+  String get mobilityGood => 'Hyvä';
+
+  @override
+  String get mobilityModerate => 'Kohtalainen';
+
+  @override
+  String get mobilityWeak => 'Heikko';
+
+  @override
+  String get mobilityVeryWeak => 'Erittäin heikko';
+
+  @override
+  String get mobilitySlow => 'Hidas';
+
+  @override
+  String get simulatedUnits => 'Simuloidut yksiköt';
+
+  @override
+  String get metabolicActivity => 'Metabolinen aktiivisuus';
+
+  @override
+  String get biomassDensity => 'Biomassan tiheys';
+
+  @override
+  String get immobilizedNutrients => 'Sitoutuneet ravinteet';
+
+  @override
+  String get gwpLabel => 'Ilmaston lämmitysvaikutus (GWP)';
+
+  @override
+  String get methanogenesis => 'Metanogeneesi';
+
+  @override
+  String get biomassLabel => 'Biomassa';
+
+  @override
+  String get depthLabel => 'Syvyys';
+
+  @override
+  String get radiusLabel => 'Säde';
+
+  @override
+  String get co2UptakeTitle => 'CO₂-OTTO';
+
+  @override
+  String get n2oEmissionTitle => 'N₂O-PÄÄSTÖ';
+
+  @override
+  String get o2DiffusionTitle => 'O₂-DIFFUUSIO';
+
+  @override
+  String get sugarCompound => 'Sokeri (C6H12O6)';
+
+  @override
+  String get nitrogenLossDenit => 'Typpihävikki denitrifikaation kautta';
+
+  @override
+  String get liquid => 'Neste';
+
+  @override
+  String get greenhouseGas => 'Kasvihuonekaasu';
+
+  @override
   String get temperatureLabel => 'Lämpötila';
 
   @override
@@ -2801,9 +2906,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get nutrientAvailability => 'Ravinteiden saatavuus';
 
   @override
-  String get greenhouseGas => 'Kasvihuonekaasu';
-
-  @override
   String get highDivision => 'Nopea jakautuminen';
 
   @override
@@ -2823,9 +2925,6 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get c3Pathway => 'C3-reitti';
-
-  @override
-  String get sugarCompound => 'Sokeri (C6H12O6)';
 
   @override
   String get organicPoolLabel => 'Orgaaninen pooli';
@@ -2915,18 +3014,6 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get significanceLabel => 'Merkitys';
-
-  @override
-  String get co2UptakeTitle => 'CO₂-OTTO';
-
-  @override
-  String get o2DiffusionTitle => 'O₂-DIFFUUSIO';
-
-  @override
-  String get n2oEmissionTitle => 'N₂O-PÄÄSTÖ';
-
-  @override
-  String get nitrogenLossDenit => 'Typpihävikki denitrifikaation kautta';
 
   @override
   String get riskLabel => 'Riski';

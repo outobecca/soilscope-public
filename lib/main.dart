@@ -21,6 +21,7 @@ import 'core/app_theme.dart';
 import 'presentation/widgets/game/flutter_quick_actions.dart';
 import 'presentation/widgets/gamification_bar.dart';
 import 'presentation/providers/simulation_session_provider.dart';
+import 'presentation/providers/ui_state_provider.dart';
 
 void main() {
   runApp(const ProviderScope(child: SoilScopeApp()));
@@ -73,6 +74,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenWidth = MediaQuery.of(context).size.width;
+      if (screenWidth >= 1024) { // Desktop/Tablet
+        setState(() => _isLeftSidebarOpen = true);
+      }
       _initSimulation();
     });
   }
@@ -287,10 +292,14 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // 1. FULL SCREEN SIMULATION
-          const Positioned.fill(child: FlameSimulationView()),
+      body: MouseRegion(
+        onHover: (event) {
+          ref.read(uIStateProvider.notifier).updateScreenPosition(event.position);
+        },
+        child: Stack(
+          children: [
+            // 1. FULL SCREEN SIMULATION
+            const Positioned.fill(child: FlameSimulationView()),
 
           // 2. TOP BAR (MISSION & SIDEBAR TOGGLES)
           Positioned(
@@ -375,10 +384,25 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           ),
 
           // 6. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)
-          Positioned(
-            right: (_isRightSidebarOpen && !isMobile) ? 340 : 20,
-            top: 140,
-            child: SafeArea(child: HoverTooltip()),
+          Consumer(
+            builder: (context, ref, child) {
+              final info = ref.watch(uIStateProvider);
+              if (info == null) return const SizedBox.shrink();
+
+              if (!info.isPinned && info.screenPosition != null) {
+                return Positioned(
+                  left: info.screenPosition!.dx + 20,
+                  top: info.screenPosition!.dy + 20,
+                  child: const HoverTooltip(),
+                );
+              }
+
+              return Positioned(
+                right: (_isRightSidebarOpen && !isMobile) ? 340 : 20,
+                top: 140,
+                child: const SafeArea(child: HoverTooltip()),
+              );
+            },
           ),
 
           // 7. TUTORIAL OVERLAY
@@ -403,6 +427,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

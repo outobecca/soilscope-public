@@ -6,17 +6,17 @@ import '../soil_scope_game.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
-import 'process_magnifier.dart';
+import 'process_magnifier_component.dart';
 
 
-class InspectionTarget extends PositionComponent
+class InspectionTargetComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks {
   final MagnifierType type;
-  final ProcessMagnifier magnifier;
+  final ProcessMagnifierComponent magnifier;
   double opacity = 1.0;
   bool _isPinned = false;
 
-  InspectionTarget({
+  InspectionTargetComponent({
     required this.type,
     required this.magnifier,
     required Vector2 position,
@@ -185,6 +185,8 @@ class InspectionTarget extends PositionComponent
             description: desc,
             stats: stats,
             isPinned: pinned,
+            accentColor: Colors.cyanAccent,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

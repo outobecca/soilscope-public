@@ -151,12 +151,14 @@ class SimulationIsolateManager {
   final StreamController<BiophysicalState> _stateController =
       StreamController<BiophysicalState>.broadcast();
   Stream<BiophysicalState> get stateStream => _stateController.stream;
+  bool _initialized = false;
 
   Future<void> init() async {
-    if (kIsWeb) {
-      debugPrint('SimulationIsolateManager: Running in Web Mode (Main Thread)');
+    if (kIsWeb || _initialized) {
+      if (kIsWeb) debugPrint('SimulationIsolateManager: Running in Web Mode (Main Thread)');
       return;
     }
+    _initialized = true;
 
     _receivePort = ReceivePort();
     _isolate = await Isolate.spawn(simulationIsolateEntry, _receivePort!.sendPort);
@@ -169,7 +171,9 @@ class SimulationIsolateManager {
         }
         _pendingCommands.clear();
       } else if (message is BiophysicalState) {
-        _stateController.add(message);
+        if (!_stateController.isClosed) {
+          _stateController.add(message);
+        }
       }
     });
   }
@@ -194,13 +198,19 @@ class SimulationIsolateManager {
         try {
           final nextState = await compute(_webTickWrapper, (_currentState!, dt, _precipitation));
           _currentState = nextState;
-          _stateController.add(_currentState!);
+          if (!_stateController.isClosed) {
+            _stateController.add(_currentState!);
+          }
         } catch (e) {
           debugPrint('Error in web simulation tick: $e');
           await Future.delayed(Duration.zero);
           final nextState = SimulationEngine.tick(_currentState!, dt, precipitation: _precipitation);
           _currentState = _sanitizeState(nextState);
-          _stateController.add(_currentState!);
+          Future.microtask(() {
+            if (!_stateController.isClosed) {
+              _stateController.add(_currentState!);
+            }
+          });
         }
       }
       await Future.delayed(const Duration(milliseconds: 200));

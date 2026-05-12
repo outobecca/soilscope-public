@@ -3,15 +3,15 @@ import 'package:flame/components.dart';
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../domain/models/plant.dart';
-import 'inspection_target.dart';
+import 'inspection_target_component.dart';
 import 'magnifier_group_component.dart';
-import 'process_magnifier.dart';
+import 'process_magnifier_component.dart';
 import 'scene_coordinate_mapper.dart';
 
 /// Sub-layer responsible for managing the positions of logical Inspection Targets.
 class InspectionTargetLayerComponent extends Component
     with HasGameReference<SoilScopeGame> {
-  final List<InspectionTarget> _inspectionTargets = [];
+  final List<InspectionTargetComponent> _inspectionTargets = [];
   bool _inspectorInitialized = false;
 
   void updateState(BiophysicalState state) {
@@ -29,7 +29,7 @@ class InspectionTargetLayerComponent extends Component
     for (final type in MagnifierType.values) {
       final magnifier = magnifierGroup.getMagnifier(type);
       if (magnifier != null) {
-        final target = InspectionTarget(
+        final target = InspectionTargetComponent(
           type: type,
           magnifier: magnifier,
           position: Vector2.zero(),

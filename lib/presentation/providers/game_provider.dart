@@ -8,5 +8,9 @@ class SoilScopeGameProvider extends _$SoilScopeGameProvider {
   @override
   SoilScopeGame? build() => null;
 
-  void setGame(SoilScopeGame? game) => state = game;
+  void setGame(SoilScopeGame? game) {
+    Future.microtask(() {
+      state = game;
+    });
+  }
 }

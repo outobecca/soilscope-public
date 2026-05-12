@@ -244,6 +244,9 @@ class IonComponent extends PositionComponent
             formula: info['formula'] as String?,
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
+            accentColor: CPKStandards.getColor(symbol),
+            elementSymbol: symbol,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }
