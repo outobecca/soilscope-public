@@ -363,9 +363,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
 
     if (l10n == null) {
+      debugPrint('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    debugPrint('[MainSimulationScreen] build: Rendering MAIN UI (Scaffold)');
     return Scaffold(
       body: MouseRegion(
         onHover: (event) {

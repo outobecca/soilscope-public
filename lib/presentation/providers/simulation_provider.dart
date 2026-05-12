@@ -282,7 +282,7 @@ class Simulation extends _$Simulation {
     
     // Set initializing to false after setup is complete and we are ready for commands
     state = state.copyWith(isInitializing: false);
-    debugPrint('[SimulationProvider] _initIsolate finished');
+    debugPrint('[SimulationProvider] _initIsolate finished: isInitializing=${state.isInitializing}');
   }
 
   /// Merges background simulation results with current Control state.
