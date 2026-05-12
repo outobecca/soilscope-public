@@ -1,4 +1,4 @@
-import 'package:flame_riverpod/flame_riverpod.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'game/soil_scope_game.dart';
@@ -16,20 +16,23 @@ class FlameSimulationView extends ConsumerStatefulWidget {
 
 class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   late SoilScopeGame _game;
-  final _gameKey = GlobalKey<RiverpodAwareGameWidgetState<SoilScopeGame>>();
 
   @override
   void initState() {
     super.initState();
+    debugPrint('[FlameSimulationView] initState: Creating SoilScopeGame');
     _game = SoilScopeGame();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('[FlameSimulationView] PostFrameCallback: Registering game in soilScopeGameProviderProvider');
       ref.read(soilScopeGameProviderProvider.notifier).setGame(_game);
+      debugPrint('[FlameSimulationView] PostFrameCallback: Calling onGameReady');
       widget.onGameReady?.call(_game);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return RiverpodAwareGameWidget(key: _gameKey, game: _game);
+    debugPrint('[FlameSimulationView] build: Returning GameWidget');
+    return GameWidget(game: _game);
   }
 }

@@ -192,8 +192,10 @@ class SimulationIsolateManager {
   }
 
   void _runWebLoop() async {
+    debugPrint('[SimulationIsolateManager] _runWebLoop: starting loop');
     while (_isWebRunning) {
       if (_currentState != null) {
+        debugPrint('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
           final nextState = await compute(_webTickWrapper, (_currentState!, dt, _precipitation));
@@ -213,8 +215,12 @@ class SimulationIsolateManager {
           });
         }
       }
+      if (_currentState == null) {
+        debugPrint('[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...');
+      }
       await Future.delayed(const Duration(milliseconds: 200));
     }
+    debugPrint('[SimulationIsolateManager] _runWebLoop: loop EXITED');
   }
 
   void _processWebCommand(SimulationCommand cmd) {

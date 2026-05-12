@@ -25,6 +25,7 @@ _BiophysicalState _$BiophysicalStateFromJson(Map<String, dynamic> json) =>
       timeScale: (json['timeScale'] as num?)?.toDouble() ?? 1.0,
       hasCoverCrop: json['hasCoverCrop'] as bool? ?? false,
       isRunning: json['isRunning'] as bool? ?? false,
+      isInitializing: json['isInitializing'] as bool? ?? true,
       score: json['score'] == null
           ? const SustainabilityScore()
           : SustainabilityScore.fromJson(json['score'] as Map<String, dynamic>),
@@ -47,6 +48,7 @@ Map<String, dynamic> _$BiophysicalStateToJson(_BiophysicalState instance) =>
       'timeScale': instance.timeScale,
       'hasCoverCrop': instance.hasCoverCrop,
       'isRunning': instance.isRunning,
+      'isInitializing': instance.isInitializing,
       'score': instance.score,
       'solarRadiationOverride': instance.solarRadiationOverride,
     };

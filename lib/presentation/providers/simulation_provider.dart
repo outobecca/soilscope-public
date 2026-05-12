@@ -46,6 +46,7 @@ class Simulation extends _$Simulation {
 
   @override
   BiophysicalState build() {
+    debugPrint('[SimulationProvider] build called');
     // Reset lifecycle flags on rebuild — critical for correctness.
     // Without this, a provider rebuild creates new isolate managers
     // but skips their init (because _isInitialized was still true)
@@ -211,6 +212,7 @@ class Simulation extends _$Simulation {
       timeScale: 1.0,
       hasCoverCrop: false,
       isRunning: false,
+      isInitializing: true,
       history: [],
     );
 
@@ -223,13 +225,15 @@ class Simulation extends _$Simulation {
   }
 
   Future<void> _initIsolate() async {
+    debugPrint('[SimulationProvider] _initIsolate started');
     await _isolateManager.init();
+    debugPrint('[SimulationProvider] IsolateManager initialized');
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
       // While scrubbing, freeze the background simulation result from affecting display
       final session = ref.read(simulationSessionProvider);
       if (session.isScrubbing) return;
 
-      BiophysicalState processedState = newState;
+      BiophysicalState processedState = newState.copyWith(isInitializing: false);
       bool eventApplied = false;
 
       // Cultivation Event Triggers
@@ -237,6 +241,7 @@ class Simulation extends _$Simulation {
         for (final event in state.currentScenario!.cultivationPlan) {
           if (processedState.timeElapsed >= event.executionTime && 
               state.timeElapsed < event.executionTime) {
+            debugPrint('[SimulationProvider] Applying event: ${event.type} at ${event.executionTime}');
             processedState = _applyEvent(processedState, event);
             eventApplied = true;
           }
@@ -274,12 +279,17 @@ class Simulation extends _$Simulation {
         _saveState();
       }
     });
+    
+    // Set initializing to false after setup is complete and we are ready for commands
+    state = state.copyWith(isInitializing: false);
+    debugPrint('[SimulationProvider] _initIsolate finished');
   }
 
   /// Merges background simulation results with current Control state.
   /// Preserves user overrides from [localState] while taking biophysical results from [remoteState].
   BiophysicalState _mergeSimulationState(BiophysicalState remoteState, BiophysicalState localState) {
     return remoteState.copyWith(
+      isInitializing: false,
       // Preserve Control State (Main thread is source of truth)
       isRunning: localState.isRunning,
       timeScale: localState.timeScale,
@@ -305,8 +315,18 @@ class Simulation extends _$Simulation {
   }
 
   void start() {
+    debugPrint('[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}');
+    if (state.isRunning || state.isInitializing) {
+      debugPrint('[SimulationProvider] start() ABORTED: already running or initializing');
+      return;
+    }
+    
     state = state.copyWith(isRunning: true);
+    debugPrint('[SimulationProvider] start() state updated: isRunning=true');
+    
     _syncIsolate(); // Ensure isolate has the latest state before starting
+    debugPrint('[SimulationProvider] start() isolate synced');
+    
     _isolateManager.start();
     particleIsolate.start(
       _particleMinX,
@@ -314,6 +334,7 @@ class Simulation extends _$Simulation {
       _particleWorldHeight,
       _particleSurfaceY,
     );
+    debugPrint('[SimulationProvider] start() SUCCESS: all isolate managers started');
   }
 
   void stop() {

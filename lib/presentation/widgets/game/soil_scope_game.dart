@@ -75,6 +75,11 @@ class SoilScopeGame extends FlameGame
   late final Component technicalHotspotLayer;
   MoleculeParticlePool? moleculePool;
 
+  SoilScopeGame() {
+    debugPrint('[SoilScopeGame] Constructor called');
+    technicalHotspotLayer = Component()..priority = 2500;
+  }
+
   @override
   void update(double dt) {
     // Process sync buffer before simulation update
@@ -131,19 +136,19 @@ class SoilScopeGame extends FlameGame
   List<Vector2> get rootTipWorldPositions => _rootTipWorldPositions;
   List<Vector2> get foliageWorldPositions => _foliageWorldPositions;
 
-
-
   @override
   Future<void> onLoad() async {
+    debugPrint('[SoilScopeGame] onLoad started');
     await super.onLoad();
     try {
       l10n = ref.read(appLocalizationsProvider);
-    } catch (_) {
+      debugPrint('[SoilScopeGame] l10n loaded successfully');
+    } catch (e) {
+      debugPrint('[SoilScopeGame] l10n loading failed: $e, using fallback');
       try {
         l10n = lookupAppLocalizations(const Locale('en'));
-      } catch (e) {
-        // Ultimate fallback if l10n is not working
-        debugPrint('L10n fallback failed: $e');
+      } catch (e2) {
+        debugPrint('L10n fallback failed: $e2');
       }
     }
 
@@ -153,6 +158,7 @@ class SoilScopeGame extends FlameGame
     camera.viewfinder.zoom = 1.0;
 
     // 0. Absolute Backgrounds (Screen Space, pinned to game.size)
+    debugPrint('[SoilScopeGame] Adding static backgrounds');
     add(SkyBackgroundComponent());
     add(SoilBasementComponent());
 
@@ -170,16 +176,17 @@ class SoilScopeGame extends FlameGame
     world.add(SoilBackgroundLayer()..priority = -200);
     
     // The main simulation layers
+    debugPrint('[SoilScopeGame] Adding SimulationAnimationLayerComponent');
     world.add(SimulationAnimationLayerComponent()..priority = 200);
 
     // Soil Symbiosis Network (Between passive hotspots/layers and active particles/roots)
     world.add(SoilSymbiosisNetworkComponent()..priority = 2000);
 
     // TECHNICAL OVERLAY (Always on top of world components)
-    technicalHotspotLayer = Component()..priority = 2500;
     world.add(technicalHotspotLayer);
 
     camera.viewport.add(MagnifierGroupComponent());
+    debugPrint('[SoilScopeGame] onLoad finished');
   }
 
   @override
@@ -285,14 +292,17 @@ class SoilScopeGame extends FlameGame
 
   @override
   void onMount() {
+    debugPrint('[SoilScopeGame] onMount started');
     super.onMount();
     
     // Explicitly manage Riverpod subscriptions in the game lifecycle
     if (buildContext != null) {
+      debugPrint('[SoilScopeGame] onMount: buildContext is not null, setting up subscriptions');
       final container = ProviderScope.containerOf(buildContext!);
       
       _riverpodSubscriptions.add(
         container.listen(appLocalizationsProvider, (previous, next) {
+          debugPrint('[SoilScopeGame] appLocalizationsProvider changed');
           if (next != l10n) {
             _syncActionBuffer.add(() => l10n = next);
           }
@@ -307,6 +317,7 @@ class SoilScopeGame extends FlameGame
             s.selectedInspectorType,
           )),
           (previous, next) {
+            debugPrint('[SoilScopeGame] simulationSessionProvider (selectedLayer/Inspector) changed');
             final state = container.read(displayedSimulationStateProvider);
             final session = container.read(simulationSessionProvider);
             _syncActionBuffer.add(() {
@@ -322,6 +333,7 @@ class SoilScopeGame extends FlameGame
         container.listen<bool>(
           simulationProvider.select((s) => s.isRunning),
           (previous, next) {
+            debugPrint('[SoilScopeGame] isRunning changed to: $next');
             // Set paused directly on the game instance
             // This is critical because if paused is true, update() is not called
             // and the _syncActionBuffer would never be processed to unpause.
@@ -333,6 +345,25 @@ class SoilScopeGame extends FlameGame
               _lastState = state;
             });
           },
+          fireImmediately: true,
+        )
+      );
+
+      // Listen to Biophysical State Changes (Water flux, nutrient movement, etc.)
+      _riverpodSubscriptions.add(
+        container.listen<BiophysicalState>(
+          displayedSimulationStateProvider,
+          (previous, next) {
+            // debugPrint('[SoilScopeGame] displayedSimulationStateProvider changed'); // Too spammy if uncommented
+            _syncActionBuffer.add(() {
+              _lastState = next;
+              // Synchronize animation layer components with the new biophysical state
+              final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
+              if (animLayer != null) {
+                animLayer.updateState(next);
+              }
+            });
+          },
         )
       );
 
@@ -341,6 +372,7 @@ class SoilScopeGame extends FlameGame
         container.listen<double>(
           simulationProvider.select((s) => s.timeScale),
           (previous, next) {
+            debugPrint('[SoilScopeGame] timeScale changed to: $next');
             _syncActionBuffer.add(() {
               final state = container.read(displayedSimulationStateProvider);
               _lastState = state;
@@ -356,6 +388,7 @@ class SoilScopeGame extends FlameGame
             s.plants.length,
           )),
           (previous, next) {
+            debugPrint('[SoilScopeGame] displayedSimulationStateProvider (layers/plants count) changed');
             final state = container.read(displayedSimulationStateProvider);
             final session = container.read(simulationSessionProvider);
             _syncActionBuffer.add(() {
@@ -365,17 +398,21 @@ class SoilScopeGame extends FlameGame
           },
         )
       );
+    } else {
+      debugPrint('[SoilScopeGame] onMount: buildContext is NULL!');
     }
 
     try {
       final initialState = ref.read(displayedSimulationStateProvider);
       final session = ref.read(simulationSessionProvider);
+      debugPrint('[SoilScopeGame] onMount: performing initial _updateScene');
       _updateScene(initialState, session);
       _lastState = initialState;
     } catch (e) {
       debugPrint('Error reading initial state in onMount: $e');
     }
     _clampCamera();
+    debugPrint('[SoilScopeGame] onMount finished');
   }
 
   @override

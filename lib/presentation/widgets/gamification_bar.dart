@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/models/biophysical_state.dart';
+import 'package:collection/collection.dart';
 import '../../domain/models/scenario.dart';
+import '../../domain/models/plant.dart';
+import '../../domain/models/sustainability_score.dart';
+import '../../domain/models/soil_profile.dart';
+import '../../domain/solvers/mycorrhiza_solver.dart';
 import '../providers/simulation_provider.dart';
-
 import '../../core/app_theme.dart';
 
 class GamificationBar extends ConsumerWidget {
@@ -11,7 +14,17 @@ class GamificationBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(simulationProvider);
+    // Only watch parts that affect gamification
+    final state = ref.watch(simulationProvider.select((s) => _GamificationRelevantState(
+      score: s.score,
+      plants: s.plants,
+      currentScenario: s.currentScenario,
+      precipitation: s.precipitation,
+      hasCoverCrop: s.hasCoverCrop,
+      mycorrhizaState: s.mycorrhizaState,
+      profile: s.profile,
+    )));
+    
     final uiState = _GamificationUIState.fromState(state);
 
     if (!uiState.hasTopsoil) {
@@ -148,7 +161,7 @@ class GamificationBar extends ConsumerWidget {
     required Color plantColor,
     required int currentLevel,
     required double xpProgress,
-    required BiophysicalState state,
+    required _GamificationRelevantState state,
     required List<Map<String, dynamic>> buffs,
   }) {
     final theme = Theme.of(context);
@@ -261,7 +274,7 @@ class _GamificationUIState {
     required this.plantColor,
   });
 
-  factory _GamificationUIState.fromState(BiophysicalState state) {
+  factory _GamificationUIState.fromState(_GamificationRelevantState state) {
     // 1. Soil Health Calculation
     final double soilHealth = (state.score.totalSoilHealth).clamp(0.0, 100.0);
 
@@ -347,6 +360,49 @@ class _GamificationUIState {
       plantColor: plantColor,
     );
   }
+}
+
+class _GamificationRelevantState {
+  final SustainabilityScore score;
+  final List<Plant> plants;
+  final Scenario? currentScenario;
+  final double precipitation;
+  final bool hasCoverCrop;
+  final MycorrhizaState? mycorrhizaState;
+  final SoilProfile profile;
+
+  _GamificationRelevantState({
+    required this.score,
+    required this.plants,
+    this.currentScenario,
+    required this.precipitation,
+    required this.hasCoverCrop,
+    this.mycorrhizaState,
+    required this.profile,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _GamificationRelevantState &&
+          runtimeType == other.runtimeType &&
+          score == other.score &&
+          const ListEquality().equals(plants, other.plants) &&
+          currentScenario == other.currentScenario &&
+          precipitation == other.precipitation &&
+          hasCoverCrop == other.hasCoverCrop &&
+          mycorrhizaState == other.mycorrhizaState &&
+          profile == other.profile;
+
+  @override
+  int get hashCode =>
+      score.hashCode ^
+      plants.hashCode ^
+      currentScenario.hashCode ^
+      precipitation.hashCode ^
+      hasCoverCrop.hashCode ^
+      mycorrhizaState.hashCode ^
+      profile.hashCode;
 }
 
 class HealthMeterWidget extends StatelessWidget {

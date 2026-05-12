@@ -8,52 +8,14 @@ class TimelineSliderWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final simState = ref.watch(simulationProvider);
+    final history = ref.watch(simulationProvider.select((s) => s.history));
     final session = ref.watch(simulationSessionProvider);
     
-    if (!session.isScrubbing || simState.history.isEmpty) {
+    if (!session.isScrubbing || history.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final theme = Theme.of(context);
-
-    if (simState.history.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
-            const SizedBox(width: 16),
-            Text(
-              'Lasketaan aikajanaa...',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final history = simState.history;
     final minTime = history.first.timeElapsed;
     final maxTime = history.last.timeElapsed;
     final currentTime = session.isScrubbing 
