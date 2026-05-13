@@ -884,23 +884,35 @@ class AnimatedPlantComponent extends PositionComponent
           droopAngle +
           heightSway;
       
-      // Schematic: Radial distribution around the top half
-      const double radialSweep = math.pi * 0.8; 
+      // Schematic: Radial Graph distribution centered at base
+      // Main stem provides context, branches radiate fully outwards.
+      final bool isSchematic = _layoutProgress > 0.5;
+      const double radialSweep = math.pi * 1.5; // Spread around the center
       final schematicAngle = branchCount > 0 
-          ? (-radialSweep / 2 + (i / branchCount) * radialSweep + (bIsLeft ? -0.2 : 0.2) - math.pi/2)
+          ? (-radialSweep / 2 + (i / branchCount) * radialSweep) - math.pi/2
           : (bIsLeft ? -math.pi/3 : math.pi/3) - math.pi/2;
       
       final currentAngle = lerpDouble(organicAngle, schematicAngle, _layoutProgress)!;
 
-      final bEndX = bStartX + math.sin(currentAngle) * bLength;
-      final bEndY = bStartY - math.cos(currentAngle) * bLength;
+      // In radial schematic mode, branches extend outward from origin (0,0) or low on the stem
+      final targetStartX = isSchematic ? 0.0 : schematicStartX;
+      final targetStartY = isSchematic ? 0.0 : schematicStartY;
+
+      final currentStartX = lerpDouble(organicStartX, targetStartX, _layoutProgress)!;
+      final currentStartY = lerpDouble(organicStartY, targetStartY, _layoutProgress)!;
+
+      final schematicLength = bLength * 1.5; // Make them slightly longer in radial view to stand out
+      final currentLength = lerpDouble(bLength, schematicLength, _layoutProgress)!;
+
+      final bEndX = currentStartX + math.sin(currentAngle) * currentLength;
+      final bEndY = currentStartY - math.cos(currentAngle) * currentLength;
 
       _branchPaint
         ..color = activeStemColor
         ..strokeWidth = 4.0 * shootScale * (1.1 - t * 0.6) * unfoldingScale;
 
       canvas.drawLine(
-        Offset(bStartX, bStartY),
+        Offset(currentStartX, currentStartY),
         Offset(bEndX, bEndY),
         _branchPaint,
       );
@@ -955,8 +967,13 @@ class AnimatedPlantComponent extends PositionComponent
 
       final leafScale = (1.2 - (i / 14.0) * 0.5) * shootScale * unfoldingScale;
       final t = heightFactor;
-      final lX = _cubicBezier(0, cp1X, cp2X, topX, t);
-      final lY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      final organicX = _cubicBezier(0, cp1X, cp2X, topX, t);
+      final organicY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      final schematicX = 0.0;
+      final schematicY = -topY.abs() * t;
+
+      final lX = lerpDouble(organicX, schematicX, _layoutProgress)!;
+      final lY = lerpDouble(organicY, schematicY, _layoutProgress)!;
       final heightSway = sway * (1.0 + t * 0.6);
 
       _drawLeaf(
@@ -1306,8 +1323,8 @@ class AnimatedPlantComponent extends PositionComponent
       
       if (_layoutProgress > 0.8) {
         // Layered Graph Style: Orthogonal (L-shaped) connections
-        // We drop straight down from parent, then horizontal to child
-        spine.lineTo(o1.dx, o2.dy);
+        // Roots spread wide horizontally in the topsoil first, then straight down
+        spine.lineTo(o2.dx, o1.dy);
         spine.lineTo(o2.dx, o2.dy);
       } else {
         // Organic: Cubic Bezier spine with reduced horizontal swing for the taproot
