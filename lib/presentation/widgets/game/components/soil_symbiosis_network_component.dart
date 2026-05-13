@@ -265,60 +265,103 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     
     if (growthAge < 0.05) return;
     
-    // Use cubic for more "thread-like" look
-    final c1 = Offset.lerp(start, cp, 0.5)!;
-    final c2 = Offset.lerp(cp, end, 0.5)!;
+    // Check if we're in schematic layout
+    final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+    final isSchematic = layoutMode == VisualLayoutMode.schematic;
+
+    // Build the path based on layout mode
+    Path baseParticlePath = Path();
 
     final paint = _threadPaint;
     final strokeBase = (2.5 + activity * 2.0) / zoom; // Thicker threads
 
-    // DRAW HYPHAL BUNDLE (Multiple strands for "Better Visualized" food web)
-    for (int i = 0; i < 3; i++) {
-      final threadOffset = normal * (i - 1) * 3.0 / zoom;
-      final jitter = 2.0 * math.sin(time * 2.0 + i + seed);
-      
-      final threadPath = Path()
+    if (isSchematic) {
+      // Schematic: Layered Graph Style (Orthogonal routing)
+      // Usually roots spread horizontal then vertical. We'll do similar here:
+      // Start -> Horizontal -> Vertical -> End
+      baseParticlePath
         ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          c1.dx + threadOffset.dx + jitter, c1.dy + threadOffset.dy + jitter,
-          c2.dx + threadOffset.dx - jitter, c2.dy + threadOffset.dy - jitter,
-          end.dx, end.dy
-        );
+        ..lineTo(end.dx, start.dy)
+        ..lineTo(end.dx, end.dy);
 
-      // Apply expansion clipping
+      // Draw standard single line
       if (growthAge < 1.0) {
-        final metrics = threadPath.computeMetrics().toList();
+        final metrics = baseParticlePath.computeMetrics().toList();
         if (metrics.isNotEmpty) {
           final m = metrics.first;
           final extract = m.extractPath(0, m.length * growthAge);
-          canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity * growthAge));
+          canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.3 * opacity * growthAge)..strokeWidth = strokeBase..maskFilter = null);
         }
       } else {
-        // Draw full path normally
-        if (i == 1) {
+        canvas.drawPath(
+          baseParticlePath,
+          paint
+            ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
+            ..strokeWidth = strokeBase * 4.0
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+        );
+        canvas.drawPath(
+          baseParticlePath,
+          paint
+            ..color = const Color(0xFFF1F5F9).withValues(alpha: 0.4 * opacity)
+            ..strokeWidth = strokeBase
+            ..maskFilter = null,
+        );
+      }
+    } else {
+      // Organic: Use cubic for more "thread-like" look
+      final c1 = Offset.lerp(start, cp, 0.5)!;
+      final c2 = Offset.lerp(cp, end, 0.5)!;
+      baseParticlePath..moveTo(start.dx, start.dy)..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+
+      // DRAW HYPHAL BUNDLE (Multiple strands for "Better Visualized" food web)
+      for (int i = 0; i < 3; i++) {
+        final threadOffset = normal * (i - 1) * 3.0 / zoom;
+        final jitter = 2.0 * math.sin(time * 2.0 + i + seed);
+
+        final threadPath = Path()
+          ..moveTo(start.dx, start.dy)
+          ..cubicTo(
+            c1.dx + threadOffset.dx + jitter, c1.dy + threadOffset.dy + jitter,
+            c2.dx + threadOffset.dx - jitter, c2.dy + threadOffset.dy - jitter,
+            end.dx, end.dy
+          );
+
+        // Apply expansion clipping
+        if (growthAge < 1.0) {
+          final metrics = threadPath.computeMetrics().toList();
+          if (metrics.isNotEmpty) {
+            final m = metrics.first;
+            final extract = m.extractPath(0, m.length * growthAge);
+            canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity * growthAge));
+          }
+        } else {
+          // Draw full path normally
+          if (i == 1) {
+            canvas.drawPath(
+              threadPath,
+              paint
+                ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
+                ..strokeWidth = strokeBase * 4.0
+                ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+            );
+          }
+
           canvas.drawPath(
             threadPath,
             paint
-              ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
-              ..strokeWidth = strokeBase * 4.0
-              ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+              ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
+                  .withValues(alpha: (0.4 - i * 0.1) * opacity)
+              ..strokeWidth = strokeBase * (1.0 - i * 0.2)
+              ..maskFilter = null,
           );
         }
-
-        canvas.drawPath(
-          threadPath,
-          paint
-            ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
-                .withValues(alpha: (0.4 - i * 0.1) * opacity)
-            ..strokeWidth = strokeBase * (1.0 - i * 0.2)
-            ..maskFilter = null,
-        );
       }
     }
 
     // 3. Bidirectional Flux Particles (The actual "transfer")
     // Use a unified path for particles
-    final particlePath = Path()..moveTo(start.dx, start.dy)..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+    final particlePath = baseParticlePath;
     _drawFluxPulses(canvas, particlePath, edge, time, zoom, activity, opacity);
   }
 
