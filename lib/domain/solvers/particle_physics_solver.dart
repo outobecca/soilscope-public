@@ -214,7 +214,7 @@ class ParticleEcsSystem extends System {
       p.y += by * dt * flowBoost;
 
       if (p.type == ParticleType.ammonium && p.state > 0 && p.state < 1.0) {
-        p.state += dt * 0.8; // Faster morphing (from 0.5)
+        p.state += dt * 0.8 * flowBoost; // Faster morphing (from 0.5)
         if (p.state >= 1.0) {
           p.type = ParticleType.nitrate;
           p.state = 0.0;
@@ -354,7 +354,7 @@ class ParticleEcsSystem extends System {
               if (isAnaerobic) vMax *= 0.3;
               const double kM = 0.5;
               final double mmRate = vMax / (kM + 1.0);
-              if (random.nextDouble() < mmRate * q10Factor * dt * 8.0) { // Reduced from 10.0
+              if (random.nextDouble() < mmRate * q10Factor * dt * 8.0 * flowBoost) { // Reduced from 10.0
                 p.type = ParticleType.ammonium;
                 p.life = 1.0;
               }
@@ -369,7 +369,7 @@ class ParticleEcsSystem extends System {
         // P2 = Vertical destination point (x0, y0 - 150)
         // P1 = Control point biased towards surface (x0, y0 - 50)
         
-        p.t += dt * 0.8; // Reduced Suction speed from 1.2
+        p.t += dt * 0.8 * flowBoost; // Reduced Suction speed from 1.2
         if (p.t > 1.0) p.t = 1.0;
 
         final double t = p.t;
@@ -390,7 +390,7 @@ class ParticleEcsSystem extends System {
         
         // If we reached the end of the suction curve, either die or continue linear rise
         if (p.t >= 1.0) {
-           p.life -= 1.5 * dt; // Reduced from 2.0
+           p.life -= 1.5 * dt * flowBoost; // Reduced from 2.0
         }
       }
 
@@ -432,12 +432,12 @@ class ParticleEcsSystem extends System {
           p.vy += 0.2 * dt; // Reduced from 0.3
         }
       } else {
-        if (random.nextDouble() < 0.006) { // Reduced from 0.008
+        if (random.nextDouble() < 0.006 * flowBoost) { // Reduced from 0.008
           p.isImmobilized = false;
         }
       }
 
-      p.life -= 0.06 * dt; // Reduced from 0.08 (calmer lifecycle)
+      p.life -= 0.06 * dt * flowBoost; // Reduced from 0.08 (calmer lifecycle)
 
       if (p.x < minX + 6.0) {
         p.x = minX + 6.0;

@@ -139,7 +139,9 @@ class MoleculeParticleComponent extends PositionComponent
     if (_selectionPulse > 0) _selectionPulse -= dt * 2.0;
     if (!(game.simulationState?.isRunning ?? false)) return;
 
-    final vdt = getPerceptualDt(dt);
+    final flowMode = game.ref.read(particleFlowModeProvider);
+    final boost = flowMode ? 2.5 : 1.0;
+    final vdt = getPerceptualDt(dt) * boost;
     if (_isAbsorbed) {
       return; // Handled by removeFromParent immediately
     }

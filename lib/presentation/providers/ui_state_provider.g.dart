@@ -216,3 +216,56 @@ abstract class _$ActiveTutorialStep extends $Notifier<ScenarioTutorialStep?> {
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(VisualLayoutModeState)
+final visualLayoutModeStateProvider = VisualLayoutModeStateProvider._();
+
+final class VisualLayoutModeStateProvider
+    extends $NotifierProvider<VisualLayoutModeState, VisualLayoutMode> {
+  VisualLayoutModeStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'visualLayoutModeStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$visualLayoutModeStateHash();
+
+  @$internal
+  @override
+  VisualLayoutModeState create() => VisualLayoutModeState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VisualLayoutMode value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VisualLayoutMode>(value),
+    );
+  }
+}
+
+String _$visualLayoutModeStateHash() =>
+    r'0529235021bd54d1cb5af12f869d357dd9ca427d';
+
+abstract class _$VisualLayoutModeState extends $Notifier<VisualLayoutMode> {
+  VisualLayoutMode build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<VisualLayoutMode, VisualLayoutMode>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<VisualLayoutMode, VisualLayoutMode>,
+              VisualLayoutMode,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

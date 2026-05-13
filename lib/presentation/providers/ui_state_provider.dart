@@ -196,3 +196,21 @@ class ActiveTutorialStep extends _$ActiveTutorialStep {
     state = step;
   }
 }
+
+enum VisualLayoutMode {
+  organic,
+  schematic,
+}
+
+@riverpod
+class VisualLayoutModeState extends _$VisualLayoutModeState {
+  @override
+  VisualLayoutMode build() => VisualLayoutMode.organic;
+
+  void setMode(VisualLayoutMode mode) => state = mode;
+  void toggle() {
+    state = (state == VisualLayoutMode.organic)
+        ? VisualLayoutMode.schematic
+        : VisualLayoutMode.organic;
+  }
+}

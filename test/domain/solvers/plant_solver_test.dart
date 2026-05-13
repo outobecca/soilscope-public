@@ -63,7 +63,7 @@ void main() {
 
     test('Calculates Nutrient Sinks', () {
       // First run solve to get plant with actual transpiration calculated
-      final updatedPlant = PlantSolver.solve(plant, profile, 3600.0);
+      final (updatedPlant, _) = PlantSolver.solve(plant, profile, 3600.0);
       final buffer = NutrientBuffer(profile.layers.length);
       PlantSolver.accumulateSinks(updatedPlant, profile, buffer);
 
@@ -78,7 +78,7 @@ void main() {
     });
 
     test('Growth increments totalBiomass', () {
-      final updated = PlantSolver.solve(plant, profile, 86400.0); // 24h
+      final (updated, _) = PlantSolver.solve(plant, profile, 86400.0); // 24h
       expect(updated.totalBiomass, greaterThan(100.0));
     });
   });

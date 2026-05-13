@@ -72,6 +72,9 @@ abstract class SoilLayer with _$SoilLayer {
     @Default(0.0) double denitrificationRate, // mg/kg/s
     
     @Default({}) Map<String, double> traceElements,
+
+    // === HOTSPOTS (Rhizosphere / Decomposition) ===
+    @Default([]) List<RhizosphereHotspot> hotspots,
   }) = _SoilLayer;
 
   const SoilLayer._();
@@ -145,4 +148,26 @@ abstract class SoilLayer with _$SoilLayer {
     final activity = (oxygenContent * phScale) - (aluminumLevel * 0.5);
     return activity.clamp(0.0, double.infinity);
   }
+}
+
+@Freezed(fromJson: true, toJson: true)
+abstract class RhizosphereHotspot with _$RhizosphereHotspot {
+  const factory RhizosphereHotspot({
+    required String id,
+    required double x, // Relative 0..1 in layer width
+    required double z, // Relative 0..1 in layer thickness
+    required double intensity, // 0..1 (Metabolic activity)
+    @Default(0.05) double radius, // m
+    @Default(0.0) double age, // s
+    @Default(HotspotType.rhizosphere) HotspotType type,
+  }) = _RhizosphereHotspot;
+
+  factory RhizosphereHotspot.fromJson(Map<String, dynamic> json) =>
+      _$RhizosphereHotspotFromJson(json);
+}
+
+enum HotspotType {
+  rhizosphere,
+  decomposition,
+  fungalHub
 }

@@ -243,6 +243,17 @@ class FlutterQuickActions extends ConsumerWidget {
                 },
               ),
 
+              // Schematic Toggle
+              _buildActionButton(
+                context: context,
+                icon: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic ? Icons.account_tree_rounded : Icons.account_tree_outlined,
+                label: 'SCHEMATIC',
+                isActive: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic,
+                onTap: () {
+                  ref.read(visualLayoutModeStateProvider.notifier).toggle();
+                },
+              ),
+
               // Scenario Builder
               _buildActionButton(
                 context: context,

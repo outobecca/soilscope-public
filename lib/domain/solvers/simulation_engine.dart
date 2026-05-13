@@ -202,17 +202,20 @@ class SimulationEngine {
     // 7. Individual Plant Growth (Solve for each plant in the collection)
     final List<Plant> updatedPlants = [];
     for (final plant in state.plants) {
-      updatedPlants.add(
-        PlantSolver.solve(
-          plant,
-          updatedProfile,
-          dt,
-          airTemperature: state.airTemperature,
-          atmCO2: state.atmCO2,
-          relativeHumidity: state.relativeHumidity,
-          solarRadiation: state.solarRadiation,
-        ),
+      final (nextPlant, nextLayers) = PlantSolver.solve(
+        plant,
+        updatedProfile,
+        dt,
+        airTemperature: state.airTemperature,
+        atmCO2: state.atmCO2,
+        relativeHumidity: state.relativeHumidity,
+        solarRadiation: state.solarRadiation,
       );
+      updatedPlants.add(nextPlant);
+      
+      // Update profile with rhizosphere hotspots and chemistry changes from THIS plant
+      // In a multi-plant scenario, hotspots will accumulate across all plants.
+      updatedProfile = updatedProfile.copyWith(layers: nextLayers);
     }
 
     // 7.5 Mycorrhiza Symbiosis (Coupled with all plants and cover crop)

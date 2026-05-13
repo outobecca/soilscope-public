@@ -96,12 +96,14 @@ class DiffusionLinesComponent extends Component
     super.update(dt);
     final sim = game.simulationState;
     if (sim == null || !sim.isRunning) return;
-    _lines.removeWhere((line) => !line.update(dt));
+
+    final flowMode = game.ref.read(particleFlowModeProvider);
+    final boost = flowMode ? 2.5 : 1.0;
 
     final state = game.ref.read(simulationProvider);
     if (state.profile.layers.isEmpty) return;
 
-    if (_lines.length < 15 && _rand.nextDouble() < 0.05) {
+    if (_lines.length < 15 && _rand.nextDouble() < 0.05 * boost) {
       final layerIndex = _rand.nextInt(state.profile.layers.length);
       final layer = state.profile.layers[layerIndex];
       final soilHeight = game.soilColumnHeight;
@@ -132,6 +134,8 @@ class DiffusionLinesComponent extends Component
         ),
       );
     }
+
+    _lines.removeWhere((line) => !line.update(dt * boost));
   }
 
   Color _getNutrientColor(String? symbol) {

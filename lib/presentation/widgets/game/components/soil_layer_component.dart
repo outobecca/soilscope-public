@@ -20,6 +20,7 @@ import '../../../../core/simulation_constants.dart';
 import 'soil_component_mixin.dart';
 import 'layer_tech_node_mixin.dart';
 import 'riverpod_lifecycle_mixin.dart';
+import 'rhizosphere_hotspot_component.dart';
 
 class SoilLayerComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin {
@@ -254,6 +255,44 @@ class SoilLayerComponent extends PositionComponent
         layerId: layerId,
         state: state,
       );
+    }
+
+    // --- RHIZOSPHERE HOTSPOTS SYNC ---
+    final dynamicHotspots = children.query<RhizosphereHotspotComponent>();
+    final Map<String, RhizosphereHotspotComponent> dynamicMap = {
+      for (var h in dynamicHotspots) h.hotspotId: h,
+    };
+
+    final activeHotspotIds = <String>{};
+    for (final h in _layer.hotspots) {
+      activeHotspotIds.add(h.id);
+      final existing = dynamicMap[h.id];
+      
+      final Vector2 hotspotPos = Vector2(
+        h.x * size.x,
+        h.z * size.y,
+      );
+
+      if (existing != null) {
+        existing.position = hotspotPos;
+        existing.updateIntensity(h.intensity);
+      } else {
+        add(RhizosphereHotspotComponent(
+          hotspotId: h.id,
+          layerId: layerId,
+          intensity: h.intensity,
+          type: h.type,
+          position: hotspotPos,
+          radius: h.radius,
+        ));
+      }
+    }
+
+    // Remove defunct hotspots
+    for (final h in dynamicHotspots) {
+      if (!activeHotspotIds.contains(h.hotspotId)) {
+        h.removeFromParent();
+      }
     }
   }
 

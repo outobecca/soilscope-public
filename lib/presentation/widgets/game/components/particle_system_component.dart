@@ -58,8 +58,11 @@ class MolecularParticleFieldComponent extends Component
   void update(double dt) {
     super.update(dt);
     if (game.simulationState?.isRunning == true) {
+      final flowMode = game.ref.read(particleFlowModeProvider);
+      final boost = flowMode ? 2.5 : 1.0;
+
       // Decouple visual movement from global simulation speed for pedagogical clarity
-      final vdt = getPerceptualDt(dt);
+      final vdt = getPerceptualDt(dt) * boost;
 
       for (int i = 0; i < _particleData.length; i += 10) {
         _particleData[i + 1] += _particleData[i + 3] * vdt;

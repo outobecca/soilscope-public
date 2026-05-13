@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/event_log_provider.dart';
+import '../providers/ui_state_provider.dart';
 import '../../l10n/app_localizations.dart';
 
 class EventNotificationOverlay extends ConsumerStatefulWidget {
@@ -62,7 +63,16 @@ class _EventNotificationOverlayState
     return AnimatedBuilder(
       animation: _floatController,
       builder: (context, child) {
-        final floatOffset = math.sin(_floatController.value * 2.0 * math.pi) * 8.0;
+        final layoutMode = ref.watch(visualLayoutModeStateProvider);
+        final isSchematic = layoutMode == VisualLayoutMode.schematic;
+        final flowMode = ref.watch(particleFlowModeProvider);
+        
+        // Stabilize: reduced bobbing in schematic mode
+        final bobbingIntensity = isSchematic ? 2.0 : (flowMode ? 12.0 : 8.0);
+        final boost = (flowMode && !isSchematic) ? 2.0 : 1.0;
+        
+        final floatOffset = math.sin(_floatController.value * 2.0 * math.pi * boost) * bobbingIntensity;
+        
         return TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
           duration: const Duration(milliseconds: 300),

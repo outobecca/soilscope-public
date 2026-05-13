@@ -81,18 +81,22 @@ class BubbleComponent extends CircleComponent
   void update(double dt) {
     super.update(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
+    
+    final flowMode = game.ref.read(particleFlowModeProvider);
+    final boost = flowMode ? 2.5 : 1.0;
+    final boostedDt = dt * boost;
     final time = game.currentTime();
 
     // O₂ moves DOWN (diffusion into soil), others rise UP
     if (type == BubbleType.o2) {
-      position.y += speed * dt;
+      position.y += speed * boostedDt;
       // Remove if past the soil column bottom
       if (position.y > game.soilSurfaceY + game.soilColumnHeight) {
         removeFromParent();
       }
     } else {
       // Rise upwards
-      position.y -= speed * dt;
+      position.y -= speed * boostedDt;
       // Remove if above the soil surface and release atmospheric particles
       if (position.y < game.soilSurfaceY) {
         _releaseGas();
@@ -101,10 +105,10 @@ class BubbleComponent extends CircleComponent
     }
 
     // Enhanced Wobble: sine wave drift simulates fluid dynamics in soil pores
-    position.x += math.sin(time * 3.5 + seed) * 0.3;
+    position.x += math.sin(time * 3.5 * boost + seed) * 0.3 * boost;
     
     // Subtle size pulse representing gas expansion
-    final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 + seed);
+    final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 * boost + seed);
     radius = _getRadiusForType(type) * pulse;
   }
 

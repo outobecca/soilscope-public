@@ -1,4 +1,4 @@
-import 'dart:ui' show PathMetric;
+import 'dart:ui' show PathMetric, lerpDouble;
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -39,9 +39,15 @@ class AnimatedPlantComponent extends PositionComponent
   bool _isRunning = false;
 
   final List<_RootTipGlow> _tipGlows = [];
+  final Map<int, double> _nodeBirthTimes = {};
   double _vaporTimer = 0;
   int _previousRootCount = 0;
 
+  // Schematic Layout State
+  VisualLayoutMode _layoutMode = VisualLayoutMode.organic;
+  double _layoutProgress = 0.0; // 0 = organic, 1 = schematic
+  final Map<int, Vector2> _schematicRootPositions = {};
+  
   static const int maxTipGlows = 25;
 
   int? _hoveredRootIndex;
@@ -167,6 +173,10 @@ class AnimatedPlantComponent extends PositionComponent
       (prev, next) {
         _plant = next;
         if (next != null && next.rootSystem.length > _previousRootCount) {
+          final time = game.currentTime();
+          for (int i = _previousRootCount; i < next.rootSystem.length; i++) {
+            _nodeBirthTimes[i] = time;
+          }
           _onNewRootGrowth(next);
           _previousRootCount = next.rootSystem.length;
         }
@@ -185,6 +195,19 @@ class AnimatedPlantComponent extends PositionComponent
     listenProvider<double>(
       displayedSimulationStateProvider.select((s) => s.solarRadiation),
       (prev, next) => _solarRadiation = next,
+      fireImmediately: true,
+    );
+
+    // Listen to layout mode
+    listenProvider<VisualLayoutMode>(
+      visualLayoutModeStateProvider,
+      (prev, next) {
+        _layoutMode = next;
+        if (next == VisualLayoutMode.schematic) {
+          final plant = _plant;
+          if (plant != null) _calculateSchematicLayout(plant);
+        }
+      },
       fireImmediately: true,
     );
   }
@@ -254,6 +277,24 @@ class AnimatedPlantComponent extends PositionComponent
     final plant = _plantData;
     if (plant == null) return;
 
+    // 0. Update Layout Animation
+    final targetProgress = _layoutMode == VisualLayoutMode.schematic ? 1.0 : 0.0;
+    if ((_layoutProgress - targetProgress).abs() > 0.001) {
+      final step = dt * 1.5;
+      if (_layoutProgress < targetProgress) {
+        _layoutProgress = (_layoutProgress + step).clamp(0.0, 1.0);
+      } else {
+        _layoutProgress = (_layoutProgress - step).clamp(0.0, 1.0);
+      }
+    }
+
+    if (_layoutProgress > 0.001) {
+      // Recalculate if root system has grown since last calculation
+      if (plant.rootSystem.length != _schematicRootPositions.length) {
+        _calculateSchematicLayout(plant);
+      }
+    }
+
     // 1. Synchronize world position with Root Collar (Node 0)
     final worldWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
@@ -296,6 +337,27 @@ class AnimatedPlantComponent extends PositionComponent
     }
     _previousRootCount = plant.rootSystem.length;
 
+    // 2. Periodic "Active Maintenance" glows for healthy tips
+    final vitality = (1.0 - plant.waterStressIndex).clamp(0.0, 1.0);
+    if (vitality > 0.4 && _random.nextDouble() < 0.05 * dt * 60) {
+      final tips = plant.rootSystem.asMap().entries.where((e) => e.value.isTip).toList();
+      if (tips.isNotEmpty) {
+        final entry = tips[_random.nextInt(tips.length)];
+        final pos = _mapRootToLocal(
+          entry.value,
+          entry.key,
+          plant.baseX,
+          worldWidth,
+          game.soilColumnHeight,
+        );
+        _tipGlows.add(_RootTipGlow(
+          position: pos,
+          vitality: vitality,
+          isGrowth: false,
+        ));
+      }
+    }
+
     for (final glow in _tipGlows) {
       glow.update(dt);
     }
@@ -337,6 +399,8 @@ class AnimatedPlantComponent extends PositionComponent
   void _onNewRootGrowth(Plant plant) {
     final worldWidth = SoilScopeGame.soilColumnWidth;
     final soilHeight = game.soilColumnHeight;
+    final vitality = (1.0 - plant.waterStressIndex).clamp(0.0, 1.0);
+
     for (
       int i = math.max(0, plant.rootSystem.length - 5);
       i < plant.rootSystem.length;
@@ -351,7 +415,11 @@ class AnimatedPlantComponent extends PositionComponent
           worldWidth,
           soilHeight,
         );
-        _tipGlows.add(_RootTipGlow(position: pos));
+        _tipGlows.add(_RootTipGlow(
+          position: pos,
+          vitality: vitality,
+          isGrowth: true,
+        ));
       }
     }
   }
@@ -402,8 +470,11 @@ class AnimatedPlantComponent extends PositionComponent
   }
 
   void _spawnRootFlows(Plant plant, double dt) {
+    final isFlowMode = game.ref.read(particleFlowModeProvider);
+    final boost = isFlowMode ? 3.0 : 1.0;
+
     // Phloem-driven carbon moving DOWN the roots
-    if (_random.nextDouble() < 0.15 * dt * 60) {
+    if (_random.nextDouble() < 0.15 * dt * 60 * boost) {
       final branches = _groupNodesIntoBranches(plant.rootSystem);
       if (branches.isEmpty) return;
 
@@ -439,7 +510,9 @@ class AnimatedPlantComponent extends PositionComponent
       if (node.isTip) {
         final seed = node.hashCode % 5; // Support more types
         // SIGNIFICANTLY reduced chance to prevent "Rogue Particle Engine"
-        final chance = 0.01 * dt;
+        final isFlowMode = game.ref.read(particleFlowModeProvider);
+        final boost = isFlowMode ? 4.0 : 1.0;
+        final chance = 0.01 * dt * boost;
         if (_random.nextDouble() < chance) {
           final rawY = SceneCoordinateMapper.mapRootY(
             node.z,
@@ -789,21 +862,38 @@ class AnimatedPlantComponent extends PositionComponent
       if (unfoldingScale < 0.05) continue;
 
       final t = heightFactor;
-      final bStartX = _cubicBezier(0, cp1X, cp2X, topX, t);
-      final bStartY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      
+      // Interpolate start point based on stem straightening
+      final organicStartX = _cubicBezier(0, cp1X, cp2X, topX, t);
+      final organicStartY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      final schematicStartX = 0.0;
+      final schematicStartY = -topY.abs() * t;
+      
+      final bStartX = lerpDouble(organicStartX, schematicStartX, _layoutProgress)!;
+      final bStartY = lerpDouble(organicStartY, schematicStartY, _layoutProgress)!;
 
       final bIsLeft = i % 2 == 0;
       final bLength = 65.0 * shootScale * (1.1 - t * 0.5) * unfoldingScale;
       // Sway is stronger at the top
       final heightSway = sway * (1.0 + t * 0.5);
-      final bAngle =
-          (bIsLeft ? -math.pi / 2.8 : math.pi / 2.8) *
+
+      // --- Angle Calculation ---
+      // Organic: Stochastic based on side and turgor
+      final organicAngle = (bIsLeft ? -math.pi / 2.8 : math.pi / 2.8) *
               (0.8 + (1.0 - turgor) * 0.5) +
           droopAngle +
           heightSway;
+      
+      // Schematic: Radial distribution around the top half
+      const double radialSweep = math.pi * 0.8; 
+      final schematicAngle = branchCount > 0 
+          ? (-radialSweep / 2 + (i / branchCount) * radialSweep + (bIsLeft ? -0.2 : 0.2) - math.pi/2)
+          : (bIsLeft ? -math.pi/3 : math.pi/3) - math.pi/2;
+      
+      final currentAngle = lerpDouble(organicAngle, schematicAngle, _layoutProgress)!;
 
-      final bEndX = bStartX + math.sin(bAngle) * bLength;
-      final bEndY = bStartY - math.cos(bAngle) * bLength;
+      final bEndX = bStartX + math.sin(currentAngle) * bLength;
+      final bEndY = bStartY - math.cos(currentAngle) * bLength;
 
       _branchPaint
         ..color = activeStemColor
@@ -968,8 +1058,18 @@ class AnimatedPlantComponent extends PositionComponent
     final int segments = 20;
     for (int i = 0; i <= segments; i++) {
       final t = i / segments;
-      final currentX = _cubicBezier(0, cp1X, cp2X, topX, t);
-      final currentY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      
+      // Organic positions
+      final organicX = _cubicBezier(0, cp1X, cp2X, topX, t);
+      final organicY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
+      
+      // Schematic positions: Straight vertical line
+      final schematicX = 0.0;
+      final schematicY = -h * t;
+
+      final currentX = lerpDouble(organicX, schematicX, _layoutProgress)!;
+      final currentY = lerpDouble(organicY, schematicY, _layoutProgress)!;
+      
       centers.add(Offset(currentX, currentY));
 
       // Allometric scaling: stem is thicker at base
@@ -979,14 +1079,26 @@ class AnimatedPlantComponent extends PositionComponent
       double dx, dy;
       if (i < segments) {
         final nextT = (i + 1) / segments;
-        final nextX = _cubicBezier(0, cp1X, cp2X, topX, nextT);
-        final nextY = _cubicBezier(0, cp1Y, cp2Y, topY, nextT);
+        final nextOrganicX = _cubicBezier(0, cp1X, cp2X, topX, nextT);
+        final nextOrganicY = _cubicBezier(0, cp1Y, cp2Y, topY, nextT);
+        final nextSchematicX = 0.0;
+        final nextSchematicY = -h * nextT;
+        
+        final nextX = lerpDouble(nextOrganicX, nextSchematicX, _layoutProgress)!;
+        final nextY = lerpDouble(nextOrganicY, nextSchematicY, _layoutProgress)!;
+        
         dx = nextX - currentX;
         dy = nextY - currentY;
       } else {
         final prevT = (i - 1) / segments;
-        final prevX = _cubicBezier(0, cp1X, cp2X, topX, prevT);
-        final prevY = _cubicBezier(0, cp1Y, cp2Y, topY, prevT);
+        final prevOrganicX = _cubicBezier(0, cp1X, cp2X, topX, prevT);
+        final prevOrganicY = _cubicBezier(0, cp1Y, cp2Y, topY, prevT);
+        final prevSchematicX = 0.0;
+        final prevSchematicY = -h * prevT;
+        
+        final prevX = lerpDouble(prevOrganicX, prevSchematicX, _layoutProgress)!;
+        final prevY = lerpDouble(prevOrganicY, prevSchematicY, _layoutProgress)!;
+        
         dx = currentX - prevX;
         dy = currentY - prevY;
       }
@@ -1190,17 +1302,25 @@ class AnimatedPlantComponent extends PositionComponent
       final noiseX = math.sin(noisePhase) * noiseAmplitude;
       final noiseX2 = math.cos(noisePhase * 0.8) * (noiseAmplitude * 0.4);
 
-      // Build the cubic Bezier spine with reduced horizontal swing for the taproot
-      final cpIntensity = isTaproot ? 0.05 : 0.15;
       final spine = Path()..moveTo(o1.dx, o1.dy);
-      spine.cubicTo(
-        o1.dx + noiseX + dx * cpIntensity, // CP1x
-        o1.dy + dy * 0.35, // CP1y
-        o2.dx + noiseX2 - dx * cpIntensity, // CP2x
-        o1.dy + dy * 0.65, // CP2y
-        o2.dx,
-        o2.dy,
-      );
+      
+      if (_layoutProgress > 0.8) {
+        // Layered Graph Style: Orthogonal (L-shaped) connections
+        // We drop straight down from parent, then horizontal to child
+        spine.lineTo(o1.dx, o2.dy);
+        spine.lineTo(o2.dx, o2.dy);
+      } else {
+        // Organic: Cubic Bezier spine with reduced horizontal swing for the taproot
+        final cpIntensity = isTaproot ? 0.05 : 0.15;
+        spine.cubicTo(
+          o1.dx + noiseX + dx * cpIntensity, // CP1x
+          o1.dy + dy * 0.35, // CP1y
+          o2.dx + noiseX2 - dx * cpIntensity, // CP2x
+          o1.dy + dy * 0.65, // CP2y
+          o2.dx,
+          o2.dy,
+        );
+      }
 
       // --- Width tapering ---
       // Parent width: feeds from the stem base (which is 13.2 * scale)
@@ -1230,7 +1350,13 @@ class AnimatedPlantComponent extends PositionComponent
       if (metrics.isEmpty) continue;
       final metric = metrics.first;
       final mLen = metric.length;
-      if (mLen < 1.0) continue;
+
+      // --- Growth Interpolation ---
+      final birthTime = _nodeBirthTimes[i] ?? 0.0;
+      final growthAge = (time - birthTime).clamp(0.0, 1.0);
+      // Smoothly interpolate the length of the segment for newly grown nodes
+      final activeLen = mLen * growthAge;
+      if (activeLen < 0.1) continue;
 
       const int taperSegments = 10;
       final List<Offset> leftEdge = [];
@@ -1238,7 +1364,7 @@ class AnimatedPlantComponent extends PositionComponent
 
       for (int s = 0; s <= taperSegments; s++) {
         final t = s / taperSegments;
-        final tangent = metric.getTangentForOffset(mLen * t);
+        final tangent = metric.getTangentForOffset(activeLen * t);
         if (tangent == null) continue;
 
         final pos = tangent.position;
@@ -1300,6 +1426,10 @@ class AnimatedPlantComponent extends PositionComponent
             ..strokeCap = StrokeCap.round,
         );
       }
+      // --- Root hairs on lateral roots (Using existing method) ---
+      if (!isTaproot && node.z > 0.08 && zoom > 0.8) {
+        _drawRootHairs(canvas, metric, activeLen, wEnd, zoom, time, node.z, i);
+      }
 
       // --- Inspector highlight ---
       if (highlighted) {
@@ -1312,11 +1442,6 @@ class AnimatedPlantComponent extends PositionComponent
             ..strokeWidth = 2.0 / zoom
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
         );
-      }
-
-      // --- Root hairs on lateral roots ---
-      if (!isTaproot && node.z > 0.08 && zoom > 0.8) {
-        _drawRootHairs(canvas, metric, mLen, wEnd, zoom, time, node.z, i);
       }
     }
   }
@@ -1643,22 +1768,83 @@ class AnimatedPlantComponent extends PositionComponent
     double worldWidth,
     double soilHeight,
   ) {
-    // Add a tiny visual jitter to prevent "perfect stacking"
-    // Use very small noise to keep it stable
-    final visualX =
-        n.x + math.sin(index * 1.23 + plantId.hashCode % 100) * 0.003;
-    final visualZ =
-        n.z + math.cos(index * 0.67 + plantId.hashCode % 100) * 0.003;
-
     final p = _plantData;
     final collarNode = (p != null && p.rootSystem.isNotEmpty) ? p.rootSystem.first : null;
     final collarX = collarNode?.x ?? 0.5;
     final collarZ = collarNode?.z ?? 0.0;
 
-    return Vector2(
-      (visualX - collarX) * worldWidth * 0.45,
-      ((visualZ - collarZ) * soilHeight).clamp(0.0, soilHeight).toDouble(),
+    // Organic world position
+    final organic = Vector2(
+      (n.x - collarX) * worldWidth * 0.45,
+      ((n.z - collarZ) * soilHeight).clamp(0.0, soilHeight).toDouble(),
     );
+
+    if (_layoutProgress <= 0.001) return organic;
+
+    // Schematic position (Tidier Tree)
+    final schematic = _schematicRootPositions[index];
+    if (schematic == null) return organic;
+
+    // Interpolate
+    return Vector2(
+      lerpDouble(organic.x, schematic.x, _layoutProgress)!,
+      lerpDouble(organic.y, schematic.y, _layoutProgress)!,
+    );
+  }
+
+  void _calculateSchematicLayout(Plant plant) {
+    _schematicRootPositions.clear();
+    if (plant.rootSystem.isEmpty) return;
+
+    // Build adjacency
+    final Map<int, List<int>> children = {};
+    for (int i = 0; i < plant.rootSystem.length; i++) {
+      final parent = plant.rootSystem[i].parentIndex;
+      if (parent != null && parent < plant.rootSystem.length) {
+        children.putIfAbsent(parent, () => []).add(i);
+      }
+    }
+
+    // Subtree leaf counting for spacing
+    final Map<int, int> subtreeLeaves = {};
+    int countLeaves(int idx) {
+      final kids = children[idx] ?? [];
+      if (kids.isEmpty) {
+        subtreeLeaves[idx] = 1;
+        return 1;
+      }
+      int count = 0;
+      for (final k in kids) {
+        count += countLeaves(k);
+      }
+      subtreeLeaves[idx] = count;
+      return count;
+    }
+    countLeaves(0);
+
+    // Layout configuration
+    const double hSpacing = 45.0;
+    const double vSpacing = 65.0;
+
+    void assignPos(int idx, double xCenter, double y) {
+      _schematicRootPositions[idx] = Vector2(xCenter, y);
+      
+      final kids = children[idx] ?? [];
+      if (kids.isEmpty) return;
+
+      // Center the children under the parent
+      double totalWidth = (subtreeLeaves[idx]! - 1) * hSpacing;
+      double currentX = xCenter - totalWidth / 2.0;
+
+      for (final k in kids) {
+        double kw = (subtreeLeaves[k]! - 1) * hSpacing;
+        assignPos(k, currentX + kw / 2.0, y + vSpacing);
+        currentX += kw + hSpacing;
+      }
+    }
+
+    // Start from collar at 0,0
+    assignPos(0, 0, 0);
   }
 
   Map<int, List<RootNode>> _groupNodesIntoBranches(List<RootNode> nodes) {
@@ -1679,34 +1865,70 @@ class AnimatedPlantComponent extends PositionComponent
 
   void _drawTipAnimations(Canvas canvas) {
     final zoom = game.camera.viewfinder.zoom;
-    // LOD: Hide small tip glows when zoomed out
     if (zoom < 0.6) return;
     final zoomLOD = (zoom - 0.6).clamp(0.0, 1.0);
 
+    final isFlowMode = game.ref.read(particleFlowModeProvider);
+    final boost = isFlowMode ? 2.5 : 1.0;
+
     for (final glow in _tipGlows) {
       final alpha = glow.alpha * zoomLOD;
-      final progress = glow.life / 2.0; // 0 to 1
+      final progress = glow.life / 2.5;
 
-      final ringPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.15 * alpha)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0 / zoom;
+      // Color based on vitality: Green (healthy) -> Yellow (stress) -> White (active growth)
+      final baseColor = Color.lerp(
+        const Color(0xFFFACC15), // Yellow
+        const Color(0xFF84CC16), // Green
+        glow.vitality,
+      )!;
+      
+      final energyColor = Color.lerp(
+        baseColor,
+        Colors.white,
+        (glow.pulse * 0.5 + 0.5) * 0.5,
+      )!;
 
+      // 1. Expanding Metabolic Rings (Multi-layered)
+      for (int r = 0; r < 2; r++) {
+        final rProgress = (progress + r * 0.3) % 1.0;
+        final ringAlpha = (1.0 - rProgress) * 0.2 * alpha;
+        final ringRadius = (2.0 + rProgress * 15.0) / zoom;
+        
+        canvas.drawCircle(
+          glow.position.toOffset(),
+          ringRadius,
+          Paint()
+            ..color = energyColor.withValues(alpha: ringAlpha)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2 / zoom,
+        );
+      }
+
+      // 2. Active Meristem Core
+      final coreRadius = (3.0 + glow.pulse * 2.0 * boost) / zoom;
       canvas.drawCircle(
         glow.position.toOffset(),
-        (3 + progress * 12) / zoom,
-        ringPaint,
-      ); // Reduced radius
+        coreRadius,
+        Paint()
+          ..color = energyColor.withValues(alpha: 0.4 * alpha)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 / zoom),
+      );
 
-      final corePaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.25 * alpha)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom);
-
-      canvas.drawCircle(
-        glow.position.toOffset(),
-        (3 + glow.pulse * 1.5) / zoom,
-        corePaint,
-      ); // Reduced radius
+      // 3. Absorption Sparkles (Random tiny dots)
+      if (glow.vitality > 0.5 && glow.pulse > 0.8) {
+        final rand = math.Random(glow.hashCode + (glow.life * 10).toInt());
+        for (int i = 0; i < 3; i++) {
+          final offset = Offset(
+            (rand.nextDouble() - 0.5) * 10 / zoom,
+            (rand.nextDouble() - 0.5) * 10 / zoom,
+          );
+          canvas.drawCircle(
+            glow.position.toOffset() + offset,
+            0.8 / zoom,
+            Paint()..color = Colors.white.withValues(alpha: 0.6 * alpha),
+          );
+        }
+      }
     }
   }
 
@@ -2100,10 +2322,18 @@ class AnimatedPlantComponent extends PositionComponent
 
 class _RootTipGlow {
   final Vector2 position;
+  final double vitality;
+  final bool isGrowth;
   double life = 0;
-  _RootTipGlow({required this.position});
+
+  _RootTipGlow({
+    required this.position,
+    this.vitality = 1.0,
+    this.isGrowth = true,
+  });
+
   void update(double dt) => life += dt;
-  double get alpha => (1.0 - life / 2.0).clamp(0.0, 1.0);
-  double get pulse => math.sin(life * 6);
-  bool get isDone => life > 2.0;
+  double get alpha => (1.0 - life / 2.5).clamp(0.0, 1.0);
+  double get pulse => math.sin(life * (isGrowth ? 8.0 : 4.0));
+  bool get isDone => life > 2.5;
 }

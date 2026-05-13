@@ -372,7 +372,7 @@ class ParticlePhysicsIsolateManager {
           
           // Natural aging
           double life = _webParticleData[i + 6].abs() % 1.0;
-          life -= 0.01 * dt;
+          life -= 0.01 * dt * _webFlowBoost;
           if (life < 0) life = 0;
           
           // Re-encode state (simple version for web loop)

@@ -78,6 +78,11 @@ _SoilLayer _$SoilLayerFromJson(Map<String, dynamic> json) => _SoilLayer(
         (k, e) => MapEntry(k, (e as num).toDouble()),
       ) ??
       const {},
+  hotspots:
+      (json['hotspots'] as List<dynamic>?)
+          ?.map((e) => RhizosphereHotspot.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$SoilLayerToJson(_SoilLayer instance) =>
@@ -140,4 +145,35 @@ Map<String, dynamic> _$SoilLayerToJson(_SoilLayer instance) =>
       'nitrificationRate': instance.nitrificationRate,
       'denitrificationRate': instance.denitrificationRate,
       'traceElements': instance.traceElements,
+      'hotspots': instance.hotspots,
     };
+
+_RhizosphereHotspot _$RhizosphereHotspotFromJson(Map<String, dynamic> json) =>
+    _RhizosphereHotspot(
+      id: json['id'] as String,
+      x: (json['x'] as num).toDouble(),
+      z: (json['z'] as num).toDouble(),
+      intensity: (json['intensity'] as num).toDouble(),
+      radius: (json['radius'] as num?)?.toDouble() ?? 0.05,
+      age: (json['age'] as num?)?.toDouble() ?? 0.0,
+      type:
+          $enumDecodeNullable(_$HotspotTypeEnumMap, json['type']) ??
+          HotspotType.rhizosphere,
+    );
+
+Map<String, dynamic> _$RhizosphereHotspotToJson(_RhizosphereHotspot instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'x': instance.x,
+      'z': instance.z,
+      'intensity': instance.intensity,
+      'radius': instance.radius,
+      'age': instance.age,
+      'type': _$HotspotTypeEnumMap[instance.type]!,
+    };
+
+const _$HotspotTypeEnumMap = {
+  HotspotType.rhizosphere: 'rhizosphere',
+  HotspotType.decomposition: 'decomposition',
+  HotspotType.fungalHub: 'fungalHub',
+};

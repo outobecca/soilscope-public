@@ -121,15 +121,25 @@ class MicrobialEnzymesSolver {
     );
     final double fRedox = _redoxResponse(layer.redoxPotential);
 
-    // --- RHIZOSPHERE PRIMING EFFECT (Moved from AggregationSolver) ---
+    // --- RHIZOSPHERE PRIMING EFFECT ---
     // Labile C (exudates) stimulates enzyme production
     const double vMaxPriming = 2.0;
     const double kmPriming = 50.0;
-    final double primingFactor =
+    final double basePrimingFactor =
         vMaxPriming * layer.labileCarbon / (kmPriming + layer.labileCarbon);
 
+    // Hotspot-driven priming (additional boost from biological "hubs")
+    // This represents the concentrated enzymatic activity at root-microbe interfaces
+    double hotspotBoost = 0.0;
+    for (final h in layer.hotspots) {
+      // Hotspots provide a localized boost to the enzyme pool
+      hotspotBoost += h.intensity * 0.4; 
+    }
+    
+    final double totalPrimingFactor = (basePrimingFactor + hotspotBoost).clamp(0.0, 5.0);
+
     // Enzyme pool scales with microbial biomass and is boosted by priming
-    final double enzymePool = (layer.microbialBiomass / 100.0) * (1.0 + primingFactor);
+    final double enzymePool = (layer.microbialBiomass / 100.0) * (1.0 + totalPrimingFactor);
 
     // C/N constraint for net N mineralization
     // Mineralization peaks when C/N < 20, and drops towards 0 as C/N approaches 30.

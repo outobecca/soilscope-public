@@ -9,6 +9,7 @@ import 'animated_microbe_component.dart';
 import 'expandable_hotspot_node.dart';
 import 'soil_layer_component.dart';
 import 'biological_entities_component.dart';
+import 'rhizosphere_hotspot_component.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'cycle_highlight_mixin.dart';
@@ -73,6 +74,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   bool _isPinned = false;
   final List<NetworkEdge> _edges = [];
+  final Map<int, double> _edgeBirthTimes = {};
   double _lastGraphUpdate = 0;
 
   @override
@@ -95,7 +97,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
     // 1. Organic Graph Maintenance (Single Source)
     if (time - _lastGraphUpdate > 1.2) {
-      _rebuildSymbioticGraph(state);
+      _rebuildSymbioticGraph(state, time);
       _lastGraphUpdate = time;
     }
 
@@ -132,7 +134,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
   }
 
-  void _rebuildSymbioticGraph(BiophysicalState state) {
+  void _rebuildSymbioticGraph(BiophysicalState state, double time) {
     _edges.clear();
     final rootNodes = <NetNode>[];
     final otherNodes = <NetNode>[];
@@ -155,11 +157,17 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
 
     // 2. Target Nodes (Hotspots and Microbes)
-    final hotspots = game.world.children
-        .whereType<SoilLayerComponent>()
-        .expand((l) => l.children.whereType<ExpandableHotspotNode>());
+    final hotspots = game.technicalHotspotLayer.children.whereType<ExpandableHotspotNode>();
     for (final h in hotspots) {
       otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'hotspot', metadata: {'layerId': h.layerId}));
+    }
+
+    final layerComps = game.world.children.whereType<SoilLayerComponent>();
+    for (final layer in layerComps) {
+      final rhizoHotspots = layer.children.whereType<RhizosphereHotspotComponent>();
+      for (final h in rhizoHotspots) {
+        otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'rhizosphere_hotspot', metadata: {'layerId': h.layerId}));
+      }
     }
 
     final animLayer = game.world.children.whereType<SimulationAnimationLayerComponent>().firstOrNull;
@@ -196,6 +204,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
           if (dist > 300) continue; // Range limit
 
           _edges.add(NetworkEdge(u, v));
+          final edgeKey = u.pos.hashCode ^ v.pos.hashCode;
+          if (!_edgeBirthTimes.containsKey(edgeKey)) {
+            _edgeBirthTimes[edgeKey] = time;
+          }
           nextFrontier.add(v);
           connectedNodes.add(v);
         }
@@ -233,8 +245,25 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final diff = end - start;
     if (diff.distance < 1.0) return;
     final normal = Offset(-diff.dy, diff.dx) / diff.distance;
+
+    // BIOLOGICAL BREATHING: Subtle time-based sway synced with plant vitality
+    final state = game.simulationState;
+    final plant = state?.plants.isNotEmpty == true ? state!.plants.first : state?.plant;
+    final turgor = plant?.turgorPressure ?? 0.5;
+    final isFlowMode = game.ref.read(particleFlowModeProvider);
+    final boost = isFlowMode ? 2.5 : 1.0;
+
+    final sway = (4.0 + turgor * 6.0) * math.sin(time * (0.4 + turgor * 0.2) + seed) * boost;
+    final pulse = 1.0 + 0.1 * math.sin(time * (2.0 + turgor * 2.0) + seed);
     
-    final cp = mid + (normal * baseDrift);
+    final cp = mid + (normal * (baseDrift + sway) * pulse);
+
+    // HYPHAL EXPANSION: Animate new edges growing from root to target
+    final edgeKey = edge.a.pos.hashCode ^ edge.b.pos.hashCode;
+    final birthTime = _edgeBirthTimes[edgeKey] ?? 0.0;
+    final growthAge = ((time - birthTime) * 1.5).clamp(0.0, 1.0);
+    
+    if (growthAge < 0.05) return;
     
     // Use cubic for more "thread-like" look
     final c1 = Offset.lerp(start, cp, 0.5)!;
@@ -256,26 +285,35 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
           end.dx, end.dy
         );
 
-      // Glow for the whole bundle if i==1
-      if (i == 1) {
+      // Apply expansion clipping
+      if (growthAge < 1.0) {
+        final metrics = threadPath.computeMetrics().toList();
+        if (metrics.isNotEmpty) {
+          final m = metrics.first;
+          final extract = m.extractPath(0, m.length * growthAge);
+          canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity * growthAge));
+        }
+      } else {
+        // Draw full path normally
+        if (i == 1) {
+          canvas.drawPath(
+            threadPath,
+            paint
+              ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
+              ..strokeWidth = strokeBase * 4.0
+              ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+          );
+        }
+
         canvas.drawPath(
           threadPath,
           paint
-            ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
-            ..strokeWidth = strokeBase * 4.0
-            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+            ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
+                .withValues(alpha: (0.4 - i * 0.1) * opacity)
+            ..strokeWidth = strokeBase * (1.0 - i * 0.2)
+            ..maskFilter = null,
         );
       }
-
-      // Core thread
-      canvas.drawPath(
-        threadPath,
-        paint
-          ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
-              .withValues(alpha: (0.4 - i * 0.1) * opacity)
-          ..strokeWidth = strokeBase * (1.0 - i * 0.2)
-          ..maskFilter = null,
-      );
     }
 
     // 3. Bidirectional Flux Particles (The actual "transfer")
@@ -286,13 +324,22 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   double _calculateMetabolism(NetworkEdge edge) {
     final dist = (edge.a.pos - edge.b.pos).distance;
-    double m = (1.0 - (dist / 400)).clamp(0.1, 1.0);
+    double activity = (1.0 - (dist / 400)).clamp(0.1, 1.0);
 
-    // Symbiotic bonus: connections to root tips are high-activity
-    if (edge.a.type == 'root_tip' || edge.b.type == 'root_tip') {
-      m *= 1.5;
+    if (edge.a.type == 'microbe' || edge.b.type == 'microbe') {
+      activity += 0.3;
     }
-    return m;
+    if (edge.a.type == 'hotspot' || edge.b.type == 'hotspot') {
+      activity += 0.4;
+    }
+    if (edge.a.type == 'rhizosphere_hotspot' || edge.b.type == 'rhizosphere_hotspot') {
+      activity += 0.6; // High intensity biological hub
+    }
+    if (edge.a.type == 'root_tip' || edge.b.type == 'root_tip') {
+      activity += 0.2;
+    }
+
+    return activity.clamp(0.0, 2.0);
   }
 
   Color _getEdgeColor(NetworkEdge edge) {
@@ -301,6 +348,9 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
     if (edge.a.type == 'hotspot' || edge.b.type == 'hotspot') {
       return const Color(0xFFFBBF24); // Amber (Nutrient Transfer)
+    }
+    if (edge.a.type == 'rhizosphere_hotspot' || edge.b.type == 'rhizosphere_hotspot') {
+      return const Color(0xFFD946EF); // Fuchsia (Biological Activity)
     }
     return const Color(0xFF94A3B8).withValues(alpha: 0.5); // Soft Slate for structural connections
   }
@@ -319,8 +369,12 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final m = metrics.first;
 
     final flowMode = game.ref.read(particleFlowModeProvider);
-    final speed = (0.5 + activity * 0.4) * (flowMode ? 2.0 : 1.0);
-    final count = (flowMode ? 4 : (2 * activity).toInt().clamp(1, 3));
+    final state = game.simulationState;
+    final plant = state?.plants.isNotEmpty == true ? state!.plants.first : state?.plant;
+    final turgor = plant?.turgorPressure ?? 0.5;
+    
+    final speed = (0.5 + activity * 0.4 + turgor * 0.3) * (flowMode ? 2.5 : 1.0);
+    final count = (flowMode ? 5 : (2 * activity).toInt().clamp(1, 3));
 
     for (int i = 0; i < count; i++) {
       final t = (time * speed + (i / count)) % 1.0;

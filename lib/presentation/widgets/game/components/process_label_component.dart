@@ -94,10 +94,15 @@ class ProcessLabel extends PositionComponent
     if (!(game.simulationState?.isRunning ?? false)) return;
     if (!isStatic && !_isPinned) {
       _elapsed += dt;
-      // Floating notifications rise faster and slightly jitter
-      final speed = showTitle ? 25.0 : 10.0;
+      
+      final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+      final isSchematic = layoutMode == VisualLayoutMode.schematic;
+      
+      // Stabilize: Slower rise and NO jitter in schematic mode
+      final speed = isSchematic ? 5.0 : (showTitle ? 25.0 : 10.0);
       position.y -= speed * dt;
-      if (showTitle) {
+      
+      if (showTitle && !isSchematic) {
         position.x += math.sin(_elapsed * 4) * 0.2;
       }
     }
