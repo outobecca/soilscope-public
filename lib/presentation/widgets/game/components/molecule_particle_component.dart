@@ -4,32 +4,14 @@ import 'package:flame/events.dart';
 import 'package:flame/collisions.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../../core/cpk_standards.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_provider.dart';
 import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'cycle_highlight_mixin.dart';
 import 'animated_plant_component.dart';
+import 'molecule_renderer.dart';
 
-enum MoleculeType {
-  ammonium,
-  nitrate,
-  labileCarbon,
-  stableCarbon,
-  water,
-  oxygen,
-  co2,
-  organicNitrogen,
-  carbon,
-  methane,
-  nitrousOxide,
-  phosphate,
-  potassium,
-  calcium,
-  magnesium,
-  waterVapor,
-}
 
 /// Optimized Molecular Particle component with reduced pixel footprint.
 /// Represents a cluster of molecules (edustusmalli).
@@ -130,15 +112,15 @@ class MoleculeParticleComponent extends PositionComponent
   }
 
   @override
-  String get entityTitle => _getSymbolText(type);
+  String get entityTitle => MoleculeRenderer.getMoleculeFormula(type);
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
     if (isInteractionEnabled && other is AnimatedPlantComponent && !_isAbsorbed) {
       final plantId = other.plantId;
-      final amount = 0.1; // Standard absorption unit
-      game.ref.read(simulationProvider.notifier).absorbNutrient(plantId, _getSymbolOnly(type), amount);
+      final symbol = MoleculeRenderer.getMoleculeFormula(type).replaceAll(RegExp(r'[^a-zA-Z]'), '');
+      game.ref.read(simulationProvider.notifier).absorbNutrient(plantId, symbol, 0.1);
       game.triggerPlantGrowth();
       _isAbsorbed = true;
       children.query<CircleHitbox>().firstOrNull?.collisionType = CollisionType.inactive;
@@ -146,23 +128,8 @@ class MoleculeParticleComponent extends PositionComponent
     }
   }
 
-  String _getSymbolOnly(MoleculeType t) {
-    switch (t) {
-      case MoleculeType.nitrate: return 'N';
-      case MoleculeType.ammonium: return 'N';
-      case MoleculeType.phosphate: return 'P';
-      case MoleculeType.potassium: return 'K';
-      case MoleculeType.calcium: return 'Ca';
-      case MoleculeType.magnesium: return 'Mg';
-      case MoleculeType.oxygen: return 'O2';
-      case MoleculeType.co2: return 'CO2';
-      case MoleculeType.methane: return 'CH4';
-      case MoleculeType.nitrousOxide: return 'N2O';
-      case MoleculeType.water || MoleculeType.waterVapor: return 'H2O';
-      case MoleculeType.organicNitrogen: return 'N';
-      default: return 'X';
-    }
-  }
+  Color get moleculeColor => MoleculeRenderer.getMoleculeColor(type);
+
 
   static final Vector2 _tmpVec = Vector2.zero();
 
@@ -271,7 +238,8 @@ class MoleculeParticleComponent extends PositionComponent
         }
 
         if (targetIsRoot && targetPlantId != null) {
-           game.ref.read(simulationProvider.notifier).absorbNutrient(targetPlantId, _getSymbolOnly(type), 0.1);
+           final symbol = MoleculeRenderer.getMoleculeFormula(type).replaceAll(RegExp(r'[^a-zA-Z]'), '');
+           game.ref.read(simulationProvider.notifier).absorbNutrient(targetPlantId, symbol, 0.1);
         } else {
            // If it's not a root, it might be a soil hotspot.
            // Since we can't easily attribute it to a plant, we just let it be destroyed.
@@ -292,6 +260,7 @@ class MoleculeParticleComponent extends PositionComponent
     final zoom = game.camera.viewfinder.zoom;
     final double elapsed = _time - seed;
     double currentOpacity = opacity;
+    
     // Smooth fade in/out
     if (elapsed < 1.0) {
       currentOpacity *= elapsed;
@@ -299,212 +268,25 @@ class MoleculeParticleComponent extends PositionComponent
       currentOpacity *= math.max(0.0, lifeTime - elapsed);
     }
 
-    // High Contrast Dimming: Apply cycle-based opacity scaling
+    // High Contrast Dimming
     currentOpacity *= cycleOpacity;
-
-    // Activity intensity: Faster particles are slightly more opaque
-    final speedIntensity = (velocity.length / 100.0).clamp(0.5, 1.5);
-    currentOpacity = (currentOpacity * speedIntensity).clamp(0.0, 1.0);
 
     final center = Offset(size.x / 2, size.y / 2);
 
-    // 1. CYCLE GLOW (Render override for pedagogical focus)
+    // 1. CYCLE GLOW
     renderCycleGlow(canvas, center, 4.0);
 
-    // 2. MOLECULAR RENDERING (CPK Standard)
-    if (zoom > 1.2) {
-      if (transformTarget != null) {
-        // Render interpolation between types
-        _renderTransformStructure(canvas, center, currentOpacity, zoom, _transformProgress);
-      } else {
-        _renderMoleculeStructure(canvas, center, currentOpacity, zoom, type);
-      }
-    } else {
-      // Simple dot rendering for distance - now with shading
-      final color = transformTarget != null 
-          ? Color.lerp(_getMoleculeColor(type), _getMoleculeColor(transformTarget!), _transformProgress)!
-          : _getMoleculeColor(type);
-      final radius = 3.0;
-      
-      // Main circle
-      canvas.drawCircle(center, radius, Paint()..color = color.withValues(alpha: currentOpacity));
-      
-      // Subtle shading/highlight for "clear, shaded circles"
-      canvas.drawCircle(
-        center - Offset(radius * 0.3, radius * 0.3),
-        radius * 0.25,
-        Paint()..color = Colors.white.withValues(alpha: currentOpacity * 0.45),
-      );
-    }
-
-    if (isPinned || isHovered) {
-      final center = Offset(size.x / 2, size.y / 2);
-      canvas.drawCircle(
-        center,
-        10.0,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.3 * currentOpacity)
-          ..style = PaintingStyle.stroke,
-      );
-    }
-  }
-
-  void _renderMoleculeStructure(Canvas canvas, Offset center, double opacity, double zoom, MoleculeType mType) {
-    final double atomRadius = 2.0;
-
-    switch (mType) {
-      case MoleculeType.co2: // O=C=O (Linear)
-        _drawAtom(canvas, center, CPKStandards.colorC, atomRadius * 1.2, opacity); // Carbon
-        _drawAtom(canvas, center + const Offset(-4, 0), CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        _drawAtom(canvas, center + const Offset(4, 0), CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        break;
-      case MoleculeType.water || MoleculeType.waterVapor: // H-O-H (Bent)
-        _drawAtom(canvas, center, CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        _drawAtom(canvas, center + const Offset(-3, 3), Colors.white, atomRadius * 0.7, opacity); // Hydrogen
-        _drawAtom(canvas, center + const Offset(3, 3), Colors.white, atomRadius * 0.7, opacity); // Hydrogen
-        break;
-      case MoleculeType.nitrate: // NO3- (Trigonal Planar)
-        _drawAtom(canvas, center, CPKStandards.colorN, atomRadius, opacity); // Nitrogen
-        _drawAtom(canvas, center + const Offset(0, -4), CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        _drawAtom(canvas, center + const Offset(-3.5, 2.5), CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        _drawAtom(canvas, center + const Offset(3.5, 2.5), CPKStandards.colorO, atomRadius, opacity); // Oxygen
-        break;
-      case MoleculeType.ammonium: // NH4+ (Tetrahedral)
-        _drawAtom(canvas, center, CPKStandards.colorN, atomRadius, opacity); // Nitrogen
-        _drawAtom(canvas, center + const Offset(-3, -3), Colors.white, atomRadius * 0.7, opacity);
-        _drawAtom(canvas, center + const Offset(3, -3), Colors.white, atomRadius * 0.7, opacity);
-        _drawAtom(canvas, center + const Offset(0, 4), Colors.white, atomRadius * 0.7, opacity);
-        break;
-      case MoleculeType.methane: // CH4
-        _drawAtom(canvas, center, CPKStandards.colorC, atomRadius * 1.1, opacity);
-        _drawAtom(canvas, center + const Offset(-3, -3), Colors.white, atomRadius * 0.6, opacity);
-        _drawAtom(canvas, center + const Offset(3, -3), Colors.white, atomRadius * 0.6, opacity);
-        _drawAtom(canvas, center + const Offset(0, 4), Colors.white, atomRadius * 0.6, opacity);
-        break;
-      case MoleculeType.nitrousOxide: // N=N=O (Linear)
-        _drawAtom(canvas, center, CPKStandards.colorN, atomRadius, opacity);
-        _drawAtom(canvas, center + const Offset(-4, 0), CPKStandards.colorN, atomRadius, opacity);
-        _drawAtom(canvas, center + const Offset(4, 0), CPKStandards.colorO, atomRadius, opacity);
-        break;
-      default:
-        // Single atom types (P, K, etc.)
-        _drawAtom(canvas, center, _getMoleculeColor(mType), atomRadius * 1.5, opacity);
-    }
-  }
-
-  void _renderTransformStructure(Canvas canvas, Offset center, double opacity, double zoom, double progress) {
-    if (transformTarget == null) return;
-    
-    // Simple way to show transformation: cross-fade the atom clusters
-    canvas.save();
-    _renderMoleculeStructure(canvas, center, opacity * (1.0 - progress), zoom, type);
-    _renderMoleculeStructure(canvas, center, opacity * progress, zoom, transformTarget!);
-    canvas.restore();
-    
-    // Add a transformation glow pulse
-    final pulse = math.sin(progress * math.pi);
-    canvas.drawCircle(
-      center, 
-      8.0 * pulse, 
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.4 * pulse * opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0)
+    // 2. MOLECULAR RENDERING (Unified)
+    MoleculeRenderer.drawMolecule(
+      canvas,
+      center,
+      type,
+      opacity: currentOpacity,
+      isLocked: isPinned || isHovered,
+      zoom: zoom,
+      phase: _time * 2.0,
+      morphProgress: transformTarget != null ? _transformProgress : 0.0,
     );
-  }
-
-  void _drawAtom(Canvas canvas, Offset pos, Color color, double radius, double opacity) {
-    // 1. Shadow for depth
-    canvas.drawCircle(
-      pos + const Offset(0.5, 0.5),
-      radius,
-      Paint()..color = Colors.black.withValues(alpha: opacity * 0.3),
-    );
-
-    // 2. Main CPK Color Circle
-    canvas.drawCircle(
-      pos, 
-      radius, 
-      Paint()..color = color.withValues(alpha: opacity)
-    );
-
-    // 3. Highlight/Shading for 3D sphere look
-    canvas.drawCircle(
-      pos - Offset(radius * 0.3, radius * 0.3),
-      radius * 0.35,
-      Paint()..color = Colors.white.withValues(alpha: opacity * 0.5),
-    );
-  }
-
-  String _getSymbolText(MoleculeType t) {
-    switch (t) {
-      case MoleculeType.ammonium:
-        return "NH4+";
-      case MoleculeType.nitrate:
-        return "NO3-";
-      case MoleculeType.labileCarbon:
-      case MoleculeType.carbon:
-        return "C-lab";
-      case MoleculeType.stableCarbon:
-        return "C-sta";
-      case MoleculeType.water:
-        return "H2O";
-      case MoleculeType.oxygen:
-        return "O2";
-      case MoleculeType.co2:
-        return "CO2";
-      case MoleculeType.organicNitrogen:
-        return "DON";
-      case MoleculeType.methane:
-        return "CH4";
-      case MoleculeType.nitrousOxide:
-        return "N2O";
-      case MoleculeType.phosphate:
-        return "PO4";
-      case MoleculeType.potassium:
-        return "K+";
-      case MoleculeType.calcium:
-        return "Ca2+";
-      case MoleculeType.magnesium:
-        return "Mg2+";
-      case MoleculeType.waterVapor:
-        return "H2O(v)";
-    }
-  }
-
-  Color _getMoleculeColor(MoleculeType t) {
-    switch (t) {
-      case MoleculeType.ammonium:
-        return CPKStandards.colorN;
-      case MoleculeType.nitrate:
-        return CPKStandards.colorN; // Central Nitrogen
-      case MoleculeType.labileCarbon:
-      case MoleculeType.carbon:
-        return CPKStandards.colorLabileCarbon;
-      case MoleculeType.stableCarbon:
-        return CPKStandards.colorStableCarbon;
-      case MoleculeType.water:
-        return Colors.cyan;
-      case MoleculeType.methane:
-        return CPKStandards.colorC;
-      case MoleculeType.oxygen:
-        return CPKStandards.colorO;
-      case MoleculeType.co2:
-        return CPKStandards.colorC;
-      case MoleculeType.organicNitrogen:
-        return CPKStandards.colorN;
-      case MoleculeType.nitrousOxide:
-        return CPKStandards.colorN; // Dominant Nitrogen
-      case MoleculeType.phosphate:
-        return CPKStandards.colorP;
-      case MoleculeType.potassium:
-        return CPKStandards.colorK;
-      case MoleculeType.calcium:
-        return CPKStandards.colorCa;
-      case MoleculeType.magnesium:
-        return CPKStandards.colorMg;
-      case MoleculeType.waterVapor:
-        return CPKStandards.colorO.withValues(alpha: 0.7);
-    }
   }
 
   @override
@@ -548,10 +330,10 @@ class MoleculeParticleComponent extends PositionComponent
             title: info['title'] as String,
             description: info['description'] as String,
             stats: info['stats'] as Map<String, String>,
-            formula: info['formula'] as String?,
+            formula: MoleculeRenderer.getMoleculeFormula(type),
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
-            accentColor: _getMoleculeColor(type),
+            accentColor: MoleculeRenderer.getMoleculeColor(type),
             elementSymbol: symbol,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
@@ -565,7 +347,6 @@ class MoleculeParticleComponent extends PositionComponent
         return {
           'title': l.moleculeAmmoniumTitle,
           'description': l.moleculeAmmoniumDesc,
-          'formula': r'NH_{4}^{+}',
           'stats': {
             l.ionLabel: 'NH₄⁺',
             l.charge: '+1 (Kationi)',
@@ -577,7 +358,6 @@ class MoleculeParticleComponent extends PositionComponent
         return {
           'title': l.moleculeNitrateTitle,
           'description': l.moleculeNitrateDesc,
-          'formula': r'NO_{3}^{-}',
           'stats': {
             l.ionLabel: 'NO₃⁻',
             l.charge: '-1 (Anioni)',

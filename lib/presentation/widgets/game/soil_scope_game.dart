@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/events.dart';
-import 'package:flame_riverpod/flame_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
 import '../../providers/simulation_provider.dart';
@@ -29,10 +28,17 @@ import 'components/soil_symbiosis_network_component.dart';
 /// Enforces a unified central simulation column for sky and soil.
 class SoilScopeGame extends FlameGame
     with
-        RiverpodGameMixin,
         ScrollDetector,
         ScaleDetector,
         HasCollisionDetection {
+  
+  final WidgetRef ref;
+
+  SoilScopeGame(this.ref) {
+    debugPrint('[SoilScopeGame] Constructor called');
+    technicalHotspotLayer = Component()..priority = 2500;
+  }
+
   /// Reference logical size for coordinate calculations.
   static final Vector2 logicalSize = Vector2(1200, 900);
 
@@ -75,10 +81,6 @@ class SoilScopeGame extends FlameGame
   late final Component technicalHotspotLayer;
   MoleculeParticlePool? moleculePool;
 
-  SoilScopeGame() {
-    debugPrint('[SoilScopeGame] Constructor called');
-    technicalHotspotLayer = Component()..priority = 2500;
-  }
 
   @override
   void update(double dt) {
@@ -136,11 +138,13 @@ class SoilScopeGame extends FlameGame
   List<Vector2> get rootTipWorldPositions => _rootTipWorldPositions;
   List<Vector2> get foliageWorldPositions => _foliageWorldPositions;
 
+
   @override
   Future<void> onLoad() async {
     debugPrint('[SoilScopeGame] onLoad started');
     await super.onLoad();
     try {
+      debugPrint('[SoilScopeGame] onLoad: attempting to read l10n');
       l10n = ref.read(appLocalizationsProvider);
       debugPrint('[SoilScopeGame] l10n loaded successfully');
     } catch (e) {
@@ -287,7 +291,43 @@ class SoilScopeGame extends FlameGame
   }
 
   final List<void Function()> _syncActionBuffer = [];
-  final List<ProviderSubscription> _riverpodSubscriptions = [];
+
+  /// External reactive updates from UI/Riverpod
+  void updateL10n(AppLocalizations next) {
+    if (next != l10n) {
+      _syncActionBuffer.add(() => l10n = next);
+    }
+  }
+
+  void updateSession(BiophysicalState state, SimulationSessionState session) {
+    _syncActionBuffer.add(() {
+      _updateScene(state, session);
+      _lastState = state;
+    });
+  }
+
+  void updateIsRunning(bool isRunning, BiophysicalState state) {
+    paused = !isRunning;
+    _syncActionBuffer.add(() {
+      _lastState = state;
+    });
+  }
+
+  void updateBiophysicalState(BiophysicalState next) {
+    _syncActionBuffer.add(() {
+      _lastState = next;
+      final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
+      if (animLayer != null) {
+        animLayer.updateState(next);
+      }
+    });
+  }
+
+  void updateTimeScale(double timeScale, BiophysicalState state) {
+    _syncActionBuffer.add(() {
+      _lastState = state;
+    });
+  }
 
 
   @override
@@ -295,113 +335,6 @@ class SoilScopeGame extends FlameGame
     debugPrint('[SoilScopeGame] onMount started');
     super.onMount();
     
-    // Explicitly manage Riverpod subscriptions in the game lifecycle
-    if (buildContext != null) {
-      debugPrint('[SoilScopeGame] onMount: buildContext is not null, setting up subscriptions');
-      final container = ProviderScope.containerOf(buildContext!);
-      
-      _riverpodSubscriptions.add(
-        container.listen(appLocalizationsProvider, (previous, next) {
-          debugPrint('[SoilScopeGame] appLocalizationsProvider changed');
-          if (next != l10n) {
-            _syncActionBuffer.add(() => l10n = next);
-          }
-        })
-      );
-
-      // Structural update: only re-layout when layers or plants are added/removed, or selection changes
-      _riverpodSubscriptions.add(
-        container.listen(
-          simulationSessionProvider.select((s) => (
-            s.selectedLayerId,
-            s.selectedInspectorType,
-          )),
-          (previous, next) {
-            debugPrint('[SoilScopeGame] simulationSessionProvider (selectedLayer/Inspector) changed');
-            final state = container.read(displayedSimulationStateProvider);
-            final session = container.read(simulationSessionProvider);
-            _syncActionBuffer.add(() {
-              _updateScene(state, session);
-              _lastState = state;
-            });
-          },
-        )
-      );
-
-      // Listen to Simulation Running State
-      _riverpodSubscriptions.add(
-        container.listen<bool>(
-          simulationProvider.select((s) => s.isRunning),
-          (previous, next) {
-            debugPrint('[SoilScopeGame] isRunning changed to: $next');
-            // Set paused directly on the game instance
-            // This is critical because if paused is true, update() is not called
-            // and the _syncActionBuffer would never be processed to unpause.
-            paused = !next;
-            
-            _syncActionBuffer.add(() {
-              // Force update _lastState to reflect isRunning change
-              final state = container.read(displayedSimulationStateProvider);
-              _lastState = state;
-            });
-          },
-          fireImmediately: true,
-        )
-      );
-
-      // Listen to Biophysical State Changes (Water flux, nutrient movement, etc.)
-      _riverpodSubscriptions.add(
-        container.listen<BiophysicalState>(
-          displayedSimulationStateProvider,
-          (previous, next) {
-            // debugPrint('[SoilScopeGame] displayedSimulationStateProvider changed'); // Too spammy if uncommented
-            _syncActionBuffer.add(() {
-              _lastState = next;
-              // Synchronize animation layer components with the new biophysical state
-              final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
-              if (animLayer != null) {
-                animLayer.updateState(next);
-              }
-            });
-          },
-        )
-      );
-
-      // Listen to Time Scale
-      _riverpodSubscriptions.add(
-        container.listen<double>(
-          simulationProvider.select((s) => s.timeScale),
-          (previous, next) {
-            debugPrint('[SoilScopeGame] timeScale changed to: $next');
-            _syncActionBuffer.add(() {
-              final state = container.read(displayedSimulationStateProvider);
-              _lastState = state;
-            });
-          },
-        )
-      );
-      
-      _riverpodSubscriptions.add(
-        container.listen(
-          displayedSimulationStateProvider.select((s) => (
-            s.profile.layers.length,
-            s.plants.length,
-          )),
-          (previous, next) {
-            debugPrint('[SoilScopeGame] displayedSimulationStateProvider (layers/plants count) changed');
-            final state = container.read(displayedSimulationStateProvider);
-            final session = container.read(simulationSessionProvider);
-            _syncActionBuffer.add(() {
-              _updateScene(state, session);
-              _lastState = state;
-            });
-          },
-        )
-      );
-    } else {
-      debugPrint('[SoilScopeGame] onMount: buildContext is NULL!');
-    }
-
     try {
       final initialState = ref.read(displayedSimulationStateProvider);
       final session = ref.read(simulationSessionProvider);
@@ -417,15 +350,13 @@ class SoilScopeGame extends FlameGame
 
   @override
   void onRemove() {
-    for (final sub in _riverpodSubscriptions) {
-      sub.close();
-    }
-    _riverpodSubscriptions.clear();
+    debugPrint('[SoilScopeGame] onRemove');
     super.onRemove();
   }
 
   @override
   void onGameResize(Vector2 size) {
+    debugPrint('[SoilScopeGame] onGameResize: ${size.x}x${size.y}');
     super.onGameResize(size);
     
     // Ensure we always fill the width with the central column at minimum

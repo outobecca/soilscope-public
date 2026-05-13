@@ -13,6 +13,7 @@ import '../../../providers/ui_state_provider.dart';
 import 'riverpod_lifecycle_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'lod_render_mixin.dart';
+import 'molecule_renderer.dart';
 
 /// Renders a large field of molecular particles from the physics isolate.
 /// Optimization: Uses LOD and batch rendering logic.
@@ -47,33 +48,10 @@ class MolecularParticleFieldComponent extends Component
   int? _pinnedParticleId;
   int? _hoveredParticleId;
 
-  late final Paint _chargePaint;
-  late final Paint _ammoniumPaint;
-  late final Paint _nitratePaint;
-  late final Paint _labileCarbonPaint;
-  late final Paint _stableCarbonPaint;
-  late final Paint _waterPaint;
-  late final Paint _nPaint;
-  late final Paint _cPaint;
-  late final Paint _pPaint;
-  late final Paint _immobilizedPaint;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _chargePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.9;
-    _ammoniumPaint = Paint()..color = CPKStandards.colorN;
-    _nitratePaint = Paint()..color = CPKStandards.colorN;
-    _labileCarbonPaint = Paint()..color = CPKStandards.colorLabileCarbon;
-    _stableCarbonPaint = Paint()..color = CPKStandards.colorStableCarbon;
-    _waterPaint = Paint()..color = CPKStandards.colorO; // Central Oxygen
-    _nPaint = Paint()..color = CPKStandards.colorN;
-    _cPaint = Paint()..color = CPKStandards.colorC;
-    _pPaint = Paint()..color = CPKStandards.colorP;
-    _immobilizedPaint = Paint()..color = const Color(0xFFF59E0B);
   }
 
   @override
@@ -93,6 +71,7 @@ class MolecularParticleFieldComponent extends Component
   @override
   void onMount() {
     super.onMount();
+    
     final isolateManager = game.ref
         .read(simulationProvider.notifier)
         .particleIsolate;
@@ -223,33 +202,6 @@ class MolecularParticleFieldComponent extends Component
     );
   }
 
-  void _drawSimplifiedParticle(
-    Canvas canvas,
-    Offset pos,
-    int pTypeIdx,
-    bool isImmobilized,
-    double baseOpacity,
-  ) {
-    final Paint basePaint = _getSimplifiedPaint(
-      pTypeIdx,
-      isImmobilized,
-      baseOpacity,
-    );
-    // Add contrast ring for dark molecules (N, C) at low zoom to ensure visibility
-    final isDark =
-        pTypeIdx == ParticleType.carbon.index ||
-        pTypeIdx == ParticleType.nitrate.index ||
-        pTypeIdx == ParticleType.ammonium.index;
-
-    if (isDark) {
-      canvas.drawCircle(
-        pos,
-        (isImmobilized ? 4.5 : 4.0),
-        Paint()..color = Colors.white.withValues(alpha: 0.15),
-      );
-    }
-    canvas.drawCircle(pos, isImmobilized ? 3.5 : 3.0, basePaint);
-  }
 
   @override
   void render(Canvas canvas) {
@@ -318,7 +270,7 @@ class MolecularParticleFieldComponent extends Component
           baseOpacity *= 0.15; // High-contrast dimming
         }
 
-        // Element Highlighting Logic (for manual selection or specific cycle focus)
+        // Element Highlighting Logic
         bool isElementHighlighted = _isElementHighlighted(
           type,
           activeCycle,
@@ -338,101 +290,26 @@ class MolecularParticleFieldComponent extends Component
           );
         }
 
-        // LOD Optimization: Draw simple dots at very low zoom
-        if (renderZoom < 0.6 && !isPaused && !isPinned && !isHovered) {
-          _drawSimplifiedParticle(
-            canvas,
-            pos,
-            pTypeIdx,
-            isImmobilized,
-            baseOpacity,
-          );
-          continue;
-        }
+        // Use unified renderer
+        MoleculeRenderer.drawParticle(
+          canvas,
+          pos,
+          type,
+          opacity: baseOpacity,
+          isLocked: isImmobilized,
+          morphProgress: morphProgress,
+          isPaused: isPaused,
+          zoom: renderZoom,
+          phase: px + py, // Use spatial phase for stable micro-animations
+        );
 
-        if (pTypeIdx == ParticleType.ammonium.index) {
-          _drawAmmonium(
-            canvas,
-            pos,
-            px + py,
-            opacity: baseOpacity,
-            isLocked: isImmobilized,
-            morphProgress: morphProgress,
-            isPaused: isPaused,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.nitrate.index) {
-          _drawNitrate(
-            canvas,
-            pos,
-            px - py,
-            opacity: baseOpacity,
-            isLocked: isImmobilized,
-            isPaused: isPaused,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.labileCarbon.index ||
-            pTypeIdx == ParticleType.carbon.index) {
-          _drawLabileCarbon(
-            canvas,
-            pos,
-            px + py,
-            opacity: baseOpacity,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.stableCarbon.index) {
-          canvas.drawCircle(
-            pos,
-            3.2,
-            _stableCarbonPaint
-              ..color = _stableCarbonPaint.color.withValues(
-                alpha: baseOpacity * 0.7,
-              ),
-          );
-        } else if (pTypeIdx == ParticleType.water.index) {
-          _drawWater(
-            canvas,
-            pos,
-            px - py,
-            opacity: baseOpacity,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.organicNitrogen.index) {
-          _drawOrganicNitrogen(
-            canvas,
-            pos,
-            px + py,
-            opacity: baseOpacity,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.phosphorus.index) {
-          _drawPhosphorus(
-            canvas,
-            pos,
-            opacity: baseOpacity,
-            isLocked: isImmobilized,
-            zoom: renderZoom,
-          );
-        } else if (pTypeIdx == ParticleType.organicPhosphorus.index) {
-          canvas.drawCircle(
-            pos,
-            2.5,
-            _pPaint..color = _pPaint.color.withValues(alpha: baseOpacity),
-          );
-          canvas.drawCircle(
-            pos + const Offset(2, 2),
-            1.8,
-            _cPaint..color = _cPaint.color.withValues(alpha: baseOpacity * 0.7),
-          );
-        }
-
-        // Draw movement trails for non-immobilized particles
+        // Draw movement trails
         if (!isImmobilized && !isPaused && renderZoom > 1.2) {
           _drawParticleTrail(canvas, px, py, pvx, pvy, pTypeIdx, renderZoom);
         }
       }
     } catch (e) {
-      // Robustness
+      debugPrint('[ParticleSystemComponent] Render error: $e');
     }
     canvas.restore();
   }
@@ -558,397 +435,13 @@ class MolecularParticleFieldComponent extends Component
               title: title,
               description: desc,
               stats: stats,
+              formula: MoleculeRenderer.getMoleculeFormula(MoleculeRenderer.mapParticleToMolecule(type)),
               isPinned: pinned,
             ),
           );
     });
   }
 
-  void _drawGlow(Canvas canvas, Offset pos, double radius, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius);
-    canvas.drawCircle(pos, radius, paint);
-  }
-
-  Paint _getSimplifiedPaint(int typeIndex, bool isImmobilized, double alpha) {
-    if (isImmobilized) {
-      return _immobilizedPaint
-        ..color = _immobilizedPaint.color.withValues(alpha: alpha);
-    }
-    final type = ParticleType.values[typeIndex];
-    switch (type) {
-      case ParticleType.ammonium:
-        return _ammoniumPaint
-          ..color = _ammoniumPaint.color.withValues(alpha: alpha);
-      case ParticleType.nitrate:
-        return _nitratePaint
-          ..color = _nitratePaint.color.withValues(alpha: alpha);
-      case ParticleType.labileCarbon:
-      case ParticleType.carbon:
-        return _labileCarbonPaint
-          ..color = _labileCarbonPaint.color.withValues(alpha: alpha);
-      case ParticleType.stableCarbon:
-        return _stableCarbonPaint
-          ..color = _stableCarbonPaint.color.withValues(alpha: alpha);
-      case ParticleType.water:
-        return _waterPaint..color = _waterPaint.color.withValues(alpha: alpha);
-      case ParticleType.organicNitrogen:
-        return _nPaint..color = _nPaint.color.withValues(alpha: alpha);
-      case ParticleType.phosphorus:
-      case ParticleType.organicPhosphorus:
-        return _pPaint..color = _pPaint.color.withValues(alpha: alpha);
-    }
-  }
-
-  void _drawAmmonium(
-    Canvas canvas,
-    Offset center,
-    double phase, {
-    double opacity = 1.0,
-    bool isLocked = false,
-    double morphProgress = 0.0,
-    bool isPaused = false,
-    required double zoom,
-  }) {
-    final currentColor = CPKStandards.colorN;
-    final hColor = CPKStandards.colorH;
-
-    // 1. Shadow for depth
-    canvas.drawCircle(
-      center + const Offset(0.5, 0.5),
-      4.5,
-      Paint()..color = Colors.black.withValues(alpha: 0.2 * opacity),
-    );
-
-    // 2. Main Nitrogen Core
-    canvas.drawCircle(
-      center,
-      4.5,
-      Paint()..color = currentColor.withValues(alpha: opacity),
-    );
-
-    // 3. Highlight for 3D look
-    canvas.drawCircle(
-      center - const Offset(1.2, 1.2),
-      1.8,
-      Paint()..color = Colors.white.withValues(alpha: opacity * 0.4),
-    );
-
-    final dist = 4.5 + morphProgress * 0.5;
-    for (int i = 0; i < 4; i++) {
-      if (i == 3 && morphProgress > 0.5) continue;
-      final angle = phase * 0.01 + (i * (morphProgress > 0.5 ? 2.094 : 1.5707));
-      final p = Offset(
-        center.dx + dist * math.cos(angle),
-        center.dy + dist * math.sin(angle),
-      );
-
-      // Hydrogen atoms with shading
-      canvas.drawCircle(
-        p,
-        1.3 + morphProgress * 0.25,
-        Paint()..color = hColor.withValues(alpha: opacity * 0.9),
-      );
-      canvas.drawCircle(
-        p - const Offset(0.3, 0.3),
-        0.4,
-        Paint()..color = Colors.white.withValues(alpha: opacity * 0.6),
-      );
-    }
-
-    if (isLocked) {
-      canvas.drawCircle(
-        center,
-        6.0,
-        Paint()
-          ..color = Colors.amber.withValues(alpha: 0.25 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-      );
-    }
-
-    if (isPaused && zoom > 2.0) {
-      _drawChargeLabel(canvas, center, '+', Colors.white, zoom);
-    } else if (morphProgress < 0.5) {
-      final cPaint = _chargePaint
-        ..color = Colors.white.withValues(alpha: 0.95 * opacity);
-      canvas.drawLine(
-        Offset(center.dx - 1.5, center.dy),
-        Offset(center.dx + 1.5, center.dy),
-        cPaint,
-      );
-      canvas.drawLine(
-        Offset(center.dx, center.dy - 1.5),
-        Offset(center.dx, center.dy + 1.5),
-        cPaint,
-      );
-    }
-  }
-
-  void _drawNitrate(
-    Canvas canvas,
-    Offset center,
-    double phase, {
-    double opacity = 1.0,
-    bool isLocked = false,
-    bool isPaused = false,
-    required double zoom,
-  }) {
-    final Color colorN = CPKStandards.colorN;
-    final Color colorO = CPKStandards.colorO;
-
-    // 1. Shadow
-    canvas.drawCircle(
-      center + const Offset(0.5, 0.5),
-      4.5,
-      Paint()..color = Colors.black.withValues(alpha: 0.2 * opacity),
-    );
-
-    // 2. Central Nitrogen
-    canvas.drawCircle(
-      center,
-      4.5,
-      Paint()..color = colorN.withValues(alpha: opacity),
-    );
-    canvas.drawCircle(
-      center - const Offset(1.2, 1.2),
-      1.8,
-      Paint()..color = Colors.white.withValues(alpha: opacity * 0.4),
-    );
-
-    final dist = 4.8;
-    for (int i = 0; i < 3; i++) {
-      final angle = phase * 0.008 + (i * 2.0943951023931953);
-      final p = Offset(
-        center.dx + dist * math.cos(angle),
-        center.dy + dist * math.sin(angle),
-      );
-
-      // Oxygen atoms with shading
-      canvas.drawCircle(
-        p,
-        1.5,
-        Paint()..color = colorO.withValues(alpha: opacity * 0.9),
-      );
-      canvas.drawCircle(
-        p - const Offset(0.4, 0.4),
-        0.5,
-        Paint()..color = Colors.white.withValues(alpha: opacity * 0.6),
-      );
-    }
-
-    if (isPaused && zoom > 2.0) {
-      _drawChargeLabel(canvas, center, '-', Colors.white, zoom);
-    } else {
-      final cPaint = _chargePaint
-        ..color = Colors.white.withValues(alpha: 0.95 * opacity);
-      canvas.drawLine(
-        Offset(center.dx - 1.5, center.dy),
-        Offset(center.dx + 1.5, center.dy),
-        cPaint,
-      );
-    }
-  }
-
-  void _drawChargeLabel(
-    Canvas canvas,
-    Offset center,
-    String symbol,
-    Color color,
-    double zoom,
-  ) {
-    canvas.drawCircle(
-      center,
-      6.0,
-      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.8),
-    );
-    canvas.drawCircle(
-      center,
-      6.0,
-      Paint()
-        ..color = color.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    final stroke = 1.5 / zoom; // Thicker stroke
-    final paint = Paint()
-      ..color = color.withValues(alpha: 1.0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
-
-    const s = 5.0;
-    canvas.drawLine(
-      Offset(center.dx - s / 2, center.dy),
-      Offset(center.dx + s / 2, center.dy),
-      paint,
-    );
-    if (symbol == '+') {
-      canvas.drawLine(
-        Offset(center.dx, center.dy - s / 2),
-        Offset(center.dx, center.dy + s / 2),
-        paint,
-      );
-    }
-  }
-
-  void _drawPhosphorus(
-    Canvas canvas,
-    Offset center, {
-    double opacity = 1.0,
-    bool isLocked = false,
-    required double zoom,
-  }) {
-    final colorP = CPKStandards.colorP;
-    _drawGlow(canvas, center, 7.0, colorP.withValues(alpha: 0.15 * opacity));
-
-    canvas.drawCircle(
-      center,
-      2.8,
-      Paint()..color = colorP.withValues(alpha: opacity),
-    );
-
-    // Draw tetrahedral phosphate (PO4) structure (simplified 2D)
-    final dist = 4.0;
-    final colorO = CPKStandards.colorO;
-    for (int i = 0; i < 4; i++) {
-      final angle = (i * 1.5707) + (game.currentTime() * 0.5);
-      final p = Offset(
-        center.dx + dist * math.cos(angle),
-        center.dy + dist * math.sin(angle),
-      );
-      canvas.drawCircle(
-        p,
-        1.2,
-        Paint()..color = colorO.withValues(alpha: opacity * 0.7),
-      );
-    }
-
-    if (isLocked) {
-      canvas.drawCircle(
-        center,
-        5.5,
-        Paint()
-          ..color = Colors.amber.withValues(alpha: 0.3 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0,
-      );
-    }
-  }
-
-  void _drawLabileCarbon(
-    Canvas canvas,
-    Offset center,
-    double phase, {
-    double opacity = 1.0,
-    required double zoom,
-  }) {
-    final colorC = CPKStandards.colorC;
-    final colorO = CPKStandards.colorO;
-
-    _drawGlow(canvas, center, 10.0, colorC.withValues(alpha: 0.15 * opacity));
-    canvas.drawCircle(
-      center,
-      3.5,
-      Paint()..color = colorC.withValues(alpha: opacity),
-    );
-
-    if (zoom > 1.3) {
-      // Draw simplified glucose-like structure (ring/chain)
-      for (int i = 0; i < 3; i++) {
-        final angle = phase * 0.005 + (i * 2.0);
-        final p = center + Offset(math.cos(angle) * 4.0, math.sin(angle) * 4.0);
-        canvas.drawCircle(
-          p,
-          1.8,
-          Paint()..color = colorO.withValues(alpha: opacity * 0.8),
-        );
-      }
-    } else {
-      // Add a slight contrast halo for black carbon on dark soil
-      canvas.drawCircle(
-        center,
-        4.0,
-        Paint()..color = Colors.white.withValues(alpha: 0.15 * opacity),
-      );
-    }
-  }
-
-  void _drawWater(
-    Canvas canvas,
-    Offset center,
-    double phase, {
-    double opacity = 1.0,
-    required double zoom,
-  }) {
-    final colorO = CPKStandards.colorO;
-    final colorH = CPKStandards.colorH;
-
-    if (zoom > 1.5) {
-      // High-fidelity CPK Water (Bent molecule)
-      canvas.drawCircle(
-        center,
-        3.2,
-        Paint()..color = colorO.withValues(alpha: opacity),
-      );
-      final dist = 3.8;
-      for (int i = 0; i < 2; i++) {
-        final angle = (i == 0 ? 0.6 : 2.5) + phase * 0.005;
-        final p =
-            center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
-        canvas.drawCircle(
-          p,
-          1.4,
-          Paint()..color = colorH.withValues(alpha: opacity * 0.9),
-        );
-      }
-    } else {
-      // Low zoom: Single dot with contrast halo
-      canvas.drawCircle(
-        center,
-        4.2 / zoom,
-        Paint()..color = Colors.white.withValues(alpha: 0.4 * opacity),
-      );
-      canvas.drawCircle(
-        center,
-        3.2 / zoom,
-        Paint()..color = colorO.withValues(alpha: opacity),
-      );
-    }
-  }
-
-  void _drawOrganicNitrogen(
-    Canvas canvas,
-    Offset center,
-    double phase, {
-    double opacity = 1.0,
-    required double zoom,
-  }) {
-    final colorN = CPKStandards.colorN;
-    final colorC = CPKStandards.colorC;
-
-    // Removed glow for clear CPK rendering
-    canvas.drawCircle(
-      center,
-      3.8,
-      Paint()..color = colorN.withValues(alpha: opacity),
-    );
-
-    if (zoom > 1.4) {
-      // Cluster representing an amino acid
-      for (int i = 0; i < 2; i++) {
-        final angle = phase * 0.01 + (i * 3.14);
-        final p = center + Offset(math.cos(angle) * 5.0, math.sin(angle) * 5.0);
-        canvas.drawCircle(
-          p,
-          2.2,
-          Paint()..color = colorC.withValues(alpha: opacity * 0.8),
-        );
-      }
-    }
-  }
 
   void _drawParticleTrail(
     Canvas canvas,
@@ -962,7 +455,11 @@ class MolecularParticleFieldComponent extends Component
     final speed = Vector2(vx, vy).length;
     if (speed < 8.0) return;
 
-    final paint = _getSimplifiedPaint(typeIndex, false, 0.3)
+    final type = ParticleType.values[typeIndex];
+    final color = CPKStandards.getColor(_getSymbolForType(type));
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.3)
       ..strokeWidth = 2.0 / zoom
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -974,5 +471,18 @@ class MolecularParticleFieldComponent extends Component
       Offset(px - unitV.x * trailLength, py - unitV.y * trailLength),
       paint,
     );
+  }
+
+  String _getSymbolForType(ParticleType type) {
+    switch (type) {
+      case ParticleType.ammonium || ParticleType.nitrate || ParticleType.organicNitrogen:
+        return 'N';
+      case ParticleType.labileCarbon || ParticleType.carbon || ParticleType.stableCarbon:
+        return 'C';
+      case ParticleType.water:
+        return 'O';
+      case ParticleType.phosphorus || ParticleType.organicPhosphorus:
+        return 'P';
+    }
   }
 }

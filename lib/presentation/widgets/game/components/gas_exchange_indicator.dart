@@ -6,7 +6,7 @@ import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../../core/cpk_standards.dart';
-import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 enum FluxType { co2Uptake, h2oTranspiration, co2Emission, o2Diffusion, n2oEmission }
 

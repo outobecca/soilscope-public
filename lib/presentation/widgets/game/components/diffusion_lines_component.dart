@@ -6,6 +6,7 @@ import '../soil_scope_game.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
+import '../../../../core/cpk_standards.dart';
 
 class _DiffusionLine {
   final Vector2 start;
@@ -134,16 +135,8 @@ class DiffusionLinesComponent extends Component
   }
 
   Color _getNutrientColor(String? symbol) {
-    switch (symbol) {
-      case 'N':
-        return const Color(0xFF10B981); // Emerald
-      case 'P':
-        return const Color(0xFFF59E0B); // Amber
-      case 'K':
-        return const Color(0xFFA855F7); // Purple
-      default:
-        return Colors.white;
-    }
+    if (symbol == null) return Colors.white;
+    return CPKStandards.getColor(symbol);
   }
 
   @override

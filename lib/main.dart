@@ -83,45 +83,30 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   }
 
   void _initSimulation() {
-    if (!mounted) {
-      debugPrint('[MainSimulationScreen] _initSimulation ABORTED: not mounted');
-      return;
-    }
+    if (!mounted || _initialized) return;
     
-    debugPrint(
-      '[MainSimulationScreen] _initSimulation START: _initialized=$_initialized',
-    );
-    try {
-      if (!_initialized) {
+    debugPrint('[MainSimulationScreen] _initSimulation START: _initialized=$_initialized');
+    
+    Future.microtask(() {
+      try {
+        debugPrint('[MainSimulationScreen] _initSimulation (microtask): reading session');
         final session = ref.read(simulationSessionProvider);
-        debugPrint(
-          '[MainSimulationScreen] _initSimulation: session.isScrubbing=${session.isScrubbing}',
-        );
+        
+        debugPrint('[MainSimulationScreen] _initSimulation (microtask): isScrubbing=${session.isScrubbing}');
         if (!session.isScrubbing) {
-          debugPrint(
-            '[MainSimulationScreen] _initSimulation: CALLING simulationProvider.notifier.start()',
-          );
-          ref.read(simulationProvider.notifier).start();
-        } else {
-          debugPrint('[MainSimulationScreen] _initSimulation: SKIPPING start() because scrubbing');
+          debugPrint('[MainSimulationScreen] _initSimulation (microtask): reading provider notifier');
+          final notifier = ref.read(simulationProvider.notifier);
+          
+          debugPrint('[MainSimulationScreen] _initSimulation (microtask): calling start()');
+          notifier.start();
         }
+        
         _initialized = true;
         debugPrint('[MainSimulationScreen] _initSimulation SUCCESS: _initialized set to true');
-      } else {
-        debugPrint('[MainSimulationScreen] _initSimulation SKIPPED: already initialized');
+      } catch (e) {
+        debugPrint('[MainSimulationScreen] Error during _initSimulation: $e');
       }
-    } catch (e, stack) {
-      debugPrint('[MainSimulationScreen] _initSimulation ERROR: $e');
-      debugPrintStack(stackTrace: stack);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Virhe simulaation käynnistyksessä: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    });
   }
 
   void _toggleLeftSidebar() {
@@ -375,8 +360,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               .read(uIStateProvider.notifier)
               .updateScreenPosition(event.position);
         },
-        child: Stack(
-          children: [
+        child: SizedBox.expand(
+          child: Stack(
+            children: [
             // 1. FULL SCREEN SIMULATION
             const Positioned.fill(child: FlameSimulationView()),
 
@@ -496,7 +482,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               bottom: 0,
               child: _buildRightSidebar(isMobile, screenWidth),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

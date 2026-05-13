@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
 import 'molecule_particle_component.dart';
 import 'bubble_component.dart';
+import 'molecule_renderer.dart';
 import 'scene_coordinate_mapper.dart';
 import 'data_hotspot_component.dart';
 import 'soil_layer_component.dart';
@@ -656,6 +657,7 @@ class BiochemicalDynamicsComponent extends Component
           windDrift: 10.0, // Constant light wind
           windNoise:
               15.0 + state.precipitation * 20.0, // Weather-affected engine data
+          flowBoost: game.ref.read(particleFlowModeProvider) ? 2.5 : 1.0,
         );
 
     final topLayers = state.profile.layers.take(2).toList();

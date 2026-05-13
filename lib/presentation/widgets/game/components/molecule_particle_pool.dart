@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 /// A performance-optimized pool for MoleculeParticleComponents.
 /// Prevents GC pressure and over-exposure by limiting the absolute maximum particle count.

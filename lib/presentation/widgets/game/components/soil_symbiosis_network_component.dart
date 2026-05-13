@@ -12,6 +12,7 @@ import 'biological_entities_component.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'cycle_highlight_mixin.dart';
+import 'simulation_animation_layer_component.dart';
 
 /// The consolidated "Single Source of Truth" for the Nutrient and Symbiosis Network.
 /// Visualizes the "Wood Wide Web" and nutrient routing between plants, microbes, and hotspots.
@@ -79,10 +80,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final activeCycle = game.ref.read(activeCycleProvider);
     final flowMode = game.ref.read(particleFlowModeProvider);
     
-    // VISIBILITY LOGIC:
     // Show if a cycle is active, OR if the explicit "Flow Mode" is toggled on.
-    double baseOpacity = (activeCycle == ObservationCycle.none) ? 0.0 : cycleOpacity;
-    if (flowMode) baseOpacity = math.max(baseOpacity, 0.7);
+    // Use a small base opacity even if no cycle is active to provide visual feedback.
+    double baseOpacity = (activeCycle == ObservationCycle.none) ? 0.35 : cycleOpacity;
+    if (flowMode) baseOpacity = math.max(baseOpacity, 0.75);
     
     if (baseOpacity < 0.05) return;
 
@@ -161,7 +162,8 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'hotspot', metadata: {'layerId': h.layerId}));
     }
 
-    final biologicalEntities = parent?.children.whereType<BiologicalEntitiesComponent>().firstOrNull;
+    final animLayer = game.world.children.whereType<SimulationAnimationLayerComponent>().firstOrNull;
+    final biologicalEntities = animLayer?.children.whereType<BiologicalEntitiesComponent>().firstOrNull;
     final microbes = biologicalEntities?.children.whereType<AnimatedMicrobeComponent>() ?? const [];
     for (final m in microbes) {
       otherNodes.add(NetNode(m.absolutePosition.toOffset(), 'microbe'));

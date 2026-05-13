@@ -18,6 +18,7 @@ import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'cycle_highlight_mixin.dart';
 import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 /// Optimized Microbial Cluster component representing a dense colony of organisms.
 /// Decouples visual representation from mathematical simulation units (1:500 ratio).

@@ -6,7 +6,7 @@ import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../providers/ui_state_provider.dart';
-import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 /// Gas types representing different biogeochemical processes
 enum BubbleType {

@@ -10,15 +10,26 @@ import '../../../providers/simulation_session_provider.dart';
 import 'scene_coordinate_mapper.dart';
 import '../../../../core/cpk_standards.dart';
 import 'animated_plant_component.dart';
-
-/// Interactive ion component representing dissolved nutrients in soil solution.
-/// Tap to pin detailed information about the nutrient's chemistry and plant availability.
+import 'molecule_renderer.dart';
 import 'biological_entity_mixin.dart';
 
 /// Interactive ion component representing dissolved nutrients in soil solution.
 /// Tap to pin detailed information about the nutrient's chemistry and plant availability.
 class IonComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, BiologicalEntityMixin, CollisionCallbacks {
+  Color get color => MoleculeRenderer.getMoleculeColor(_moleculeType);
+
+  MoleculeType get _moleculeType {
+    switch (symbol) {
+      case 'N': return MoleculeType.nitrate;
+      case 'P': return MoleculeType.phosphate;
+      case 'K': return MoleculeType.potassium;
+      case 'Ca': return MoleculeType.calcium;
+      case 'Mg': return MoleculeType.magnesium;
+      default: return MoleculeType.ammonium;
+    }
+  }
+
   final String symbol;
 
   @override
@@ -26,14 +37,12 @@ class IonComponent extends PositionComponent
 
   final String layerId;
   final int seed;
-  final Color color;
 
   IonComponent({
     required this.symbol,
     required this.layerId,
     required this.seed,
     required Vector2 position,
-    required this.color,
   }) : super(
          position: position,
          size: Vector2.all(12.0),
@@ -112,23 +121,13 @@ class IonComponent extends PositionComponent
   void render(Canvas canvas) {
     final double alphaScale = (_age / 0.5).clamp(0.0, 1.0);
     final center = size.toOffset() / 2;
-    final radius = size.x / 3;
-    final time = game.currentTime();
     final zoom = game.camera.viewfinder.zoom;
 
-    // Subtle drop shadow
-    canvas.drawCircle(
-      center,
-      radius * 1.5,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.3 * alphaScale)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0),
-    );
     // Selection Feedback Pulse
     if (_selectionPulse > 0) {
       canvas.drawCircle(
         center,
-        radius * 1.5 * (1.0 + (1.0 - _selectionPulse) * 1.5),
+        size.x * (1.0 + (1.0 - _selectionPulse) * 1.5),
         Paint()
           ..color = Colors.white.withValues(alpha: _selectionPulse * 0.5)
           ..style = PaintingStyle.stroke
@@ -136,74 +135,15 @@ class IonComponent extends PositionComponent
       );
     }
 
-    // LOD at low zoom
-    if (zoom < 0.6) {
-      canvas.drawCircle(center, radius * 0.8, Paint()..color = color.withValues(alpha: alphaScale));
-      return;
-    }
-
-    final blurValue = (4.0 / zoom).clamp(2.0, 8.0);
-    final glowPaint = Paint()
-      ..color = color.withValues(alpha: (0.15 + (math.sin(time * 3 + seed) * 0.05)) * alphaScale)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurValue);
-    canvas.drawCircle(center, radius * 1.8, glowPaint);
-
-    // 1. Shadow for depth
-    canvas.drawCircle(
-      center + const Offset(1.0, 1.0),
-      radius,
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.4 * alphaScale)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0),
+    MoleculeRenderer.drawMolecule(
+      canvas,
+      center,
+      _moleculeType,
+      opacity: alphaScale,
+      isLocked: isPinned || isHovered,
+      zoom: zoom,
+      phase: _age * 2.0,
     );
-
-    // 2. Main Ion Body
-    final bodyPaint = Paint()..color = color.withValues(alpha: alphaScale);
-    // Contrast halo for visibility in dark soil
-    canvas.drawCircle(center, radius * 1.15, Paint()..color = Colors.white.withValues(alpha: 0.2 * alphaScale));
-    canvas.drawCircle(center, radius, bodyPaint);
-
-    // 3. Shading / Highlight
-    canvas.drawCircle(
-      center - Offset(radius * 0.3, radius * 0.3),
-      radius * 0.35,
-      Paint()..color = Colors.white.withValues(alpha: 0.5 * alphaScale),
-    );
-
-    final ringPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4 * alphaScale)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-    canvas.drawCircle(center, radius * 0.8, ringPaint);
-
-    if (zoom > 1.5) {
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: symbol,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: alphaScale),
-            fontSize: radius * 1.2,
-            fontWeight: FontWeight.bold,
-            shadows: const [Shadow(blurRadius: 1, color: Colors.black)],
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(canvas, center - Offset(textPainter.width / 2, textPainter.height / 2));
-    }
-
-    if (isPinned) {
-      final highlightPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.6)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-      canvas.drawCircle(center, radius * 2.5, highlightPaint);
-      
-      for (int i = 0; i < 3; i++) {
-        final angle = time * 2 + (i * math.pi * 2 / 3);
-        canvas.drawArc(Rect.fromCircle(center: center, radius: radius * 2.8), angle, 0.8, false, highlightPaint..strokeWidth = 1.0);
-      }
-    }
   }
 
   @override
@@ -241,10 +181,10 @@ class IonComponent extends PositionComponent
             title: info['title'] as String,
             description: info['description'] as String,
             stats: info['stats'] as Map<String, String>,
-            formula: info['formula'] as String?,
+            formula: MoleculeRenderer.getMoleculeFormula(_moleculeType),
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
-            accentColor: CPKStandards.getColor(symbol),
+            accentColor: color,
             elementSymbol: symbol,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),

@@ -29,6 +29,7 @@ class UpdateEnvironment extends ParticleCommand {
   final List<double>? visibleRect;
   final double windDrift;
   final double windNoise;
+  final double flowBoost;
 
   UpdateEnvironment(
     this.temperature,
@@ -40,6 +41,7 @@ class UpdateEnvironment extends ParticleCommand {
     this.visibleRect,
     this.windDrift = 10.0,
     this.windNoise = 15.0,
+    this.flowBoost = 1.0,
   });
 }
 
@@ -79,6 +81,7 @@ void particleIsolateEntry(SendPort mainSendPort) {
   List<double>? currentVisibleRect;
   double currentWindDrift = 10.0;
   double currentWindNoise = 15.0;
+  double currentFlowBoost = 1.0;
 
   Timer? timer;
   Stopwatch stopwatch = Stopwatch();
@@ -88,20 +91,14 @@ void particleIsolateEntry(SendPort mainSendPort) {
     for (int i = 0; i < particles.length; i++) {
       final p = particles[i];
       final offset = i * 10;
-      double finalState = p.isImmobilized ? -p.life : p.life;
-      if (p.state >= 10.0) {
-        finalState += 100.0; // Marker for xylem
-      } else if (p.state > 0) {
-        finalState += p.state * 10.0;
-      }
-
+      
       buffer[offset] = p.id.toDouble();
       buffer[offset + 1] = p.x;
       buffer[offset + 2] = p.y;
       buffer[offset + 3] = p.vx;
       buffer[offset + 4] = p.vy;
       buffer[offset + 5] = p.type.index.toDouble();
-      buffer[offset + 6] = finalState;
+      buffer[offset + 6] = p.calculateVisualState();
       buffer[offset + 7] = p.x0;
       buffer[offset + 8] = p.y0;
       buffer[offset + 9] = p.t;
@@ -146,6 +143,7 @@ void particleIsolateEntry(SendPort mainSendPort) {
             visibleRect: currentVisibleRect,
             windDrift: currentWindDrift,
             windNoise: currentWindNoise,
+            flowBoost: currentFlowBoost,
           );
 
           // Remove dead particles
@@ -169,6 +167,7 @@ void particleIsolateEntry(SendPort mainSendPort) {
       currentVisibleRect = message.visibleRect;
       currentWindDrift = message.windDrift;
       currentWindNoise = message.windNoise;
+      currentFlowBoost = message.flowBoost;
     } else if (message is AddParticles) {
       for (final data in message.newParticles) {
         particles.add(Particle.fromData(data));
@@ -262,6 +261,7 @@ class ParticlePhysicsIsolateManager {
   double _webTemperature = 293.15;
   double _webFriction = 1.0;
   double _webWaterFlux = 0.0;
+  double _webFlowBoost = 1.0;
 
   void _processWebCommand(ParticleCommand cmd) {
     if (cmd is StartParticles) {
@@ -279,17 +279,18 @@ class ParticlePhysicsIsolateManager {
         final pData = cmd.newParticles[i];
         if (pData.length < 7) continue;
         final offset = i * 10;
-        newData[offset] = pData[0];     // id
-        newData[offset + 1] = pData[2]; // x
-        newData[offset + 2] = pData[3]; // y
-        newData[offset + 3] = pData[4]; // vx
-        newData[offset + 4] = pData[5]; // vy
-        newData[offset + 5] = pData[1]; // type index
-        newData[offset + 6] = pData[6]; // life
-        // Fill remaining with 0 or defaults
-        for (int j = 7; j < 10; j++) {
-          newData[offset + j] = j < pData.length ? pData[j] : 0.0;
-        }
+        final p = Particle.fromData(pData);
+        
+        newData[offset] = p.id.toDouble();
+        newData[offset + 1] = p.x;
+        newData[offset + 2] = p.y;
+        newData[offset + 3] = p.vx;
+        newData[offset + 4] = p.vy;
+        newData[offset + 5] = p.type.index.toDouble();
+        newData[offset + 6] = p.calculateVisualState();
+        newData[offset + 7] = p.x0;
+        newData[offset + 8] = p.y0;
+        newData[offset + 9] = p.t;
       }
 
       final newList = Float32List(_webParticleData.length + newData.length);
@@ -303,22 +304,25 @@ class ParticlePhysicsIsolateManager {
         final pData = cmd.particles[i];
         if (pData.length < 7) continue;
         final offset = i * 10;
-        newData[offset] = pData[0];     // id
-        newData[offset + 1] = pData[2]; // x
-        newData[offset + 2] = pData[3]; // y
-        newData[offset + 3] = pData[4]; // vx
-        newData[offset + 4] = pData[5]; // vy
-        newData[offset + 5] = pData[1]; // type index
-        newData[offset + 6] = pData[6]; // life
-        for (int j = 7; j < 10; j++) {
-          newData[offset + j] = j < pData.length ? pData[j] : 0.0;
-        }
+        final p = Particle.fromData(pData);
+        
+        newData[offset] = p.id.toDouble();
+        newData[offset + 1] = p.x;
+        newData[offset + 2] = p.y;
+        newData[offset + 3] = p.vx;
+        newData[offset + 4] = p.vy;
+        newData[offset + 5] = p.type.index.toDouble();
+        newData[offset + 6] = p.calculateVisualState();
+        newData[offset + 7] = p.x0;
+        newData[offset + 8] = p.y0;
+        newData[offset + 9] = p.t;
       }
       _webParticleData = newData;
     } else if (cmd is UpdateEnvironment) {
       _webTemperature = cmd.temperature;
       _webFriction = cmd.friction;
       _webWaterFlux = cmd.waterFlux;
+      _webFlowBoost = cmd.flowBoost;
     } else if (cmd is RemoveParticles) {
       if (_webParticleData.isEmpty) return;
 
@@ -356,15 +360,24 @@ class ParticlePhysicsIsolateManager {
           _webParticleData[i + 4] += (math.Random().nextDouble() - 0.5) * jitter;
 
           // Apply water flux (vertical drift)
-          _webParticleData[i + 2] += _webWaterFlux * dt * 50.0; // Scaled for visual effect
+          _webParticleData[i + 2] += _webWaterFlux * dt * 50.0 * _webFlowBoost; // Scaled for visual effect
 
           // Apply velocity (Euler)
-          _webParticleData[i + 1] += _webParticleData[i + 3] * dt;
-          _webParticleData[i + 2] += _webParticleData[i + 4] * dt;
+          _webParticleData[i + 1] += _webParticleData[i + 3] * dt * _webFlowBoost;
+          _webParticleData[i + 2] += _webParticleData[i + 4] * dt * _webFlowBoost;
 
           // Apply friction
           _webParticleData[i + 3] *= (1.0 - _webFriction * dt);
           _webParticleData[i + 4] *= (1.0 - _webFriction * dt);
+          
+          // Natural aging
+          double life = _webParticleData[i + 6].abs() % 1.0;
+          life -= 0.01 * dt;
+          if (life < 0) life = 0;
+          
+          // Re-encode state (simple version for web loop)
+          final bool isImmobilized = _webParticleData[i + 6] < 0;
+          _webParticleData[i + 6] = isImmobilized ? -life : life;
         }
 
         // Emit data & update counts
@@ -426,6 +439,7 @@ class ParticlePhysicsIsolateManager {
     List<double>? visibleRect,
     double windDrift = 10.0,
     double windNoise = 15.0,
+    double flowBoost = 1.0,
   }) {
     _sendCommand(
       UpdateEnvironment(
@@ -438,6 +452,7 @@ class ParticlePhysicsIsolateManager {
         visibleRect: visibleRect,
         windDrift: windDrift,
         windNoise: windNoise,
+        flowBoost: flowBoost,
       ),
     );
   }

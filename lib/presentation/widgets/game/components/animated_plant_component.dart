@@ -12,7 +12,7 @@ import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import 'soil_symbiosis_network_component.dart';
 import 'scene_coordinate_mapper.dart';
-import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 import 'riverpod_lifecycle_mixin.dart';
 
 /// Primary visual entity representing a dynamic plant system.

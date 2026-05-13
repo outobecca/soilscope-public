@@ -10,8 +10,8 @@ import '../../../providers/simulation_session_provider.dart';
 import '../logic/soil_layer_style_engine.dart';
 import '../logic/soil_layer_noise_engine.dart';
 import 'ion_component.dart';
-import 'molecule_particle_component.dart';
 import 'expandable_hotspot_node.dart';
+import 'molecule_renderer.dart';
 import 'scene_coordinate_mapper.dart';
 import '../soil_scope_game.dart';
 import 'process_label_component.dart';
@@ -235,7 +235,6 @@ class SoilLayerComponent extends PositionComponent
             layerId: layerId,
             seed: existingIons.length,
             position: Vector2(ix, iy),
-            color: CPKStandards.getColor(symbol),
           ),
         );
       }
