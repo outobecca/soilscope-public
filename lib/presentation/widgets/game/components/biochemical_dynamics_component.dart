@@ -197,7 +197,7 @@ class BiochemicalDynamicsComponent extends Component
           type: MoleculeType.ammonium,
           transformTarget: MoleculeType.nitrate,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 10, -5),
+          velocity: Vector2((_random.nextDouble() - 0.5) * 4, -2), // Slower initial drift
           seed: _random.nextInt(100),
           lifeTime: 4.0,
         );
@@ -254,7 +254,7 @@ class BiochemicalDynamicsComponent extends Component
           type: MoleculeType.organicNitrogen,
           transformTarget: MoleculeType.ammonium,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 5, -2),
+          velocity: Vector2((_random.nextDouble() - 0.5) * 2, -1), // Very slow mineralization
           seed: _random.nextInt(100),
           lifeTime: 6.0,
         );
@@ -312,50 +312,49 @@ class BiochemicalDynamicsComponent extends Component
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
         );
 
-        Vector2 startPos;
-        String? startLayerId;
-
-        if (hotspots.isNotEmpty) {
-          final h = hotspots[_random.nextInt(hotspots.length)];
-          startPos = h.position;
-          startLayerId = h.layerId;
-        } else {
-          // Fallback: spawn from a point within the soil column, biased towards the plant
-          final plantWorldX =
-              SceneCoordinateMapper.mapRootX(
-                0.5,
-                worldWidth,
-                baseX: plant.baseX,
-              ) +
-              game.soilLeftX;
-          final rx = _nextGaussian(
-            plantWorldX,
-            300.0,
-          ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
-          final ry = tipPos.y + 40.0 + _random.nextDouble() * 100.0;
-          startPos = Vector2(rx, ry);
-        }
-
-        final amount = 0.05;
         final type = _random.nextBool()
             ? MoleculeType.nitrate
             : MoleculeType.ammonium;
         final resType = type == MoleculeType.nitrate ? 'nitrate' : 'ammonium';
+
+        Vector2 startPos;
+        String? startLayerId;
+
+        // RHIZOSPHERE LOCALIZATION: Filter hotspots by distance to tip
+        final nearbyHotspots = hotspots.where((h) {
+          final dist = h.position.distanceTo(tipPos);
+          // Ammonium is very immobile (80px range), Nitrate slightly more mobile (250px)
+          final limit = (type == MoleculeType.ammonium) ? 80.0 : 250.0;
+          return dist < limit;
+        }).toList();
+
+        if (nearbyHotspots.isNotEmpty) {
+          final h = nearbyHotspots[_random.nextInt(nearbyHotspots.length)];
+          startPos = h.position;
+          startLayerId = h.layerId;
+        } else {
+          // Fallback: spawn very close to the tip to represent local mineralized pool
+          final rx = tipPos.x + (_random.nextDouble() - 0.5) * 60.0;
+          final ry = tipPos.y + (_random.nextDouble() - 0.5) * 60.0;
+          startPos = Vector2(rx, ry);
+        }
+
+        final amount = 0.05;
 
         bool success = true;
         if (startLayerId != null) {
           success = game.ref
               .read(simulationProvider.notifier)
               .consumeResource(startLayerId, resType, amount);
-          if (success && hotspots.isNotEmpty) {
+          if (success && nearbyHotspots.isNotEmpty) {
             // Find specific hotspot and pulse it
-            final h = hotspots.firstWhere(
+            final h = nearbyHotspots.firstWhere(
               (h) =>
                   h.layerId == startLayerId &&
                   h.label.contains(
                     type == MoleculeType.nitrate ? 'NO₃' : 'NH₄',
                   ),
-              orElse: () => hotspots.first,
+              orElse: () => nearbyHotspots.first,
             );
             h.triggerPulse();
           }

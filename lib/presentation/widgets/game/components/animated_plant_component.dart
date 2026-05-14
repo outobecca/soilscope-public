@@ -148,11 +148,15 @@ class AnimatedPlantComponent extends PositionComponent
     final cp2Y = topY * 0.7;
 
     final collarPos = path.last;
-    for (int i = 1; i <= 5; i++) {
-      final t = i / 5.0;
+    // INCREASED: More points for smoother transit and reliable removal
+    for (int i = 1; i <= 12; i++) {
+      final t = i / 12.0;
       final lx = _cubicBezier(0, cp1X, cp2X, topX, t);
       final ly = _cubicBezier(0, cp1Y, cp2Y, topY, t);
-      path.add(collarPos + Vector2(lx, ly));
+      
+      // Add a slight "leaf seeking" jitter at the end
+      final foliageJitterX = (t > 0.8) ? math.sin(t * 10 + plant.baseX) * 15.0 : 0.0;
+      path.add(collarPos + Vector2(lx + foliageJitterX, ly));
     }
 
     return path;
@@ -573,7 +577,7 @@ class AnimatedPlantComponent extends PositionComponent
               .firstOrNull;
           if (network != null) {
             final netPath = network.findNetworkPath(
-              tipPos + Vector2((_random.nextDouble() - 0.5) * 100, 50),
+              tipPos + Vector2((_random.nextDouble() - 0.5) * 40, 20),
               tipPos,
             );
             if (netPath != null) fullPath.addAll(netPath);
@@ -868,9 +872,6 @@ class AnimatedPlantComponent extends PositionComponent
       final organicStartY = _cubicBezier(0, cp1Y, cp2Y, topY, t);
       final schematicStartX = 0.0;
       final schematicStartY = -topY.abs() * t;
-      
-      final bStartX = lerpDouble(organicStartX, schematicStartX, _layoutProgress)!;
-      final bStartY = lerpDouble(organicStartY, schematicStartY, _layoutProgress)!;
 
       final bIsLeft = i % 2 == 0;
       final bLength = 65.0 * shootScale * (1.1 - t * 0.5) * unfoldingScale;

@@ -153,22 +153,26 @@ class MoleculeParticleComponent extends PositionComponent
     if (path != null && _pathIndex < path!.length) {
       currentTarget = path![_pathIndex];
       // Organic "drift" around waypoints: Add a small deterministic jitter based on seed and time
-      final driftX = math.sin(_time * 2.0 + seed) * 4.0;
-      final driftY = math.cos(_time * 2.5 + seed) * 4.0;
+      final driftScale = (type == MoleculeType.ammonium) ? 2.5 : 4.0;
+      final driftX = math.sin(_time * 2.0 + seed) * driftScale;
+      final driftY = math.cos(_time * 2.5 + seed) * driftScale;
       
       // If we are close to the current waypoint, advance
-      if (position.distanceToSquared(currentTarget) < 400) { // 20px radius for smoother handoff
+      // Using a slightly larger radius for faster particles to prevent skipping
+      final threshold = (velocity.length * vdt * 1.5).clamp(15.0, 40.0);
+      if (position.distanceToSquared(currentTarget) < threshold * threshold) {
         _pathIndex++;
         if (_pathIndex < path!.length) {
           currentTarget = path![_pathIndex];
         } else {
-          currentTarget = targetPosition; // Final target
+          // Path exhausted - Force removal if we were following a vascular path to the end
+          _isAbsorbed = true;
+          removeFromParent();
+          return;
         }
       }
       
-      if (currentTarget != null) {
-        currentTarget = currentTarget + Vector2(driftX, driftY);
-      }
+      currentTarget = currentTarget + Vector2(driftX, driftY);
     }
 
     if (currentTarget != null) {
@@ -176,8 +180,10 @@ class MoleculeParticleComponent extends PositionComponent
       _tmpVec.sub(position);
       if (_tmpVec.length > 0) {
         _tmpVec.normalize();
-        // Slower lerp for more "drifting" feel (0.08 instead of 0.15)
-        velocity.lerp(_tmpVec * (35.0 + math.sin(_time + seed) * 15.0), 0.08);
+        // Slower seek for Ammonium (sticks to CEC)
+        final seekStrength = (type == MoleculeType.ammonium) ? 0.04 : 0.08;
+        final baseSpeed = (type == MoleculeType.ammonium) ? 25.0 : 35.0;
+        velocity.lerp(_tmpVec * (baseSpeed + math.sin(_time + seed) * 15.0), seekStrength);
       }
     }
 

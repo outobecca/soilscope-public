@@ -198,7 +198,7 @@ class SoilScopeGame extends FlameGame
     final zoomDelta = -info.scrollDelta.global.y / 500.0;
     final oldZoom = camera.viewfinder.zoom;
     final minZoom = logicalSize.x / size.x;
-    final newZoom = (oldZoom + zoomDelta).clamp(math.min(0.8, minZoom), 4.0).toDouble();
+    final newZoom = (oldZoom + zoomDelta).clamp(math.min(0.8, minZoom), 10.0).toDouble();
 
     // Zoom towards cursor
     final cursorPosition = info.eventPosition.global;
@@ -221,7 +221,7 @@ class SoilScopeGame extends FlameGame
   void onScaleUpdate(ScaleUpdateInfo info) {
     final double scaleFactor = info.scale.global.y;
     final oldZoom = camera.viewfinder.zoom;
-    final newZoom = (_startZoom * scaleFactor).clamp(0.8, 4.0).toDouble();
+    final newZoom = (_startZoom * scaleFactor).clamp(0.8, 10.0).toDouble();
 
     if (newZoom != oldZoom) {
       // Use the raw Flutter focalPoint for maximum compatibility
@@ -307,7 +307,6 @@ class SoilScopeGame extends FlameGame
   }
 
   void updateIsRunning(bool isRunning, BiophysicalState state) {
-    paused = !isRunning;
     _syncActionBuffer.add(() {
       _lastState = state;
     });

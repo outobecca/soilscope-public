@@ -74,7 +74,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   bool _isPinned = false;
   final List<NetworkEdge> _edges = [];
-  final Map<int, double> _edgeBirthTimes = {};
+  final Map<String, double> _edgeBirthTimes = {}; // Use String key for stable ID
   double _lastGraphUpdate = 0;
 
   @override
@@ -83,7 +83,6 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final flowMode = game.ref.read(particleFlowModeProvider);
     
     // Show if a cycle is active, OR if the explicit "Flow Mode" is toggled on.
-    // Use a small base opacity even if no cycle is active to provide visual feedback.
     double baseOpacity = (activeCycle == ObservationCycle.none) ? 0.35 : cycleOpacity;
     if (flowMode) baseOpacity = math.max(baseOpacity, 0.75);
     
@@ -96,7 +95,8 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final time = game.currentTime();
 
     // 1. Organic Graph Maintenance (Single Source)
-    if (time - _lastGraphUpdate > 1.2) {
+    // Increased update frequency but made it "softer"
+    if (time - _lastGraphUpdate > 0.8) {
       _rebuildSymbioticGraph(state, time);
       _lastGraphUpdate = time;
     }
@@ -135,7 +135,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
   }
 
   void _rebuildSymbioticGraph(BiophysicalState state, double time) {
-    _edges.clear();
+    final newEdges = <NetworkEdge>[];
     final rootNodes = <NetNode>[];
     final otherNodes = <NetNode>[];
     
@@ -146,27 +146,45 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
     // 1. Root Tips (Origin Hubs)
     for (final plant in state.plants) {
-      for (final tip in plant.rootSystem.where((n) => n.isTip)) {
+      final tips = plant.rootSystem.asMap().entries.where((e) => e.value.isTip);
+      for (final entry in tips) {
+        final tipIdx = entry.key;
+        final tip = entry.value;
         final rawY = SceneCoordinateMapper.mapRootY(tip.z, surfaceY, soilHeight);
         final pos = Offset(
           SceneCoordinateMapper.mapRootX(tip.x, worldWidth, baseX: plant.baseX) + soilX,
           rawY.clamp(surfaceY + 10.0, surfaceY + soilHeight - 10.0).toDouble(),
         );
-        rootNodes.add(NetNode(pos, 'root_tip', metadata: {'plantId': plant.id}));
+        rootNodes.add(NetNode(
+          pos, 
+          'root_tip', 
+          id: 'plant_${plant.id}_tip_$tipIdx',
+          metadata: {'plantId': plant.id}
+        ));
       }
     }
 
     // 2. Target Nodes (Hotspots and Microbes)
     final hotspots = game.technicalHotspotLayer.children.whereType<ExpandableHotspotNode>();
     for (final h in hotspots) {
-      otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'hotspot', metadata: {'layerId': h.layerId}));
+      otherNodes.add(NetNode(
+        h.absolutePosition.toOffset(), 
+        'hotspot', 
+        id: 'hotspot_${h.layerId}',
+        metadata: {'layerId': h.layerId}
+      ));
     }
 
     final layerComps = game.world.children.whereType<SoilLayerComponent>();
     for (final layer in layerComps) {
       final rhizoHotspots = layer.children.whereType<RhizosphereHotspotComponent>();
       for (final h in rhizoHotspots) {
-        otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'rhizosphere_hotspot', metadata: {'layerId': h.layerId}));
+        otherNodes.add(NetNode(
+          h.absolutePosition.toOffset(), 
+          'rhizosphere_hotspot', 
+          id: 'rhizo_${h.hashCode}', // Fallback to hash if no better ID
+          metadata: {'layerId': h.layerId}
+        ));
       }
     }
 
@@ -174,20 +192,24 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final biologicalEntities = animLayer?.children.whereType<BiologicalEntitiesComponent>().firstOrNull;
     final microbes = biologicalEntities?.children.whereType<AnimatedMicrobeComponent>() ?? const [];
     for (final m in microbes) {
-      otherNodes.add(NetNode(m.absolutePosition.toOffset(), 'microbe'));
+      otherNodes.add(NetNode(
+        m.absolutePosition.toOffset(), 
+        'microbe',
+        id: 'microbe_${m.hashCode}'
+      ));
     }
 
-    if (rootNodes.isEmpty || otherNodes.isEmpty) return;
+    if (rootNodes.isEmpty || otherNodes.isEmpty) {
+      _edges.clear();
+      return;
+    }
 
     // RHIZOSPHERE CENTRIC EXPANSION:
-    // Build the network by connecting root tips to their nearest neighbors, 
-    // and then those neighbors to further targets.
-    
-    final connectedNodes = <NetNode>{...rootNodes};
+    // Build the network by connecting root tips to their nearest neighbors.
     final frontier = <NetNode>[...rootNodes];
     final remainingTargets = <NetNode>[...otherNodes];
 
-    // Limit search depth to keep focus on rhizosphere
+    // Search depth limited to keep focus on rhizosphere
     int depth = 0;
     while (frontier.isNotEmpty && depth < 2) {
       final nextFrontier = <NetNode>[];
@@ -201,15 +223,17 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         
         for (final v in potentialTargets) {
           final dist = (u.pos - v.pos).distance;
-          if (dist > 300) continue; // Range limit
+          // OPTIMIZATION: Reduced range from 300 to 150 to focus on "nearby spots"
+          if (dist > 150) continue; 
 
-          _edges.add(NetworkEdge(u, v));
-          final edgeKey = u.pos.hashCode ^ v.pos.hashCode;
+          final edge = NetworkEdge(u, v);
+          newEdges.add(edge);
+          
+          final edgeKey = edge.stableId;
           if (!_edgeBirthTimes.containsKey(edgeKey)) {
             _edgeBirthTimes[edgeKey] = time;
           }
           nextFrontier.add(v);
-          connectedNodes.add(v);
         }
         
         // Remove connected from remaining
@@ -221,8 +245,13 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       depth++;
     }
 
-    // Optional: Connect microbes to nearby hotspots if they are both "connected" to the tree
-    // to show full rhizosphere integration.
+    // Soft Update: Swap edges
+    _edges.clear();
+    _edges.addAll(newEdges);
+    
+    // Cleanup old birth times
+    final activeKeys = _edges.map((e) => e.stableId).toSet();
+    _edgeBirthTimes.removeWhere((key, _) => !activeKeys.contains(key));
   }
 
   void _drawSymbioticEdge(
@@ -239,7 +268,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final activity = _calculateMetabolism(edge);
     if (activity < 0.1) return;
 
-    final seed = edge.hashCode % 100;
+    final seed = edge.stableId.hashCode % 100;
     final baseDrift = 25.0 * math.sin(time * 0.5 + seed);
     final mid = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
     final diff = end - start;
@@ -259,7 +288,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final cp = mid + (normal * (baseDrift + sway) * pulse);
 
     // HYPHAL EXPANSION: Animate new edges growing from root to target
-    final edgeKey = edge.a.pos.hashCode ^ edge.b.pos.hashCode;
+    final edgeKey = edge.stableId;
     final birthTime = _edgeBirthTimes[edgeKey] ?? 0.0;
     final growthAge = ((time - birthTime) * 1.5).clamp(0.0, 1.0);
     
@@ -277,8 +306,6 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
     if (isSchematic) {
       // Schematic: Layered Graph Style (Orthogonal routing)
-      // Usually roots spread horizontal then vertical. We'll do similar here:
-      // Start -> Horizontal -> Vertical -> End
       baseParticlePath
         ..moveTo(start.dx, start.dy)
         ..lineTo(end.dx, start.dy)
@@ -367,7 +394,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   double _calculateMetabolism(NetworkEdge edge) {
     final dist = (edge.a.pos - edge.b.pos).distance;
-    double activity = (1.0 - (dist / 400)).clamp(0.1, 1.0);
+    double activity = (1.0 - (dist / 200)).clamp(0.1, 1.0); // More aggressive falloff
 
     if (edge.a.type == 'microbe' || edge.b.type == 'microbe') {
       activity += 0.3;
@@ -520,14 +547,14 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
   }
   /// Finds a path through the symbiotic network from [startWorld] to [endWorld].
   /// Uses simple BFS on the existing graph.
-  List<Vector2>? findNetworkPath(Vector2 startWorld, Vector2 endWorld) {
+  List<Vector2>? findNetworkPath(Vector2 startWorld, Vector2 endWorld, {double maxDist = 150.0}) {
     if (_edges.isEmpty) return null;
 
-    // 1. Find nearest nodes
+    // 1. Find nearest nodes within reasonable distance
     NetNode? startNode;
     NetNode? endNode;
-    double minStartDist = 999999;
-    double minEndDist = 999999;
+    double minStartDist = maxDist * maxDist;
+    double minEndDist = maxDist * maxDist;
 
     final allNodes = <NetNode>{};
     for (final edge in _edges) {
@@ -596,12 +623,27 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 class NetNode {
   final Offset pos;
   final String type;
+  final String id; // Added persistent ID
   final Map<String, dynamic>? metadata;
-  NetNode(this.pos, this.type, {this.metadata});
+  NetNode(this.pos, this.type, {required this.id, this.metadata});
+
+  @override
+  bool operator ==(Object other) => other is NetNode && id == other.id;
+  
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class NetworkEdge {
   final NetNode a;
   final NetNode b;
   NetworkEdge(this.a, this.b);
+
+  String get stableId => "${a.id}_${b.id}";
+
+  @override
+  bool operator ==(Object other) => other is NetworkEdge && stableId == other.stableId;
+
+  @override
+  int get hashCode => stableId.hashCode;
 }
