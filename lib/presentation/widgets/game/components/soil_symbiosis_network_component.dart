@@ -182,7 +182,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         otherNodes.add(NetNode(
           h.absolutePosition.toOffset(), 
           'rhizosphere_hotspot', 
-          id: 'rhizo_${h.hashCode}', // Fallback to hash if no better ID
+          id: 'rhizo_${h.hotspotId}', 
           metadata: {'layerId': h.layerId}
         ));
       }
@@ -195,7 +195,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       otherNodes.add(NetNode(
         m.absolutePosition.toOffset(), 
         'microbe',
-        id: 'microbe_${m.hashCode}'
+        id: 'microbe_${m.microbeId}'
       ));
     }
 
@@ -224,7 +224,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         for (final v in potentialTargets) {
           final dist = (u.pos - v.pos).distance;
           // OPTIMIZATION: Reduced range from 300 to 150 to focus on "nearby spots"
-          if (dist > 150) continue; 
+          if (dist > 100) continue; 
 
           final edge = NetworkEdge(u, v);
           newEdges.add(edge);

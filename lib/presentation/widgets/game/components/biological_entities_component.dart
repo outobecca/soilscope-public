@@ -166,6 +166,7 @@ class BiologicalEntitiesComponent extends Component
 
         add(
           AnimatedMicrobeComponent(
+            microbeId: 'microbe_${plant.id}_${_random.nextInt(10000)}',
             position: Vector2(mx, my),
             seed: _random.nextInt(10000),
           )..priority = 350,

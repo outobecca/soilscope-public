@@ -58,6 +58,7 @@ class SoilScopeGame extends FlameGame
   List<Vector2> _rootTipWorldPositions = const [];
   List<Vector2> _foliageWorldPositions = const [];
   double _elapsed = 0;
+  double _uiElapsed = 0;
   double _startZoom = 1.0;
 
   late AppLocalizations l10n;
@@ -94,6 +95,7 @@ class SoilScopeGame extends FlameGame
     }
 
     super.update(dt);
+    _uiElapsed += dt;
     if (simulationState?.isRunning ?? false) {
       _elapsed += dt;
       _updateMassFlow(dt);
@@ -125,6 +127,8 @@ class SoilScopeGame extends FlameGame
 
   @override
   double currentTime() => _elapsed;
+
+  double uiTime() => _uiElapsed;
 
   BiophysicalState? get simulationState {
     if (_lastState != null) return _lastState;

@@ -86,7 +86,7 @@ class AnimatedPlantComponent extends PositionComponent
   }) : super(priority: 50);
 
   /// Finds a world-space path from a root position up to the shoot foliage.
-  List<Vector2>? getPlantVascularPath(Vector2 startWorld) {
+  List<Vector2>? getPlantVascularPath(Vector2 startWorld, {bool stopAtCollar = false}) {
     final plant = _plant;
     if (plant == null) return null;
 
@@ -131,6 +131,8 @@ class AnimatedPlantComponent extends PositionComponent
         curr = null;
       }
     }
+
+    if (stopAtCollar) return path;
 
     // 3. Build shoot path (stem)
     final shootScale = SceneCoordinateMapper.getShootScale(
@@ -582,7 +584,7 @@ class AnimatedPlantComponent extends PositionComponent
             );
             if (netPath != null) fullPath.addAll(netPath);
           }
-          final plantPath = getPlantVascularPath(tipPos);
+          final plantPath = getPlantVascularPath(tipPos, stopAtCollar: type == MoleculeType.ammonium);
           if (plantPath != null) fullPath.addAll(plantPath);
 
           game.moleculePool?.spawn(

@@ -60,8 +60,13 @@ class AnimatedMicrobeComponent extends PositionComponent
   final Paint _nutrientPaint = Paint();
   final Paint _nutrientHighlightPaint = Paint();
 
-  AnimatedMicrobeComponent({required Vector2 position, this.seed = 0})
-    : super(position: position, size: Vector2.all(120), anchor: Anchor.center, priority: 80) {
+  final String microbeId;
+
+  AnimatedMicrobeComponent({
+    required this.microbeId,
+    required Vector2 position,
+    this.seed = 0,
+  }) : super(position: position, size: Vector2.all(120), anchor: Anchor.center, priority: 80) {
     _time = seed.toDouble();
     _anchorIndex = seed;
   }

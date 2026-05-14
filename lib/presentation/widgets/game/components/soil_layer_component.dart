@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/models/soil_layer.dart';
@@ -13,6 +12,7 @@ import 'ion_component.dart';
 import 'expandable_hotspot_node.dart';
 import 'molecule_renderer.dart';
 import 'scene_coordinate_mapper.dart';
+import 'selection_node_component.dart';
 import '../soil_scope_game.dart';
 import 'process_label_component.dart';
 import '../../../../core/cpk_standards.dart';
@@ -23,7 +23,7 @@ import 'riverpod_lifecycle_mixin.dart';
 import 'rhizosphere_hotspot_component.dart';
 
 class SoilLayerComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin {
+    with HasGameReference<SoilScopeGame>, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin {
   final String layerId;
   SoilLayer _layer;
   bool _isSelected;
@@ -68,6 +68,36 @@ class SoilLayerComponent extends PositionComponent
           _updatePaint();
         }
       },
+    );
+
+    _addLayerNode();
+  }
+
+  void _addLayerNode() {
+    add(
+      SelectionNodeComponent(
+        nodeType: SelectionNodeType.soilLayer,
+        layerId: layerId,
+        title: _layer.name.isNotEmpty ? _layer.name.toUpperCase() : 'LAYER ${layerId.toUpperCase()}',
+        description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
+        accentColor: Color(_layer.colorValue),
+        icon: Icons.layers_rounded,
+        position: Vector2(40, size.y / 2),
+        statsProvider: () {
+          final state = game.ref.read(simulationProvider);
+          try {
+            final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
+            return {
+              game.l10n.waterContentLabel: '${(layer.waterContent * 100).toStringAsFixed(1)}%',
+              game.l10n.temperatureLabel: '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
+              'pH': layer.ph.toStringAsFixed(1),
+              'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
+            };
+          } catch (_) {
+            return null;
+          }
+        },
+      ),
     );
   }
 
@@ -304,17 +334,6 @@ class SoilLayerComponent extends PositionComponent
     return z0 * stdDev + mean;
   }
 
-  @override
-  void onTapUp(TapUpEvent event) {
-    game.ref.read(simulationSessionProvider.notifier).selectLayer(layerId);
-    final session = game.ref.read(simulationSessionProvider);
-    if (session.isMicroscopeEnabled) {
-      game.ref.read(simulationSessionProvider.notifier).selectInspector('soilStructure');
-    } else {
-      game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
-    }
-    event.handled = true;
-  }
 
   double _nitrificationAccumulator = 0;
 

@@ -241,7 +241,7 @@ class DataHotspotComponent extends CircleComponent
 
   void _renderCollapsed(Canvas canvas, Offset center, double zoom) {
     final state = game.simulationState;
-    final time = game.currentTime();
+    final time = game.uiTime();
     final currentOpacity = opacity;
     
     // Slow, breathing pulse for organic feel

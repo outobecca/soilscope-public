@@ -1,21 +1,19 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/ui_state_provider.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'animated_microbe_component.dart';
 import 'scene_coordinate_mapper.dart';
+import 'selection_node_component.dart';
 
 /// Visualizes enzyme activity (ripples) emanating from microbes and root tips.
 /// Anchored to biological hotspots for causal realism.
 class EnzymeActivityComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+    with HasGameReference<SoilScopeGame> {
   final List<_EnzymeWave> _waves = [];
   final math.Random _random = math.Random.secure();
   double _spawnTimer = 0;
-  bool _isPinned = false;
 
   EnzymeActivityComponent() : super(priority: 6);
 
@@ -97,8 +95,37 @@ class EnzymeActivityComponent extends PositionComponent
   }
 
   @override
+  void onMount() {
+    super.onMount();
+    _addEnzymeNode();
+  }
+
+  void _addEnzymeNode() {
+    add(
+      SelectionNodeComponent(
+        nodeType: SelectionNodeType.enzymes,
+        title: game.l10n.enzymesTitle.toUpperCase(),
+        description: game.l10n.enzymesDesc,
+        accentColor: Colors.purpleAccent,
+        icon: Icons.auto_awesome_motion_rounded,
+        position: Vector2(game.soilLeftX + 50, game.soilSurfaceY + 40),
+        statsProvider: () {
+          final state = game.simulationState;
+          if (state == null) return null;
+          return {
+            game.l10n.kineticsLabel: 'Michaelis-Menten',
+            game.l10n.responseLabel: 'Q10 & pH',
+            game.l10n.type: game.l10n.biogeochemical,
+          };
+        },
+      ),
+    );
+  }
+
+  @override
   void render(Canvas canvas) {
     final zoom = game.camera.viewfinder.zoom;
+    // Enzymes are microscopic details, only show when zoomed in
     if (zoom < 1.15) return;
 
     for (final wave in _waves) {
@@ -186,49 +213,6 @@ class EnzymeActivityComponent extends PositionComponent
       _EnzymeType.cellulase => Colors.greenAccent,
       _EnzymeType.protease => Colors.redAccent,
     };
-  }
-
-  @override
-  void onTapUp(TapUpEvent event) {
-    _isPinned = !_isPinned;
-    _showEnzymeInfo(pinned: _isPinned);
-    event.handled = true;
-  }
-
-  @override
-  void onHoverEnter() {
-    final current = game.ref.read(uIStateProvider);
-    if (current == null || !current.isPinned) _showEnzymeInfo(pinned: false);
-  }
-
-  @override
-  void onHoverExit() {
-    if (!_isPinned) {
-      final current = game.ref.read(uIStateProvider);
-      if (current == null || !current.isPinned) {
-        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
-      }
-    }
-  }
-
-  void _showEnzymeInfo({bool pinned = false}) {
-    final l = game.l10n;
-    game.ref
-        .read(uIStateProvider.notifier)
-        .setHoverInfo(
-          HoverInfo(
-            title: l.enzymesTitle.toUpperCase(),
-            description: l.enzymesDesc,
-            stats: {
-              l.kineticsLabel: 'Michaelis-Menten',
-              l.responseLabel: 'Q10 & pH',
-              l.type: l.biogeochemical,
-            },
-            isPinned: pinned,
-            accentColor: Colors.purpleAccent,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
-          ),
-        );
   }
 }
 

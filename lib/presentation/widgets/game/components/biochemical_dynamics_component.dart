@@ -4,6 +4,7 @@ import '../soil_scope_game.dart';
 import '../../../providers/simulation_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
+import 'rhizosphere_hotspot_component.dart';
 import 'molecule_particle_component.dart';
 import 'bubble_component.dart';
 import 'molecule_renderer.dart';
@@ -61,6 +62,7 @@ class BiochemicalDynamicsComponent extends Component
     _spawnExudates(dt);
     _spawnBubbles(dt);
     _spawnNitrogenCycleFlow(dt);
+    _spawnNitrateReductionFlow(dt);
     _spawnGasExchangeFlows(dt);
     _spawnWaterCycleFlows(dt);
   }
@@ -177,10 +179,10 @@ class BiochemicalDynamicsComponent extends Component
     final soilHeight = game.soilColumnHeight;
 
     // We only need hotspots for root uptake flows, not for the general cycle
-    final hotspots = game.world.children
+    // RHIZOSPHERE CENTRIC: Collect biological hotspots as primary sources for nutrient flows
+    final List<RhizosphereHotspotComponent> biologicalSources = game.world.children
         .whereType<SoilLayerComponent>()
-        .expand((l) => l.children.whereType<DataHotspotComponent>())
-        .where((h) => h.label == 'NH₄⁺' || h.label == 'NO₃⁻' || h.label == 'N')
+        .expand((l) => l.children.whereType<RhizosphereHotspotComponent>())
         .toList();
 
     for (int i = 0; i < state.profile.layers.length; i++) {
@@ -320,17 +322,17 @@ class BiochemicalDynamicsComponent extends Component
         Vector2 startPos;
         String? startLayerId;
 
-        // RHIZOSPHERE LOCALIZATION: Filter hotspots by distance to tip
-        final nearbyHotspots = hotspots.where((h) {
+        // RHIZOSPHERE LOCALIZATION: Filter biological sources by distance to tip
+        final nearbySources = biologicalSources.where((h) {
           final dist = h.position.distanceTo(tipPos);
           // Ammonium is very immobile (80px range), Nitrate slightly more mobile (250px)
           final limit = (type == MoleculeType.ammonium) ? 80.0 : 250.0;
           return dist < limit;
         }).toList();
 
-        if (nearbyHotspots.isNotEmpty) {
-          final h = nearbyHotspots[_random.nextInt(nearbyHotspots.length)];
-          startPos = h.position;
+        if (nearbySources.isNotEmpty) {
+          final h = nearbySources[_random.nextInt(nearbySources.length)];
+          startPos = h.absolutePosition;
           startLayerId = h.layerId;
         } else {
           // Fallback: spawn very close to the tip to represent local mineralized pool
@@ -346,15 +348,11 @@ class BiochemicalDynamicsComponent extends Component
           success = game.ref
               .read(simulationProvider.notifier)
               .consumeResource(startLayerId, resType, amount);
-          if (success && nearbyHotspots.isNotEmpty) {
+          if (success && nearbySources.isNotEmpty) {
             // Find specific hotspot and pulse it
-            final h = nearbyHotspots.firstWhere(
-              (h) =>
-                  h.layerId == startLayerId &&
-                  h.label.contains(
-                    type == MoleculeType.nitrate ? 'NO₃' : 'NH₄',
-                  ),
-              orElse: () => nearbyHotspots.first,
+            final h = nearbySources.firstWhere(
+              (h) => h.layerId == startLayerId,
+              orElse: () => nearbySources.first,
             );
             h.triggerPulse();
           }
@@ -397,6 +395,54 @@ class BiochemicalDynamicsComponent extends Component
             seed: _random.nextInt(1000),
             lifeTime: 12.0, // Long lifetime for full plant transit
           );
+        }
+      }
+    }
+  }
+
+  /// Represents the transformation of Nitrate to Ammonium near roots (DNRA-like or microbial)
+  /// as requested by user to represent local availability.
+  void _spawnNitrateReductionFlow(double dt) {
+    final state = game.simulationState;
+    if (state == null) return;
+
+    final worldWidth = SoilScopeGame.soilColumnWidth;
+    final surfaceY = game.soilSurfaceY;
+    final soilHeight = game.soilColumnHeight;
+
+    for (final plant in state.plants) {
+      final tips = plant.rootSystem.where((n) => n.isTip).toList();
+      if (tips.isEmpty) continue;
+
+      // Local reduction happens near root tips where microbial activity is high
+      if (_random.nextDouble() < 0.02 * dt) {
+        final tipNode = tips[_random.nextInt(tips.length)];
+        final tipPos = Vector2(
+          SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth, baseX: plant.baseX) + game.soilLeftX,
+          SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
+        );
+
+        // Spawn a Nitrate particle that morphs into Ammonium near the root
+        final startPos = tipPos + Vector2((_random.nextDouble() - 0.5) * 40, (_random.nextDouble() - 0.5) * 40);
+        
+        game.moleculePool?.spawn(
+          type: MoleculeType.nitrate,
+          transformTarget: MoleculeType.ammonium,
+          position: startPos,
+          targetPosition: tipPos,
+          velocity: (tipPos - startPos).normalized() * 15.0, // Very slow movement
+          seed: _random.nextInt(100),
+          lifeTime: 8.0,
+        );
+
+        // Visual process label occasionally
+        if (_random.nextDouble() < 0.005) {
+          game.world.add(ProcessLabel(
+            type: ProcessMarkerType.mineralization, // Using mineralization as proxy for N-reduction for now
+            color: CPKStandards.colorN,
+            position: tipPos,
+            showTitle: false,
+          ));
         }
       }
     }

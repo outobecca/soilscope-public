@@ -1,19 +1,16 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import 'soil_component_mixin.dart';
-import '../../../providers/ui_state_provider.dart';
-import '../../../providers/simulation_session_provider.dart';
+import 'selection_node_component.dart';
 
 /// Animated weather component handling rain particles, sky colors, and clouds.
 class WeatherComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, SoilComponentMixin {
+    with HasGameReference<SoilScopeGame>, SoilComponentMixin {
   final List<_RainDrop> _rainDrops = [];
   final List<_Cloud> _clouds = [];
   final math.Random _random = math.Random.secure();
-  bool _isPinned = false;
   final bool animated;
 
   WeatherComponent({
@@ -27,10 +24,37 @@ class WeatherComponent extends PositionComponent
     await super.onLoad();
     _initClouds();
 
-    // Expand to cover the full visual background area for interaction
+    // Expand to cover the full visual background area
     size.x = SoilScopeGame.visualColumnWidth;
     position.x =
         -SoilScopeGame.visualColumnWidth / 2 + SoilScopeGame.logicalSize.x / 2;
+
+    _addAtmosphereNode();
+  }
+
+  void _addAtmosphereNode() {
+    add(
+      SelectionNodeComponent(
+        nodeType: SelectionNodeType.atmosphere,
+        title: game.l10n.atmosphere.toUpperCase(),
+        description: game.l10n.atmosphereDesc,
+        accentColor: Colors.cyanAccent,
+        icon: Icons.cloud_rounded,
+        position: Vector2(size.x * 0.9, 60), // Top right of the sky area
+        statsProvider: () {
+          final state = game.simulationState;
+          if (state == null) return null;
+          return {
+            game.l10n.temperature:
+                '${(state.airTemperature - 273.15).toStringAsFixed(1)} °C',
+            game.l10n.relativeHumidity:
+                '${((state.relativeHumidity) * 100).toStringAsFixed(0)}%',
+            game.l10n.precipitation.toUpperCase():
+                '${(state.precipitation).toStringAsFixed(1)} mm/h',
+          };
+        },
+      ),
+    );
   }
 
   void _initClouds() {
@@ -151,51 +175,6 @@ class WeatherComponent extends PositionComponent
     }
   }
 
-  @override
-  bool containsLocalPoint(Vector2 point) {
-    // The sky area is always everything above the soil surface
-    return point.y < game.soilSurfaceY;
-  }
-
-  @override
-  void onTapUp(TapUpEvent event) {
-    _isPinned = !_isPinned;
-    event.handled = true;
-
-    if (_isPinned) {
-      game.ref
-          .read(simulationSessionProvider.notifier)
-          .selectLayer("atmosphere");
-      game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
-      game.ref
-          .read(uIStateProvider.notifier)
-          .setHoverInfo(
-            HoverInfo(
-              title: game.l10n.atmosphere.toUpperCase(),
-              description: game.l10n.atmosphereDesc,
-              stats: {
-                game.l10n.temperature:
-                    '${(game.simulationState!.airTemperature - 273.15).toStringAsFixed(1)} °C',
-                game.l10n.relativeHumidity:
-                    '${((game.simulationState?.relativeHumidity ?? 0.6) * 100).toStringAsFixed(0)}%',
-                game.l10n.precipitation.toUpperCase():
-                    '${(game.simulationState?.precipitation ?? 0).toStringAsFixed(1)} mm/h',
-              },
-              isPinned: true,
-              legends: [
-                LegendItem(
-                  icon: Icons.cloud_rounded,
-                  color: Colors.cyanAccent,
-                  label: game.l10n.atmosphere,
-                ),
-              ],
-            ),
-          );
-    } else {
-      game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
-    }
-  }
 }
 
 class _RainDrop {

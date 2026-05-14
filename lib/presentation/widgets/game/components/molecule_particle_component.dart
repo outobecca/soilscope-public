@@ -58,6 +58,8 @@ class MoleculeParticleComponent extends PositionComponent
 
   double _time = 0;
   bool _isAbsorbed = false;
+  bool _isFadingOut = false;
+  double _fadeTime = 0.0;
   double _selectionPulse = 0.0;
   double _transformProgress = 0.0;
 
@@ -180,9 +182,19 @@ class MoleculeParticleComponent extends PositionComponent
       _tmpVec.sub(position);
       if (_tmpVec.length > 0) {
         _tmpVec.normalize();
-        // Slower seek for Ammonium (sticks to CEC)
-        final seekStrength = (type == MoleculeType.ammonium) ? 0.04 : 0.08;
-        final baseSpeed = (type == MoleculeType.ammonium) ? 25.0 : 35.0;
+        // Ammonium is very "sticky" (CEC) and slow
+        final isAmmonium = type == MoleculeType.ammonium;
+        final seekStrength = isAmmonium ? 0.02 : 0.08;
+        final baseSpeed = isAmmonium ? 15.0 : 35.0;
+        
+        // Add brownian jitter for ammonium to represent restricted diffusion
+        if (isAmmonium) {
+          _tmpVec.add(Vector2(
+            math.sin(_time * 5.0 + seed) * 0.5,
+            math.cos(_time * 4.0 + seed) * 0.5
+          ));
+        }
+
         velocity.lerp(_tmpVec * (baseSpeed + math.sin(_time + seed) * 15.0), seekStrength);
       }
     }
@@ -215,51 +227,38 @@ class MoleculeParticleComponent extends PositionComponent
     }
 
     // Absorption logic
-    if (!_isAbsorbed && targetPosition != null && position.distanceTo(targetPosition!) < 10.0) {
+    if (!_isAbsorbed && !_isFadingOut && targetPosition != null && position.distanceTo(targetPosition!) < 15.0) {
       game.triggerPlantGrowth();
       _isAbsorbed = true;
+      _isFadingOut = true;
+      _fadeTime = 0.5; // 0.5s fade out
 
       final state = game.simulationState;
-      // If the particle represents a nutrient and the target is likely a root,
-      // attribute the absorption to the plant. Wait, we should only attribute
-      // it to the plant if the target is actually a plant root. We can use
-      // the existing logic: if a target was specified, it was spawned by
-      // _emitFluxParticle in SoilLayerComponent, which targets a hotspot,
-      // or by _spawnNitrogenCycleFlow in BiochemicalDynamicsComponent, which
-      // targets a hotspot. Actually, in BiochemicalDynamicsComponent,
-      // _spawnWaterCycleFlows targets foliage, and _spawnNitrogenCycleFlow
-      // targets root tips. So if it targets a root tip, attribute it.
-      // But we can just use the first plant ID for now as done previously.
       if (state != null && state.plants.isNotEmpty) {
-        // Find if target is close to any root
-        bool targetIsRoot = false;
         String? targetPlantId;
         for (final plant in state.plants) {
            for (final pos in game.rootTipWorldPositions) {
-             if (pos.distanceToSquared(targetPosition!) < 400) { // 20px radius
-               targetIsRoot = true;
+             if (pos.distanceToSquared(targetPosition!) < 900) { // 30px radius
                targetPlantId = plant.id;
                break;
              }
            }
-           if (targetIsRoot) break;
+           if (targetPlantId != null) break;
         }
 
-        if (targetIsRoot && targetPlantId != null) {
+        if (targetPlantId != null) {
            final symbol = MoleculeRenderer.getMoleculeFormula(type).replaceAll(RegExp(r'[^a-zA-Z]'), '');
            game.ref.read(simulationProvider.notifier).absorbNutrient(targetPlantId, symbol, 0.1);
-        } else {
-           // If it's not a root, it might be a soil hotspot.
-           // Since we can't easily attribute it to a plant, we just let it be destroyed.
-           // This maintains mass conservation for the visual aspect (it doesn't become a zombie)
-           // while not double-counting nutrients for plants.
-           // The simulation state (Riverpod) already handles soil-level transformations
-           // mathematically in solvers; visual particles are often just representations
-           // of these underlying fluxes.
         }
       }
+    }
 
-      removeFromParent();
+    if (_isFadingOut) {
+      _fadeTime -= dt;
+      if (_fadeTime <= 0) {
+        removeFromParent();
+      }
+      return;
     }
   }
 
@@ -272,6 +271,8 @@ class MoleculeParticleComponent extends PositionComponent
     // Smooth fade in/out
     if (elapsed < 1.0) {
       currentOpacity *= elapsed;
+    } else if (_isFadingOut) {
+      currentOpacity *= (_fadeTime / 0.5).clamp(0.0, 1.0);
     } else if (elapsed > lifeTime - 1.0) {
       currentOpacity *= math.max(0.0, lifeTime - elapsed);
     }

@@ -66,6 +66,9 @@ abstract class SoilLayer with _$SoilLayer {
     @Default(10.0) double microbialNitrogen, // mg/kg (Mic-N pool)
     @Default(50.0) double maomNitrogen, // mg/kg (MAOM-N pool)
     required double nitrogenContent,
+    @Default('') String name,
+    @Default('') String description,
+    @Default(0xFF795548) int colorValue,
     
     // === NEW DIAGNOSTIC FLUXES ===
     @Default(0.0) double nitrificationRate, // mg/kg/s

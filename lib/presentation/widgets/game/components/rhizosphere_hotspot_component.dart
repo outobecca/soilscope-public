@@ -109,4 +109,13 @@ class RhizosphereHotspotComponent extends PositionComponent with HasGameReferenc
     
     canvas.drawCircle(Offset(size.x / 2, size.y / 2), 4, paint);
   }
+
+  void triggerPulse() {
+    _glow.add(
+      SequenceEffect([
+        ScaleEffect.by(Vector2.all(1.4), EffectController(duration: 0.1, reverseDuration: 0.1)),
+        OpacityEffect.to(0.5, EffectController(duration: 0.1, reverseDuration: 0.2)),
+      ]),
+    );
+  }
 }
