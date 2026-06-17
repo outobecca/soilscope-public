@@ -9,6 +9,7 @@ class TutorialOverlayWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final step = ref.watch(activeTutorialStepProvider);
+    debugPrint('[TutorialOverlayWidget] build: step=${step?.title ?? "null"}');
     
     if (step == null) {
       return const SizedBox.shrink();

@@ -2,15 +2,16 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
-import 'inspection_target.dart';
+import '../../../../domain/models/plant.dart';
+import 'inspection_target_component.dart';
 import 'magnifier_group_component.dart';
-import 'process_magnifier.dart';
+import 'process_magnifier_component.dart';
 import 'scene_coordinate_mapper.dart';
 
 /// Sub-layer responsible for managing the positions of logical Inspection Targets.
 class InspectionTargetLayerComponent extends Component
     with HasGameReference<SoilScopeGame> {
-  final List<InspectionTarget> _inspectionTargets = [];
+  final List<InspectionTargetComponent> _inspectionTargets = [];
   bool _inspectorInitialized = false;
 
   void updateState(BiophysicalState state) {
@@ -28,7 +29,7 @@ class InspectionTargetLayerComponent extends Component
     for (final type in MagnifierType.values) {
       final magnifier = magnifierGroup.getMagnifier(type);
       if (magnifier != null) {
-        final target = InspectionTarget(
+        final target = InspectionTargetComponent(
           type: type,
           magnifier: magnifier,
           position: Vector2.zero(),
@@ -89,25 +90,46 @@ class InspectionTargetLayerComponent extends Component
           break;
         case MagnifierType.root:
           // BOTTOM OF THE ROOT: The deepest active root tip
-          final tips = plant.rootSystem.where((n) => n.isTip).toList();
-          if (tips.isNotEmpty) {
-            tips.sort((a, b) => b.z.compareTo(a.z)); // Get deepest
-            final tip = tips.first;
+          RootNode? deepestTip;
+          for (final node in plant.rootSystem) {
+            if (node.isTip) {
+              if (deepestTip == null || node.z > deepestTip.z) {
+                deepestTip = node;
+              }
+            }
+          }
+
+          if (deepestTip != null) {
             target.position = Vector2(
-              SceneCoordinateMapper.mapRootX(tip.x, worldWidth, baseX: plant.baseX) + soilX,
-              SceneCoordinateMapper.mapRootY(tip.z, surfaceY, soilHeight),
+              SceneCoordinateMapper.mapRootX(deepestTip.x, worldWidth, baseX: plant.baseX) + soilX,
+              SceneCoordinateMapper.mapRootY(deepestTip.z, surfaceY, soilHeight),
             );
           }
           break;
         case MagnifierType.rhizosphere:
           // MIDDLE OF THE ROOT: A central node in the taproot
-          final nodes = plant.rootSystem.where((n) => n.radius > 0.01).toList();
-          if (nodes.length > 5) {
-            final node = nodes[nodes.length ~/ 2];
-            target.position = Vector2(
-              SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX,
-              SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
-            );
+          int validNodeCount = 0;
+          for (final node in plant.rootSystem) {
+            if (node.radius > 0.01) {
+              validNodeCount++;
+            }
+          }
+
+          if (validNodeCount > 5) {
+            final middleIndex = validNodeCount ~/ 2;
+            int currentIndex = 0;
+            for (final node in plant.rootSystem) {
+              if (node.radius > 0.01) {
+                if (currentIndex == middleIndex) {
+                  target.position = Vector2(
+                    SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX,
+                    SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
+                  );
+                  break;
+                }
+                currentIndex++;
+              }
+            }
           }
           break;
         case MagnifierType.microbe:

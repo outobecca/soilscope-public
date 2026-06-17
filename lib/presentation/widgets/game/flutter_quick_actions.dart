@@ -13,7 +13,12 @@ class FlutterQuickActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(simulationProvider);
+    final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
+    final timeScale = ref.watch(simulationProvider.select((s) => s.timeScale));
+    final autoWeather = ref.watch(simulationProvider.select((s) => s.autoWeather));
+    final precipitation = ref.watch(simulationProvider.select((s) => s.precipitation));
+    final hasCoverCrop = ref.watch(simulationProvider.select((s) => s.hasCoverCrop));
+    
     final session = ref.watch(simulationSessionProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -41,12 +46,12 @@ class FlutterQuickActions extends ConsumerWidget {
               // Play/Pause
               _buildActionButton(
                 context: context,
-                icon: state.isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                label: state.isRunning ? l10n.pause : l10n.play,
-                isActive: state.isRunning,
+                icon: isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                label: isRunning ? l10n.pause : l10n.play,
+                isActive: isRunning,
                 onTap: () {
                   final notifier = ref.read(simulationProvider.notifier);
-                  if (state.isRunning) {
+                  if (isRunning) {
                     notifier.stop();
                   } else {
                     notifier.start();
@@ -58,22 +63,22 @@ class FlutterQuickActions extends ConsumerWidget {
               _buildActionButton(
                 context: context,
                 icon: Icons.speed_rounded,
-                label: '${state.timeScale}x',
-                isActive: state.timeScale > 1.0,
+                label: '${timeScale}x',
+                isActive: timeScale > 1.0,
                 onTap: () {
                   final speeds = [0.5, 1.0, 2.0, 5.0, 10.0];
-                  final currentIndex = speeds.indexOf(state.timeScale);
+                  final currentIndex = speeds.indexOf(timeScale);
                   final nextIndex = (currentIndex + 1) % speeds.length;
                   ref.read(simulationProvider.notifier).setSpeed(speeds[nextIndex]);
                 },
               ),
-
+              
               // Weather
               _buildActionButton(
                 context: context,
                 icon: Icons.cloudy_snowing,
                 label: l10n.autoWeather,
-                isActive: state.autoWeather,
+                isActive: autoWeather,
                 onTap: () {
                   ref.read(simulationProvider.notifier).toggleAutoWeather();
                 },
@@ -82,12 +87,12 @@ class FlutterQuickActions extends ConsumerWidget {
               // Rain
               _buildActionButton(
                 context: context,
-                icon: state.precipitation > 0 ? Icons.water_drop_rounded : Icons.water_drop_outlined,
+                icon: precipitation > 0 ? Icons.water_drop_rounded : Icons.water_drop_outlined,
                 label: l10n.rain,
-                isActive: state.precipitation > 0,
+                isActive: precipitation > 0,
                 onTap: () {
                   final notifier = ref.read(simulationProvider.notifier);
-                  notifier.setPrecipitation(state.precipitation > 0 ? 0.0 : 10.0);
+                  notifier.setPrecipitation(precipitation > 0 ? 0.0 : 10.0);
                 },
               ),
 
@@ -107,9 +112,9 @@ class FlutterQuickActions extends ConsumerWidget {
                 context: context,
                 icon: Icons.eco_rounded,
                 label: l10n.coverCrop,
-                isActive: state.hasCoverCrop,
+                isActive: hasCoverCrop,
                 onTap: () {
-                  if (!state.hasCoverCrop) {
+                  if (!hasCoverCrop) {
                     ref.read(simulationProvider.notifier).applyCoverCrop();
                   }
                 },
@@ -235,6 +240,17 @@ class FlutterQuickActions extends ConsumerWidget {
                 isActive: ref.watch(particleFlowModeProvider),
                 onTap: () {
                   ref.read(particleFlowModeProvider.notifier).toggle();
+                },
+              ),
+
+              // Schematic Toggle
+              _buildActionButton(
+                context: context,
+                icon: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic ? Icons.account_tree_rounded : Icons.account_tree_outlined,
+                label: 'SCHEMATIC',
+                isActive: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic,
+                onTap: () {
+                  ref.read(visualLayoutModeStateProvider.notifier).toggle();
                 },
               ),
 

@@ -27,6 +27,7 @@ abstract class BiophysicalState with _$BiophysicalState {
     @Default(1.0) double timeScale,
     @Default(false) bool hasCoverCrop,
     @Default(false) bool isRunning,
+    @Default(true) bool isInitializing,
     @Default([])
     @JsonKey(includeFromJson: false, includeToJson: false)
     List<BiophysicalState> history,

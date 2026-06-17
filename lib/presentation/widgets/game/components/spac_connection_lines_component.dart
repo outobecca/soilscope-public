@@ -257,23 +257,43 @@ class SPACConnectionLinesComponent extends Component
       ..strokeWidth = 1.0 / zoom
       ..style = PaintingStyle.stroke;
 
+    final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+    final isSchematic = layoutMode == VisualLayoutMode.schematic;
+
     // Animated dash offset for flow effect
     final flowSpeed = 20.0 + alpha * 100.0;
     final offset = (time * flowSpeed) % (dashLen + gapLen);
-    double traveled = -offset;
+    
+    final path = Path();
+    if (isSchematic) {
+      // Layered Graph Style: Orthogonal (L-shaped)
+      path.moveTo(realStart.dx, realStart.dy);
+      // Halfway vertically, then horizontal, then the rest vertically
+      final midY = (realStart.dy + realEnd.dy) / 2;
+      path.lineTo(realStart.dx, midY);
+      path.lineTo(realEnd.dx, midY);
+      path.lineTo(realEnd.dx, realEnd.dy);
+    } else {
+      // Organic: Straight line
+      path.moveTo(realStart.dx, realStart.dy);
+      path.lineTo(realEnd.dx, realEnd.dy);
+    }
 
-    while (traveled < distance) {
-      final dashStart = traveled.clamp(0.0, distance);
-      final dashEnd = (traveled + dashLen).clamp(0.0, distance);
+    final pathMetrics = path.computeMetrics().toList();
+    if (pathMetrics.isEmpty) return;
 
-      if (dashEnd > dashStart) {
-        canvas.drawLine(
-          Offset(realStart.dx + unitX * dashStart, realStart.dy + unitY * dashStart),
-          Offset(realStart.dx + unitX * dashEnd, realStart.dy + unitY * dashEnd),
-          paint,
-        );
+    for (final metric in pathMetrics) {
+      double traveled = -offset;
+      while (traveled < metric.length) {
+        final dashStart = traveled.clamp(0.0, metric.length);
+        final dashEnd = (traveled + dashLen).clamp(0.0, metric.length);
+
+        if (dashEnd > dashStart) {
+          final extract = metric.extractPath(dashStart, dashEnd);
+          canvas.drawPath(extract, paint);
+        }
+        traveled += dashLen + gapLen;
       }
-      traveled += dashLen + gapLen;
     }
 
     // Directional Arrow

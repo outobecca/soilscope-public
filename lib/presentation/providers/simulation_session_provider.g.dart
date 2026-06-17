@@ -41,7 +41,7 @@ final class SimulationSessionProvider
   }
 }
 
-String _$simulationSessionHash() => r'bbe36e23571e398d5cf3337fdaad6ccf15860770';
+String _$simulationSessionHash() => r'399f343057ccc612f91e85dc5c6a42dda65c9bfa';
 
 abstract class _$SimulationSession extends $Notifier<SimulationSessionState> {
   SimulationSessionState build();

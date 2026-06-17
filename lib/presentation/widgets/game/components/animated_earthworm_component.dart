@@ -17,6 +17,9 @@ class AnimatedEarthwormComponent extends PositionComponent
   @override
   String get entityTitle => game.l10n.earthworm;
 
+  final Paint _segmentPaint = Paint()..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
+  final Paint _clitellumPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
+  final Paint _headTailPaint = Paint();
   late final List<Vector2> _segments;
   double _time = 0;
   Vector2? _target;
@@ -160,14 +163,12 @@ class AnimatedEarthwormComponent extends PositionComponent
       final phase = _time * 4.0 - i * 0.8;
       final thickness = 2.5 + math.sin(phase) * 0.8;
 
-      final segmentPaint = Paint()
+      final segmentPaint = _segmentPaint
         ..color = Color.lerp(
           baseColor,
           darkColor,
           (math.sin(phase) * 0.5 + 0.5) * 0.2,
         )!
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
         ..strokeWidth = thickness;
 
       canvas.drawLine(
@@ -183,20 +184,18 @@ class AnimatedEarthwormComponent extends PositionComponent
     canvas.drawCircle(
       clitPos.toOffset(),
       3.5,
-      Paint()
-        ..color = const Color(0xFFBC9B92).withValues(alpha: 0.6)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1),
+      _clitellumPaint..color = const Color(0xFFBC9B92).withValues(alpha: 0.6),
     );
 
     // Minimal Head Detail
     final headOffset = _segments.last.toOffset();
-    canvas.drawCircle(headOffset, 2.5, Paint()..color = darkColor);
+    canvas.drawCircle(headOffset, 2.5, _headTailPaint..color = darkColor);
     
     // Tail Detail
     canvas.drawCircle(
       _segments.first.toOffset(),
       1.5,
-      Paint()..color = darkColor,
+      _headTailPaint..color = darkColor,
     );
   }
 

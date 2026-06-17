@@ -9,8 +9,66 @@ enum MagnifierType { leaf, stem, root, rhizosphere, microbe, soilStructure, apic
 
 /// High-fidelity microscope (Nanovision) component.
 /// Provides detailed cross-sectional visualization of biophysical processes.
-class ProcessMagnifier extends PositionComponent
+class ProcessMagnifierComponent extends PositionComponent
     with HasGameReference<SoilScopeGame> {
+
+  final Paint _sharedFillPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _glowPaint = Paint();
+  final Paint _circlePaint = Paint();
+  final Paint _blurSimPaint = Paint();
+  final Paint _borderPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 6.0;
+  final Paint _scanlinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.0;
+  final Paint _epiPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _wallPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _palisadePaint = Paint();
+  final Paint _cpPaint = Paint();
+  final Paint _spongyPaint = Paint();
+  final Paint _bundleFillPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _bundleStrokePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.0;
+  final Paint _guardPaint = Paint();
+  final Paint _cortexPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 8.0;
+  final Paint _pithPaint = Paint();
+  final Paint _texturePaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _phloemPaint = Paint();
+  final Paint _xylemPaint = Paint();
+  final Paint _xylemParticlePaint = Paint();
+  final Paint _rootCortexPaint = Paint();
+  final Paint _rootCortexStrokePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 3.0;
+  final Paint _cortexRingPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _endodermisPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 5.0;
+  final Paint _stelePaint = Paint();
+  final Paint _xylemStarPaint = Paint();
+  final Paint _phloemClusterPaint = Paint();
+  final Paint _hairPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _flowPaint = Paint();
+  final Paint _clayPaint = Paint();
+  final Paint _cpLinePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.5;
+  final Paint _ammoniumPaint = Paint();
+  final Paint _glowCirclePaint = Paint();
+  final Paint _ionPaint = Paint();
+  final Paint _bacPaint = Paint();
+  final Paint _fPathPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2.0;
+  final Paint _dnaPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _enzymePaint = Paint();
+  final Paint _domePaint = Paint()..style = PaintingStyle.fill;
+  final Paint _wallDomePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _primPaint = Paint();
+  final Paint _cellPaint = Paint();
+  final Paint _cellDotPaint = Paint();
+  final Paint _apPaint = Paint();
+  final Paint _clayStructPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _sandPaint = Paint();
+  final Paint _labelShadowPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+  final Paint _labelBgPaint = Paint();
+  final Paint _labelBorderPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 0.5;
+  final Paint _badgeBgPaint = Paint();
+  final Paint _linePaint = Paint()..strokeWidth = 1.0;
+  final Paint _bgRectPaint = Paint();
+  final Paint _titleBgPaint = Paint();
+  final Paint _titleBorderPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+  final Paint _beamPaint = Paint()..strokeWidth = 1.5..strokeCap = StrokeCap.round;
+  final Paint _targetPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1.0;
+
   final MagnifierType type;
   final double radius = 120.0;
   double _opacity = 0.0;
@@ -20,7 +78,7 @@ class ProcessMagnifier extends PositionComponent
   // Reference to the world hotspot for orientation
   Vector2? _hotspotWorldPosition;
 
-  ProcessMagnifier({
+  ProcessMagnifierComponent({
     required this.type,
     required Vector2 position,
     Vector2? hotspotWorldPosition,
@@ -54,7 +112,7 @@ class ProcessMagnifier extends PositionComponent
     }
 
     // 1. Outer Glow
-    final glowPaint = Paint()
+    final glowPaint = _glowPaint
       ..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.15)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 25);
     canvas.drawCircle(center, (radius + 15) * _scale, glowPaint);
@@ -64,7 +122,7 @@ class ProcessMagnifier extends PositionComponent
     canvas.drawCircle(
       center,
       radius * _scale,
-      Paint()
+      _circlePaint
         ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -78,7 +136,7 @@ class ProcessMagnifier extends PositionComponent
     // Backdrop blur effect (Simulation)
     // In Flame, we can't easily use BackdropFilter inside canvas clip, 
     // but we can simulate it with a darker, slightly textured base.
-    final blurSimPaint = Paint()
+    final blurSimPaint = _blurSimPaint
       ..color = Colors.black.withValues(alpha: _opacity * 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
     canvas.drawCircle(center, radius * _scale, blurSimPaint);
@@ -99,7 +157,7 @@ class ProcessMagnifier extends PositionComponent
     canvas.drawCircle(
       center,
       (radius - 5) * _scale,
-      Paint()
+      _circlePaint
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -108,7 +166,7 @@ class ProcessMagnifier extends PositionComponent
     );
 
     // Premium Border
-    final borderPaint = Paint()
+    final borderPaint = _borderPaint
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -117,9 +175,7 @@ class ProcessMagnifier extends PositionComponent
           const Color(0xFF0EA5E9).withValues(alpha: _opacity * 0.5),
           const Color(0xFF38BDF8).withValues(alpha: _opacity),
         ],
-      ).createShader(circleRect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0;
+      ).createShader(circleRect);
     canvas.drawCircle(center, radius * _scale, borderPaint);
 
     // 3. Detailed Anatomy (Clipped)
@@ -143,7 +199,7 @@ class ProcessMagnifier extends PositionComponent
 
     // Scanning line effect
     if (_opacity > 0.1) {
-       final scanlinePaint = Paint()..color = Colors.cyanAccent.withValues(alpha: 0.1 * _opacity)..style = PaintingStyle.stroke..strokeWidth = 2.0;
+       final scanlinePaint = (_scanlinePaint..color = Colors.cyanAccent.withValues(alpha: 0.1 * _opacity));
        final yPos = center.dy - (radius * _scale) + (_scanlineOffset / 240) * (radius * 2 * _scale);
        canvas.drawLine(
          Offset(center.dx - radius * _scale * 0.8, yPos), 
@@ -194,15 +250,10 @@ class ProcessMagnifier extends PositionComponent
     final isLowPar = state.solarRadiation < 200.0;
 
     // 1. Upper Epidermis
-    final epiPaint = Paint()
-      ..color = isDeficient 
+    final epiPaint = (_epiPaint..color = isDeficient
         ? Colors.amber.shade100.withValues(alpha: _opacity * 0.8)
-        : (isLowPar ? Colors.lightGreen.shade100.withValues(alpha: _opacity * 0.6) : const Color(0xFFC8E6C9).withValues(alpha: _opacity * 0.8))
-      ..style = PaintingStyle.fill;
-    final wallPaint = Paint()
-      ..color = const Color(0xFF4CAF50).withValues(alpha: _opacity * 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+        : (isLowPar ? Colors.lightGreen.shade100.withValues(alpha: _opacity * 0.6) : const Color(0xFFC8E6C9).withValues(alpha: _opacity * 0.8)));
+    final wallPaint = (_wallPaint..color = const Color(0xFF4CAF50).withValues(alpha: _opacity * 0.5));
 
     for (int i = -6; i <= 6; i++) {
       final r = Rect.fromCenter(center: center + Offset(i * 20.0, -85), width: 18, height: 12);
@@ -211,10 +262,9 @@ class ProcessMagnifier extends PositionComponent
     }
 
     // 2. Palisade Mesophyll (Tall cells)
-    final palisadePaint = Paint()
-      ..color = isDeficient 
+    final palisadePaint = (_palisadePaint..color = isDeficient
         ? Colors.amber.shade300.withValues(alpha: _opacity * 0.9)
-        : (isLowPar ? Colors.lightGreen.shade200.withValues(alpha: _opacity * 0.7) : const Color(0xFF81C784).withValues(alpha: _opacity * 0.9));
+        : (isLowPar ? Colors.lightGreen.shade200.withValues(alpha: _opacity * 0.7) : const Color(0xFF81C784).withValues(alpha: _opacity * 0.9)));
     
     final photoPulse = (state.solarRadiation / 1000.0).clamp(0.2, 1.0);
 
@@ -224,10 +274,9 @@ class ProcessMagnifier extends PositionComponent
       canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(4)), wallPaint);
       
       // Chloroplasts (Active Photosynthesis)
-      final cpPaint = Paint()
-        ..color = isDeficient 
+      final cpPaint = (_cpPaint..color = isDeficient
           ? Colors.amber.shade900.withValues(alpha: _opacity * 0.6)
-          : const Color(0xFF1B5E20).withValues(alpha: _opacity * (0.5 + 0.3 * photoPulse));
+          : const Color(0xFF1B5E20).withValues(alpha: _opacity * (0.5 + 0.3 * photoPulse)));
       
       for (int j = 0; j < 5; j++) {
         final cpY = r.top + 6 + j * 8;
@@ -238,10 +287,9 @@ class ProcessMagnifier extends PositionComponent
     }
 
     // 3. Spongy Mesophyll (Loose cells)
-    final spongyPaint = Paint()
-      ..color = isDeficient 
+    final spongyPaint = (_spongyPaint..color = isDeficient
         ? Colors.amber.shade200.withValues(alpha: _opacity * 0.7)
-        : (isLowPar ? Colors.lightGreen.shade100.withValues(alpha: _opacity * 0.5) : const Color(0xFFAED581).withValues(alpha: _opacity * 0.7));
+        : (isLowPar ? Colors.lightGreen.shade100.withValues(alpha: _opacity * 0.5) : const Color(0xFFAED581).withValues(alpha: _opacity * 0.7)));
     final rand = math.Random(42);
     for (int i = 0; i < 25; i++) {
       final p = center + Offset(-w/2 + rand.nextDouble() * w, -10 + rand.nextDouble() * 50);
@@ -252,19 +300,19 @@ class ProcessMagnifier extends PositionComponent
 
     // 4. Central Vascular Bundle (Vein)
     final bundleCenter = center + const Offset(0, 20);
-    canvas.drawCircle(bundleCenter, 35, Paint()..color = const Color(0xFFF1F8E9).withValues(alpha: _opacity)..style = PaintingStyle.fill);
-    canvas.drawCircle(bundleCenter, 35, Paint()..color = const Color(0xFF4CAF50).withValues(alpha: _opacity * 0.5)..style = PaintingStyle.stroke..strokeWidth = 2.0);
+    canvas.drawCircle(bundleCenter, 35, _bundleFillPaint..color = const Color(0xFFF1F8E9).withValues(alpha: _opacity));
+    canvas.drawCircle(bundleCenter, 35, _bundleStrokePaint..color = const Color(0xFF4CAF50).withValues(alpha: _opacity * 0.5));
     
     // Xylem (Top half of bundle, red)
     canvas.save();
     canvas.clipRect(Rect.fromLTWH(bundleCenter.dx - 40, bundleCenter.dy - 40, 80, 40));
-    canvas.drawCircle(bundleCenter, 32, Paint()..color = const Color(0xFFFFCDD2).withValues(alpha: _opacity));
+    canvas.drawCircle(bundleCenter, 32, _sharedFillPaint..color = const Color(0xFFFFCDD2).withValues(alpha: _opacity));
     canvas.restore();
     
     // Phloem (Bottom half, teal)
     canvas.save();
     canvas.clipRect(Rect.fromLTWH(bundleCenter.dx - 40, bundleCenter.dy, 80, 40));
-    canvas.drawCircle(bundleCenter, 32, Paint()..color = const Color(0xFFB2DFDB).withValues(alpha: _opacity));
+    canvas.drawCircle(bundleCenter, 32, _sharedFillPaint..color = const Color(0xFFB2DFDB).withValues(alpha: _opacity));
     canvas.restore();
 
     // 5. Lower Epidermis & Stomata
@@ -278,7 +326,7 @@ class ProcessMagnifier extends PositionComponent
     }
 
     final stomaOpening = (1.0 + 9.0 * plant.turgorPressure).clamp(1.0, 10.0);
-    final guardPaint = Paint()..color = const Color(0xFF81C784).withValues(alpha: _opacity);
+    final guardPaint = (_guardPaint..color = const Color(0xFF81C784).withValues(alpha: _opacity));
     canvas.drawOval(Rect.fromCenter(center: center + Offset(-6 - stomaOpening/2, 85), width: 12, height: 18), guardPaint);
     canvas.drawOval(Rect.fromCenter(center: center + Offset(6 + stomaOpening/2, 85), width: 12, height: 18), guardPaint);
 
@@ -294,24 +342,24 @@ class ProcessMagnifier extends PositionComponent
     final isLowPar = state.solarRadiation < 200.0;
 
     // 1. Epidermis (Outer ring)
-    canvas.drawCircle(center, 100, Paint()..color = const Color(0xFF1B5E20).withValues(alpha: _opacity)..style = PaintingStyle.stroke..strokeWidth = 3.0);
+    canvas.drawCircle(center, 100, _rootCortexStrokePaint..color = const Color(0xFF1B5E20).withValues(alpha: _opacity));
     
     // 2. Cortex (Inner light ring)
     final cortexColor = isDeficient 
       ? Colors.amber.shade300 
       : (isLowPar ? Colors.lightGreen.shade200 : const Color(0xFF81C784));
-    canvas.drawCircle(center, 96, Paint()..color = cortexColor.withValues(alpha: _opacity * 0.3)..style = PaintingStyle.stroke..strokeWidth = 8.0);
+    canvas.drawCircle(center, 96, _cortexPaint..color = cortexColor.withValues(alpha: _opacity * 0.3));
 
     // 3. Pith (Center area with cellular texture)
     final pithColor = isDeficient 
       ? Colors.amber.shade100 
       : (isLowPar ? Colors.lightGreen.shade50 : const Color(0xFFF1F8E9));
-    canvas.drawCircle(center, 88, Paint()..color = pithColor.withValues(alpha: _opacity * 0.8));
+    canvas.drawCircle(center, 88, (_pithPaint..color = pithColor.withValues(alpha: _opacity * 0.8)));
     final rand = math.Random(42);
     for (int i = 0; i < 40; i++) {
       final a = rand.nextDouble() * math.pi * 2;
       final d = rand.nextDouble() * 70;
-      canvas.drawCircle(center + Offset(math.cos(a) * d, math.sin(a) * d), 10, Paint()..color = const Color(0xFFC8E6C9).withValues(alpha: _opacity * 0.2)..style = PaintingStyle.stroke);
+      canvas.drawCircle(center + Offset(math.cos(a) * d, math.sin(a) * d), 10, (_texturePaint..color = const Color(0xFFC8E6C9).withValues(alpha: _opacity * 0.2)));
     }
 
     // 4. Vascular Bundles arranged in a ring
@@ -326,19 +374,19 @@ class ProcessMagnifier extends PositionComponent
       // Phloem (Outer, Teal)
       canvas.drawPath(
         Path()..moveTo(-10, -5)..quadraticBezierTo(0, -15, 10, -5)..lineTo(8, 5)..lineTo(-8, 5)..close(),
-        Paint()..color = const Color(0xFF4DB6AC).withValues(alpha: _opacity),
+        (_phloemPaint..color = const Color(0xFF4DB6AC).withValues(alpha: _opacity)),
       );
       
       // Xylem (Inner, Red, Upward flow)
       final xylemPulse = 0.8 + 0.2 * math.sin(time * flowSpeed + i);
       canvas.drawPath(
         Path()..moveTo(-8, 8)..lineTo(8, 8)..lineTo(5, 20)..quadraticBezierTo(0, 25, -5, 20)..close(),
-        Paint()..color = const Color(0xFFE57373).withValues(alpha: _opacity * xylemPulse),
+        (_xylemPaint..color = const Color(0xFFE57373).withValues(alpha: _opacity * xylemPulse)),
       );
       
       // Xylem flow particles
       final pPos = (time * flowSpeed * 2 + i * 5) % 30;
-      canvas.drawCircle(Offset(0, 20 - pPos), 2, Paint()..color = Colors.white.withValues(alpha: _opacity * 0.5));
+      canvas.drawCircle(Offset(0, 20 - pPos), 2, (_xylemParticlePaint..color = Colors.white.withValues(alpha: _opacity * 0.5)));
       
       canvas.restore();
     }
@@ -357,19 +405,19 @@ class ProcessMagnifier extends PositionComponent
     final rootCortexColor = isDeficient 
       ? Colors.amber.shade100 
       : const Color(0xFFF5F5F5);
-    canvas.drawCircle(center, 110, Paint()..color = rootCortexColor.withValues(alpha: _opacity));
-    canvas.drawCircle(center, 110, Paint()..color = const Color(0xFF795548).withValues(alpha: _opacity * 0.7)..style = PaintingStyle.stroke..strokeWidth = 3.0);
+    canvas.drawCircle(center, 110, (_rootCortexPaint..color = rootCortexColor.withValues(alpha: _opacity)));
+    canvas.drawCircle(center, 110, (_rootCortexStrokePaint..color = const Color(0xFF795548).withValues(alpha: _opacity * 0.7)));
     
     // Cortex cellular rings
     for (int r = 1; r <= 3; r++) {
-      canvas.drawCircle(center, 110 - r * 25.0, Paint()..color = Colors.black12.withValues(alpha: _opacity * 0.1)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+      canvas.drawCircle(center, 110 - r * 25.0, (_cortexRingPaint..color = Colors.black12.withValues(alpha: _opacity * 0.1)));
     }
 
     // 2. Endodermis (Casparian Strip ring)
-    canvas.drawCircle(center, 45, Paint()..color = const Color(0xFF388E3C).withValues(alpha: _opacity)..style = PaintingStyle.stroke..strokeWidth = 5.0);
+    canvas.drawCircle(center, 45, (_endodermisPaint..color = const Color(0xFF388E3C).withValues(alpha: _opacity)));
 
     // 3. Stele (Center)
-    canvas.drawCircle(center, 40, Paint()..color = const Color(0xFFF1F8E9).withValues(alpha: _opacity));
+    canvas.drawCircle(center, 40, (_stelePaint..color = const Color(0xFFF1F8E9).withValues(alpha: _opacity)));
 
     // 4. Xylem Tetrarch Star (Red)
     final xylemPath = Path();
@@ -386,20 +434,17 @@ class ProcessMagnifier extends PositionComponent
       xylemPath.lineTo(p2.dx, p2.dy);
     }
     xylemPath.close();
-    canvas.drawPath(xylemPath, Paint()..color = const Color(0xFFE57373).withValues(alpha: _opacity));
+    canvas.drawPath(xylemPath, (_xylemStarPaint..color = const Color(0xFFE57373).withValues(alpha: _opacity)));
 
     // 5. Phloem Clusters (Blue, between xylem arms)
     for (int i = 0; i < 4; i++) {
       final a = i * math.pi / 2 + math.pi / 4;
       final p = center + Offset(math.cos(a) * 25, math.sin(a) * 25);
-      canvas.drawCircle(p, 8, Paint()..color = const Color(0xFF4FC3F7).withValues(alpha: _opacity));
+      canvas.drawCircle(p, 8, (_phloemClusterPaint..color = const Color(0xFF4FC3F7).withValues(alpha: _opacity)));
     }
 
     // 6. Root Hairs (Lateral view simulation at 200x)
-    final hairPaint = Paint()
-      ..color = Colors.white.withValues(alpha: _opacity * 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final hairPaint = (_hairPaint..color = Colors.white.withValues(alpha: _opacity * 0.3));
     for (int i = 0; i < 12; i++) {
       final a = (i / 12) * math.pi * 2 + time * 0.2;
       canvas.drawLine(
@@ -415,7 +460,7 @@ class ProcessMagnifier extends PositionComponent
       final t = (time * 0.4 + i * 0.2) % 1.0;
       final d = 110 - t * 75;
       final a = i * math.pi / 3 + time * 0.1;
-      canvas.drawCircle(center + Offset(math.cos(a) * d, math.sin(a) * d), 2.5, Paint()..color = flowColor);
+      canvas.drawCircle(center + Offset(math.cos(a) * d, math.sin(a) * d), 2.5, (_flowPaint..color = flowColor));
     }
 
     _drawValueLabel(canvas, center, 'ROOT TIP: ${health > 0.8 ? "ACTIVE GROWTH" : "STRESSED"}');
@@ -423,7 +468,7 @@ class ProcessMagnifier extends PositionComponent
 
   void _drawRhizosphereDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
     // 1. Clay Platelets (Negative matrix)
-    final clayPaint = Paint()..color = const Color(0xFF78350F).withValues(alpha: _opacity * 0.9);
+    final clayPaint = (_clayPaint..color = const Color(0xFF78350F).withValues(alpha: _opacity * 0.9));
     final rand = math.Random(101);
     for (int i = 0; i < 12; i++) {
       final px = center.dx - 60 + rand.nextDouble() * 120;
@@ -445,13 +490,13 @@ class ProcessMagnifier extends PositionComponent
       }
       platPath.close();
       canvas.drawPath(platPath, clayPaint);
-      final cp = Paint()..color = Colors.white.withValues(alpha: _opacity * 0.5)..style = PaintingStyle.stroke..strokeWidth = 1.5;
+      final cp = _cpLinePaint..color = Colors.white.withValues(alpha: _opacity * 0.5);
       canvas.drawLine(const Offset(-4, 0), const Offset(4, 0), cp);
       canvas.restore();
     }
 
     // 2. Ion Adsorption (NH4+ to clay)
-    final ammoniumPaint = Paint()..color = const Color(0xFF8F40AD).withValues(alpha: _opacity);
+    final ammoniumPaint = (_ammoniumPaint..color = const Color(0xFF8F40AD).withValues(alpha: _opacity));
     for (int i = 0; i < 6; i++) {
       final ax = center.dx - 30 + math.sin(time + i) * 50;
       final ay = center.dy - 40 + math.cos(time * 0.8 + i) * 60;
@@ -460,7 +505,7 @@ class ProcessMagnifier extends PositionComponent
     }
 
     // 3. Root Exudation & Ion Migration
-    final ionPaint = Paint()..color = Colors.white.withValues(alpha: _opacity * 0.4);
+    final ionPaint = (_ionPaint..color = Colors.white.withValues(alpha: _opacity * 0.4));
     for (int i = 0; i < 15; i++) {
       final p = (time * 0.8 + i * 0.2) % 1.0;
       final start = center + Offset(-100 + i * 15, -100);
@@ -477,7 +522,7 @@ class ProcessMagnifier extends PositionComponent
     final stretch = math.cos(time * (2 + activity)) * 10;
     final bacRect = Rect.fromCenter(center: center, width: 140 + stretch, height: 60 - stretch / 2);
 
-    canvas.drawRRect(RRect.fromRectAndRadius(bacRect, const Radius.circular(30)), Paint()..color = const Color(0xFF0EA5E9).withValues(alpha: _opacity * 0.9));
+    canvas.drawRRect(RRect.fromRectAndRadius(bacRect, const Radius.circular(30)), (_bacPaint..color = const Color(0xFF0EA5E9).withValues(alpha: _opacity * 0.9)));
 
     // Flagella
     final fPath = Path()..moveTo(center.dx - 70 - stretch/2, center.dy);
@@ -487,20 +532,17 @@ class ProcessMagnifier extends PositionComponent
         center.dx - 110 - i * 15, center.dy,
       );
     }
-    canvas.drawPath(fPath, Paint()..color = Colors.white.withValues(alpha: _opacity * 0.4)..style = PaintingStyle.stroke..strokeWidth = 2.0);
+    canvas.drawPath(fPath, _fPathPaint..color = Colors.white.withValues(alpha: _opacity * 0.4));
 
     // DNA / Nucleoid area
-    final dnaPaint = Paint()
-      ..color = Colors.purpleAccent.withValues(alpha: _opacity * 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final dnaPaint = (_dnaPaint..color = Colors.purpleAccent.withValues(alpha: _opacity * 0.3));
     final dnaPath = Path()..moveTo(center.dx - 30, center.dy);
     for (int i = 0; i < 20; i++) {
       dnaPath.lineTo(center.dx - 30 + i * 3, center.dy + math.sin(i * 1.2 + time * 2) * 8);
     }
     canvas.drawPath(dnaPath, dnaPaint);
 
-    final enzymeP = Paint()..color = const Color(0xFFFACC15).withValues(alpha: _opacity * 0.8);
+    final enzymeP = (_enzymePaint..color = const Color(0xFFFACC15).withValues(alpha: _opacity * 0.8));
     for (int i = 0; i < 5; i++) {
       final phase = (time * activity + i) % (math.pi * 2);
       canvas.drawCircle(center + Offset(70 + stretch / 2 + (phase / (math.pi * 2)) * 80, math.sin(i * 1.5) * 20), 3, enzymeP);
@@ -509,13 +551,8 @@ class ProcessMagnifier extends PositionComponent
   }
 
   void _drawApicalMeristemDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
-    final domePaint = Paint()
-      ..color = const Color(0xFFBEF264).withValues(alpha: _opacity * 0.9)
-      ..style = PaintingStyle.fill;
-    final wallPaint = Paint()
-      ..color = const Color(0xFF65A30D).withValues(alpha: _opacity * 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    final domePaint = (_domePaint..color = const Color(0xFFBEF264).withValues(alpha: _opacity * 0.9));
+    final wallPaint = (_wallDomePaint..color = const Color(0xFF65A30D).withValues(alpha: _opacity * 0.5));
 
     final path = Path()
       ..moveTo(center.dx - 40, center.dy + 60)
@@ -524,8 +561,7 @@ class ProcessMagnifier extends PositionComponent
     canvas.drawPath(path, domePaint);
     canvas.drawPath(path, wallPaint);
 
-    final primPaint = Paint()
-      ..color = const Color(0xFF84CC16).withValues(alpha: _opacity * 0.8);
+    final primPaint = (_primPaint..color = const Color(0xFF84CC16).withValues(alpha: _opacity * 0.8));
     final leftPrim = Path()
       ..moveTo(center.dx - 35, center.dy + 30)
       ..cubicTo(center.dx - 70, center.dy - 10, center.dx - 50, center.dy - 40, center.dx - 25, center.dy + 10)
@@ -545,10 +581,10 @@ class ProcessMagnifier extends PositionComponent
       final dx = (rand.nextDouble() - 0.5) * 50;
       final dy = (rand.nextDouble() - 0.5) * 40 + 20;
       final r = Rect.fromCenter(center: center + Offset(dx, dy), width: 8, height: 8);
-      canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(2)), Paint()..color = const Color(0xFFD9F99D).withValues(alpha: _opacity * 0.9));
+      canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(2)), (_cellPaint..color = const Color(0xFFD9F99D).withValues(alpha: _opacity * 0.9)));
       canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(2)), wallPaint);
       
-      canvas.drawCircle(center + Offset(dx, dy), 1.5, Paint()..color = const Color(0xFF4D7C0F).withValues(alpha: _opacity * 0.8));
+      canvas.drawCircle(center + Offset(dx, dy), 1.5, (_cellDotPaint..color = const Color(0xFF4D7C0F).withValues(alpha: _opacity * 0.8)));
     }
 
     _drawValueLabel(canvas, center, 'ACTIVE CELL DIVISION');
@@ -560,13 +596,13 @@ class ProcessMagnifier extends PositionComponent
     final stability = layer.aggregateStability;
     
     // 1. Aggregates
-    final ap = Paint()..color = Color.lerp(const Color(0xFF78350F), const Color(0xFF451A03), stability)!.withValues(alpha: _opacity);
+    final ap = (_apPaint..color = Color.lerp(const Color(0xFF78350F), const Color(0xFF451A03), stability)!.withValues(alpha: _opacity));
     for (int i = 0; i < 6; i++) {
       canvas.drawCircle(center + Offset(-70 + rand.nextDouble() * 140, -70 + rand.nextDouble() * 140), (15 + rand.nextDouble() * 15) * (0.5 + stability), ap);
     }
 
     // 2. Clay Platelets (Hexagons)
-    final clayPaint = Paint()..color = const Color(0xFF94A3B8).withValues(alpha: _opacity * 0.6)..style = PaintingStyle.stroke..strokeWidth = 1.0;
+    final clayPaint = (_clayStructPaint..color = const Color(0xFF94A3B8).withValues(alpha: _opacity * 0.6));
     for (int i = 0; i < 10; i++) {
       final pos = center + Offset(-90 + rand.nextDouble() * 180, -90 + rand.nextDouble() * 180);
       final path = Path();
@@ -585,7 +621,7 @@ class ProcessMagnifier extends PositionComponent
     }
 
     // 3. Sand Grains (Jagged)
-    final sandPaint = Paint()..color = const Color(0xFFFDE68A).withValues(alpha: _opacity * 0.4);
+    final sandPaint = (_sandPaint..color = const Color(0xFFFDE68A).withValues(alpha: _opacity * 0.4));
     for (int i = 0; i < 4; i++) {
        canvas.drawRect(Rect.fromLTWH(center.dx - 100 + rand.nextDouble() * 200, center.dy - 100 + rand.nextDouble() * 200, 15, 15), sandPaint);
     }
@@ -594,7 +630,7 @@ class ProcessMagnifier extends PositionComponent
   }
 
   void _drawGlow(Canvas canvas, Offset pos, double radius, Color color) {
-    canvas.drawCircle(pos, radius, Paint()..color = color..maskFilter = MaskFilter.blur(BlurStyle.normal, radius));
+    canvas.drawCircle(pos, radius, _glowCirclePaint..color = color..maskFilter = MaskFilter.blur(BlurStyle.normal, radius));
   }
 
   void _drawValueLabel(Canvas canvas, Offset center, String text) {
@@ -627,22 +663,17 @@ class ProcessMagnifier extends PositionComponent
     // Drop shadow
     canvas.drawRRect(
       bgRect.shift(const Offset(0, 1)),
-      Paint()
-        ..color = Colors.black.withValues(alpha: _opacity * 0.5)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      _labelShadowPaint..color = Colors.black.withValues(alpha: _opacity * 0.5),
     );
     // Background
     canvas.drawRRect(
       bgRect,
-      Paint()..color = Colors.black.withValues(alpha: _opacity * 0.85),
+      (_labelBgPaint..color = Colors.black.withValues(alpha: _opacity * 0.85)),
     );
     // Border
     canvas.drawRRect(
       bgRect,
-      Paint()
-        ..color = Colors.cyanAccent.withValues(alpha: _opacity * 0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.5,
+      _labelBorderPaint..color = Colors.cyanAccent.withValues(alpha: _opacity * 0.3),
     );
     // Pixel-snap text position
     tp.paint(
@@ -674,7 +705,7 @@ class ProcessMagnifier extends PositionComponent
       const Radius.circular(8),
     );
 
-    canvas.drawRRect(rect, Paint()..color = const Color(0xFF0EA5E9).withValues(alpha: _opacity));
+    canvas.drawRRect(rect, (_badgeBgPaint..color = const Color(0xFF0EA5E9).withValues(alpha: _opacity)));
     tp.paint(canvas, badgePos - Offset(tp.width / 2, tp.height / 2));
   }
 
@@ -696,9 +727,7 @@ class ProcessMagnifier extends PositionComponent
       fontFamily: 'monospace',
       fontWeight: FontWeight.bold,
     );
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: _opacity * 0.4)
-      ..strokeWidth = 1.0;
+    final linePaint = (_linePaint..color = Colors.white.withValues(alpha: _opacity * 0.4));
 
     for (final label in labels) {
       final pos = label['pos'] as Offset;
@@ -726,7 +755,7 @@ class ProcessMagnifier extends PositionComponent
       );
       canvas.drawRRect(
         bgRect,
-        Paint()..color = const Color(0xFF0F172A).withValues(alpha: _opacity * 0.7),
+        (_bgRectPaint..color = const Color(0xFF0F172A).withValues(alpha: _opacity * 0.7)),
       );
 
       tp.paint(canvas, labelPos);
@@ -769,14 +798,11 @@ class ProcessMagnifier extends PositionComponent
     );
     canvas.drawRRect(
       titleBg,
-      Paint()..color = const Color(0xFF1E293B).withValues(alpha: _opacity * 0.95),
+      (_titleBgPaint..color = const Color(0xFF1E293B).withValues(alpha: _opacity * 0.95)),
     );
     canvas.drawRRect(
       titleBg,
-      Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
+      _titleBorderPaint..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.4),
     );
     titleTp.paint(
       canvas,
@@ -860,10 +886,7 @@ class ProcessMagnifier extends PositionComponent
 
     if (distance < 0.1) return;
     
-    final beamPaint = Paint()
-      ..color = const Color(0xFF06B6D4).withValues(alpha: _opacity * 0.4)
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
+    final beamPaint = (_beamPaint..color = const Color(0xFF06B6D4).withValues(alpha: _opacity * 0.4));
 
     final direction = math.atan2(offsetToHotspot.dy, offsetToHotspot.dx);
     const dashLength = 5.0;
@@ -888,7 +911,7 @@ class ProcessMagnifier extends PositionComponent
     canvas.drawCircle(
       center + offsetToHotspot, 
       4.0, 
-      Paint()..color = const Color(0xFF38BDF8).withValues(alpha: _opacity)..style = PaintingStyle.stroke..strokeWidth = 1.0,
+      (_targetPaint..color = const Color(0xFF38BDF8).withValues(alpha: _opacity)),
     );
   }
 

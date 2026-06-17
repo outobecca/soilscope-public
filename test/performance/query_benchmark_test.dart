@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/data_hotspot_component.dart';
-import 'package:soilscope/domain/models/soil_layer.dart';
+import 'package:soilscope/domain/models/soil_layer.dart' hide HotspotType;
 import 'package:flutter/material.dart';
 
 void main() {

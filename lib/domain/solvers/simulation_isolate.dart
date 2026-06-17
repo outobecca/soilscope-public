@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint, compute;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
 import '../models/plant.dart';
@@ -89,11 +89,6 @@ BiophysicalState _sanitizeState(BiophysicalState state) {
   return state;
 }
 
-/// Wrapper for web compute tick
-BiophysicalState _webTickWrapper((BiophysicalState, double, double) args) {
-  final nextState = SimulationEngine.tick(args.$1, args.$2, precipitation: args.$3);
-  return _sanitizeState(nextState);
-}
 
 /// The entry point for the simulation isolate
 void simulationIsolateEntry(SendPort mainSendPort) {
@@ -151,12 +146,14 @@ class SimulationIsolateManager {
   final StreamController<BiophysicalState> _stateController =
       StreamController<BiophysicalState>.broadcast();
   Stream<BiophysicalState> get stateStream => _stateController.stream;
+  bool _initialized = false;
 
   Future<void> init() async {
-    if (kIsWeb) {
-      debugPrint('SimulationIsolateManager: Running in Web Mode (Main Thread)');
+    if (kIsWeb || _initialized) {
+      if (kIsWeb) debugPrint('SimulationIsolateManager: Running in Web Mode (Main Thread)');
       return;
     }
+    _initialized = true;
 
     _receivePort = ReceivePort();
     _isolate = await Isolate.spawn(simulationIsolateEntry, _receivePort!.sendPort);
@@ -169,7 +166,9 @@ class SimulationIsolateManager {
         }
         _pendingCommands.clear();
       } else if (message is BiophysicalState) {
-        _stateController.add(message);
+        if (!_stateController.isClosed) {
+          _stateController.add(message);
+        }
       }
     });
   }
@@ -188,34 +187,46 @@ class SimulationIsolateManager {
   }
 
   void _runWebLoop() async {
+    debugPrint('[SimulationIsolateManager] _runWebLoop: starting loop');
     while (_isWebRunning) {
       if (_currentState != null) {
+        debugPrint('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
-          final nextState = await compute(_webTickWrapper, (_currentState!, dt, _precipitation));
-          _currentState = nextState;
-          _stateController.add(_currentState!);
+          // On Web, compute() might hang or behave inconsistently. 
+          // Since it runs on main thread anyway, we'll run directly.
+          final nextState = SimulationEngine.tick(
+            _currentState!,
+            dt,
+            precipitation: _precipitation,
+          );
+          _currentState = _sanitizeState(nextState);
+          if (!_stateController.isClosed) {
+            _stateController.add(_currentState!);
+          }
         } catch (e) {
           debugPrint('Error in web simulation tick: $e');
-          await Future.delayed(Duration.zero);
-          final nextState = SimulationEngine.tick(_currentState!, dt, precipitation: _precipitation);
-          _currentState = _sanitizeState(nextState);
-          _stateController.add(_currentState!);
         }
+      } else {
+        debugPrint('[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...');
       }
       await Future.delayed(const Duration(milliseconds: 200));
     }
+    debugPrint('[SimulationIsolateManager] _runWebLoop: loop EXITED');
   }
 
   void _processWebCommand(SimulationCommand cmd) {
     if (cmd is StartCommand) {
+      debugPrint('[SimulationIsolateManager] processWebCommand: StartCommand, isWebRunning=$_isWebRunning');
       if (!_isWebRunning) {
         _isWebRunning = true;
         _runWebLoop();
       }
     } else if (cmd is StopCommand) {
+      debugPrint('[SimulationIsolateManager] processWebCommand: StopCommand');
       _isWebRunning = false;
     } else if (cmd is UpdateStateCommand) {
+      debugPrint('[SimulationIsolateManager] processWebCommand: UpdateStateCommand');
       _currentState = cmd.state;
       _precipitation = cmd.precipitation;
     }

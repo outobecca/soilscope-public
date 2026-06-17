@@ -10,16 +10,17 @@ import '../../../providers/simulation_session_provider.dart';
 import '../logic/soil_layer_style_engine.dart';
 import '../logic/soil_layer_noise_engine.dart';
 import 'ion_component.dart';
-import 'molecule_particle_component.dart';
 import 'expandable_hotspot_node.dart';
+import 'molecule_renderer.dart';
 import 'scene_coordinate_mapper.dart';
 import '../soil_scope_game.dart';
+import 'process_label_component.dart';
 import '../../../../core/cpk_standards.dart';
-
 import '../../../../core/simulation_constants.dart';
 import 'soil_component_mixin.dart';
 import 'layer_tech_node_mixin.dart';
 import 'riverpod_lifecycle_mixin.dart';
+import 'rhizosphere_hotspot_component.dart';
 
 class SoilLayerComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin {
@@ -235,7 +236,6 @@ class SoilLayerComponent extends PositionComponent
             layerId: layerId,
             seed: existingIons.length,
             position: Vector2(ix, iy),
-            color: CPKStandards.getColor(symbol),
           ),
         );
       }
@@ -255,6 +255,44 @@ class SoilLayerComponent extends PositionComponent
         layerId: layerId,
         state: state,
       );
+    }
+
+    // --- RHIZOSPHERE HOTSPOTS SYNC ---
+    final dynamicHotspots = children.query<RhizosphereHotspotComponent>();
+    final Map<String, RhizosphereHotspotComponent> dynamicMap = {
+      for (var h in dynamicHotspots) h.hotspotId: h,
+    };
+
+    final activeHotspotIds = <String>{};
+    for (final h in _layer.hotspots) {
+      activeHotspotIds.add(h.id);
+      final existing = dynamicMap[h.id];
+      
+      final Vector2 hotspotPos = Vector2(
+        h.x * size.x,
+        h.z * size.y,
+      );
+
+      if (existing != null) {
+        existing.position = hotspotPos;
+        existing.updateIntensity(h.intensity);
+      } else {
+        add(RhizosphereHotspotComponent(
+          hotspotId: h.id,
+          layerId: layerId,
+          intensity: h.intensity,
+          type: h.type,
+          position: hotspotPos,
+          radius: h.radius,
+        ));
+      }
+    }
+
+    // Remove defunct hotspots
+    for (final h in dynamicHotspots) {
+      if (!activeHotspotIds.contains(h.hotspotId)) {
+        h.removeFromParent();
+      }
     }
   }
 
@@ -310,6 +348,16 @@ class SoilLayerComponent extends PositionComponent
             opacity: redoxOpacity,
             speed: SimulationConstants.particleBaseSpeed + (nitRate * SimulationConstants.fluxToSpeedScale).clamp(5.0, 50.0),
           );
+
+          // Occasional process notification
+          if (math.Random().nextDouble() < 0.001) {
+             game.world.add(ProcessLabel(
+               type: ProcessMarkerType.nitrification,
+               color: CPKStandards.colorN,
+               position: Vector2(position.x + math.Random().nextDouble() * size.x, position.y + math.Random().nextDouble() * size.y),
+               showTitle: true,
+             ));
+          }
         }
       }
     } catch (_) {}

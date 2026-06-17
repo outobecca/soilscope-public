@@ -30,6 +30,7 @@ class HoverInfo {
   final Offset? screenPosition;
   final Color? accentColor;
   final TooltipType type;
+  final String? elementSymbol; // For CPK coloring
 
   HoverInfo({
     required this.title,
@@ -41,6 +42,7 @@ class HoverInfo {
     this.screenPosition,
     this.accentColor,
     this.type = TooltipType.basic,
+    this.elementSymbol,
   });
 
   HoverInfo copyWith({
@@ -53,6 +55,7 @@ class HoverInfo {
     Offset? screenPosition,
     Color? accentColor,
     TooltipType? type,
+    String? elementSymbol,
   }) {
     return HoverInfo(
       title: title ?? this.title,
@@ -64,6 +67,7 @@ class HoverInfo {
       screenPosition: screenPosition ?? this.screenPosition,
       accentColor: accentColor ?? this.accentColor,
       type: type ?? this.type,
+      elementSymbol: elementSymbol ?? this.elementSymbol,
     );
   }
 }
@@ -72,6 +76,9 @@ class HoverInfo {
 class UIState extends _$UIState {
   @override
   HoverInfo? build() => null;
+
+  HoverInfo? _pendingHoverInfo;
+  bool _isUpdateScheduled = false;
 
   void setHoverInfo(HoverInfo? info) {
     // Don't replace pinned info with a non-pinned hover, but allow setting to null
@@ -90,20 +97,38 @@ class UIState extends _$UIState {
         mapEquals(state?.stats, info?.stats)) {
       return;
     }
-    state = info;
+    _pendingHoverInfo = info;
+    if (!_isUpdateScheduled) {
+      _isUpdateScheduled = true;
+      Future.microtask(() {
+        state = _pendingHoverInfo;
+        _isUpdateScheduled = false;
+      });
+    }
+  }
+
+  /// Update just the screen position (for mouse following)
+  void updateScreenPosition(Offset pos) {
+    if (state != null && !state!.isPinned) {
+      state = state!.copyWith(screenPosition: pos);
+    }
   }
 
   /// Pin the current info (make it persist)
   void pinCurrentInfo() {
     if (state != null && !state!.isPinned) {
-      state = state!.copyWith(isPinned: true);
+      Future.microtask(() {
+        state = state!.copyWith(isPinned: true);
+      });
     }
   }
 
   /// Unpin and clear the current info
   void clearPinnedInfo() {
     if (state != null && state!.isPinned) {
-      state = null;
+      Future.microtask(() {
+        state = null;
+      });
     }
   }
 
@@ -116,14 +141,19 @@ class UIState extends _$UIState {
       (k, v) => MapEntry(k, v.toString()),
     );
 
-    state = HoverInfo(
-      title: infoMap['title'] as String? ?? 'Info',
-      description: infoMap['description'] as String? ?? '',
-      stats: stats,
-      legends: legends,
-      formula: infoMap['formula'] as String?,
-      isPinned: true,
-    );
+    Future.microtask(() {
+      state = HoverInfo(
+        title: infoMap['title'] as String? ?? 'Info',
+        description: infoMap['description'] as String? ?? '',
+        stats: stats,
+        legends: legends,
+        formula: infoMap['formula'] as String?,
+        isPinned: true,
+        accentColor: infoMap['accentColor'] as Color?,
+        elementSymbol: infoMap['elementSymbol'] as String?,
+        screenPosition: infoMap['screenPosition'] as Offset?,
+      );
+    });
   }
 }
 
@@ -141,7 +171,9 @@ class ActiveCycle extends _$ActiveCycle {
   ObservationCycle build() => ObservationCycle.none;
 
   void setCycle(ObservationCycle cycle) {
-    state = (state == cycle) ? ObservationCycle.none : cycle;
+    Future.microtask(() {
+      state = (state == cycle) ? ObservationCycle.none : cycle;
+    });
   }
 }
 
@@ -162,5 +194,23 @@ class ActiveTutorialStep extends _$ActiveTutorialStep {
 
   void setTutorialStep(ScenarioTutorialStep? step) {
     state = step;
+  }
+}
+
+enum VisualLayoutMode {
+  organic,
+  schematic,
+}
+
+@riverpod
+class VisualLayoutModeState extends _$VisualLayoutModeState {
+  @override
+  VisualLayoutMode build() => VisualLayoutMode.organic;
+
+  void setMode(VisualLayoutMode mode) => state = mode;
+  void toggle() {
+    state = (state == VisualLayoutMode.organic)
+        ? VisualLayoutMode.schematic
+        : VisualLayoutMode.organic;
   }
 }

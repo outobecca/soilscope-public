@@ -4,9 +4,9 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
+import '../../../../core/cpk_standards.dart';
 import '../../../providers/ui_state_provider.dart';
-import '../../../providers/simulation_provider.dart';
-import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 /// Gas types representing different biogeochemical processes
 enum BubbleType {
@@ -81,18 +81,22 @@ class BubbleComponent extends CircleComponent
   void update(double dt) {
     super.update(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
+    
+    final flowMode = game.ref.read(particleFlowModeProvider);
+    final boost = flowMode ? 2.5 : 1.0;
+    final boostedDt = dt * boost;
     final time = game.currentTime();
 
     // O₂ moves DOWN (diffusion into soil), others rise UP
     if (type == BubbleType.o2) {
-      position.y += speed * dt;
+      position.y += speed * boostedDt;
       // Remove if past the soil column bottom
       if (position.y > game.soilSurfaceY + game.soilColumnHeight) {
         removeFromParent();
       }
     } else {
       // Rise upwards
-      position.y -= speed * dt;
+      position.y -= speed * boostedDt;
       // Remove if above the soil surface and release atmospheric particles
       if (position.y < game.soilSurfaceY) {
         _releaseGas();
@@ -101,10 +105,10 @@ class BubbleComponent extends CircleComponent
     }
 
     // Enhanced Wobble: sine wave drift simulates fluid dynamics in soil pores
-    position.x += math.sin(time * 3.5 + seed) * 0.3;
+    position.x += math.sin(time * 3.5 * boost + seed) * 0.3 * boost;
     
     // Subtle size pulse representing gas expansion
-    final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 + seed);
+    final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 * boost + seed);
     radius = _getRadiusForType(type) * pulse;
   }
 
@@ -196,8 +200,19 @@ class BubbleComponent extends CircleComponent
   }
 
   void _showBubbleInfo({bool pinned = false}) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.simulationState;
+    if (state == null) return;
+
     final info = _getGasInfo(state);
+    
+    String? symbol;
+    Color? accent;
+    switch (type) {
+      case BubbleType.co2: symbol = 'C'; accent = CPKStandards.colorC; break;
+      case BubbleType.n2o: symbol = 'N'; accent = CPKStandards.colorN; break;
+      case BubbleType.ch4: symbol = 'C'; accent = CPKStandards.colorC; break;
+      case BubbleType.o2:  symbol = 'O'; accent = CPKStandards.colorO; break;
+    }
 
     game.ref
         .read(uIStateProvider.notifier)
@@ -208,6 +223,9 @@ class BubbleComponent extends CircleComponent
             stats: info['stats'] as Map<String, String>,
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
+            accentColor: accent,
+            elementSymbol: symbol,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }
@@ -224,7 +242,7 @@ class BubbleComponent extends CircleComponent
             l.process: l.aerobicRespiration,
             l.source: l.heterotrophicMicrobes,
             l.stateLabel: l.aerobicStatus,
-            l.climateEffect: 'GWP=1',
+            l.climateEffect: '${l.effectLabel}: GWP=1',
           },
         };
       case BubbleType.n2o:
@@ -236,19 +254,19 @@ class BubbleComponent extends CircleComponent
             l.process: l.denitrifiers,
             l.source: l.anaerobicDenitrification,
             l.stateLabel: l.anaerobicState,
-            l.climateEffect: 'GWP=298',
+            l.climateEffect: '${l.effectLabel}: GWP=298',
             l.nitrogenLoss: l.nitrogenAtmosphereLoss,
           },
         };
       case BubbleType.ch4:
         return {
-          'title': 'CH₄ ${l.methaneDescription.split(' ').first.toUpperCase()}',
+          'title': 'CH₄ ${l.methanogenesis.toUpperCase()}',
           'description': l.methaneDescription,
           'stats': {
             l.gasLabel: 'CH₄',
-            l.process: 'Methanogenesis',
+            l.process: l.methanogenesis,
             l.stateLabel: l.anoxic,
-            l.climateEffect: 'GWP=28',
+            l.climateEffect: '${l.effectLabel}: GWP=28',
           },
         };
       case BubbleType.o2:

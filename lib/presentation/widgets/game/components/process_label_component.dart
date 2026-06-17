@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
@@ -16,16 +17,21 @@ class ProcessLabel extends PositionComponent
   final ProcessMarkerType type;
   final Color color;
   final bool isStatic;
+  final bool showTitle;
   final double lifeTime = 5.0;
   double _elapsed = 0;
   bool _isHovered = false;
   bool _isPinned = false;
+  TextPainter? _textPainter;
+  Rect? _labelRect;
+  RRect? _labelRRect;
 
   ProcessLabel({
     required this.type,
     required this.color,
     required Vector2 position,
     this.isStatic = false,
+    this.showTitle = false,
   }) : super(
           position: position,
           size: Vector2.all(36),
@@ -34,12 +40,71 @@ class ProcessLabel extends PositionComponent
         );
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    if (showTitle) {
+      _prepareLabel();
+    }
+  }
+
+  void _prepareLabel() {
+    final l = game.l10n;
+    String text = "";
+    switch (type) {
+      case ProcessMarkerType.nitrification:
+        text = l.nitrificationTitle.toUpperCase();
+        break;
+      case ProcessMarkerType.mineralization:
+        text = l.mineralizationTitle.toUpperCase();
+        break;
+      case ProcessMarkerType.adsorption:
+        text = l.adsorptionTitle.toUpperCase();
+        break;
+      case ProcessMarkerType.denitrification:
+        text = l.denitrification.toUpperCase();
+        break;
+    }
+
+    _textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final paddingH = 8.0;
+    final paddingV = 4.0;
+    _labelRect = Rect.fromCenter(
+      center: const Offset(0, -28), // Relative to component center
+      width: _textPainter!.width + paddingH * 2,
+      height: _textPainter!.height + paddingV * 2,
+    );
+    _labelRRect = RRect.fromRectAndRadius(_labelRect!, const Radius.circular(4));
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
     if (!isStatic && !_isPinned) {
       _elapsed += dt;
-      position.y -= 10 * dt;
+      
+      final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+      final isSchematic = layoutMode == VisualLayoutMode.schematic;
+      
+      // Stabilize: Slower rise and NO jitter in schematic mode
+      final speed = isSchematic ? 5.0 : (showTitle ? 25.0 : 10.0);
+      position.y -= speed * dt;
+      
+      if (showTitle && !isSchematic) {
+        position.x += math.sin(_elapsed * 4) * 0.2;
+      }
     }
     if (!isStatic && _elapsed >= lifeTime && !_isPinned) removeFromParent();
   }
@@ -77,6 +142,10 @@ class ProcessLabel extends PositionComponent
     canvas.drawCircle(center, 11, framePaint);
 
     _drawMarkerSymbol(canvas, center, framePaint, opacity);
+
+    if (showTitle) {
+      _drawFloatingLabel(canvas, center, opacity);
+    }
 
     // Visual feedback for selection - no more floating text boxes here
     if (_isPinned) {
@@ -147,6 +216,11 @@ class ProcessLabel extends PositionComponent
         break;
     }
 
+    String? symbol;
+    if (type != ProcessMarkerType.adsorption) {
+      symbol = 'N'; // Most processes here are N-related in SoilScope
+    }
+
     game.ref
         .read(uIStateProvider.notifier)
         .setHoverInfo(
@@ -155,6 +229,9 @@ class ProcessLabel extends PositionComponent
             description: description,
             stats: stats,
             isPinned: pinned,
+            accentColor: color,
+            elementSymbol: symbol,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }
@@ -249,5 +326,48 @@ class ProcessLabel extends PositionComponent
           ..color = Colors.white.withValues(alpha: 0.7 * opacity),
       );
     }
+  }
+
+  void _drawFloatingLabel(Canvas canvas, Offset center, double opacity) {
+    if (_textPainter == null || _labelRRect == null) return;
+
+    // Shift canvas to center to use relative rects
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+
+    // Tooltip background
+    canvas.drawRRect(
+      _labelRRect!,
+      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
+    );
+
+    // CPK colored border
+    canvas.drawRRect(
+      _labelRRect!,
+      Paint()
+        ..color = color.withValues(alpha: 0.6 * opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    _textPainter!.text = TextSpan(
+      text: _textPainter!.text!.toPlainText(),
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: opacity),
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
+    );
+    _textPainter!.layout(); // Still need to layout if opacity changed? 
+    // Actually, setting text is expensive. Let's just use opacity in the Paint if possible? 
+    // TextPainter doesn't support opacity in paint directly easily without color in style.
+    
+    _textPainter!.paint(
+      canvas,
+      _labelRect!.topLeft + Offset(8, 4), // Padding compensation
+    );
+
+    canvas.restore();
   }
 }

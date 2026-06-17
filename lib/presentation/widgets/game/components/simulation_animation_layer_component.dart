@@ -23,7 +23,7 @@ import 'nitrous_oxide_bubble_component.dart';
 /// Contains high-fidelity biological and technical visual entities.
 ///
 /// Priority: 10
-class SimulationAnimationLayer extends Component
+class SimulationAnimationLayerComponent extends Component
     with HasGameReference<SoilScopeGame> {
   BiologicalEntitiesComponent? _biologicalEntities;
   AtmosphericFluxLayerComponent? _atmosphericFluxLayer;

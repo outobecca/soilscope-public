@@ -76,14 +76,26 @@ class DataHotspotComponent extends CircleComponent
   void _showHotspotInfo({bool pinned = false}) {
     final state = game.simulationState;
     if (state == null) return;
-
+    
     final info = _getHotspotInfo(state);
+    
+    // Determine element symbol for CPK indicator
+    String? elementSymbol;
+    if (['N', 'NH4+', 'NH₄⁺', 'NO3-', 'NO₃⁻'].contains(label)) elementSymbol = 'N';
+    if (label == 'P') elementSymbol = 'P';
+    if (label == 'K') elementSymbol = 'K';
+    if (label == 'Ca') elementSymbol = 'Ca';
+    if (label == 'Mg') elementSymbol = 'Mg';
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: info['title'] as String,
         description: info['description'] as String,
         stats: info['stats'] as Map<String, String>,
         isPinned: pinned,
+        accentColor: color,
+        elementSymbol: elementSymbol,
+        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),
     );
   }

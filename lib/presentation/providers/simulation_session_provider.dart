@@ -43,31 +43,56 @@ class SimulationSession extends _$SimulationSession {
   @override
   SimulationSessionState build() => const SimulationSessionState();
 
+  double? _pendingViewTime;
+  bool _isTimeUpdateScheduled = false;
+
   void selectLayer(String? layerId) {
-    state = state.copyWith(selectedLayerId: layerId);
+    Future.microtask(() {
+      state = state.copyWith(selectedLayerId: layerId);
+    });
   }
 
   void selectElement(String? symbol) {
-    state = state.copyWith(selectedElementSymbol: symbol);
+    Future.microtask(() {
+      state = state.copyWith(selectedElementSymbol: symbol);
+    });
   }
 
   void selectInspector(String? type) {
-    state = state.copyWith(selectedInspectorType: type);
+    Future.microtask(() {
+      state = state.copyWith(selectedInspectorType: type);
+    });
   }
 
   void toggleMicroscope() {
-    state = state.copyWith(isMicroscopeEnabled: !state.isMicroscopeEnabled);
+    Future.microtask(() {
+      state = state.copyWith(isMicroscopeEnabled: !state.isMicroscopeEnabled);
+    });
   }
 
   void setScrubbing(bool isScrubbing) {
-    state = state.copyWith(isScrubbing: isScrubbing);
+    Future.microtask(() {
+      state = state.copyWith(isScrubbing: isScrubbing);
+    });
   }
 
   void setViewTime(double time) {
-    state = state.copyWith(viewTime: time);
+    _pendingViewTime = time;
+    if (!_isTimeUpdateScheduled) {
+      _isTimeUpdateScheduled = true;
+      Future.microtask(() {
+        if (_pendingViewTime != null) {
+          state = state.copyWith(viewTime: _pendingViewTime!);
+          _pendingViewTime = null;
+        }
+        _isTimeUpdateScheduled = false;
+      });
+    }
   }
 
   void scrubTo(double time) {
-    state = state.copyWith(viewTime: time, isScrubbing: true);
+    Future.microtask(() {
+      state = state.copyWith(viewTime: time, isScrubbing: true);
+    });
   }
 }

@@ -5,7 +5,8 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
-import 'molecule_particle_component.dart';
+import '../../../../core/cpk_standards.dart';
+import 'molecule_renderer.dart';
 
 enum FluxType { co2Uptake, h2oTranspiration, co2Emission, o2Diffusion, n2oEmission }
 
@@ -329,32 +330,44 @@ class AtmosphericFluxIndicator extends PositionComponent
     String title = "";
     String desc = "";
     Map<String, String> stats = {};
+    String? symbol;
+    Color? accent;
 
     switch (type) {
       case FluxType.co2Uptake:
         title = l.co2UptakeTitle;
         desc = l.photosynthesis;
         stats = {l.source: l.atmosphere, l.productLabel: l.sugarCompound};
+        symbol = 'C';
+        accent = CPKStandards.colorC;
         break;
       case FluxType.h2oTranspiration:
         title = l.transpiration.toUpperCase();
         desc = l.transpirationDesc;
         stats = {l.source: l.root, l.driverLabel: l.vpdLabel};
+        symbol = 'O'; // Focus on Oxygen in H2O
+        accent = Colors.blueAccent;
         break;
       case FluxType.co2Emission:
         title = l.soilRespiration.toUpperCase();
         desc = l.bubbleCo2Description;
         stats = {l.source: l.microbes, l.processLabel: l.aerobicRespiration};
+        symbol = 'C';
+        accent = CPKStandards.colorC;
         break;
       case FluxType.o2Diffusion:
         title = l.o2DiffusionTitle;
         desc = l.oxygenDiffusionDesc;
         stats = {l.directionLabel: l.intoRoot, l.importance: l.aerobicState};
+        symbol = 'O';
+        accent = CPKStandards.colorO;
         break;
       case FluxType.n2oEmission:
         title = l.n2oEmissionTitle;
         desc = l.nitrogenLossDenit;
         stats = {l.source: l.subsoilHorizon, l.riskLabel: l.greenhouseGas};
+        symbol = 'N';
+        accent = CPKStandards.colorN;
         break;
     }
 
@@ -366,6 +379,9 @@ class AtmosphericFluxIndicator extends PositionComponent
             description: desc,
             stats: stats,
             isPinned: pinned,
+            accentColor: accent,
+            elementSymbol: symbol,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

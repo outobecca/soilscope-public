@@ -9,9 +9,11 @@ import 'animated_microbe_component.dart';
 import 'expandable_hotspot_node.dart';
 import 'soil_layer_component.dart';
 import 'biological_entities_component.dart';
+import 'rhizosphere_hotspot_component.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'cycle_highlight_mixin.dart';
+import 'simulation_animation_layer_component.dart';
 
 /// The consolidated "Single Source of Truth" for the Nutrient and Symbiosis Network.
 /// Visualizes the "Wood Wide Web" and nutrient routing between plants, microbes, and hotspots.
@@ -27,6 +29,14 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     ObservationCycle.phosphorus,
     ObservationCycle.carbon,
   };
+
+  final Paint _glowPaint = Paint();
+  final Paint _threadPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _shadowPaint = Paint();
+  final Paint _bodyPaint = Paint();
+  final Paint _corePaint = Paint();
+  final Paint _specularPaint = Paint();
+  final Paint _pulseGlowPaint = Paint();
 
   SoilSymbiosisNetworkComponent() : super(priority: 2000);
 
@@ -64,6 +74,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   bool _isPinned = false;
   final List<NetworkEdge> _edges = [];
+  final Map<int, double> _edgeBirthTimes = {};
   double _lastGraphUpdate = 0;
 
   @override
@@ -71,10 +82,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final activeCycle = game.ref.read(activeCycleProvider);
     final flowMode = game.ref.read(particleFlowModeProvider);
     
-    // VISIBILITY LOGIC:
     // Show if a cycle is active, OR if the explicit "Flow Mode" is toggled on.
-    double baseOpacity = (activeCycle == ObservationCycle.none) ? 0.0 : cycleOpacity;
-    if (flowMode) baseOpacity = math.max(baseOpacity, 0.7);
+    // Use a small base opacity even if no cycle is active to provide visual feedback.
+    double baseOpacity = (activeCycle == ObservationCycle.none) ? 0.35 : cycleOpacity;
+    if (flowMode) baseOpacity = math.max(baseOpacity, 0.75);
     
     if (baseOpacity < 0.05) return;
 
@@ -86,7 +97,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
     // 1. Organic Graph Maintenance (Single Source)
     if (time - _lastGraphUpdate > 1.2) {
-      _rebuildSymbioticGraph(state);
+      _rebuildSymbioticGraph(state, time);
       _lastGraphUpdate = time;
     }
 
@@ -110,7 +121,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       nodes.add(edge.b);
     }
 
-    final paint = Paint()..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom);
+    final paint = _glowPaint..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom);
     for (final node in nodes) {
       final pulse = 0.8 + 0.2 * math.sin(time * 3.0 + node.pos.dx);
       final color = node.type == 'root_tip' ? Colors.white : const Color(0xFF2DD4BF);
@@ -123,7 +134,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
   }
 
-  void _rebuildSymbioticGraph(BiophysicalState state) {
+  void _rebuildSymbioticGraph(BiophysicalState state, double time) {
     _edges.clear();
     final rootNodes = <NetNode>[];
     final otherNodes = <NetNode>[];
@@ -146,14 +157,21 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
 
     // 2. Target Nodes (Hotspots and Microbes)
-    final hotspots = game.world.children
-        .whereType<SoilLayerComponent>()
-        .expand((l) => l.children.whereType<ExpandableHotspotNode>());
+    final hotspots = game.technicalHotspotLayer.children.whereType<ExpandableHotspotNode>();
     for (final h in hotspots) {
       otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'hotspot', metadata: {'layerId': h.layerId}));
     }
 
-    final biologicalEntities = parent?.children.whereType<BiologicalEntitiesComponent>().firstOrNull;
+    final layerComps = game.world.children.whereType<SoilLayerComponent>();
+    for (final layer in layerComps) {
+      final rhizoHotspots = layer.children.whereType<RhizosphereHotspotComponent>();
+      for (final h in rhizoHotspots) {
+        otherNodes.add(NetNode(h.absolutePosition.toOffset(), 'rhizosphere_hotspot', metadata: {'layerId': h.layerId}));
+      }
+    }
+
+    final animLayer = game.world.children.whereType<SimulationAnimationLayerComponent>().firstOrNull;
+    final biologicalEntities = animLayer?.children.whereType<BiologicalEntitiesComponent>().firstOrNull;
     final microbes = biologicalEntities?.children.whereType<AnimatedMicrobeComponent>() ?? const [];
     for (final m in microbes) {
       otherNodes.add(NetNode(m.absolutePosition.toOffset(), 'microbe'));
@@ -186,6 +204,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
           if (dist > 300) continue; // Range limit
 
           _edges.add(NetworkEdge(u, v));
+          final edgeKey = u.pos.hashCode ^ v.pos.hashCode;
+          if (!_edgeBirthTimes.containsKey(edgeKey)) {
+            _edgeBirthTimes[edgeKey] = time;
+          }
           nextFrontier.add(v);
           connectedNodes.add(v);
         }
@@ -223,66 +245,144 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final diff = end - start;
     if (diff.distance < 1.0) return;
     final normal = Offset(-diff.dy, diff.dx) / diff.distance;
-    
-    final cp = mid + (normal * baseDrift);
-    
-    // Use cubic for more "thread-like" look
-    final c1 = Offset.lerp(start, cp, 0.5)!;
-    final c2 = Offset.lerp(cp, end, 0.5)!;
 
-    final paint = Paint()..style = PaintingStyle.stroke;
+    // BIOLOGICAL BREATHING: Subtle time-based sway synced with plant vitality
+    final state = game.simulationState;
+    final plant = state?.plants.isNotEmpty == true ? state!.plants.first : state?.plant;
+    final turgor = plant?.turgorPressure ?? 0.5;
+    final isFlowMode = game.ref.read(particleFlowModeProvider);
+    final boost = isFlowMode ? 2.5 : 1.0;
+
+    final sway = (4.0 + turgor * 6.0) * math.sin(time * (0.4 + turgor * 0.2) + seed) * boost;
+    final pulse = 1.0 + 0.1 * math.sin(time * (2.0 + turgor * 2.0) + seed);
+    
+    final cp = mid + (normal * (baseDrift + sway) * pulse);
+
+    // HYPHAL EXPANSION: Animate new edges growing from root to target
+    final edgeKey = edge.a.pos.hashCode ^ edge.b.pos.hashCode;
+    final birthTime = _edgeBirthTimes[edgeKey] ?? 0.0;
+    final growthAge = ((time - birthTime) * 1.5).clamp(0.0, 1.0);
+    
+    if (growthAge < 0.05) return;
+    
+    // Check if we're in schematic layout
+    final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+    final isSchematic = layoutMode == VisualLayoutMode.schematic;
+
+    // Build the path based on layout mode
+    Path baseParticlePath = Path();
+
+    final paint = _threadPaint;
     final strokeBase = (2.5 + activity * 2.0) / zoom; // Thicker threads
 
-    // DRAW HYPHAL BUNDLE (Multiple strands for "Better Visualized" food web)
-    for (int i = 0; i < 3; i++) {
-      final threadOffset = normal * (i - 1) * 3.0 / zoom;
-      final jitter = 2.0 * math.sin(time * 2.0 + i + seed);
-      
-      final threadPath = Path()
+    if (isSchematic) {
+      // Schematic: Layered Graph Style (Orthogonal routing)
+      // Usually roots spread horizontal then vertical. We'll do similar here:
+      // Start -> Horizontal -> Vertical -> End
+      baseParticlePath
         ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          c1.dx + threadOffset.dx + jitter, c1.dy + threadOffset.dy + jitter,
-          c2.dx + threadOffset.dx - jitter, c2.dy + threadOffset.dy - jitter,
-          end.dx, end.dy
-        );
+        ..lineTo(end.dx, start.dy)
+        ..lineTo(end.dx, end.dy);
 
-      // Glow for the whole bundle if i==1
-      if (i == 1) {
+      // Draw standard single line
+      if (growthAge < 1.0) {
+        final metrics = baseParticlePath.computeMetrics().toList();
+        if (metrics.isNotEmpty) {
+          final m = metrics.first;
+          final extract = m.extractPath(0, m.length * growthAge);
+          canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.3 * opacity * growthAge)..strokeWidth = strokeBase..maskFilter = null);
+        }
+      } else {
         canvas.drawPath(
-          threadPath,
+          baseParticlePath,
           paint
             ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
             ..strokeWidth = strokeBase * 4.0
             ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
         );
+        canvas.drawPath(
+          baseParticlePath,
+          paint
+            ..color = const Color(0xFFF1F5F9).withValues(alpha: 0.4 * opacity)
+            ..strokeWidth = strokeBase
+            ..maskFilter = null,
+        );
       }
+    } else {
+      // Organic: Use cubic for more "thread-like" look
+      final c1 = Offset.lerp(start, cp, 0.5)!;
+      final c2 = Offset.lerp(cp, end, 0.5)!;
+      baseParticlePath..moveTo(start.dx, start.dy)..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
 
-      // Core thread
-      canvas.drawPath(
-        threadPath,
-        paint
-          ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
-              .withValues(alpha: (0.4 - i * 0.1) * opacity)
-          ..strokeWidth = strokeBase * (1.0 - i * 0.2)
-          ..maskFilter = null,
-      );
+      // DRAW HYPHAL BUNDLE (Multiple strands for "Better Visualized" food web)
+      for (int i = 0; i < 3; i++) {
+        final threadOffset = normal * (i - 1) * 3.0 / zoom;
+        final jitter = 2.0 * math.sin(time * 2.0 + i + seed);
+
+        final threadPath = Path()
+          ..moveTo(start.dx, start.dy)
+          ..cubicTo(
+            c1.dx + threadOffset.dx + jitter, c1.dy + threadOffset.dy + jitter,
+            c2.dx + threadOffset.dx - jitter, c2.dy + threadOffset.dy - jitter,
+            end.dx, end.dy
+          );
+
+        // Apply expansion clipping
+        if (growthAge < 1.0) {
+          final metrics = threadPath.computeMetrics().toList();
+          if (metrics.isNotEmpty) {
+            final m = metrics.first;
+            final extract = m.extractPath(0, m.length * growthAge);
+            canvas.drawPath(extract, paint..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity * growthAge));
+          }
+        } else {
+          // Draw full path normally
+          if (i == 1) {
+            canvas.drawPath(
+              threadPath,
+              paint
+                ..color = _getEdgeColor(edge).withValues(alpha: 0.1 * opacity)
+                ..strokeWidth = strokeBase * 4.0
+                ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 / zoom),
+            );
+          }
+
+          canvas.drawPath(
+            threadPath,
+            paint
+              ..color = (i == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFCBD5E1))
+                  .withValues(alpha: (0.4 - i * 0.1) * opacity)
+              ..strokeWidth = strokeBase * (1.0 - i * 0.2)
+              ..maskFilter = null,
+          );
+        }
+      }
     }
 
     // 3. Bidirectional Flux Particles (The actual "transfer")
     // Use a unified path for particles
-    final particlePath = Path()..moveTo(start.dx, start.dy)..cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, end.dx, end.dy);
+    final particlePath = baseParticlePath;
     _drawFluxPulses(canvas, particlePath, edge, time, zoom, activity, opacity);
   }
 
   double _calculateMetabolism(NetworkEdge edge) {
     final dist = (edge.a.pos - edge.b.pos).distance;
-    double m = (1.0 - (dist / 400)).clamp(0.1, 1.0);
+    double activity = (1.0 - (dist / 400)).clamp(0.1, 1.0);
 
-    // Symbiotic bonus: connections to root tips are high-activity
-    if (edge.a.type == 'root_tip' || edge.b.type == 'root_tip') {
-      m *= 1.5;
+    if (edge.a.type == 'microbe' || edge.b.type == 'microbe') {
+      activity += 0.3;
     }
-    return m;
+    if (edge.a.type == 'hotspot' || edge.b.type == 'hotspot') {
+      activity += 0.4;
+    }
+    if (edge.a.type == 'rhizosphere_hotspot' || edge.b.type == 'rhizosphere_hotspot') {
+      activity += 0.6; // High intensity biological hub
+    }
+    if (edge.a.type == 'root_tip' || edge.b.type == 'root_tip') {
+      activity += 0.2;
+    }
+
+    return activity.clamp(0.0, 2.0);
   }
 
   Color _getEdgeColor(NetworkEdge edge) {
@@ -291,6 +391,9 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     }
     if (edge.a.type == 'hotspot' || edge.b.type == 'hotspot') {
       return const Color(0xFFFBBF24); // Amber (Nutrient Transfer)
+    }
+    if (edge.a.type == 'rhizosphere_hotspot' || edge.b.type == 'rhizosphere_hotspot') {
+      return const Color(0xFFD946EF); // Fuchsia (Biological Activity)
     }
     return const Color(0xFF94A3B8).withValues(alpha: 0.5); // Soft Slate for structural connections
   }
@@ -309,8 +412,12 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final m = metrics.first;
 
     final flowMode = game.ref.read(particleFlowModeProvider);
-    final speed = (0.5 + activity * 0.4) * (flowMode ? 2.0 : 1.0);
-    final count = (flowMode ? 4 : (2 * activity).toInt().clamp(1, 3));
+    final state = game.simulationState;
+    final plant = state?.plants.isNotEmpty == true ? state!.plants.first : state?.plant;
+    final turgor = plant?.turgorPressure ?? 0.5;
+    
+    final speed = (0.5 + activity * 0.4 + turgor * 0.3) * (flowMode ? 2.5 : 1.0);
+    final count = (flowMode ? 5 : (2 * activity).toInt().clamp(1, 3));
 
     for (int i = 0; i < count; i++) {
       final t = (time * speed + (i / count)) % 1.0;
@@ -343,35 +450,35 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         final pos = tangent.position;
 
         // 1. Shadow
-        canvas.drawCircle(pos + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.1 * opacity));
+        canvas.drawCircle(pos + const Offset(1, 1), radius, _shadowPaint..color = Colors.black.withValues(alpha: 0.1 * opacity));
         
         // 2. Glow (Boosted by flowMode)
         canvas.drawCircle(
           pos, 
           glowSize, 
-          Paint()
+          (_pulseGlowPaint
             ..color = pColor.withValues(alpha: 0.4 * opacity)
-            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 / zoom)
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 / zoom))
         );
 
         // 3. Main Body
         canvas.drawCircle(
           pos,
           radius,
-          Paint()..color = Colors.white.withValues(alpha: 0.9 * opacity),
+          (_bodyPaint..color = Colors.white.withValues(alpha: 0.9 * opacity)),
         );
         
         canvas.drawCircle(
           pos,
           radius * 0.7,
-          Paint()..color = pColor.withValues(alpha: 0.8 * opacity),
+          _corePaint..color = pColor.withValues(alpha: 0.8 * opacity),
         );
 
         // 4. Specular Highlight
         canvas.drawCircle(
           pos - Offset(radius * 0.3, radius * 0.3),
           radius * 0.4,
-          Paint()..color = Colors.white.withValues(alpha: 0.9 * opacity),
+          (_specularPaint..color = Colors.white.withValues(alpha: 0.9 * opacity)),
         );
       }
     }

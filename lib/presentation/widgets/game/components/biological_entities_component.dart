@@ -43,7 +43,7 @@ class MicrobeDataComponent extends ecs.Component<Map<String, dynamic>> {
 /// Enforces strict population limits for simulation stability.
 class BiologicalEntitiesComponent extends Component
     with HasGameReference<SoilScopeGame> {
-  final math.Random _random = math.Random();
+  final math.Random _random = math.Random.secure();
   late ecs.World _ecsWorld;
 
   // STRICT LIMITS: Reduced density for clarity (Task: Combine/Reduce)
@@ -53,8 +53,12 @@ class BiologicalEntitiesComponent extends Component
   Future<void> onLoad() async {
     await super.onLoad();
     _ecsWorld = ecs.World();
-    _ecsWorld.registerComponent<PlantDataComponent, Plant>(() => PlantDataComponent());
-    _ecsWorld.registerComponent<MicrobeDataComponent, Map<String, dynamic>>(() => MicrobeDataComponent());
+    _ecsWorld.registerComponent<PlantDataComponent, Plant>(
+      () => PlantDataComponent(),
+    );
+    _ecsWorld.registerComponent<MicrobeDataComponent, Map<String, dynamic>>(
+      () => MicrobeDataComponent(),
+    );
     _ecsWorld.init();
 
     final state = game.simulationState;
@@ -113,21 +117,25 @@ class BiologicalEntitiesComponent extends Component
     _syncMicrobes(state);
 
     // 3. Sync Earthworms Visuals
-    if (children.query<AnimatedEarthwormComponent>().isEmpty && state.plants.isNotEmpty) {
+    if (children.query<AnimatedEarthwormComponent>().isEmpty &&
+        state.plants.isNotEmpty) {
       _initEarthworms(state);
     }
   }
 
   void _syncMicrobes(BiophysicalState state) {
     if (state.profile.layers.isEmpty || state.plants.isEmpty) return;
-    
-    final totalBiomass = state.profile.layers.fold<double>(0, (sum, l) => sum + l.microbialBiomass);
+
+    final totalBiomass = state.profile.layers.fold<double>(
+      0,
+      (sum, l) => sum + l.microbialBiomass,
+    );
     // Target count based on science, but strictly capped at 25 (Task: Reduce density)
     final int targetCount = (totalBiomass * 5.0).toInt().clamp(3, maxMicrobes);
-    
+
     final existing = children.query<AnimatedMicrobeComponent>();
     final int currentCount = existing.length;
-    
+
     if (currentCount < targetCount) {
       final int toAdd = targetCount - currentCount;
       final plant = state.plants.first;
@@ -135,19 +143,33 @@ class BiologicalEntitiesComponent extends Component
       final soilWidth = SoilScopeGame.soilColumnWidth;
 
       for (int i = 0; i < toAdd; i++) {
-         // Double-check the limit during generation to prevent race conditions or loops
-         if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes) break;
+        // Double-check the limit during generation to prevent race conditions or loops
+        if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes) {
+          break;
+        }
 
-         final centerX = SceneCoordinateMapper.mapShootPosition(plant.baseX, soilWidth, surfaceY).x + game.soilLeftX;
-         final mx = _nextGaussian(centerX, 150.0).clamp(game.soilLeftX + 20, game.soilLeftX + soilWidth - 20);
-         final my = _nextGaussian(surfaceY + 150, 200.0).clamp(surfaceY + 20, surfaceY + game.soilColumnHeight - 20);
-         
-         add(
-           AnimatedMicrobeComponent(
-             position: Vector2(mx, my),
-             seed: _random.nextInt(10000),
-           )..priority = 350,
-         );
+        final centerX =
+            SceneCoordinateMapper.mapShootPosition(
+              plant.baseX,
+              soilWidth,
+              surfaceY,
+            ).x +
+            game.soilLeftX;
+        final mx = _nextGaussian(
+          centerX,
+          150.0,
+        ).clamp(game.soilLeftX + 20, game.soilLeftX + soilWidth - 20);
+        final my = _nextGaussian(
+          surfaceY + 150,
+          200.0,
+        ).clamp(surfaceY + 20, surfaceY + game.soilColumnHeight - 20);
+
+        add(
+          AnimatedMicrobeComponent(
+            position: Vector2(mx, my),
+            seed: _random.nextInt(10000),
+          )..priority = 350,
+        );
       }
     } else if (currentCount > targetCount) {
       final int toRemove = currentCount - targetCount;
@@ -159,16 +181,31 @@ class BiologicalEntitiesComponent extends Component
   }
 
   void _initEarthworms(BiophysicalState state) {
-    if (children.query<AnimatedEarthwormComponent>().length >= 3 || state.plants.isEmpty) return;
+    if (children.query<AnimatedEarthwormComponent>().length >= 3 ||
+        state.plants.isEmpty) {
+      return;
+    }
     final plant = state.plants.first;
     final surfaceY = game.soilSurfaceY;
     final soilWidth = SoilScopeGame.soilColumnWidth;
 
     for (int i = 0; i < 3; i++) {
-      final centerX = SceneCoordinateMapper.mapShootPosition(plant.baseX, soilWidth, surfaceY).x + game.soilLeftX;
-      final wx = _nextGaussian(centerX, 250.0).clamp(game.soilLeftX + 50, game.soilLeftX + soilWidth - 50);
-      final wy = _nextGaussian(surfaceY + 200, 250.0).clamp(surfaceY + 50, surfaceY + game.soilColumnHeight - 50);
-      
+      final centerX =
+          SceneCoordinateMapper.mapShootPosition(
+            plant.baseX,
+            soilWidth,
+            surfaceY,
+          ).x +
+          game.soilLeftX;
+      final wx = _nextGaussian(
+        centerX,
+        250.0,
+      ).clamp(game.soilLeftX + 50, game.soilLeftX + soilWidth - 50);
+      final wy = _nextGaussian(
+        surfaceY + 200,
+        250.0,
+      ).clamp(surfaceY + 50, surfaceY + game.soilColumnHeight - 50);
+
       add(
         AnimatedEarthwormComponent(
           position: Vector2(wx, wy),

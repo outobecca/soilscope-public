@@ -1220,7 +1220,7 @@ abstract class AppLocalizations {
   /// No description provided for @vpdLabel.
   ///
   /// In en, this message translates to:
-  /// **'VPD:'**
+  /// **'VPD (Vapor Pressure Deficit)'**
   String get vpdLabel;
 
   /// No description provided for @physical.
@@ -1394,7 +1394,7 @@ abstract class AppLocalizations {
   /// No description provided for @denitrificationDesc.
   ///
   /// In en, this message translates to:
-  /// **'N₂O loss (Anaerobic)'**
+  /// **'Reduction of nitrate to gaseous nitrogen (N₂O, N₂) in low oxygen conditions.'**
   String get denitrificationDesc;
 
   /// No description provided for @active.
@@ -2096,7 +2096,7 @@ abstract class AppLocalizations {
   /// No description provided for @intoRoot.
   ///
   /// In en, this message translates to:
-  /// **'Into Root'**
+  /// **'Atmosphere → Soil'**
   String get intoRoot;
 
   /// No description provided for @intoLeaves.
@@ -2336,7 +2336,7 @@ abstract class AppLocalizations {
   /// No description provided for @soilMoisture.
   ///
   /// In en, this message translates to:
-  /// **'Soil moisture'**
+  /// **'Soil Moisture'**
   String get soilMoisture;
 
   /// No description provided for @biogeochemical.
@@ -2366,7 +2366,7 @@ abstract class AppLocalizations {
   /// No description provided for @subsoilHorizon.
   ///
   /// In en, this message translates to:
-  /// **'Subsoil'**
+  /// **'Soil → Atmosphere'**
   String get subsoilHorizon;
 
   /// No description provided for @parentMaterialHorizon.
@@ -2840,31 +2840,31 @@ abstract class AppLocalizations {
   /// No description provided for @ionNitrateDescription.
   ///
   /// In en, this message translates to:
-  /// **'Nitrate is the most important form of nitrogen for plants. It moves easily in soil water and is therefore prone to leaching. Excessive irrigation or heavy rain can wash nitrate into groundwater - causing eutrophication of water bodies.'**
+  /// **'Negatively charged, highly mobile nitrogen ion. Nitrate moves with water and can leach into groundwater or be lost to the atmosphere through denitrification.'**
   String get ionNitrateDescription;
 
   /// No description provided for @ionPhosphateDescription.
   ///
   /// In en, this message translates to:
-  /// **'Phosphate is a component of ATP and DNA. It binds strongly to iron, aluminum, and calcium, so its mobility is poor. Mycorrhizal fungi help the plant obtain phosphate.'**
+  /// **'Negatively charged phosphorus ion. Essential for energy (ATP) but moves very slowly in soil due to strong binding to minerals.'**
   String get ionPhosphateDescription;
 
   /// No description provided for @ionPotassiumDescription.
   ///
   /// In en, this message translates to:
-  /// **'Potassium regulates the opening of stomata and the plant\'s water balance. It binds between clay minerals (CEC) and is released by ion exchange. High potassium levels can interfere with magnesium uptake.'**
+  /// **'Positive ion regulating plant water balance and stomata. Held by soil\'s cation exchange capacity (CEC).'**
   String get ionPotassiumDescription;
 
   /// No description provided for @ionCalciumDescription.
   ///
   /// In en, this message translates to:
-  /// **'Calcium is a binder for pectin in cell walls and acts as a signaling molecule. It does not re-move in the plant, so young plant parts need a continuous supply. Liming raises the soil pH.'**
+  /// **'Crucial for cell wall stability and signaling. Moves slowly with water flow.'**
   String get ionCalciumDescription;
 
   /// No description provided for @ionMagnesiumDescription.
   ///
   /// In en, this message translates to:
-  /// **'Magnesium is the central atom of chlorophyll - without it, no photosynthesis! It moves well in the plant and moves from old leaves to young ones as needed. High potassium levels can interfere with magnesium uptake.'**
+  /// **'Central part of the chlorophyll molecule. Vital for photosynthesis.'**
   String get ionMagnesiumDescription;
 
   /// No description provided for @bacteriaDescription.
@@ -3098,7 +3098,7 @@ abstract class AppLocalizations {
   /// No description provided for @mineralizationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Microbes decompose organic matter and release nutrients (N, P, S) into the soil solution.'**
+  /// **'Conversion of organic matter into plant-available inorganic nutrients.'**
   String get mineralizationDesc;
 
   /// No description provided for @nitrificationTitle.
@@ -3110,7 +3110,7 @@ abstract class AppLocalizations {
   /// No description provided for @nitrificationDesc.
   ///
   /// In en, this message translates to:
-  /// **'A two-step oxidation reaction: ammonia → nitrite → nitrate. Requires aerobic conditions.'**
+  /// **'Transformation of ammonium to nitrate by specialized bacteria.'**
   String get nitrificationDesc;
 
   /// No description provided for @denitrificationTitle.
@@ -3128,7 +3128,7 @@ abstract class AppLocalizations {
   /// No description provided for @adsorptionDesc.
   ///
   /// In en, this message translates to:
-  /// **'Nutrients bind to the surfaces of soil particles (clay, humus) by electrical forces.'**
+  /// **'Binding of nutrients to soil particle surfaces (e.g., CEC).'**
   String get adsorptionDesc;
 
   /// No description provided for @desorptionTitle.
@@ -3152,7 +3152,7 @@ abstract class AppLocalizations {
   /// No description provided for @ionNitrateName.
   ///
   /// In en, this message translates to:
-  /// **'NO₃⁻ (nitrate)'**
+  /// **'Nitrate'**
   String get ionNitrateName;
 
   /// No description provided for @ionPhosphateTitle.
@@ -3164,7 +3164,7 @@ abstract class AppLocalizations {
   /// No description provided for @ionPhosphateName.
   ///
   /// In en, this message translates to:
-  /// **'H₂PO₄⁻ / HPO₄²⁻'**
+  /// **'Phosphate'**
   String get ionPhosphateName;
 
   /// No description provided for @ionPotassiumTitle.
@@ -3176,7 +3176,7 @@ abstract class AppLocalizations {
   /// No description provided for @ionPotassiumName.
   ///
   /// In en, this message translates to:
-  /// **'K⁺ (potassium)'**
+  /// **'Potassium'**
   String get ionPotassiumName;
 
   /// No description provided for @ionCalciumTitle.
@@ -3188,7 +3188,7 @@ abstract class AppLocalizations {
   /// No description provided for @ionCalciumName.
   ///
   /// In en, this message translates to:
-  /// **'Ca²⁺ (calcium)'**
+  /// **'Calcium'**
   String get ionCalciumName;
 
   /// No description provided for @ionMagnesiumTitle.
@@ -3200,7 +3200,7 @@ abstract class AppLocalizations {
   /// No description provided for @ionMagnesiumName.
   ///
   /// In en, this message translates to:
-  /// **'Mg²⁺ (magnesium)'**
+  /// **'Magnesium'**
   String get ionMagnesiumName;
 
   /// No description provided for @negativeCharge.
@@ -4697,6 +4697,216 @@ abstract class AppLocalizations {
   /// **'End product of microbial and root respiration. High CO2 levels in soil indicate active biological activity.'**
   String get moleculeCO2Desc;
 
+  /// No description provided for @moleculeOrganicNitrogenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ORGANIC NITROGEN (N_org)'**
+  String get moleculeOrganicNitrogenTitle;
+
+  /// No description provided for @moleculeOrganicNitrogenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen bound in organic matter like proteins. Microbes must mineralize it into ammonium before plants can use it.'**
+  String get moleculeOrganicNitrogenDesc;
+
+  /// No description provided for @moleculeNitrousOxideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NITROUS OXIDE (N₂O)'**
+  String get moleculeNitrousOxideTitle;
+
+  /// No description provided for @moleculeNitrousOxideDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A potent greenhouse gas produced by microbes in wet, anaerobic soil. It has ~300 times the warming potential of CO₂.'**
+  String get moleculeNitrousOxideDesc;
+
+  /// No description provided for @moleculeMethaneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'METHANE (CH₄)'**
+  String get moleculeMethaneTitle;
+
+  /// No description provided for @moleculeMethaneDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Gas produced in flooded, oxygen-free conditions. Significant climate impact.'**
+  String get moleculeMethaneDesc;
+
+  /// No description provided for @moleculeWaterVaporTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'WATER VAPOR (H₂O_g)'**
+  String get moleculeWaterVaporTitle;
+
+  /// No description provided for @moleculeWaterVaporDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Gaseous water escaping the soil via evaporation or plant transpiration.'**
+  String get moleculeWaterVaporDesc;
+
+  /// No description provided for @microbialClusterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MICROBIAL CLUSTER'**
+  String get microbialClusterTitle;
+
+  /// No description provided for @microbialClusterDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Represents a high-density colony of soil microbes performing biochemical decomposition.'**
+  String get microbialClusterDesc;
+
+  /// No description provided for @carrotTaprootTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CARROT TAPROOT'**
+  String get carrotTaprootTitle;
+
+  /// No description provided for @fineRootTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FINE ROOT'**
+  String get fineRootTitle;
+
+  /// No description provided for @rootStructureDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Root structure absorbing water and nutrients.'**
+  String get rootStructureDesc;
+
+  /// No description provided for @mobilityVeryGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Very Good'**
+  String get mobilityVeryGood;
+
+  /// No description provided for @mobilityGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get mobilityGood;
+
+  /// No description provided for @mobilityModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get mobilityModerate;
+
+  /// No description provided for @mobilityWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get mobilityWeak;
+
+  /// No description provided for @mobilityVeryWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Very Weak'**
+  String get mobilityVeryWeak;
+
+  /// No description provided for @mobilitySlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Slow'**
+  String get mobilitySlow;
+
+  /// No description provided for @simulatedUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulated Units'**
+  String get simulatedUnits;
+
+  /// No description provided for @metabolicActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Metabolic Activity'**
+  String get metabolicActivity;
+
+  /// No description provided for @biomassDensity.
+  ///
+  /// In en, this message translates to:
+  /// **'Biomass Density'**
+  String get biomassDensity;
+
+  /// No description provided for @immobilizedNutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'Immobilized Nutrients'**
+  String get immobilizedNutrients;
+
+  /// No description provided for @gwpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Warming Potential (GWP)'**
+  String get gwpLabel;
+
+  /// No description provided for @methanogenesis.
+  ///
+  /// In en, this message translates to:
+  /// **'Methanogenesis'**
+  String get methanogenesis;
+
+  /// No description provided for @biomassLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Biomass'**
+  String get biomassLabel;
+
+  /// No description provided for @depthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth'**
+  String get depthLabel;
+
+  /// No description provided for @radiusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Radius'**
+  String get radiusLabel;
+
+  /// No description provided for @co2UptakeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CO₂ UPTAKE'**
+  String get co2UptakeTitle;
+
+  /// No description provided for @n2oEmissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'N₂O EMISSION'**
+  String get n2oEmissionTitle;
+
+  /// No description provided for @o2DiffusionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'O₂ DIFFUSION'**
+  String get o2DiffusionTitle;
+
+  /// No description provided for @sugarCompound.
+  ///
+  /// In en, this message translates to:
+  /// **'Sugar (C6H12O6)'**
+  String get sugarCompound;
+
+  /// No description provided for @nitrogenLossDenit.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen loss via denitrification'**
+  String get nitrogenLossDenit;
+
+  /// No description provided for @liquid.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid'**
+  String get liquid;
+
+  /// No description provided for @greenhouseGas.
+  ///
+  /// In en, this message translates to:
+  /// **'Greenhouse Gas'**
+  String get greenhouseGas;
+
   /// No description provided for @temperatureLabel.
   ///
   /// In en, this message translates to:
@@ -5567,12 +5777,6 @@ abstract class AppLocalizations {
   /// **'Nutrient Availability'**
   String get nutrientAvailability;
 
-  /// No description provided for @greenhouseGas.
-  ///
-  /// In en, this message translates to:
-  /// **'Greenhouse Gas'**
-  String get greenhouseGas;
-
   /// No description provided for @highDivision.
   ///
   /// In en, this message translates to:
@@ -5614,12 +5818,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'C3 Pathway'**
   String get c3Pathway;
-
-  /// No description provided for @sugarCompound.
-  ///
-  /// In en, this message translates to:
-  /// **'Sugar (C6H12O6)'**
-  String get sugarCompound;
 
   /// No description provided for @organicPoolLabel.
   ///
@@ -5794,30 +5992,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Significance'**
   String get significanceLabel;
-
-  /// No description provided for @co2UptakeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'CO₂ UPTAKE'**
-  String get co2UptakeTitle;
-
-  /// No description provided for @o2DiffusionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'O₂ DIFFUSION'**
-  String get o2DiffusionTitle;
-
-  /// No description provided for @n2oEmissionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'N₂O EMISSION'**
-  String get n2oEmissionTitle;
-
-  /// No description provided for @nitrogenLossDenit.
-  ///
-  /// In en, this message translates to:
-  /// **'Nitrogen loss via denitrification'**
-  String get nitrogenLossDenit;
 
   /// No description provided for @riskLabel.
   ///

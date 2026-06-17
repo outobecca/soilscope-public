@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import '../models/plant.dart';
+import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import '../../core/simulation_constants.dart';
 import 'plant/root_architecture_solver.dart';
@@ -22,7 +23,7 @@ import 'nutrient_buffer.dart';
 /// - Sperry et al. (2017): Hydraulic limitation theory
 class PlantSolver {
   /// Solves plant growth, water/nutrient uptake, branching and biomass accumulation.
-  static Plant solve(
+  static (Plant, List<SoilLayer>) solve(
     Plant plant,
     SoilProfile profile,
     double dt, {
@@ -36,21 +37,25 @@ class PlantSolver {
     double actualDt = dt / steps;
 
     Plant currentPlant = plant;
+    List<SoilLayer> currentLayers = profile.layers;
+
     for (int s = 0; s < steps; s++) {
-      currentPlant = _solveStep(
+      final (nextPlant, nextLayers) = _solveStep(
         currentPlant,
-        profile,
+        profile.copyWith(layers: currentLayers),
         actualDt,
         airTemperature: airTemperature,
         atmCO2: atmCO2,
         relativeHumidity: relativeHumidity,
         solarRadiation: solarRadiation,
       );
+      currentPlant = nextPlant;
+      currentLayers = nextLayers;
     }
-    return currentPlant;
+    return (currentPlant, currentLayers);
   }
 
-  static Plant _solveStep(
+  static (Plant, List<SoilLayer>) _solveStep(
     Plant plant,
     SoilProfile profile,
     double dt, {
@@ -100,12 +105,14 @@ class PlantSolver {
       mgUptake,
       nStress,
       pStress,
+      updatedLayers,
     ) = PlantNutrientUptakeSolver.calculateNutrientStress(
       plant,
       profile,
       layerWeights,
       totalRootWeight,
       spacResult.transpiration,
+      dt,
     );
     final combinedNutrientStress = math.min(nStress, pStress);
     final toxicity = PlantNutrientUptakeSolver.calculateToxicityFactor(
@@ -162,28 +169,31 @@ class PlantSolver {
     final double transmission = math.exp(-0.5 * newLai);
     final double absorbed = solarW * 0.45 * (1.0 - transmission);
 
-    return plant.copyWith(
-      height: newHeight,
-      lai: newLai,
-      turgorPressure: turgor,
-      rootSystem: newRoots,
-      waterUptake: spacResult.transpiration, // NOW ACTUAL, not potential!
-      actualTranspiration: spacResult.transpiration,
-      nitrogenUptake: nUptake,
-      phosphorusUptake: pUptake,
-      calciumUptake: caUptake,
-      magnesiumUptake: mgUptake,
-      totalBiomass: newTotalB,
-      rootBiomass: newRootB,
-      age: plant.age + dt / 86400.0,
-      // New SPAC state variables
-      psiLeaf: spacResult.psiLeaf,
-      stomatalConductance: spacResult.gs,
-      waterStressIndex: waterStress,
-      relativeWaterContent: rwc,
-      // Diagnostic light fields
-      absorbedPAR: absorbed,
-      lightTransmission: transmission,
+    return (
+      plant.copyWith(
+        height: newHeight,
+        lai: newLai,
+        turgorPressure: turgor,
+        rootSystem: newRoots,
+        waterUptake: spacResult.transpiration, // NOW ACTUAL, not potential!
+        actualTranspiration: spacResult.transpiration,
+        nitrogenUptake: nUptake,
+        phosphorusUptake: pUptake,
+        calciumUptake: caUptake,
+        magnesiumUptake: mgUptake,
+        totalBiomass: newTotalB,
+        rootBiomass: newRootB,
+        age: plant.age + dt / 86400.0,
+        // New SPAC state variables
+        psiLeaf: spacResult.psiLeaf,
+        stomatalConductance: spacResult.gs,
+        waterStressIndex: waterStress,
+        relativeWaterContent: rwc,
+        // Diagnostic light fields
+        absorbedPAR: absorbed,
+        lightTransmission: transmission,
+      ),
+      updatedLayers,
     );
   }
 

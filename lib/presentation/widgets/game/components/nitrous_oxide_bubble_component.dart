@@ -9,6 +9,10 @@ import '../../../providers/ui_state_provider.dart';
 /// Visualizes nitrous oxide (N2O) escaping the soil surface under anaerobic conditions.
 class NitrousOxideBubbleComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+  final Paint _shadowPaint = Paint();
+  final Paint _bodyPaint = Paint();
+  final Paint _highlightPaint = Paint();
+
   NitrousOxideBubbleComponent() : super(priority: 15);
 
   @override
@@ -42,20 +46,20 @@ class NitrousOxideBubbleComponent extends Component
       final alpha = (1.0 - phase);
 
       // 1. Shadow
-      canvas.drawCircle(pos + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.1 * alpha));
+      canvas.drawCircle(pos + const Offset(1, 1), radius, _shadowPaint..color = Colors.black.withValues(alpha: 0.1 * alpha));
       
       // 2. Body
       canvas.drawCircle(
         pos,
         radius,
-        Paint()..color = Colors.blueGrey.withValues(alpha: 0.4 * alpha),
+        _bodyPaint..color = Colors.blueGrey.withValues(alpha: 0.4 * alpha),
       );
       
       // 3. Highlight (Shaded look)
       canvas.drawCircle(
         pos - Offset(radius * 0.3, radius * 0.3),
         radius * 0.4,
-        Paint()..color = Colors.white.withValues(alpha: 0.5 * alpha),
+        _highlightPaint..color = Colors.white.withValues(alpha: 0.5 * alpha),
       );
     }
   }
@@ -73,10 +77,11 @@ class NitrousOxideBubbleComponent extends Component
 
   @override
   void onHoverEnter() {
+    final l = game.l10n;
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
-        title: "N₂O EMISSIONS",
-        description: "Nitrous oxide gas escaping the soil through denitrification in anaerobic (waterlogged) conditions.",
+        title: l.moleculeNitrousOxideTitle,
+        description: l.moleculeNitrousOxideDesc,
         accentColor: Colors.pinkAccent,
       ),
     );

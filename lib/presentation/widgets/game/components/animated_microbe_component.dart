@@ -11,7 +11,6 @@ import 'scene_coordinate_mapper.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
-import 'animated_plant_component.dart';
 import 'data_hotspot_component.dart';
 import 'soil_layer_component.dart';
 import 'particle_system_component.dart';
@@ -19,6 +18,7 @@ import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'cycle_highlight_mixin.dart';
 import 'molecule_particle_component.dart';
+import 'molecule_renderer.dart';
 
 /// Optimized Microbial Cluster component representing a dense colony of organisms.
 /// Decouples visual representation from mathematical simulation units (1:500 ratio).
@@ -51,6 +51,14 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   // Performance Guard: Max clusters per world
   static const int maxClusters = 50;
+
+  final Paint _coreGlowPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+  final Paint _coreShadowPaint = Paint();
+  final Paint _coreBodyPaint = Paint();
+  final Paint _coreHighlightPaint = Paint();
+  final Paint _swarmPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _nutrientPaint = Paint();
+  final Paint _nutrientHighlightPaint = Paint();
 
   AnimatedMicrobeComponent({required Vector2 position, this.seed = 0})
     : super(position: position, size: Vector2.all(120), anchor: Anchor.center, priority: 80) {
@@ -322,22 +330,22 @@ class AnimatedMicrobeComponent extends PositionComponent
       }
     }
 
-    // 2. Evaluate Root Exudates (Consistent energy source)
-    final plantComps = game.world.children.query<AnimatedPlantComponent>();
-    for (final plant in plantComps) {
-      for (final pos in plant.exudateWorldPositions) {
-        final dist = position.distanceTo(pos);
-        if (dist > 300) continue;
+    // 2. Evaluate Molecule Particles (Dynamic chemotaxis)
+    final molecules = game.world.children.whereType<MoleculeParticleComponent>();
+    for (final mol in molecules) {
+      if (mol.type != MoleculeType.labileCarbon) continue;
+      
+      final dist = position.distanceTo(mol.position);
+      if (dist > 300) continue;
 
-        // Roots provide labile carbon (high energy, low nitrogen)
-        double rootBenefit = 2.5; 
-        if (isNitrogenLimited) rootBenefit *= 0.6; // Less attractive if N is needed
+      // Labile carbon is high energy
+      double benefit = 3.0; 
+      if (isNitrogenLimited) benefit *= 0.7;
 
-        final fitness = rootBenefit / (dist / 80.0).clamp(1.0, 10.0);
-        if (fitness > maxFitness) {
-          maxFitness = fitness;
-          bestTarget = pos;
-        }
+      final fitness = benefit / (dist / 80.0).clamp(1.0, 10.0);
+      if (fitness > maxFitness) {
+        maxFitness = fitness;
+        bestTarget = mol.position;
       }
     }
 
@@ -393,36 +401,32 @@ class AnimatedMicrobeComponent extends PositionComponent
     canvas.drawCircle(
       center, 
       coreRadius * 2.5, 
-      Paint()
-        ..color = baseColor.withValues(alpha: 0.15 * currentOpacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0)
+      (_coreGlowPaint..color = baseColor.withValues(alpha: 0.15 * currentOpacity))
     );
     // Shadow
     canvas.drawCircle(
       center + const Offset(0.5, 0.5),
       coreRadius,
-      Paint()..color = Colors.black.withValues(alpha: 0.3 * currentOpacity)
+      (_coreShadowPaint..color = Colors.black.withValues(alpha: 0.3 * currentOpacity))
     );
     // Core body
     canvas.drawCircle(
       center, 
       coreRadius, 
-      Paint()..color = baseColor.withValues(alpha: 0.9 * currentOpacity)
+      (_coreBodyPaint..color = baseColor.withValues(alpha: 0.9 * currentOpacity))
     );
     // Shading highlight
     canvas.drawCircle(
       center - const Offset(1.0, 1.0),
       coreRadius * 0.4,
-      Paint()..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)
+      (_coreHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
     );
 
     // 2. Swarm Effect: Multiple tiny dots representing individuals
     final dotCount = (6 * biomassIntensity).toInt().clamp(3, 12);
     final dotRadius = 1.0 / zoom;
     
-    final swarmPaint = Paint()
-      ..color = baseColor.withValues(alpha: 0.5 * currentOpacity)
-      ..style = PaintingStyle.fill;
+    final swarmPaint = _swarmPaint..color = baseColor.withValues(alpha: 0.5 * currentOpacity);
 
     for (int i = 0; i < dotCount; i++) {
       final angle = (_time * 1.5) + (i * math.pi * 2 / dotCount) + (seed * i);
@@ -442,12 +446,12 @@ class AnimatedMicrobeComponent extends PositionComponent
       canvas.drawCircle(
         nutrientPos, 
         1.5 / zoom, 
-        Paint()..color = color.withValues(alpha: 0.8 * currentOpacity)
+        (_nutrientPaint..color = color.withValues(alpha: 0.8 * currentOpacity))
       );
       canvas.drawCircle(
         nutrientPos - const Offset(0.3, 0.3),
         0.5 / zoom,
-        Paint()..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)
+        (_nutrientHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
       );
     }
 
@@ -455,20 +459,23 @@ class AnimatedMicrobeComponent extends PositionComponent
   }
 
   void _showMicrobeInfo({bool pinned = false}) {
+    final l = game.l10n;
     final state = game.simulationState;
     if (state == null || state.profile.layers.isEmpty) return;
     final layer = state.profile.layers.first;
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
-        title: "MICROBIAL CLUSTER",
-        description: "Represents a high-density colony of soil microbes performing biochemical decomposition.",
+        title: l.microbialClusterTitle,
+        description: l.microbialClusterDesc,
         stats: {
-          'Simulated Units': '500+',
-          'Metabolic Activity': '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
-          'Biomass Density': '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
-          'Immobilized Nutrients': '${_absorbedNutrients.length} units',
+          l.simulatedUnits: '500+',
+          l.metabolicActivity: '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
+          l.biomassDensity: '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
+          l.immobilizedNutrients: '${_absorbedNutrients.length} units',
         },
         isPinned: pinned,
+        accentColor: const Color(0xFFFACC15), // Golden Yellow
+        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),
     );
   }

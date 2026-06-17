@@ -40,7 +40,7 @@ final class UIStateProvider extends $NotifierProvider<UIState, HoverInfo?> {
   }
 }
 
-String _$uIStateHash() => r'1be0fb8d0d921b996dd2cf74d6d78dda0aa4790c';
+String _$uIStateHash() => r'ac9737fb0c1fdde12cf622aea64d4a47cb1b569a';
 
 abstract class _$UIState extends $Notifier<HoverInfo?> {
   HoverInfo? build();
@@ -92,7 +92,7 @@ final class ActiveCycleProvider
   }
 }
 
-String _$activeCycleHash() => r'd9ef9cfd59b885e57644ae0143d6c5e46b3e1a36';
+String _$activeCycleHash() => r'97570a29721e8667a61267816a3c4d91c24c93a0';
 
 abstract class _$ActiveCycle extends $Notifier<ObservationCycle> {
   ObservationCycle build();
@@ -210,6 +210,59 @@ abstract class _$ActiveTutorialStep extends $Notifier<ScenarioTutorialStep?> {
             as $ClassProviderElement<
               AnyNotifier<ScenarioTutorialStep?, ScenarioTutorialStep?>,
               ScenarioTutorialStep?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+@ProviderFor(VisualLayoutModeState)
+final visualLayoutModeStateProvider = VisualLayoutModeStateProvider._();
+
+final class VisualLayoutModeStateProvider
+    extends $NotifierProvider<VisualLayoutModeState, VisualLayoutMode> {
+  VisualLayoutModeStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'visualLayoutModeStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$visualLayoutModeStateHash();
+
+  @$internal
+  @override
+  VisualLayoutModeState create() => VisualLayoutModeState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VisualLayoutMode value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VisualLayoutMode>(value),
+    );
+  }
+}
+
+String _$visualLayoutModeStateHash() =>
+    r'0529235021bd54d1cb5af12f869d357dd9ca427d';
+
+abstract class _$VisualLayoutModeState extends $Notifier<VisualLayoutMode> {
+  VisualLayoutMode build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<VisualLayoutMode, VisualLayoutMode>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<VisualLayoutMode, VisualLayoutMode>,
+              VisualLayoutMode,
               Object?,
               Object?
             >;

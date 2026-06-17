@@ -584,7 +584,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get co2Label => 'CO2';
 
   @override
-  String get vpdLabel => 'VPD:';
+  String get vpdLabel => 'VPD (Vapor Pressure Deficit)';
 
   @override
   String get physical => 'Physical';
@@ -673,7 +673,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transformationDesc => 'NH₄⁺ ➔ NO₃⁻ transformation';
 
   @override
-  String get denitrificationDesc => 'N₂O loss (Anaerobic)';
+  String get denitrificationDesc => 'Reduction of nitrate to gaseous nitrogen (N₂O, N₂) in low oxygen conditions.';
 
   @override
   String get active => 'Active';
@@ -1040,7 +1040,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upward => 'Upward';
 
   @override
-  String get intoRoot => 'Into Root';
+  String get intoRoot => 'Atmosphere → Soil';
 
   @override
   String get intoLeaves => 'Into Leaves';
@@ -1160,7 +1160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get especiallyPAndK => 'Especially P and K';
 
   @override
-  String get soilMoisture => 'Soil moisture';
+  String get soilMoisture => 'Soil Moisture';
 
   @override
   String get biogeochemical => 'Biogeochemical';
@@ -1175,7 +1175,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topsoilHorizon => 'Topsoil';
 
   @override
-  String get subsoilHorizon => 'Subsoil';
+  String get subsoilHorizon => 'Soil → Atmosphere';
 
   @override
   String get parentMaterialHorizon => 'Parent Material';
@@ -1412,19 +1412,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bubbleN2oDescription => 'Nitrous oxide is released when denitrifying bacteria reduce nitrate in anaerobic (oxygen-free) conditions. This happens especially in waterlogged soil. N2O is a potent greenhouse gas (298x CO2) - a sign of a problem!';
 
   @override
-  String get ionNitrateDescription => 'Nitrate is the most important form of nitrogen for plants. It moves easily in soil water and is therefore prone to leaching. Excessive irrigation or heavy rain can wash nitrate into groundwater - causing eutrophication of water bodies.';
+  String get ionNitrateDescription => 'Negatively charged, highly mobile nitrogen ion. Nitrate moves with water and can leach into groundwater or be lost to the atmosphere through denitrification.';
 
   @override
-  String get ionPhosphateDescription => 'Phosphate is a component of ATP and DNA. It binds strongly to iron, aluminum, and calcium, so its mobility is poor. Mycorrhizal fungi help the plant obtain phosphate.';
+  String get ionPhosphateDescription => 'Negatively charged phosphorus ion. Essential for energy (ATP) but moves very slowly in soil due to strong binding to minerals.';
 
   @override
-  String get ionPotassiumDescription => 'Potassium regulates the opening of stomata and the plant\'s water balance. It binds between clay minerals (CEC) and is released by ion exchange. High potassium levels can interfere with magnesium uptake.';
+  String get ionPotassiumDescription => 'Positive ion regulating plant water balance and stomata. Held by soil\'s cation exchange capacity (CEC).';
 
   @override
-  String get ionCalciumDescription => 'Calcium is a binder for pectin in cell walls and acts as a signaling molecule. It does not re-move in the plant, so young plant parts need a continuous supply. Liming raises the soil pH.';
+  String get ionCalciumDescription => 'Crucial for cell wall stability and signaling. Moves slowly with water flow.';
 
   @override
-  String get ionMagnesiumDescription => 'Magnesium is the central atom of chlorophyll - without it, no photosynthesis! It moves well in the plant and moves from old leaves to young ones as needed. High potassium levels can interfere with magnesium uptake.';
+  String get ionMagnesiumDescription => 'Central part of the chlorophyll molecule. Vital for photosynthesis.';
 
   @override
   String get bacteriaDescription => 'Soil bacteria are the fastest decomposers and the engines of nutrient cycling. They operate near the roots (rhizosphere), decompose organic matter and release nutrients to plants. Nitrifying bacteria convert ammonium to nitrate.';
@@ -1541,13 +1541,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mineralizationTitle => 'Mineralization';
 
   @override
-  String get mineralizationDesc => 'Microbes decompose organic matter and release nutrients (N, P, S) into the soil solution.';
+  String get mineralizationDesc => 'Conversion of organic matter into plant-available inorganic nutrients.';
 
   @override
   String get nitrificationTitle => 'Nitrification';
 
   @override
-  String get nitrificationDesc => 'A two-step oxidation reaction: ammonia → nitrite → nitrate. Requires aerobic conditions.';
+  String get nitrificationDesc => 'Transformation of ammonium to nitrate by specialized bacteria.';
 
   @override
   String get denitrificationTitle => 'Denitrification';
@@ -1556,7 +1556,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adsorptionTitle => 'Adsorption';
 
   @override
-  String get adsorptionDesc => 'Nutrients bind to the surfaces of soil particles (clay, humus) by electrical forces.';
+  String get adsorptionDesc => 'Binding of nutrients to soil particle surfaces (e.g., CEC).';
 
   @override
   String get desorptionTitle => 'Desorption';
@@ -1568,31 +1568,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ionNitrateTitle => 'NITRATE (NO₃⁻)';
 
   @override
-  String get ionNitrateName => 'NO₃⁻ (nitrate)';
+  String get ionNitrateName => 'Nitrate';
 
   @override
   String get ionPhosphateTitle => 'PHOSPHATE (H₂PO₄⁻)';
 
   @override
-  String get ionPhosphateName => 'H₂PO₄⁻ / HPO₄²⁻';
+  String get ionPhosphateName => 'Phosphate';
 
   @override
   String get ionPotassiumTitle => 'POTASSIUM (K⁺)';
 
   @override
-  String get ionPotassiumName => 'K⁺ (potassium)';
+  String get ionPotassiumName => 'Potassium';
 
   @override
   String get ionCalciumTitle => 'CALCIUM (Ca²⁺)';
 
   @override
-  String get ionCalciumName => 'Ca²⁺ (calcium)';
+  String get ionCalciumName => 'Calcium';
 
   @override
   String get ionMagnesiumTitle => 'MAGNESIUM (Mg²⁺)';
 
   @override
-  String get ionMagnesiumName => 'Mg²⁺ (magnesium)';
+  String get ionMagnesiumName => 'Magnesium';
 
   @override
   String negativeCharge(String value) {
@@ -2350,6 +2350,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moleculeCO2Desc => 'End product of microbial and root respiration. High CO2 levels in soil indicate active biological activity.';
 
   @override
+  String get moleculeOrganicNitrogenTitle => 'ORGANIC NITROGEN (N_org)';
+
+  @override
+  String get moleculeOrganicNitrogenDesc => 'Nitrogen bound in organic matter like proteins. Microbes must mineralize it into ammonium before plants can use it.';
+
+  @override
+  String get moleculeNitrousOxideTitle => 'NITROUS OXIDE (N₂O)';
+
+  @override
+  String get moleculeNitrousOxideDesc => 'A potent greenhouse gas produced by microbes in wet, anaerobic soil. It has ~300 times the warming potential of CO₂.';
+
+  @override
+  String get moleculeMethaneTitle => 'METHANE (CH₄)';
+
+  @override
+  String get moleculeMethaneDesc => 'Gas produced in flooded, oxygen-free conditions. Significant climate impact.';
+
+  @override
+  String get moleculeWaterVaporTitle => 'WATER VAPOR (H₂O_g)';
+
+  @override
+  String get moleculeWaterVaporDesc => 'Gaseous water escaping the soil via evaporation or plant transpiration.';
+
+  @override
+  String get microbialClusterTitle => 'MICROBIAL CLUSTER';
+
+  @override
+  String get microbialClusterDesc => 'Represents a high-density colony of soil microbes performing biochemical decomposition.';
+
+  @override
+  String get carrotTaprootTitle => 'CARROT TAPROOT';
+
+  @override
+  String get fineRootTitle => 'FINE ROOT';
+
+  @override
+  String get rootStructureDesc => 'Root structure absorbing water and nutrients.';
+
+  @override
+  String get mobilityVeryGood => 'Very Good';
+
+  @override
+  String get mobilityGood => 'Good';
+
+  @override
+  String get mobilityModerate => 'Moderate';
+
+  @override
+  String get mobilityWeak => 'Weak';
+
+  @override
+  String get mobilityVeryWeak => 'Very Weak';
+
+  @override
+  String get mobilitySlow => 'Slow';
+
+  @override
+  String get simulatedUnits => 'Simulated Units';
+
+  @override
+  String get metabolicActivity => 'Metabolic Activity';
+
+  @override
+  String get biomassDensity => 'Biomass Density';
+
+  @override
+  String get immobilizedNutrients => 'Immobilized Nutrients';
+
+  @override
+  String get gwpLabel => 'Global Warming Potential (GWP)';
+
+  @override
+  String get methanogenesis => 'Methanogenesis';
+
+  @override
+  String get biomassLabel => 'Biomass';
+
+  @override
+  String get depthLabel => 'Depth';
+
+  @override
+  String get radiusLabel => 'Radius';
+
+  @override
+  String get co2UptakeTitle => 'CO₂ UPTAKE';
+
+  @override
+  String get n2oEmissionTitle => 'N₂O EMISSION';
+
+  @override
+  String get o2DiffusionTitle => 'O₂ DIFFUSION';
+
+  @override
+  String get sugarCompound => 'Sugar (C6H12O6)';
+
+  @override
+  String get nitrogenLossDenit => 'Nitrogen loss via denitrification';
+
+  @override
+  String get liquid => 'Liquid';
+
+  @override
+  String get greenhouseGas => 'Greenhouse Gas';
+
+  @override
   String get temperatureLabel => 'Temperature';
 
   @override
@@ -2801,9 +2906,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nutrientAvailability => 'Nutrient Availability';
 
   @override
-  String get greenhouseGas => 'Greenhouse Gas';
-
-  @override
   String get highDivision => 'High Division';
 
   @override
@@ -2823,9 +2925,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get c3Pathway => 'C3 Pathway';
-
-  @override
-  String get sugarCompound => 'Sugar (C6H12O6)';
 
   @override
   String get organicPoolLabel => 'Organic Pool';
@@ -2915,18 +3014,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get significanceLabel => 'Significance';
-
-  @override
-  String get co2UptakeTitle => 'CO₂ UPTAKE';
-
-  @override
-  String get o2DiffusionTitle => 'O₂ DIFFUSION';
-
-  @override
-  String get n2oEmissionTitle => 'N₂O EMISSION';
-
-  @override
-  String get nitrogenLossDenit => 'Nitrogen loss via denitrification';
 
   @override
   String get riskLabel => 'Risk';

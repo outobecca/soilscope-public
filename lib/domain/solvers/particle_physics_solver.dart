@@ -66,6 +66,22 @@ class Particle {
     this.state = 0.0,
   });
 
+  /// Encodes the particle's logical state into a single float for the rendering pipeline.
+  /// Format:
+  /// - Base value: life (0.0 to 1.0)
+  /// - Negative: Immobilized/Locked
+  /// - +100.0: Xylem transport marker
+  /// - +10.0 per morph step: Visual transformation progress
+  double calculateVisualState() {
+    double finalState = isImmobilized ? -life : life;
+    if (state >= 10.0) {
+      finalState += 100.0; // Marker for xylem
+    } else if (state > 0) {
+      finalState += state * 10.0;
+    }
+    return finalState;
+  }
+
   List<double> toData() => [
     id.toDouble(),
     type.index.toDouble(),
@@ -144,6 +160,7 @@ class ParticleEcsSystem extends System {
     final double waterFlux = context['waterFlux'];
     final double cnRatio = context['cnRatio'] ?? 10.0;
     final List<double>? visibleRect = context['visibleRect'];
+    final double flowBoost = context['flowBoost'] ?? 1.0;
 
     final random = math.Random();
 
@@ -177,8 +194,8 @@ class ParticleEcsSystem extends System {
 
       final damp = (p.isImmobilized ? 0.05 : 1.0) / (friction > 0 ? friction : 1.0);
 
-      p.x += p.vx * dt * damp;
-      p.y += p.vy * dt * damp;
+      p.x += p.vx * dt * damp * flowBoost;
+      p.y += p.vy * dt * damp * flowBoost;
 
       double typeJitter = 1.0;
       final bool isLabileC = p.type == ParticleType.labileCarbon || p.type == ParticleType.carbon;
@@ -193,11 +210,11 @@ class ParticleEcsSystem extends System {
       final jitterStrength = 15.0 * q10Factor * typeJitter; // Reduced from 22.0
       final bx = (random.nextDouble() * 2 - 1) * jitterStrength * (p.isImmobilized ? 0.2 : 1.0);
       final by = (random.nextDouble() * 2 - 1) * jitterStrength * (p.isImmobilized ? 0.2 : 1.0);
-      p.x += bx * dt;
-      p.y += by * dt;
+      p.x += bx * dt * flowBoost;
+      p.y += by * dt * flowBoost;
 
       if (p.type == ParticleType.ammonium && p.state > 0 && p.state < 1.0) {
-        p.state += dt * 0.8; // Faster morphing (from 0.5)
+        p.state += dt * 0.8 * flowBoost; // Faster morphing (from 0.5)
         if (p.state >= 1.0) {
           p.type = ParticleType.nitrate;
           p.state = 0.0;
@@ -337,7 +354,7 @@ class ParticleEcsSystem extends System {
               if (isAnaerobic) vMax *= 0.3;
               const double kM = 0.5;
               final double mmRate = vMax / (kM + 1.0);
-              if (random.nextDouble() < mmRate * q10Factor * dt * 8.0) { // Reduced from 10.0
+              if (random.nextDouble() < mmRate * q10Factor * dt * 8.0 * flowBoost) { // Reduced from 10.0
                 p.type = ParticleType.ammonium;
                 p.life = 1.0;
               }
@@ -352,7 +369,7 @@ class ParticleEcsSystem extends System {
         // P2 = Vertical destination point (x0, y0 - 150)
         // P1 = Control point biased towards surface (x0, y0 - 50)
         
-        p.t += dt * 0.8; // Reduced Suction speed from 1.2
+        p.t += dt * 0.8 * flowBoost; // Reduced Suction speed from 1.2
         if (p.t > 1.0) p.t = 1.0;
 
         final double t = p.t;
@@ -373,7 +390,7 @@ class ParticleEcsSystem extends System {
         
         // If we reached the end of the suction curve, either die or continue linear rise
         if (p.t >= 1.0) {
-           p.life -= 1.5 * dt; // Reduced from 2.0
+           p.life -= 1.5 * dt * flowBoost; // Reduced from 2.0
         }
       }
 
@@ -415,12 +432,12 @@ class ParticleEcsSystem extends System {
           p.vy += 0.2 * dt; // Reduced from 0.3
         }
       } else {
-        if (random.nextDouble() < 0.006) { // Reduced from 0.008
+        if (random.nextDouble() < 0.006 * flowBoost) { // Reduced from 0.008
           p.isImmobilized = false;
         }
       }
 
-      p.life -= 0.06 * dt; // Reduced from 0.08 (calmer lifecycle)
+      p.life -= 0.06 * dt * flowBoost; // Reduced from 0.08 (calmer lifecycle)
 
       if (p.x < minX + 6.0) {
         p.x = minX + 6.0;
@@ -484,6 +501,7 @@ class ParticlePhysicsSolver {
     List<double>? visibleRect,
     double windDrift = 10.0,
     double windNoise = 15.0,
+    double flowBoost = 1.0,
   }) {
     final world = World();
     world.registerComponent<ParticleDataComponent, Particle>(() => ParticleDataComponent());
@@ -506,6 +524,7 @@ class ParticlePhysicsSolver {
       'visibleRect': visibleRect,
       'windDrift': windDrift,
       'windNoise': windNoise,
+      'flowBoost': flowBoost,
     });
 
     for (final p in particles) {
