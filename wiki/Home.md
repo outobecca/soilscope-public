@@ -8,7 +8,13 @@ SoilScope on tieteellisesti kalibroitu, biofysiikkaan ja laskennalliseen ekofysi
 
 ## 📚 Wikin Sisällysluettelo
 
-1. [**Nanovision Mikroskooppi (Nanovision Microscope)**](Nanovision-Microscope.md)
+1. [**Käyttöohje (User Guide)**](User-Guide.md)
+   - Sovelluksen pikaopas ja käyttöliittymän perusteet
+   - Pääohjauspalkki ja simulaation säätimet
+   - Nanovision-mikroskoopin ja Logic Labin käyttö
+   - Jaksollinen järjestelmä ja ravinnesyöttö
+
+2. [**Nanovision Mikroskooppi (Nanovision Microscope)**](Nanovision-Microscope.md)
    - 7 biofysikaalista tarkastelukohdetta (Lehti, Varsi, Kärkimeristeemi, Juuri, Ritsosfääri, Mikrobi, Maan rakenne)
    - Kelluva lasimorfinen Nanovision HUD -ohjain
    - Suurennoskertoimet (200x – 1200x) ja reaaliaikainen telemetria
