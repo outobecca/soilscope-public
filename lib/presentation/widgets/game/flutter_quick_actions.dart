@@ -207,11 +207,22 @@ class FlutterQuickActions extends ConsumerWidget {
                 },
               ),
 
+              // Science Reference
+              _buildActionButton(
+                context: context,
+                icon: Icons.menu_book_rounded,
+                label: l10n.scienceReference.toUpperCase(),
+                isActive: false,
+                onTap: () {
+                  Navigator.pushNamed(context, '/science_reference');
+                },
+              ),
+
               // Logic Lab
               _buildActionButton(
                 context: context,
                 icon: Icons.science_outlined,
-                label: 'Logic Lab',
+                label: l10n.logicLab,
                 isActive: false,
                 onTap: () {
                   Navigator.pushNamed(context, '/logic_lab');
@@ -222,7 +233,7 @@ class FlutterQuickActions extends ConsumerWidget {
               _buildActionButton(
                 context: context,
                 icon: ref.watch(activeCycleProvider) != ObservationCycle.none ? Icons.published_with_changes : Icons.published_with_changes_outlined,
-                label: ref.watch(activeCycleProvider) == ObservationCycle.none ? 'OBSERVATION' : ref.watch(activeCycleProvider).name.toUpperCase(),
+                label: ref.watch(activeCycleProvider) == ObservationCycle.none ? l10n.observation.toUpperCase() : ref.watch(activeCycleProvider).name.toUpperCase(),
                 isActive: ref.watch(activeCycleProvider) != ObservationCycle.none,
                 onTap: () {
                   final current = ref.read(activeCycleProvider);
@@ -247,7 +258,7 @@ class FlutterQuickActions extends ConsumerWidget {
               _buildActionButton(
                 context: context,
                 icon: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic ? Icons.account_tree_rounded : Icons.account_tree_outlined,
-                label: 'SCHEMATIC',
+                label: l10n.schematic.toUpperCase(),
                 isActive: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic,
                 onTap: () {
                   ref.read(visualLayoutModeStateProvider.notifier).toggle();
@@ -296,6 +307,31 @@ class FlutterQuickActions extends ConsumerWidget {
 
     return Tooltip(
       message: label,
+      preferBelow: false,
+      verticalOffset: 24,
+      waitDuration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
       child: Material(
         color: isActive ? activeColor : inactiveColor,
         shape: const CircleBorder(),
@@ -318,6 +354,30 @@ class FlutterQuickActions extends ConsumerWidget {
   Widget _buildElementButton(WidgetRef ref, String symbol, Color color, String label, bool isSelected) {
     return Tooltip(
       message: label,
+      preferBelow: false,
+      verticalOffset: 22,
+      waitDuration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.6),
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
       child: Material(
         color: isSelected ? color : color.withValues(alpha: 0.25),
         shape: CircleBorder(

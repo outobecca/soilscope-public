@@ -223,8 +223,12 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         
         for (final v in potentialTargets) {
           final dist = (u.pos - v.pos).distance;
-          // OPTIMIZATION: Reduced range from 300 to 150 to focus on "nearby spots"
-          if (dist > 100) continue; 
+          
+          // DYNAMIC RANGE: Standard biological range is 100px, 
+          // but technical hubs (sensor nodes) have an extended "sensing range" of 250px.
+          final double maxRange = (v.type == 'hotspot' || v.type == 'rhizosphere_hotspot') ? 250.0 : 100.0;
+          
+          if (dist > maxRange) continue; 
 
           final edge = NetworkEdge(u, v);
           newEdges.add(edge);
@@ -400,7 +404,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       activity += 0.3;
     }
     if (edge.a.type == 'hotspot' || edge.b.type == 'hotspot') {
-      activity += 0.4;
+      activity += 0.8; // High priority for technical sensor nodes
     }
     if (edge.a.type == 'rhizosphere_hotspot' || edge.b.type == 'rhizosphere_hotspot') {
       activity += 0.6; // High intensity biological hub

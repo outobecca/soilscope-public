@@ -3080,4 +3080,156 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sulfur => 'Sulfur';
+
+  @override
+  String get runoff => 'Runoff';
+
+  @override
+  String get diffuseFlow => 'Diffuse Flow';
+
+  @override
+  String get interflow => 'Interflow';
+
+  @override
+  String get surfaceRunoff => 'Surface Runoff';
+
+  @override
+  String get groundwaterFlow => 'Groundwater Flow';
+
+  @override
+  String get evaporation => 'Evaporation';
+
+  @override
+  String get validation => 'Validation';
+
+  @override
+  String get inspectionBadge => 'INSPECTION';
+
+  @override
+  String get previewBadge => 'PREVIEW';
+
+  @override
+  String get preparingSimulation => 'PREPARING SIMULATION...';
+
+  @override
+  String get launchingEngine => 'Launching simulation engine...';
+
+  @override
+  String get loadingSimulation => 'Loading simulation...';
+
+  @override
+  String get preparingSoil => 'PREPARING SOIL...';
+
+  @override
+  String get continueButton => 'CONTINUE';
+
+  @override
+  String get schematic => 'Schematic';
+
+  @override
+  String get observation => 'Observation';
+
+  @override
+  String get macronutrients => 'Macronutrients';
+
+  @override
+  String get micronutrients => 'Micronutrients';
+
+  @override
+  String get beneficialElements => 'Beneficial';
+
+  @override
+  String get toxicElements => 'Heavy Metals & Toxins';
+
+  @override
+  String get allElements => 'All Elements';
+
+  @override
+  String get structuralElements => 'Structural & Gases';
+
+  @override
+  String get searchElement => 'Search element (name, symbol, number)...';
+
+  @override
+  String get gridView => 'Table View';
+
+  @override
+  String get listView => 'Card View';
+
+  @override
+  String get openScienceReference => 'Open Science Reference';
+
+  @override
+  String get scienceReferenceDesc => 'Explore the periodic table, soil physics, atmosphere, and validation benchmarks.';
+
+  @override
+  String get gatheringData => 'Gathering data...';
+
+  @override
+  String get minStepsForValidation => 'Run the simulation for at least 5 steps to see scientific validation.';
+
+  @override
+  String get variableSpecificResults => 'VARIABLE-SPECIFIC RESULTS';
+
+  @override
+  String get scientificValidation => 'Scientific Validation';
+
+  @override
+  String get validationModelRef => 'Model compared against FLUXNET/LUCAS reference data.';
+
+  @override
+  String get overallScore => 'OVERALL SCORE';
+
+  @override
+  String get assessmentExcellent => 'Excellent';
+
+  @override
+  String get assessmentGood => 'Good';
+
+  @override
+  String get assessmentSatisfactory => 'Satisfactory';
+
+  @override
+  String get assessmentAcceptable => 'Acceptable';
+
+  @override
+  String get assessmentPoor => 'Poor';
+
+  @override
+  String get rmseLabel => 'RMSE (Root Mean Square Error)';
+
+  @override
+  String get maeLabel => 'MAE (Mean Absolute Error)';
+
+  @override
+  String get r2Label => 'R² (Coefficient of Determination)';
+
+  @override
+  String get biasLabel => 'Bias (Mean Error)';
+
+  @override
+  String get ioaLabel => 'Index of Agreement (d)';
+
+  @override
+  String get groupPeriod => 'Group / Period';
+
+  @override
+  String get mass => 'Mass';
+
+  @override
+  String get createNewScenario => 'Create New Scenario';
+
+  @override
+  String get createNewScenarioDesc => 'Adjust parameters and build your own educational scenario.';
+
+  @override
+  String dayPrefix(String day) {
+    return 'Day $day';
+  }
+
+  @override
+  String get precipitationLabel => 'PRECIPITATION';
+
+  @override
+  String get co2ConcentrationLabel => 'CO₂ CONCENTRATION';
 }

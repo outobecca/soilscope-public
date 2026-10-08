@@ -7,6 +7,7 @@ import '../providers/simulation_provider.dart';
 import '../providers/simulation_session_provider.dart';
 import '../providers/locale_provider.dart';
 import '../../domain/models/biophysical_state.dart';
+import '../../l10n/app_localizations.dart';
 
 class FlameSimulationView extends ConsumerStatefulWidget {
   final ValueChanged<SoilScopeGame>? onGameReady;
@@ -101,6 +102,7 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
             game: _game,
             loadingBuilder: (context) {
               debugPrint('[FlameSimulationView] GameWidget is LOADING...');
+              final l10n = AppLocalizations.of(context);
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -108,7 +110,7 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
                     Text(
-                      'Ladataan simulaatiota... (${constraints.maxWidth.toInt()}x${constraints.maxHeight.toInt()})',
+                      '${l10n?.loadingSimulation ?? 'Ladataan simulaatiota...'} (${constraints.maxWidth.toInt()}x${constraints.maxHeight.toInt()})',
                       style: const TextStyle(color: Colors.white54),
                     ),
                   ],

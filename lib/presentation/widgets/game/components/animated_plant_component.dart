@@ -1559,33 +1559,28 @@ class AnimatedPlantComponent extends PositionComponent
       if (activity > 0.1) {
         final rPos = _mapRootToLocal(node, i, baseX, worldWidth, soilHeight).toOffset();
         // Reach depends on water content (capillary movement) - TIGHTENED for decluttering
-        final reachBase = 12.0 + waterContent * 15.0; // Reduced from 22 + 25
+        final reachBase = 8.0 + waterContent * 10.0; // Further tightened
 
         // LOD: Fade out based on zoom level
-        final zoomLOD = (zoom - 0.45).clamp(0.0, 1.0);
+        final zoomLOD = (zoom - 0.4).clamp(0.0, 1.0);
         if (zoomLOD <= 0) continue;
 
-        final glowRadius =
-            (reachBase + 8.0 * pulse * activity) *
-            0.5; // Removed /zoom to keep it relative to root
-        final alphaFactor = (highlighted ? 0.3 : 0.1) * zoomLOD;
+        final glowRadius = (reachBase + 6.0 * pulse * activity) * 0.5;
+        final alphaFactor = (highlighted ? 0.25 : 0.08) * zoomLOD;
 
         // 1. Inner Active Core (Enzymatic concentration)
         canvas.drawCircle(
           rPos,
-          glowRadius * 0.35,
+          glowRadius * 0.4,
           Paint()
-            ..shader =
-                RadialGradient(
-                  colors: [
-                    const Color(0xFF84CC16).withValues(
-                      alpha: (alphaFactor * activity * 1.2).clamp(0.0, 0.15),
-                    ),
-                    const Color(0xFF84CC16).withValues(alpha: 0.0),
-                  ],
-                ).createShader(
-                  Rect.fromCircle(center: rPos, radius: glowRadius * 0.35),
-                )
+            ..shader = RadialGradient(
+              colors: [
+                const Color(0xFF84CC16).withValues(
+                  alpha: (alphaFactor * activity * 1.5).clamp(0.0, 0.12),
+                ),
+                const Color(0xFF84CC16).withValues(alpha: 0.0),
+              ],
+            ).createShader(Rect.fromCircle(center: rPos, radius: glowRadius * 0.4))
             ..blendMode = BlendMode.screen,
         );
 
@@ -1594,7 +1589,7 @@ class AnimatedPlantComponent extends PositionComponent
           ..shader = RadialGradient(
             colors: [
               const Color(0xFF84CC16).withValues(
-                alpha: (alphaFactor * activity * 0.7).clamp(0.0, 0.15),
+                alpha: (alphaFactor * activity * 0.5).clamp(0.0, 0.1),
               ),
               const Color(0xFF84CC16).withValues(alpha: 0.0),
             ],
@@ -1604,10 +1599,8 @@ class AnimatedPlantComponent extends PositionComponent
 
         canvas.drawCircle(rPos, glowRadius, radPaint);
 
-        canvas.drawCircle(rPos, 12 / zoom, Paint()..color = Colors.transparent);
-
         // 3. Enzymatic Mining Particles (Representing symbiosis/nutrient release)
-        if (node.isTip && activity > 0.6 && i % 3 == 0) {
+        if (node.isTip && activity > 0.6 && i % 4 == 0) { // Reduced frequency
           _drawMiningParticles(canvas, rPos, time + i, activity);
         }
       }
@@ -1615,16 +1608,16 @@ class AnimatedPlantComponent extends PositionComponent
 
     // Still draw extra glow at tips for "activity" feel
     final tipPaint = Paint()
-      ..color = const Color(0xFFBEF264).withValues(alpha: 0.08 + pulse * 0.05)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 / zoom);
+      ..color = const Color(0xFFBEF264).withValues(alpha: 0.05 + pulse * 0.03)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 / zoom);
 
     for (int i = 0; i < nodes.length; i++) {
       final n = nodes[i];
       if (n.isTip) {
         canvas.drawCircle(
           map(n, i).toOffset(),
-          (8 + pulse * 4) / zoom,
-          tipPaint..color = tipPaint.color.withValues(alpha: 0.1),
+          (6 + pulse * 3) / zoom,
+          tipPaint,
         );
       }
     }
@@ -1636,15 +1629,14 @@ class AnimatedPlantComponent extends PositionComponent
     double time,
     double activity,
   ) {
-    const int count = 3;
+    const int count = 2; // Reduced count
     for (int j = 0; j < count; j++) {
-      final t = (time * 0.8 + j / count) % 1.0;
-      final angle = (j / count) * math.pi * 2 + time * 0.5;
+      final t = (time * 0.6 + j / count) % 1.0;
+      final angle = (j / count) * math.pi * 2 + time * 0.3;
 
       // Particles move FROM soil TO root (Nutrient Uptake / Symbiosis)
-      final dist = 40 * (1.0 - t);
-      final pPos =
-          center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
+      final dist = 25 * (1.0 - t); // Tighter distance
+      final pPos = center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
 
       // CPK Colors: Nitrate (Blue), Carbon (Black/Grey)
       final color = j % 2 == 0
@@ -2261,6 +2253,7 @@ class AnimatedPlantComponent extends PositionComponent
         game.ref
             .read(uIStateProvider.notifier)
             .showInfo(info);
+        event.handled = true;
         return;
       }
     }

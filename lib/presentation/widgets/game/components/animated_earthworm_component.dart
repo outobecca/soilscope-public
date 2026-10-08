@@ -200,6 +200,13 @@ class AnimatedEarthwormComponent extends PositionComponent
   }
 
   @override
+  bool containsLocalPoint(Vector2 point) {
+    // Generous touch target (80x48 px area centered on the worm)
+    final center = size / 2;
+    return (point.x - center.x).abs() <= 40 && (point.y - center.y).abs() <= 24;
+  }
+
+  @override
   void onTapUp(TapUpEvent event) {
     handleTapUp(({bool pinned = true}) => _showEarthwormInfo(pinned: pinned));
     event.handled = true;

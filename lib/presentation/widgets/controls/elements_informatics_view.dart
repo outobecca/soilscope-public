@@ -27,6 +27,7 @@ class _ElementsInformaticsViewState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
 
     return Column(
       children: [
@@ -40,14 +41,14 @@ class _ElementsInformaticsViewState
         if (_selectedElement != null) ...[
           const SizedBox(height: 24),
           Text(
-            _selectedElement!.name,
+            _selectedElement!.localizedName(lang),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _selectedElement!.soilRole,
+            _selectedElement!.localizedSoilRole(lang),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

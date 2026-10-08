@@ -229,6 +229,7 @@ class Simulation extends _$Simulation {
     await _isolateManager.init();
     debugPrint('[SimulationProvider] IsolateManager initialized');
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
+      if (_disposed || !ref.mounted) return;
       // While scrubbing, freeze the background simulation result from affecting display
       final session = ref.read(simulationSessionProvider);
       if (session.isScrubbing) return;
@@ -281,8 +282,10 @@ class Simulation extends _$Simulation {
     });
     
     // Set initializing to false after setup is complete and we are ready for commands
-    state = state.copyWith(isInitializing: false);
-    debugPrint('[SimulationProvider] _initIsolate finished: isInitializing=${state.isInitializing}');
+    if (!_disposed && ref.mounted) {
+      state = state.copyWith(isInitializing: false);
+      debugPrint('[SimulationProvider] _initIsolate finished: isInitializing=${state.isInitializing}');
+    }
   }
 
   /// Merges background simulation results with current Control state.

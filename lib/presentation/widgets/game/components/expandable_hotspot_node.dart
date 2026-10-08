@@ -25,7 +25,7 @@ class ExpandableHotspotNode extends PositionComponent
     required Vector2 position,
   }) : super(
           position: position,
-          size: Vector2.all(60),
+          size: Vector2.all(80), // Increased container size for touch ergonomics
           anchor: Anchor.center,
           priority: 1001,
         );
@@ -58,10 +58,11 @@ class ExpandableHotspotNode extends PositionComponent
   @override
   bool containsLocalPoint(Vector2 point) {
     if (_isExpanded) {
-      // Reduced hit area for better selectability of neighboring nodes
-      return (point - size / 2).length < 75.0;
+      // Expanded state: capture taps within the cluster radius
+      return (point - size / 2).length < 85.0;
     }
-    return super.containsLocalPoint(point);
+    // Collapsed state: strictly centered on the indicator (30px radius for finger-friendly targets)
+    return (point - size / 2).length < 30.0;
   }
 
   @override

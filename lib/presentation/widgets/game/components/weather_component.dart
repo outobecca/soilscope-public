@@ -40,7 +40,7 @@ class WeatherComponent extends PositionComponent
         description: game.l10n.atmosphereDesc,
         accentColor: Colors.cyanAccent,
         icon: Icons.cloud_rounded,
-        position: Vector2(size.x * 0.9, 60), // Top right of the sky area
+        position: Vector2(game.soilLeftX + 60 - position.x, 100), // Gutter position
         statsProvider: () {
           final state = game.simulationState;
           if (state == null) return null;

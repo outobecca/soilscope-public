@@ -6,79 +6,86 @@ import '../../core/cpk_standards.dart';
 import '../providers/ui_state_provider.dart';
 
 /// The consolidated information overlay for the entire app.
-/// Handles both temporary hovers and pinned inspection states.
+/// Handles both temporary hovers and pinned inspection states with crystal clear contrast.
 class HoverTooltip extends ConsumerWidget {
   const HoverTooltip({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final info = ref.watch(uIStateProvider);
     if (info == null) return const SizedBox.shrink();
 
     final isPinned = info.isPinned;
-    final Color accentColor = info.accentColor ?? 
-        (info.elementSymbol != null ? CPKStandards.getColor(info.elementSymbol!) : theme.colorScheme.primary);
+    final Color accentColor = info.accentColor ??
+        (info.elementSymbol != null
+            ? CPKStandards.getColor(info.elementSymbol!)
+            : theme.colorScheme.primary);
 
-    // If we have a screen position and it's not pinned, we might want to offset it from the cursor
-    final tooltip = Material(
+    return Material(
       color: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(16),
-        constraints: BoxConstraints(maxWidth: isPinned ? 320 : 260),
+        constraints: BoxConstraints(maxWidth: isPinned ? 320 : 270),
         decoration: BoxDecoration(
-          // Use CPK color for background as requested
-          color: accentColor.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(24),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.4),
-            width: isPinned ? 2.0 : 1.0,
+            color: accentColor.withValues(alpha: isPinned ? 0.9 : 0.6),
+            width: isPinned ? 2.0 : 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 25,
-              spreadRadius: 5,
+              color: accentColor.withValues(alpha: isPinned ? 0.35 : 0.2),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context, ref, info, theme, Colors.white),
-                const SizedBox(height: 12),
+                _buildHeader(context, ref, info, theme, l10n, accentColor),
+                const SizedBox(height: 10),
                 Text(
                   info.description,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
+                  style: const TextStyle(
+                    color: Color(0xFFF1F5F9),
+                    fontSize: 12.5,
+                    height: 1.45,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
                 if (info.formula != null) ...[
-                  const SizedBox(height: 12),
-                  _buildScientificContext(info.formula!, theme, Colors.white),
+                  const SizedBox(height: 10),
+                  _buildScientificContext(info.formula!, accentColor),
                 ],
                 if (info.stats != null && info.stats!.isNotEmpty) ...[
                   Divider(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    height: 24,
+                    color: Colors.white.withValues(alpha: 0.15),
+                    height: 20,
                   ),
                   ...info.stats!.entries.map(
-                    (e) => _buildStatRow(e.key, e.value, theme, Colors.white),
+                    (e) => _buildStatRow(e.key, e.value, accentColor),
                   ),
                 ],
                 if (info.legends != null && info.legends!.isNotEmpty) ...[
                   Divider(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    height: 24,
+                    color: Colors.white.withValues(alpha: 0.15),
+                    height: 20,
                   ),
-                  _buildLegendSection(context, info.legends!, theme, Colors.white),
+                  _buildLegendSection(context, info.legends!, l10n),
                 ],
               ],
             ),
@@ -86,8 +93,6 @@ class HoverTooltip extends ConsumerWidget {
         ),
       ),
     );
-
-    return tooltip;
   }
 
   Widget _buildHeader(
@@ -95,46 +100,60 @@ class HoverTooltip extends ConsumerWidget {
     WidgetRef ref,
     HoverInfo info,
     ThemeData theme,
-    Color textColor,
+    AppLocalizations? l10n,
+    Color accentColor,
   ) {
+    final badgeText = info.isPinned
+        ? (l10n?.inspectionBadge ?? 'INSPECTION')
+        : (l10n?.previewBadge ?? 'PREVIEW');
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                info.isPinned ? "INSPECTION" : "PREVIEW",
-                style: TextStyle(
-                  color: textColor.withValues(alpha: 0.7),
-                  fontSize: 8,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2.0,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
                 ),
               ),
+              const SizedBox(height: 4),
               Row(
                 children: [
                   if (info.elementSymbol != null) ...[
                     Container(
-                      width: 12,
-                      height: 12,
+                      width: 20,
+                      height: 20,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: accentColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 4,
                           ),
                         ],
                       ),
                       child: Center(
                         child: Text(
-                          info.elementSymbol!.substring(0, 1),
-                          style: TextStyle(
-                            color: (info.accentColor ?? CPKStandards.getColor(info.elementSymbol!)),
-                            fontSize: 7,
+                          info.elementSymbol!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -145,10 +164,11 @@ class HoverTooltip extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       info.title.toUpperCase(),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: textColor,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+                        fontSize: 13,
+                        letterSpacing: 1.0,
                         fontFamily: 'monospace',
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -161,41 +181,43 @@ class HoverTooltip extends ConsumerWidget {
         ),
         if (info.isPinned)
           IconButton(
-            icon: const Icon(Icons.close, size: 18),
+            icon: const Icon(Icons.close_rounded, size: 18),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            color: textColor.withValues(alpha: 0.8),
+            color: Colors.white70,
+            tooltip: AppLocalizations.of(context)?.closeAction ?? 'Close',
             onPressed: () => ref.read(uIStateProvider.notifier).setHoverInfo(null),
           ),
       ],
     );
   }
 
-  Widget _buildStatRow(String label, String value, ThemeData theme, Color textColor) {
+  Widget _buildStatRow(String label, String value, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: Text(
               label.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: textColor.withValues(alpha: 0.7),
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Text(
             value,
             textAlign: TextAlign.right,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: textColor,
+            style: const TextStyle(
+              color: Colors.white,
               fontWeight: FontWeight.bold,
               fontFamily: 'monospace',
+              fontSize: 12,
             ),
           ),
         ],
@@ -203,19 +225,19 @@ class HoverTooltip extends ConsumerWidget {
     );
   }
 
-  Widget _buildScientificContext(String formula, ThemeData theme, Color textColor) {
+  Widget _buildScientificContext(String formula, Color accentColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
       ),
       child: Text(
         formula,
-        style: TextStyle(
-          color: textColor,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 11,
           fontStyle: FontStyle.italic,
           fontFamily: 'serif',
@@ -227,41 +249,40 @@ class HoverTooltip extends ConsumerWidget {
   Widget _buildLegendSection(
     BuildContext context,
     List<LegendItem> legends,
-    ThemeData theme,
-    Color textColor,
+    AppLocalizations? l10n,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppLocalizations.of(context)!.visualKey.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: textColor.withValues(alpha: 0.8),
+          l10n?.visualKey.toUpperCase() ?? 'MERKKIEN SELITYS',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
             fontSize: 9,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Wrap(
-          spacing: 16,
-          runSpacing: 8,
+          spacing: 12,
+          runSpacing: 6,
           children: legends
               .map(
                 (item) => Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(item.icon, size: 14, color: Colors.white),
-                    const SizedBox(width: 6),
+                    Icon(item.icon, size: 13, color: item.color),
+                    const SizedBox(width: 5),
                     Text(
                       item.label,
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 11,
                       ),
                     ),
                   ],
-                ) as Widget,
+                ),
               )
               .toList(),
         ),

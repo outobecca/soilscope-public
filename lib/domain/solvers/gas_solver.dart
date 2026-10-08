@@ -21,16 +21,43 @@ class GasSolver {
     List<Plant> plants = const [],
     double atmCO2 = SimulationConstants.atmCO2Default,
   }) {
-    final updatedLayers = List<SoilLayer>.from(profile.layers);
-    final n = updatedLayers.length;
+    final n = profile.layers.length;
 
-    // 1. Local Respiration (Consumption/Production)
+    // Calculate stability-based sub-step
+    double minSafeDt = dt;
+    const double dzSurf = 0.01;
     for (int i = 0; i < n; i++) {
-      updatedLayers[i] = _solveRespiration(updatedLayers[i], dt, plants);
+      final l = profile.layers[i];
+      final eps = (l.porosity - l.waterContent).clamp(0.001, 1.0);
+      final factor = math.pow(eps, 2.0) / math.pow(l.porosity, 2.0 / 3.0);
+      final deO2Val = d0O2 * factor;
+      
+      if (i == 0) {
+        final safeDtSurf = 0.25 * dzSurf * l.thickness / (deO2Val + 1e-12);
+        minSafeDt = math.min(minSafeDt, safeDtSurf);
+      }
+      final safeDtInternal = 0.25 * l.thickness * l.thickness / (deO2Val + 1e-12);
+      minSafeDt = math.min(minSafeDt, safeDtInternal);
     }
 
-    // 2. Transport (Diffusion in air phase)
-    return _solveDiffusion(updatedLayers, dt, profile, atmCO2: atmCO2);
+    double subStep = minSafeDt.clamp(1.0, 60.0);
+    int steps = (dt / subStep).ceil().clamp(1, 2000);
+    double actualDt = dt / steps;
+
+    SoilProfile currentProfile = profile;
+    for (int s = 0; s < steps; s++) {
+      final stepLayers = List<SoilLayer>.from(currentProfile.layers);
+      
+      // 1. Respiration step
+      for (int i = 0; i < n; i++) {
+        stepLayers[i] = _solveRespiration(stepLayers[i], actualDt, plants);
+      }
+      
+      // 2. Diffusion step
+      currentProfile = _solveDiffusion(stepLayers, actualDt, currentProfile, atmCO2: atmCO2);
+    }
+    
+    return currentProfile;
   }
 
   static SoilLayer _solveRespiration(

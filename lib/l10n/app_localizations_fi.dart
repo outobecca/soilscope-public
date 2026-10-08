@@ -81,16 +81,16 @@ class AppLocalizationsFi extends AppLocalizations {
   String get soilRespiration => 'Maan hengitys';
 
   @override
-  String get soilEvaporation => 'Soil Evaporation';
+  String get soilEvaporation => 'Maaperän haihdunta';
 
   @override
-  String get redoxPotentialTitle => 'Redox Potential (Eh)';
+  String get redoxPotentialTitle => 'Hapetus-pelkistyspotentiaali (Eh)';
 
   @override
   String get phLabel => 'Happamuus / pH';
 
   @override
-  String get phDescription => 'A measure of the acidity or alkalinity of the soil solution.';
+  String get phDescription => 'Maaliuoksen happamuuden tai emäksisyyden mitta.';
 
   @override
   String get biophysicsInsights => 'Biofysikaaliset havainnot:';
@@ -3080,4 +3080,156 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get sulfur => 'Rikki';
+
+  @override
+  String get runoff => 'Valunta';
+
+  @override
+  String get diffuseFlow => 'Diffuusiovirtaus';
+
+  @override
+  String get interflow => 'Pintakerrosvalunta';
+
+  @override
+  String get surfaceRunoff => 'Pintavalunta';
+
+  @override
+  String get groundwaterFlow => 'Pohjavesivalunta';
+
+  @override
+  String get evaporation => 'Haihdunta';
+
+  @override
+  String get validation => 'Validointi';
+
+  @override
+  String get inspectionBadge => 'TARKASTELU';
+
+  @override
+  String get previewBadge => 'ESIKATSELU';
+
+  @override
+  String get preparingSimulation => 'VALMISTELLAAN SIMULAATIOTA...';
+
+  @override
+  String get launchingEngine => 'Käynnistetään simulaatiomoottoria...';
+
+  @override
+  String get loadingSimulation => 'Ladataan simulaatiota...';
+
+  @override
+  String get preparingSoil => 'VALMISTELLAAN MAAPERÄÄ...';
+
+  @override
+  String get continueButton => 'JATKA';
+
+  @override
+  String get schematic => 'Kaavio';
+
+  @override
+  String get observation => 'Havainnot';
+
+  @override
+  String get macronutrients => 'Pääravinteet';
+
+  @override
+  String get micronutrients => 'Hivenravinteet';
+
+  @override
+  String get beneficialElements => 'Hyödylliset';
+
+  @override
+  String get toxicElements => 'Raskasmetallit & Myrkyt';
+
+  @override
+  String get allElements => 'Kaikki alkuaineet';
+
+  @override
+  String get structuralElements => 'Rakenteelliset & Kaasut';
+
+  @override
+  String get searchElement => 'Hae alkuainetta (nimi, merkki, järjestysluku)...';
+
+  @override
+  String get gridView => 'Taulukkonäkymä';
+
+  @override
+  String get listView => 'Korttinäkymä';
+
+  @override
+  String get openScienceReference => 'Avaa tiedeviite';
+
+  @override
+  String get scienceReferenceDesc => 'Tutki jaksollista järjestelmää, maaperäfysiikkaa, ilmakehää ja validointituloksia.';
+
+  @override
+  String get gatheringData => 'Kerätään tietoja...';
+
+  @override
+  String get minStepsForValidation => 'Anna simulaation pyöriä vähintään 5 askelta nähdäksesi tieteellisen validoinnin.';
+
+  @override
+  String get variableSpecificResults => 'MUUTTUJAKOHTAISET TULOKSET';
+
+  @override
+  String get scientificValidation => 'Tieteellinen validointi';
+
+  @override
+  String get validationModelRef => 'Malli verrattuna FLUXNET/LUCAS -referenssidataan.';
+
+  @override
+  String get overallScore => 'YLEISARVOSANA';
+
+  @override
+  String get assessmentExcellent => 'Erinomainen';
+
+  @override
+  String get assessmentGood => 'Hyvä';
+
+  @override
+  String get assessmentSatisfactory => 'Tyydyttävä';
+
+  @override
+  String get assessmentAcceptable => 'Hyväksyttävä';
+
+  @override
+  String get assessmentPoor => 'Heikko';
+
+  @override
+  String get rmseLabel => 'RMSE (Keskivirhe)';
+
+  @override
+  String get maeLabel => 'MAE (Absoluuttinen virhe)';
+
+  @override
+  String get r2Label => 'R² (Selitysaste)';
+
+  @override
+  String get biasLabel => 'Bias (Harha)';
+
+  @override
+  String get ioaLabel => 'Index of Agreement (d)';
+
+  @override
+  String get groupPeriod => 'Ryhmä / Jakso';
+
+  @override
+  String get mass => 'Massa';
+
+  @override
+  String get createNewScenario => 'Luo uusi skenaario';
+
+  @override
+  String get createNewScenarioDesc => 'Säädä parametrit ja rakenna oma opettavainen skenaario.';
+
+  @override
+  String dayPrefix(String day) {
+    return 'Päivä $day';
+  }
+
+  @override
+  String get precipitationLabel => 'SADEMÄÄRÄ';
+
+  @override
+  String get co2ConcentrationLabel => 'CO₂-PISTOISUUS';
 }

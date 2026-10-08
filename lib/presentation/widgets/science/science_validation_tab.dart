@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/biophysical_state.dart';
 import '../../../domain/solvers/validation_framework.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ScienceValidationTab extends StatelessWidget {
   final BiophysicalState state;
@@ -10,6 +11,7 @@ class ScienceValidationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     if (state.history.length < 5) {
       return Center(
@@ -21,12 +23,12 @@ class ScienceValidationTab extends StatelessWidget {
               Icon(Icons.hourglass_empty, size: 48, color: theme.colorScheme.primary),
               const SizedBox(height: 16),
               Text(
-                'Kerätään tietoja...',
+                l10n.gatheringData,
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                'Anna simulaation pyöriä vähintään 5 askelta nähdäksesi tieteellisen validoinnin.',
+                l10n.minStepsForValidation,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
@@ -50,12 +52,12 @@ class ScienceValidationTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildHeader(theme),
+        _buildHeader(theme, l10n),
         const SizedBox(height: 16),
-        _buildOverallScore(comparison, theme),
+        _buildOverallScore(comparison, theme, l10n),
         const SizedBox(height: 24),
         Text(
-          'MUUTTUJAKOHTAISET TULOKSET',
+          l10n.variableSpecificResults,
           style: theme.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,
@@ -63,12 +65,12 @@ class ScienceValidationTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        ...comparison.variableResults.entries.map((entry) => _buildVariableCard(entry.key, entry.value, theme)),
+        ...comparison.variableResults.entries.map((entry) => _buildVariableCard(entry.key, entry.value, theme, l10n)),
       ],
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildHeader(ThemeData theme, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -85,11 +87,11 @@ class ScienceValidationTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tieteellinen validointi',
+                  l10n.scientificValidation,
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Malli verrattuna FLUXNET/LUCAS -referenssidataan.',
+                  l10n.validationModelRef,
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -100,10 +102,10 @@ class ScienceValidationTab extends StatelessWidget {
     );
   }
 
-  Widget _buildOverallScore(ValidationComparison comparison, ThemeData theme) {
+  Widget _buildOverallScore(ValidationComparison comparison, ThemeData theme, AppLocalizations l10n) {
     final nse = comparison.overallNSE;
-    final assessment = _getOverallAssessment(nse);
-    final color = _getAssessmentColor(assessment);
+    final assessment = _getOverallAssessment(nse, l10n);
+    final color = _getAssessmentColor(comparison.overallNSE);
 
     return Card(
       elevation: 0,
@@ -117,7 +119,7 @@ class ScienceValidationTab extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'YLEISARVOSANA',
+              l10n.overallScore,
               style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
@@ -136,8 +138,9 @@ class ScienceValidationTab extends StatelessWidget {
     );
   }
 
-  Widget _buildVariableCard(String variable, ValidationResult result, ThemeData theme) {
-    final color = _getAssessmentColor(result.qualitativeAssessment);
+  Widget _buildVariableCard(String variable, ValidationResult result, ThemeData theme, AppLocalizations l10n) {
+    final color = _getAssessmentColorForResult(result.qualitativeAssessment);
+    final localizedAssessment = _localizeAssessment(result.qualitativeAssessment, l10n);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -148,7 +151,7 @@ class ScienceValidationTab extends StatelessWidget {
       ),
       child: ExpansionTile(
         title: Text(
-          _translateVariable(variable),
+          _translateVariable(variable, l10n),
           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         trailing: Container(
@@ -158,7 +161,7 @@ class ScienceValidationTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            result.qualitativeAssessment,
+            localizedAssessment,
             style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
           ),
         ),
@@ -171,11 +174,11 @@ class ScienceValidationTab extends StatelessWidget {
                 1: FlexColumnWidth(1),
               },
               children: [
-                _buildMetricRow('RMSE (Keskivirhe)', result.rmse.toStringAsFixed(4)),
-                _buildMetricRow('MAE (Absoluuttinen virhe)', result.mae.toStringAsFixed(4)),
-                _buildMetricRow('R² (Selitysaste)', result.r2.toStringAsFixed(4)),
-                _buildMetricRow('Bias (Harha)', result.bias.toStringAsFixed(4)),
-                _buildMetricRow('Index of Agreement (d)', result.indexOfAgreement.toStringAsFixed(4)),
+                _buildMetricRow(l10n.rmseLabel, result.rmse.toStringAsFixed(4)),
+                _buildMetricRow(l10n.maeLabel, result.mae.toStringAsFixed(4)),
+                _buildMetricRow(l10n.r2Label, result.r2.toStringAsFixed(4)),
+                _buildMetricRow(l10n.biasLabel, result.bias.toStringAsFixed(4)),
+                _buildMetricRow(l10n.ioaLabel, result.indexOfAgreement.toStringAsFixed(4)),
               ],
             ),
           ),
@@ -199,16 +202,42 @@ class ScienceValidationTab extends StatelessWidget {
     );
   }
 
-  String _getOverallAssessment(double nse) {
+  String _getOverallAssessment(double nse, AppLocalizations l10n) {
     if (nse.isNaN) return 'N/A';
-    if (nse > 0.75) return 'Excellent';
-    if (nse > 0.65) return 'Good';
-    if (nse > 0.50) return 'Satisfactory';
-    if (nse > 0.0) return 'Acceptable';
-    return 'Poor';
+    if (nse > 0.75) return l10n.assessmentExcellent;
+    if (nse > 0.65) return l10n.assessmentGood;
+    if (nse > 0.50) return l10n.assessmentSatisfactory;
+    if (nse > 0.0) return l10n.assessmentAcceptable;
+    return l10n.assessmentPoor;
   }
 
-  Color _getAssessmentColor(String assessment) {
+  String _localizeAssessment(String assessment, AppLocalizations l10n) {
+    switch (assessment.toLowerCase()) {
+      case 'excellent':
+        return l10n.assessmentExcellent;
+      case 'good':
+        return l10n.assessmentGood;
+      case 'satisfactory':
+        return l10n.assessmentSatisfactory;
+      case 'acceptable':
+        return l10n.assessmentAcceptable;
+      case 'poor':
+        return l10n.assessmentPoor;
+      default:
+        return assessment;
+    }
+  }
+
+  Color _getAssessmentColor(double nse) {
+    if (nse.isNaN) return Colors.grey;
+    if (nse > 0.75) return Colors.green;
+    if (nse > 0.65) return Colors.lightGreen;
+    if (nse > 0.50) return Colors.orange;
+    if (nse > 0.0) return Colors.amber;
+    return Colors.red;
+  }
+
+  Color _getAssessmentColorForResult(String assessment) {
     switch (assessment) {
       case 'Excellent':
         return Colors.green;
@@ -223,20 +252,20 @@ class ScienceValidationTab extends StatelessWidget {
     }
   }
 
-  String _translateVariable(String variable) {
+  String _translateVariable(String variable, AppLocalizations l10n) {
     switch (variable) {
       case 'waterContent':
-        return 'Vesipitoisuus (θ)';
+        return '${l10n.soilMoisture} (θ)';
       case 'temperature':
-        return 'Maan lämpötila';
+        return l10n.temperature;
       case 'lai':
-        return 'Lehtialaindeksi (LAI)';
+        return '${l10n.laiLabel} (LAI)';
       case 'nitrateContent':
-        return 'Nitraatti (NO3)';
+        return '${l10n.nitrate} (NO3)';
       case 'ammoniumContent':
-        return 'Ammonium (NH4)';
+        return '${l10n.ammonium} (NH4)';
       case 'microbialBiomass':
-        return 'Mikrobimassa';
+        return l10n.microbialBiomass;
       default:
         return variable;
     }

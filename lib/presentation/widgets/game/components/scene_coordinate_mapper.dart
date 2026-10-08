@@ -66,8 +66,12 @@ class SceneCoordinateMapper {
   }
 
   static double getShootScale(Plant plant, {double growthBoost = 0.0}) {
-    // Matches AnimatedPlantComponent logic for scale consistency across the SPAC continuum.
-    return 0.5 + (plant.totalBiomass / 1000.0).clamp(0.0, 1.8) + growthBoost;
+    // Strictly tied to biophysical height and biomass
+    // Default height 1.0m maps to scale 1.0. 
+    // Biomass provides secondary density/scale factor.
+    final heightFactor = (plant.height * 0.8).clamp(0.1, 2.5);
+    final biomassFactor = (plant.totalBiomass / 1000.0).clamp(0.0, 0.5);
+    return heightFactor + biomassFactor + growthBoost;
   }
 
   static double plantVisualHeight(Plant plant, {double growthBoost = 0.0}) {

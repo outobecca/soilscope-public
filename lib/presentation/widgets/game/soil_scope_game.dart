@@ -193,6 +193,9 @@ class SoilScopeGame extends FlameGame
     // TECHNICAL OVERLAY (Always on top of world components)
     world.add(technicalHotspotLayer);
 
+    // Background tap fallback for deselecting layers/inspectors
+    world.add(BackgroundTapComponent()..priority = -50);
+
     camera.viewport.add(MagnifierGroupComponent());
     debugPrint('[SoilScopeGame] onLoad finished');
   }
@@ -239,15 +242,12 @@ class SoilScopeGame extends FlameGame
       camera.viewfinder.position += (worldCursorBefore - worldCursorAfter);
     }
 
-    if (camera.viewfinder.zoom > 1.0) {
-      camera.viewfinder.position -= info.delta.global / camera.viewfinder.zoom;
-      _clampCamera();
-    } else {
-      _resetCamera();
-    }
+    // Allow panning regardless of zoom level to enable mobile exploration of edges
+    camera.viewfinder.position -= info.delta.global / camera.viewfinder.zoom;
+    _clampCamera();
   }
 
-  void _resetCamera() {
+  void resetCamera() {
     camera.viewfinder.position = Vector2(logicalSize.x / 2, soilSurfaceY);
     camera.viewfinder.zoom = 1.35;
     _clampCamera();
@@ -392,8 +392,8 @@ class SoilScopeGame extends FlameGame
     final double soilX = soilLeftX;
     final double soilColumnWidth_ = simulationWidth;
 
-    // Focus on top 3 layers (most active)
-    final activeLayers = state.profile.layers.take(3).toList();
+    // Include all active soil layers in profile
+    final activeLayers = state.profile.layers;
     final activeIds = activeLayers.map((l) => l.id).toSet();
 
     for (var layerId in layerMap.keys.toList()) {

@@ -65,7 +65,7 @@ class AtmosphereInformaticsView extends ConsumerWidget {
 
         // 3. ADDITIONAL CONTROLS (Precipitation & CO2)
         SliderControl(
-          label: "SADEMÄÄRÄ",
+          label: l10n.precipitationLabel,
           value: state.precipitation,
           min: 0.0,
           max: 50.0,
@@ -73,7 +73,7 @@ class AtmosphereInformaticsView extends ConsumerWidget {
           onChanged: (v) => ref.read(simulationProvider.notifier).updateAtmosphere(precipitation: v),
         ),
         SliderControl(
-          label: "CO₂ KESKITYS",
+          label: l10n.co2ConcentrationLabel,
           value: state.atmCO2 * 1000,
           min: 0.1,
           max: 2.0,

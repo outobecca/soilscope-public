@@ -419,13 +419,13 @@ class _ScenarioSelectionScreenState
           size: 28,
         ),
         title: Text(
-          'Luo uusi skenaario',
+          l10n.createNewScenario,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
         subtitle: Text(
-          'Säädä parametrit ja rakenna oma opettavainen skenaario.',
+          l10n.createNewScenarioDesc,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

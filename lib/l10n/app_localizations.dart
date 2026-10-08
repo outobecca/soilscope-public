@@ -6124,6 +6124,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sulfur'**
   String get sulfur;
+
+  /// No description provided for @runoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff'**
+  String get runoff;
+
+  /// No description provided for @diffuseFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Diffuse Flow'**
+  String get diffuseFlow;
+
+  /// No description provided for @interflow.
+  ///
+  /// In en, this message translates to:
+  /// **'Interflow'**
+  String get interflow;
+
+  /// No description provided for @surfaceRunoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Surface Runoff'**
+  String get surfaceRunoff;
+
+  /// No description provided for @groundwaterFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Groundwater Flow'**
+  String get groundwaterFlow;
+
+  /// No description provided for @evaporation.
+  ///
+  /// In en, this message translates to:
+  /// **'Evaporation'**
+  String get evaporation;
+
+  /// No description provided for @validation.
+  ///
+  /// In en, this message translates to:
+  /// **'Validation'**
+  String get validation;
+
+  /// No description provided for @inspectionBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'INSPECTION'**
+  String get inspectionBadge;
+
+  /// No description provided for @previewBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'PREVIEW'**
+  String get previewBadge;
+
+  /// No description provided for @preparingSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARING SIMULATION...'**
+  String get preparingSimulation;
+
+  /// No description provided for @launchingEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Launching simulation engine...'**
+  String get launchingEngine;
+
+  /// No description provided for @loadingSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading simulation...'**
+  String get loadingSimulation;
+
+  /// No description provided for @preparingSoil.
+  ///
+  /// In en, this message translates to:
+  /// **'PREPARING SOIL...'**
+  String get preparingSoil;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE'**
+  String get continueButton;
+
+  /// No description provided for @schematic.
+  ///
+  /// In en, this message translates to:
+  /// **'Schematic'**
+  String get schematic;
+
+  /// No description provided for @observation.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation'**
+  String get observation;
+
+  /// No description provided for @macronutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'Macronutrients'**
+  String get macronutrients;
+
+  /// No description provided for @micronutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'Micronutrients'**
+  String get micronutrients;
+
+  /// No description provided for @beneficialElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Beneficial'**
+  String get beneficialElements;
+
+  /// No description provided for @toxicElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy Metals & Toxins'**
+  String get toxicElements;
+
+  /// No description provided for @allElements.
+  ///
+  /// In en, this message translates to:
+  /// **'All Elements'**
+  String get allElements;
+
+  /// No description provided for @structuralElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Structural & Gases'**
+  String get structuralElements;
+
+  /// No description provided for @searchElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Search element (name, symbol, number)...'**
+  String get searchElement;
+
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Table View'**
+  String get gridView;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'Card View'**
+  String get listView;
+
+  /// No description provided for @openScienceReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Science Reference'**
+  String get openScienceReference;
+
+  /// No description provided for @scienceReferenceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore the periodic table, soil physics, atmosphere, and validation benchmarks.'**
+  String get scienceReferenceDesc;
+
+  /// No description provided for @gatheringData.
+  ///
+  /// In en, this message translates to:
+  /// **'Gathering data...'**
+  String get gatheringData;
+
+  /// No description provided for @minStepsForValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Run the simulation for at least 5 steps to see scientific validation.'**
+  String get minStepsForValidation;
+
+  /// No description provided for @variableSpecificResults.
+  ///
+  /// In en, this message translates to:
+  /// **'VARIABLE-SPECIFIC RESULTS'**
+  String get variableSpecificResults;
+
+  /// No description provided for @scientificValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Scientific Validation'**
+  String get scientificValidation;
+
+  /// No description provided for @validationModelRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Model compared against FLUXNET/LUCAS reference data.'**
+  String get validationModelRef;
+
+  /// No description provided for @overallScore.
+  ///
+  /// In en, this message translates to:
+  /// **'OVERALL SCORE'**
+  String get overallScore;
+
+  /// No description provided for @assessmentExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get assessmentExcellent;
+
+  /// No description provided for @assessmentGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get assessmentGood;
+
+  /// No description provided for @assessmentSatisfactory.
+  ///
+  /// In en, this message translates to:
+  /// **'Satisfactory'**
+  String get assessmentSatisfactory;
+
+  /// No description provided for @assessmentAcceptable.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceptable'**
+  String get assessmentAcceptable;
+
+  /// No description provided for @assessmentPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Poor'**
+  String get assessmentPoor;
+
+  /// No description provided for @rmseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'RMSE (Root Mean Square Error)'**
+  String get rmseLabel;
+
+  /// No description provided for @maeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MAE (Mean Absolute Error)'**
+  String get maeLabel;
+
+  /// No description provided for @r2Label.
+  ///
+  /// In en, this message translates to:
+  /// **'R² (Coefficient of Determination)'**
+  String get r2Label;
+
+  /// No description provided for @biasLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bias (Mean Error)'**
+  String get biasLabel;
+
+  /// No description provided for @ioaLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Index of Agreement (d)'**
+  String get ioaLabel;
+
+  /// No description provided for @groupPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Group / Period'**
+  String get groupPeriod;
+
+  /// No description provided for @mass.
+  ///
+  /// In en, this message translates to:
+  /// **'Mass'**
+  String get mass;
+
+  /// No description provided for @createNewScenario.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Scenario'**
+  String get createNewScenario;
+
+  /// No description provided for @createNewScenarioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust parameters and build your own educational scenario.'**
+  String get createNewScenarioDesc;
+
+  /// No description provided for @dayPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day}'**
+  String dayPrefix(String day);
+
+  /// No description provided for @precipitationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PRECIPITATION'**
+  String get precipitationLabel;
+
+  /// No description provided for @co2ConcentrationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CO₂ CONCENTRATION'**
+  String get co2ConcentrationLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

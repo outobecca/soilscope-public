@@ -108,7 +108,7 @@ class EnzymeActivityComponent extends PositionComponent
         description: game.l10n.enzymesDesc,
         accentColor: Colors.purpleAccent,
         icon: Icons.auto_awesome_motion_rounded,
-        position: Vector2(game.soilLeftX + 50, game.soilSurfaceY + 40),
+        position: Vector2(game.soilLeftX + 100, game.soilSurfaceY + 60),
         statsProvider: () {
           final state = game.simulationState;
           if (state == null) return null;

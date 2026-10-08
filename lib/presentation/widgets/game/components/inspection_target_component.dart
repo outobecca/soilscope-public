@@ -45,13 +45,12 @@ class InspectionTargetComponent extends PositionComponent
     final isTutorialTarget = activeTutorial != null && activeTutorial.targetId == type.name;
     final isHighlighted = _isPinned || magnifier.isVisible || isTutorialTarget;
 
-    // Only render if microscope is on or it's been clicked or tutorial target
-    if (!isMicroscopeMode && !isHighlighted) return;
-
     final baseColor = const Color(0xFF38BDF8);
+    final double alphaMultiplier = isHighlighted ? 0.95 : (isMicroscopeMode ? 0.65 : 0.35);
+
     final paint = Paint()
       ..color = (isTutorialTarget ? Colors.orange : (isHighlighted ? Colors.white : baseColor))
-          .withValues(alpha: (isHighlighted ? 0.9 : 0.6) * opacity)
+          .withValues(alpha: alphaMultiplier * opacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = isHighlighted ? 2.5 : 1.5;
 
@@ -64,7 +63,7 @@ class InspectionTargetComponent extends PositionComponent
       1.5,
       Paint()
         ..color = (isHighlighted ? Colors.white : baseColor)
-            .withValues(alpha: (isHighlighted ? 1.0 : 0.4) * opacity),
+            .withValues(alpha: (isHighlighted ? 1.0 : (isMicroscopeMode ? 0.5 : 0.3)) * opacity),
     );
 
     // Subtle pulsing ring when highlighted
@@ -81,7 +80,11 @@ class InspectionTargetComponent extends PositionComponent
     }
   }
 
-
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    final center = size / 2;
+    return point.distanceTo(center) <= 28.0;
+  }
 
   @override
   void onTapUp(TapUpEvent event) {
@@ -89,8 +92,13 @@ class InspectionTargetComponent extends PositionComponent
     _isPinned = !_isPinned;
     magnifier.isVisible = _isPinned;
     if (_isPinned) {
+      if (!game.ref.read(simulationSessionProvider).isMicroscopeEnabled) {
+        game.ref.read(simulationSessionProvider.notifier).toggleMicroscope();
+      }
+      game.ref.read(simulationSessionProvider.notifier).selectInspector(type.name);
       _showInspectionInfo(pinned: true);
     } else {
+      game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
     }
     event.handled = true;

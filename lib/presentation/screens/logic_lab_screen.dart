@@ -583,7 +583,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
           // Esimerkkivalitsin
           PopupMenuButton<String>(
             icon: const Icon(Icons.science),
-            tooltip: 'Select Example',
+            tooltip: l10n.selectExample,
             onSelected: (value) {
               setState(() {
                 switch (value) {
@@ -623,7 +623,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Reset Graph',
+            tooltip: l10n.resetGraph,
             onPressed: () {
               setState(() {
                 switch (_currentExample) {

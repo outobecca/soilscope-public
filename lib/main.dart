@@ -315,6 +315,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
        WidgetsBinding.instance.addPostFrameCallback((_) => _initSimulation());
     }
 
+    final l10n = AppLocalizations.of(context);
+
     if (isInitializing) {
       return Scaffold(
         backgroundColor: const Color(0xFF0B101E),
@@ -325,7 +327,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               const CircularProgressIndicator(color: Colors.cyan),
               const SizedBox(height: 32),
               Text(
-                'VALMISTELLAAN SIMULAATIOTA...',
+                l10n?.preparingSimulation ?? 'VALMISTELLAAN SIMULAATIOTA...',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       letterSpacing: 2.0,
@@ -333,9 +335,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                     ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Käynnistetään simulaatiomoottoria...',
-                style: TextStyle(color: Colors.white54, fontSize: 12),
+              Text(
+                l10n?.launchingEngine ?? 'Käynnistetään simulaatiomoottoria...',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
             ],
           ),
@@ -343,7 +345,6 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       );
     }
 
-    final l10n = AppLocalizations.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
 

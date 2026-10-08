@@ -147,7 +147,11 @@ class IonComponent extends PositionComponent
   }
 
   @override
-  bool containsLocalPoint(Vector2 point) => (point - size / 2).length < 12.0;
+  bool containsLocalPoint(Vector2 point) {
+    // Generous touch target (48px diameter) around the 12px ion
+    final center = size / 2;
+    return point.distanceTo(center) <= 24.0;
+  }
 
   @override
   void onTapUp(TapUpEvent event) {

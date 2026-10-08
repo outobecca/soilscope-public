@@ -317,7 +317,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
         const SizedBox(height: 12),
         ..._cultivationPlan.map((e) => ListTile(
               leading: Icon(e.type == 'fertilize' ? Icons.bolt : (e.type == 'till' ? Icons.agriculture : Icons.water_drop)),
-              title: Text('${e.type.toUpperCase()} (Päivä ${(e.executionTime / 86400).toStringAsFixed(1)})'),
+              title: Text('${e.type.toUpperCase()} (${l10n.dayPrefix((e.executionTime / 86400).toStringAsFixed(1))})'),
               subtitle: Text(e.type == 'till' ? l10n.fullField : l10n.amountLabel(e.amount.toStringAsFixed(1))),
               trailing: IconButton(
                 icon: const Icon(Icons.delete),
@@ -375,7 +375,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
         Text(l10n.tutorialBuilt, style: theme.textTheme.titleLarge),
         ..._tutorialSteps.map((s) => ListTile(
               leading: const Icon(Icons.school),
-              title: Text('${s.title} (Päivä ${(s.triggerTime / 86400).toStringAsFixed(1)})'),
+              title: Text('${s.title} (${l10n.dayPrefix((s.triggerTime / 86400).toStringAsFixed(1))})'),
               subtitle: Text(s.description),
               trailing: IconButton(
                 icon: const Icon(Icons.delete),

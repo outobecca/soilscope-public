@@ -36,114 +36,175 @@ class _FertilizerModalState extends ConsumerState<FertilizerModal> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 800;
 
-    return Dialog.fullscreen(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.nutrientApplicationConsole),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: FilledButton.icon(
-                onPressed: _pendingNutrients.isEmpty
-                    ? null
-                    : () {
-                        ref
-                            .read(simulationProvider.notifier)
-                            .applyNutrients(_pendingNutrients);
-
-                        // Trigger visual effect
-                        final game = ref.read(soilScopeGameProviderProvider);
-                        if (game != null) {
-                          final Map<String, Color> colors = {};
-                          for (final symbol in _pendingNutrients.keys) {
-                            colors[symbol] =
-                                PeriodicTable.elements[symbol]?.color ??
-                                Colors.white;
-                          }
-                          game.triggerFertilizerEffect(colors);
-                        }
-
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.nutrientsAppliedSnackBar(
-                                _pendingNutrients.length,
-                              ),
-                            ),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
-                icon: const Icon(Icons.check),
-                label: Text(l10n.applyAll.toUpperCase()),
-              ),
-            ),
-          ],
+    final Widget content = Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.nutrientApplicationConsole),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
         ),
-        body: Row(
-          children: [
-            // Left side: Periodic Table
-            Expanded(
-              flex: 3,
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    Text(
-                      l10n.selectNutrients.toUpperCase(),
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                        color: theme.colorScheme.primary,
-                      ),
+        bottom: isMobile
+            ? TabBar(
+                tabs: [
+                  Tab(
+                    icon: const Icon(Icons.grid_view_rounded),
+                    text: l10n.selectNutrients,
+                  ),
+                  Tab(
+                    icon: Badge(
+                      isLabelVisible: _pendingNutrients.isNotEmpty,
+                      label: Text('${_pendingNutrients.length}'),
+                      child: const Icon(Icons.tune_rounded),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.fertilizationMixHint,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 32),
-                    Expanded(
-                      child: Center(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: PeriodicTableWidget(
-                            onSelect: _toggleElement,
-                            selectedSymbols: _pendingNutrients.keys.toSet(),
-                            preferredCellSize: 50,
+                    text: l10n.applicationMix,
+                  ),
+                ],
+              )
+            : null,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: FilledButton.icon(
+              onPressed: _pendingNutrients.isEmpty
+                  ? null
+                  : () {
+                      ref
+                          .read(simulationProvider.notifier)
+                          .applyNutrients(_pendingNutrients);
+
+                      // Trigger visual effect
+                      final game = ref.read(soilScopeGameProviderProvider);
+                      if (game != null) {
+                        final Map<String, Color> colors = {};
+                        for (final symbol in _pendingNutrients.keys) {
+                          colors[symbol] =
+                              PeriodicTable.elements[symbol]?.color ??
+                              Colors.white;
+                        }
+                        game.triggerFertilizerEffect(colors);
+                      }
+
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            l10n.nutrientsAppliedSnackBar(
+                              _pendingNutrients.length,
+                            ),
                           ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.check),
+              label: Text(l10n.applyAll.toUpperCase()),
+            ),
+          ),
+        ],
+      ),
+      body: isMobile
+          ? TabBarView(
+              children: [
+                // Mobile Tab 1: Periodic Table
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.selectNutrients.toUpperCase(),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.fertilizationMixHint,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      PeriodicTableWidget(
+                        onSelect: _toggleElement,
+                        selectedSymbols: _pendingNutrients.keys.toSet(),
+                        preferredCellSize: 42,
+                      ),
+                    ],
+                  ),
+                ),
+                // Mobile Tab 2: Sliders
+                Container(
+                  color: theme.colorScheme.surface,
+                  child: _pendingNutrients.isEmpty
+                      ? _buildEmptyState(theme, l10n)
+                      : _buildNutrientList(theme, l10n, lang),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                // Desktop / Tablet Left side: Periodic Table
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          l10n.selectNutrients.toUpperCase(),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.fertilizationMixHint,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: PeriodicTableWidget(
+                              onSelect: _toggleElement,
+                              selectedSymbols: _pendingNutrients.keys.toSet(),
+                              preferredCellSize: 46,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
 
-            // Right side: Sliders for selected nutrients
-            Container(
-              width: 400,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.3,
+                // Desktop / Tablet Right side: Sliders for selected nutrients
+                Container(
+                  width: 380,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.3,
+                    ),
+                    border: Border(
+                      left: BorderSide(color: theme.colorScheme.outlineVariant),
+                    ),
+                  ),
+                  child: _pendingNutrients.isEmpty
+                      ? _buildEmptyState(theme, l10n)
+                      : _buildNutrientList(theme, l10n, lang),
                 ),
-                border: Border(
-                  left: BorderSide(color: theme.colorScheme.outlineVariant),
-                ),
-              ),
-              child: _pendingNutrients.isEmpty
-                  ? _buildEmptyState(theme, l10n)
-                  : _buildNutrientList(theme, l10n),
+              ],
             ),
-          ],
-        ),
-      ),
+    );
+
+    return Dialog.fullscreen(
+      child: isMobile ? DefaultTabController(length: 2, child: content) : content,
     );
   }
 
@@ -180,7 +241,7 @@ class _FertilizerModalState extends ConsumerState<FertilizerModal> {
     );
   }
 
-  Widget _buildNutrientList(ThemeData theme, AppLocalizations l10n) {
+  Widget _buildNutrientList(ThemeData theme, AppLocalizations l10n, String lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -207,6 +268,7 @@ class _FertilizerModalState extends ConsumerState<FertilizerModal> {
                 amount: entry.value,
                 onChanged: (val) => _updateAmount(entry.key, val),
                 onRemove: () => _toggleElement(element),
+                lang: lang,
               );
             }).toList(),
           ),
@@ -241,12 +303,14 @@ class _NutrientSliderRow extends StatelessWidget {
   final double amount;
   final ValueChanged<double> onChanged;
   final VoidCallback onRemove;
+  final String lang;
 
   const _NutrientSliderRow({
     required this.element,
     required this.amount,
     required this.onChanged,
     required this.onRemove,
+    required this.lang,
   });
 
   @override
@@ -300,13 +364,13 @@ class _NutrientSliderRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        element.name,
+                        element.localizedName(lang),
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        element.category.name,
+                        element.localizedCategory(lang),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 10,
                         ),

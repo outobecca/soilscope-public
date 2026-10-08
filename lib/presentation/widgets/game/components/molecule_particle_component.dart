@@ -305,6 +305,13 @@ class MoleculeParticleComponent extends PositionComponent
   void onHoverExit() => handleHoverExit();
 
   @override
+  bool containsLocalPoint(Vector2 point) {
+    // Generous touch target (48px diameter) around the 6px molecule particle
+    final center = size / 2;
+    return point.distanceTo(center) <= 24.0;
+  }
+
+  @override
   void onTapUp(TapUpEvent event) {
     _selectionPulse = 1.0;
     handleTapUp(({bool pinned = true}) => _showMoleculeInfo(pinned: pinned));
@@ -358,7 +365,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.moleculeAmmoniumDesc,
           'stats': {
             l.ionLabel: 'NH₄⁺',
-            l.charge: '+1 (Kationi)',
+            l.charge: l.positiveCharge('+1'),
             l.mobility: l.veryWeak,
             l.source: l.mineralizationTitle,
           },
@@ -369,7 +376,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.moleculeNitrateDesc,
           'stats': {
             l.ionLabel: 'NO₃⁻',
-            l.charge: '-1 (Anioni)',
+            l.charge: l.negativeCharge('-1'),
             l.mobility: l.veryHigh,
             l.risk: '${l.leachingTitle} / N₂O',
           },
@@ -461,7 +468,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.ionPhosphateDescription,
           'stats': {
             l.ionLabel: 'PO₄³⁻',
-            l.charge: '-3 (Anioni)',
+            l.charge: l.negativeCharge('-3'),
             l.mobility: l.veryWeak,
             l.role: l.energy,
           },
@@ -472,7 +479,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.ionPotassiumDescription,
           'stats': {
             l.ionLabel: 'K⁺',
-            l.charge: '+1 (Kationi)',
+            l.charge: l.positiveCharge('+1'),
             l.mobility: l.mobilityModerate,
             l.role: l.stomataRegulation,
           },
@@ -483,7 +490,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.ionCalciumDescription,
           'stats': {
             l.ionLabel: 'Ca²⁺',
-            l.charge: '+2 (Kationi)',
+            l.charge: l.positiveCharge('+2'),
             l.mobility: l.mobilitySlow,
             l.role: l.cellWallSignal,
           },
@@ -494,7 +501,7 @@ class MoleculeParticleComponent extends PositionComponent
           'description': l.ionMagnesiumDescription,
           'stats': {
             l.ionLabel: 'Mg²⁺',
-            l.charge: '+2 (Kationi)',
+            l.charge: l.positiveCharge('+2'),
             l.mobility: l.mobilityGood,
             l.role: l.photosynthesis,
           },

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/models/soil_layer.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
+import '../../../providers/ui_state_provider.dart';
 import '../logic/soil_layer_style_engine.dart';
 import '../logic/soil_layer_noise_engine.dart';
 import 'ion_component.dart';
@@ -23,7 +25,7 @@ import 'riverpod_lifecycle_mixin.dart';
 import 'rhizosphere_hotspot_component.dart';
 
 class SoilLayerComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin {
+    with HasGameReference<SoilScopeGame>, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin, TapCallbacks {
   final String layerId;
   SoilLayer _layer;
   bool _isSelected;
@@ -82,7 +84,7 @@ class SoilLayerComponent extends PositionComponent
         description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
         accentColor: Color(_layer.colorValue),
         icon: Icons.layers_rounded,
-        position: Vector2(40, size.y / 2),
+        position: Vector2(60, size.y / 2), // Aligned with diagnostic gutter
         statsProvider: () {
           final state = game.ref.read(simulationProvider);
           try {
@@ -99,6 +101,37 @@ class SoilLayerComponent extends PositionComponent
         },
       ),
     );
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    game.ref.read(simulationSessionProvider.notifier).selectLayer(layerId);
+    _showLayerInfo(pinned: true);
+    event.handled = true;
+  }
+
+  void _showLayerInfo({bool pinned = false}) {
+    final state = game.ref.read(simulationProvider);
+    try {
+      final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
+      final stats = {
+        game.l10n.waterContentLabel: '${(layer.waterContent * 100).toStringAsFixed(1)}%',
+        game.l10n.temperatureLabel: '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
+        'pH': layer.ph.toStringAsFixed(1),
+        'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
+        game.l10n.organicCarbonLabel: '${(layer.organicCarbon * 100).toStringAsFixed(2)}%',
+      };
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(
+        HoverInfo(
+          title: _layer.name.isNotEmpty ? _layer.name.toUpperCase() : 'KERROS ${layerId.toUpperCase()}',
+          description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
+          stats: stats,
+          isPinned: pinned,
+          accentColor: Color(_layer.colorValue),
+          screenPosition: game.worldToScreen(absolutePosition + Vector2(size.x / 2, size.y / 2)).toOffset(),
+        ),
+      );
+    } catch (_) {}
   }
 
   void _handleLayerUpdate(SoilLayer next) {

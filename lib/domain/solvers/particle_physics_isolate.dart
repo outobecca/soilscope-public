@@ -329,7 +329,7 @@ class ParticlePhysicsIsolateManager {
       final List<double> filtered = [];
       int removedCount = 0;
       for (int i = 0; i < _webParticleData.length; i += 10) {
-        final typeIndex = _webParticleData[i + 6].toInt();
+        final typeIndex = _webParticleData[i + 5].toInt();
         if (typeIndex == cmd.typeIndex && removedCount < cmd.count) {
           removedCount++;
           continue;

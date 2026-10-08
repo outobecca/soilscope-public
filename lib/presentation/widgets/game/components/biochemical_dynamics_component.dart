@@ -190,16 +190,25 @@ class BiochemicalDynamicsComponent extends Component
       final layerY = surfaceY + (layer.depth / 1.0) * soilHeight;
 
       // --- 1. NITRIFICATION TRANSFORMATION (NH4 -> NO3) ---
+      // Localized to microbial hotspots and rhizosphere
       if (layer.nitrificationRate > 1e-7 && _random.nextDouble() < 0.05 * dt) {
-        final rx = game.soilLeftX + _random.nextDouble() * worldWidth;
-        final ry =
-            layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+        double rx;
+        double ry;
+        
+        if (biologicalSources.isNotEmpty && _random.nextDouble() < 0.7) {
+          final h = biologicalSources[_random.nextInt(biologicalSources.length)];
+          rx = h.absolutePosition.x + (_random.nextDouble() - 0.5) * 40.0;
+          ry = h.absolutePosition.y + (_random.nextDouble() - 0.5) * 40.0;
+        } else {
+          rx = _nextGaussian(game.soilLeftX + worldWidth / 2, 120.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
+          ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+        }
 
         game.moleculePool?.spawn(
           type: MoleculeType.ammonium,
           transformTarget: MoleculeType.nitrate,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 4, -2), // Slower initial drift
+          velocity: Vector2((_random.nextDouble() - 0.5) * 4, 2), // Downward/lateral drift (ammonium is heavy/sticky)
           seed: _random.nextInt(100),
           lifeTime: 4.0,
         );
@@ -216,11 +225,14 @@ class BiochemicalDynamicsComponent extends Component
       }
 
       // --- 2. DENITRIFICATION TRANSFORMATION (NO3 -> N2O) ---
+      // Focused on rhizosphere where anaerobic microsites occur
       if (layer.denitrificationRate > 1e-7 &&
           _random.nextDouble() < 0.05 * dt) {
-        final rx = game.soilLeftX + _random.nextDouble() * worldWidth;
-        final ry =
-            layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+        final plant = state.plants.firstOrNull;
+        final centerX = plant != null ? SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY).x + game.soilLeftX : game.soilLeftX + worldWidth / 2;
+        
+        final rx = _nextGaussian(centerX, 150.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
+        final ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
 
         game.moleculePool?.spawn(
           type: MoleculeType.nitrate,
@@ -228,8 +240,8 @@ class BiochemicalDynamicsComponent extends Component
           position: Vector2(rx, ry),
           velocity: Vector2(
             (_random.nextDouble() - 0.5) * 10,
-            -15,
-          ), // Upward drift
+            -25,
+          ), // Upward drift (gas escaping)
           seed: _random.nextInt(100),
           lifeTime: 5.0,
         );
@@ -249,14 +261,17 @@ class BiochemicalDynamicsComponent extends Component
       // Occurs primarily in topsoil with high microbial activity
       final double microbialActivity = layer.microbialBiomass / 500.0;
       if (layer.organicNitrogen > 5.0 && microbialActivity > 0.2 && _random.nextDouble() < 0.03 * dt) {
-        final rx = game.soilLeftX + _random.nextDouble() * worldWidth;
+        final plant = state.plants.firstOrNull;
+        final centerX = plant != null ? SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY).x + game.soilLeftX : game.soilLeftX + worldWidth / 2;
+
+        final rx = _nextGaussian(centerX, 180.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
         final ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
 
         game.moleculePool?.spawn(
           type: MoleculeType.organicNitrogen,
           transformTarget: MoleculeType.ammonium,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 2, -1), // Very slow mineralization
+          velocity: Vector2((_random.nextDouble() - 0.5) * 2, 1), // Sinking Org-N
           seed: _random.nextInt(100),
           lifeTime: 6.0,
         );
@@ -470,7 +485,7 @@ class BiochemicalDynamicsComponent extends Component
     if (_random.nextDouble() < 0.025 * photosynthesisRate * dt) {
       final startX = _nextGaussian(
         plantWorldX,
-        400.0,
+        250.0,
       ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
       final startY = surfaceY - 500;
 
@@ -626,7 +641,7 @@ class BiochemicalDynamicsComponent extends Component
       if (_random.nextDouble() < spawnChance * dt * 0.75) {
         // FURTHER REDUCED: from 1.5
         // RHIZOSPHERE FOCUS: Gaussian bias towards plant (primary respiration source)
-        final x = _nextGaussian(centerX, 200.0).clamp(soilX, soilX + soilWidth);
+        final x = _nextGaussian(centerX, 120.0).clamp(soilX, soilX + soilWidth);
         final y =
             surfaceY +
             (layer.depth / 1.0) * soilHeight +
@@ -761,7 +776,7 @@ class BiochemicalDynamicsComponent extends Component
               // RHIZOSPHERE FOCUS: Use Gaussian distribution centered on plant X
               double px = _nextGaussian(
                 centerX,
-                200.0,
+                150.0,
               ).clamp(game.soilLeftX + 20, game.soilLeftX + worldWidth - 20);
               double py =
                   surfaceY +

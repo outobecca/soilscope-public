@@ -239,7 +239,12 @@ class PlantHydraulicsSolver {
     final double fStomatalFinal = calculateStomatalStressFactor(finalPsiLeaf);
     final double fVPDFinal = calculateVPDStressFactor(vpd);
     final double gsFinal = gsMax * fStomatalFinal * fVPDFinal;
-    final double actualTransFinal = potentialTrans * fStomatalFinal * fVPDFinal;
+
+    // Calculate root system supply limit under the relaxed finalPsiLeaf
+    final double totalConductance = (rootConductance * xylemKs) / (rootConductance + xylemKs + 1e-12);
+    final double transSupplyFinal = totalConductance * (psiSoil - finalPsiLeaf).clamp(0.0, 10.0);
+    final double transDemandFinal = potentialTrans * fStomatalFinal * fVPDFinal;
+    final double actualTransFinal = math.min(transDemandFinal, transSupplyFinal);
 
     return (
       transpiration: actualTransFinal,

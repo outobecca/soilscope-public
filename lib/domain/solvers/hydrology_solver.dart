@@ -108,7 +108,7 @@ class HydrologySolver {
         currentProfile,
         actualDt,
         surfaceFlux: matrixInfiltration - stepEvap,
-        sinks: aggregatedSinks.map((sink) => sink / steps).toList(),
+        sinks: aggregatedSinks,
       );
 
       currentProfile = result.profile;

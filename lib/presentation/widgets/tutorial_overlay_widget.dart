@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/ui_state_provider.dart';
 import '../providers/simulation_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class TutorialOverlayWidget extends ConsumerWidget {
   const TutorialOverlayWidget({super.key});
@@ -107,7 +108,7 @@ class TutorialOverlayWidget extends ConsumerWidget {
                           ref.read(simulationProvider.notifier).start();
                         },
                         icon: const Icon(Icons.play_arrow_rounded),
-                        label: const Text('JATKA'),
+                        label: Text(AppLocalizations.of(context)?.continueButton ?? 'JATKA'),
                       ),
                     ],
                   ),

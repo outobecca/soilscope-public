@@ -252,29 +252,20 @@ class SPACConnectionLinesComponent extends Component
     final unitX = dx / distance;
     final unitY = dy / distance;
 
-    final paint = Paint()
-      ..color = color.withValues(alpha: alpha)
-      ..strokeWidth = 1.0 / zoom
-      ..style = PaintingStyle.stroke;
-
     final layoutMode = game.ref.read(visualLayoutModeStateProvider);
     final isSchematic = layoutMode == VisualLayoutMode.schematic;
 
-    // Animated dash offset for flow effect
     final flowSpeed = 20.0 + alpha * 100.0;
     final offset = (time * flowSpeed) % (dashLen + gapLen);
     
     final path = Path();
     if (isSchematic) {
-      // Layered Graph Style: Orthogonal (L-shaped)
       path.moveTo(realStart.dx, realStart.dy);
-      // Halfway vertically, then horizontal, then the rest vertically
       final midY = (realStart.dy + realEnd.dy) / 2;
       path.lineTo(realStart.dx, midY);
       path.lineTo(realEnd.dx, midY);
       path.lineTo(realEnd.dx, realEnd.dy);
     } else {
-      // Organic: Straight line
       path.moveTo(realStart.dx, realStart.dy);
       path.lineTo(realEnd.dx, realEnd.dy);
     }
@@ -282,21 +273,60 @@ class SPACConnectionLinesComponent extends Component
     final pathMetrics = path.computeMetrics().toList();
     if (pathMetrics.isEmpty) return;
 
+    // 1. Draw Glow Layers (Bioluminescent Effect)
+    if (alpha > 0.05) {
+      final glowPaint = Paint()
+        ..color = color.withValues(alpha: alpha * 0.15)
+        ..strokeWidth = 4.0 / zoom
+        ..style = PaintingStyle.stroke
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      
+      for (final metric in pathMetrics) {
+        canvas.drawPath(metric.extractPath(0, metric.length), glowPaint);
+      }
+    }
+
+    // 2. Draw Dashed Line
+    final basePaint = Paint()
+      ..color = color.withValues(alpha: alpha)
+      ..strokeWidth = 1.0 / zoom
+      ..style = PaintingStyle.stroke;
+
     for (final metric in pathMetrics) {
       double traveled = -offset;
       while (traveled < metric.length) {
         final dashStart = traveled.clamp(0.0, metric.length);
         final dashEnd = (traveled + dashLen).clamp(0.0, metric.length);
-
         if (dashEnd > dashStart) {
-          final extract = metric.extractPath(dashStart, dashEnd);
-          canvas.drawPath(extract, paint);
+          canvas.drawPath(metric.extractPath(dashStart, dashEnd), basePaint);
         }
         traveled += dashLen + gapLen;
       }
+
+      // 3. Draw Traveling Flow Particles (The "Soul" of the continuum)
+      if (alpha > 0.1) {
+        final particlePaint = Paint()
+          ..color = Colors.white.withValues(alpha: alpha * 0.8)
+          ..style = PaintingStyle.fill;
+        
+        // Multiple particles per path
+        for (int p = 0; p < 3; p++) {
+          final pOffset = (time * flowSpeed * 1.5 + (p * distance / 3)) % distance;
+          final tangent = metric.getTangentForOffset(pOffset % metric.length);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 1.2 / zoom, particlePaint);
+            // Smaller glow for particle
+            canvas.drawCircle(
+              tangent.position, 
+              3.0 / zoom, 
+              Paint()..color = color.withValues(alpha: alpha * 0.3)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2)
+            );
+          }
+        }
+      }
     }
 
-    // Directional Arrow
+    // 4. Directional Arrow
     if (showArrow) {
       final arrowPos = Offset(
         realStart.dx + unitX * (distance * 0.6 + math.sin(time * 5) * 10),
@@ -305,7 +335,7 @@ class SPACConnectionLinesComponent extends Component
       _drawArrowHead(canvas, arrowPos, unitX, unitY, color.withValues(alpha: alpha * 2));
     }
 
-    // Label at midpoint
+    // 5. Label (Monospaced Tech Style)
     if (label != null) {
       final mid = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
       final tp = TextPainter(
@@ -316,7 +346,8 @@ class SPACConnectionLinesComponent extends Component
             fontSize: 7,
             fontWeight: FontWeight.bold,
             fontFamily: 'monospace',
-            letterSpacing: 1.0,
+            letterSpacing: 1.2,
+            backgroundColor: Colors.black.withValues(alpha: 0.2),
           ),
         ),
         textDirection: TextDirection.ltr,

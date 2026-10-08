@@ -48,71 +48,115 @@ class SelectionNodeComponent extends PositionComponent
     final center = Offset(size.x / 2, size.y / 2);
     final time = game.uiTime();
     final zoom = game.camera.viewfinder.zoom;
+    final pulse = 0.5 + 0.5 * math.sin(time * 3);
     
-    // 1. Outer Glow
-    final glowAlpha = _isHovered ? 0.3 : 0.15;
+    // 1. Outer Glow (Glows brighter on hover)
+    final glowAlpha = _isHovered ? 0.35 : 0.15;
     canvas.drawCircle(
       center,
-      20 * (_isHovered ? 1.2 : 1.0),
+      22 * (_isHovered ? 1.1 : 1.0),
       Paint()
         ..color = accentColor.withValues(alpha: glowAlpha)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
     );
 
-    // 2. Glassmorphic Background
+    // 2. Glassmorphic Core
     final bgPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.6)
+      ..color = Colors.black.withValues(alpha: 0.75)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 18, bgPaint);
     
+    // Inner Stroke
     canvas.drawCircle(
       center,
       18,
       Paint()
-        ..color = accentColor.withValues(alpha: 0.4)
+        ..color = accentColor.withValues(alpha: 0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2 / zoom,
     );
 
-    // 3. Icon
+    // 3. Scanner Rings (Animated rotating segments)
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    
+    // Slow outer ring
+    canvas.save();
+    canvas.rotate(time * 0.4);
+    final outerRingPaint = Paint()
+      ..color = accentColor.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    for (int i = 0; i < 3; i++) {
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: 24),
+        i * (2 * math.pi / 3),
+        math.pi / 4,
+        false,
+        outerRingPaint,
+      );
+    }
+    canvas.restore();
+
+    // Fast inner ring (only on hover or pinned)
+    if (_isHovered || _isPinned) {
+      canvas.save();
+      canvas.rotate(-time * 1.2);
+      final innerRingPaint = Paint()
+        ..color = accentColor.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: 21),
+        0,
+        math.pi / 2,
+        false,
+        innerRingPaint,
+      );
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: 21),
+        math.pi,
+        math.pi / 2,
+        false,
+        innerRingPaint,
+      );
+      canvas.restore();
+    }
+
+    // 4. Target Crosshair (Visual only)
+    if (_isHovered) {
+      final crosshairPaint = Paint()
+        ..color = accentColor.withValues(alpha: 0.8 * pulse)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+      const chSize = 28.0;
+      canvas.drawLine(const Offset(-chSize/2, 0), const Offset(-chSize/2 + 4, 0), crosshairPaint);
+      canvas.drawLine(const Offset(chSize/2, 0), const Offset(chSize/2 - 4, 0), crosshairPaint);
+      canvas.drawLine(const Offset(0, -chSize/2), const Offset(0, -chSize/2 + 4), crosshairPaint);
+      canvas.drawLine(const Offset(0, chSize/2), const Offset(0, chSize/2 - 4), crosshairPaint);
+    }
+    
+    canvas.restore();
+
+    // 5. Icon
     final iconColor = _isHovered || _isPinned ? accentColor : Colors.white.withValues(alpha: 0.9);
     final iconPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(icon.codePoint),
         style: TextStyle(
-          fontSize: 20,
+          fontSize: 18,
           fontFamily: icon.fontFamily,
           package: icon.fontPackage,
           color: iconColor,
+          shadows: [
+            Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 4, offset: const Offset(1, 1)),
+          ],
         ),
       ),
       textDirection: TextDirection.ltr,
     );
     iconPainter.layout();
     iconPainter.paint(canvas, center - Offset(iconPainter.width / 2, iconPainter.height / 2));
-
-    // 4. Subtle rotation pulse for enzymes
-    if (nodeType == SelectionNodeType.enzymes) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(time * 0.5);
-      final ringPaint = Paint()
-        ..color = accentColor.withValues(alpha: 0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeCap = StrokeCap.round;
-      
-      for (int i = 0; i < 4; i++) {
-        canvas.drawArc(
-          Rect.fromCircle(center: Offset.zero, radius: 22),
-          i * math.pi / 2,
-          math.pi / 4,
-          false,
-          ringPaint,
-        );
-      }
-      canvas.restore();
-    }
   }
 
   @override
@@ -160,5 +204,12 @@ class SelectionNodeComponent extends PositionComponent
         screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),
     );
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Exact circular hit detection for precision
+    final center = size / 2;
+    return point.distanceToSquared(center) <= 22 * 22;
   }
 }

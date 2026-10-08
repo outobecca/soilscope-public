@@ -8,6 +8,7 @@ import '../../domain/models/soil_profile.dart';
 import '../../domain/solvers/mycorrhiza_solver.dart';
 import '../providers/simulation_provider.dart';
 import '../../core/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class GamificationBar extends ConsumerWidget {
   const GamificationBar({super.key});
@@ -26,17 +27,18 @@ class GamificationBar extends ConsumerWidget {
     )));
     
     final uiState = _GamificationUIState.fromState(state);
+    final l10n = AppLocalizations.of(context);
 
     if (!uiState.hasTopsoil) {
-      return const Align(
+      return Align(
         alignment: Alignment.topCenter,
         child: Card(
           color: Colors.black54,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              "VALMISTELLAAN MAAPERÄÄ...",
-              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+              l10n?.preparingSoil ?? "VALMISTELLAAN MAAPERÄÄ...",
+              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
             ),
           ),
         ),
