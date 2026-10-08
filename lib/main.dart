@@ -20,6 +20,7 @@ import 'presentation/widgets/tutorial_overlay_widget.dart';
 import 'core/app_theme.dart';
 import 'presentation/widgets/game/flutter_quick_actions.dart';
 import 'presentation/widgets/gamification_bar.dart';
+import 'presentation/widgets/controls/microscope_hud_controller.dart';
 import 'presentation/providers/simulation_session_provider.dart';
 import 'presentation/providers/ui_state_provider.dart';
 
@@ -345,7 +346,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       );
     }
 
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
 
     if (l10n == null) {
@@ -450,17 +453,49 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                 if (info == null) return const SizedBox.shrink();
 
                 if (!info.isPinned && info.screenPosition != null) {
+                  final pos = info.screenPosition!;
+                  const tooltipWidth = 280.0;
+                  const tooltipHeight = 180.0;
+
+                  double left = pos.dx + 20;
+                  if (left + tooltipWidth > screenWidth - 16) {
+                    left = pos.dx - tooltipWidth - 16;
+                  }
+                  if (left < 16) left = 16;
+
+                  double top = pos.dy + 20;
+                  if (top + tooltipHeight > screenHeight - 80) {
+                    top = pos.dy - tooltipHeight - 16;
+                  }
+                  if (top < 16) top = 16;
+
                   return Positioned(
-                    left: info.screenPosition!.dx + 20,
-                    top: info.screenPosition!.dy + 20,
+                    left: left,
+                    top: top,
                     child: const HoverTooltip(),
                   );
                 }
 
                 return Positioned(
                   right: (_isRightSidebarOpen && !isMobile) ? 340 : 20,
-                  top: 140,
+                  top: isMobile ? 80 : 140,
                   child: const SafeArea(child: HoverTooltip()),
+                );
+              },
+            ),
+
+            // 6.5 NANOVISION MICROSCOPE HUD CONTROLLER
+            Consumer(
+              builder: (context, ref, child) {
+                final isMicroscope = ref.watch(
+                  simulationSessionProvider.select((s) => s.isMicroscopeEnabled),
+                );
+                if (!isMicroscope) return const SizedBox.shrink();
+
+                return Positioned(
+                  top: isMobile ? 80 : 88,
+                  left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
+                  child: const SafeArea(child: MicroscopeHudController()),
                 );
               },
             ),

@@ -79,7 +79,7 @@ class ControlPanelSection extends ConsumerWidget {
                 return Padding(
                   padding: const EdgeInsets.only(right: 6.0),
                   child: ChoiceChip(
-                    label: Text(l.name.isNotEmpty ? l.name : 'Kerros ${l.id}'),
+                    label: Text(l.name.isNotEmpty ? l.name : '${l10n.layerLabel} ${l.id}'),
                     avatar: Icon(
                       Icons.layers_rounded,
                       size: 16,
@@ -148,7 +148,7 @@ class ControlPanelSection extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                layer.name.isNotEmpty ? layer.name : 'Kerros ${layer.id}',
+                layer.name.isNotEmpty ? layer.name : '${l10n.layerLabel} ${layer.id}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -445,7 +445,7 @@ class ControlPanelSection extends ConsumerWidget {
                         size: 16,
                         color: Color(l.colorValue),
                       ),
-                      label: Text(l.name.isNotEmpty ? l.name : 'Kerros ${l.id}'),
+                      label: Text(l.name.isNotEmpty ? l.name : '${l10n.layerLabel} ${l.id}'),
                       onPressed: () {
                         ref
                             .read(simulationSessionProvider.notifier)

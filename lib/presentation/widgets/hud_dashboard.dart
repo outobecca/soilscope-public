@@ -479,7 +479,7 @@ class _HUDSelectedLayerDetails extends ConsumerWidget {
               ),
               Expanded(
                 child: _buildSimpleDiagnostic(
-                  'PRECIP',
+                  l10n.precipAbbr,
                   state.precipitation.toStringAsFixed(1),
                   Colors.cyan,
                   theme,
@@ -807,24 +807,24 @@ Widget _buildSimpleDiagnostic(
 }
 
 Widget _buildTeaStatus(double eh, AppLocalizations l10n, ThemeData theme) {
-  String status = "AEROBIC";
+  String status = l10n.aerobicStateUpper;
   IconData icon = Icons.air;
   Color color = Colors.cyan;
 
   if (eh < -200) {
-    status = "METHANOGENIC";
+    status = l10n.methanogenicState;
     icon = Icons.waves;
     color = Colors.orange;
   } else if (eh < -100) {
-    status = "SULFATE RED.";
+    status = l10n.sulfateReductionState;
     icon = Icons.warning_amber;
     color = Colors.deepOrange;
   } else if (eh < 100) {
-    status = "IRON RED.";
+    status = l10n.ironReductionState;
     icon = Icons.opacity;
     color = Colors.brown;
   } else if (eh < 250) {
-    status = "DENITRIFYING";
+    status = l10n.denitrifyingState;
     icon = Icons.science;
     color = Colors.purple;
   }

@@ -5,7 +5,11 @@ import '../providers/simulation_provider.dart';
 import '../providers/simulation_session_provider.dart';
 import '../providers/event_log_provider.dart';
 import '../../core/cpk_standards.dart';
+import '../../core/periodic_table.dart';
+import '../providers/ui_state_provider.dart';
 import 'controls/fertilizer_modal.dart';
+import 'controls/element_selection_modal.dart';
+import 'game/logic/microscope_info_helper.dart';
 
 class SimulationActions extends ConsumerWidget {
   const SimulationActions({super.key});
@@ -219,28 +223,36 @@ class _ActionIcon extends StatelessWidget {
 
     return SizedBox(
       width: 64,
-      child: Column(
-        children: [
-          IconButton.filledTonal(
-            onPressed: onPressed,
-            icon: Icon(icon, size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: isActive
-                  ? theme.colorScheme.primaryContainer
-                  : null,
-              foregroundColor: color,
-            ),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filledTonal(
+                onPressed: onPressed,
+                icon: Icon(icon, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: isActive
+                      ? theme.colorScheme.primaryContainer
+                      : null,
+                  foregroundColor: color,
+                ),
+              ),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 9,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontSize: 9,
-              color: color,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -254,28 +266,61 @@ class _ElementToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final lang = Localizations.localeOf(context).languageCode;
+    final baseElements = ['N', 'C', 'H', 'O', 'P', 'S', 'K', 'Ca', 'Mg', 'Fe'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            "VISUALIZED ELEMENTS",
-            style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                l10n.visualizedElements.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () => ElementSelectionModal.show(context),
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.grid_view_rounded, size: 12, color: theme.colorScheme.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.allElements,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: [
-              _ElementButton(symbol: 'N', color: CPKStandards.colorN, label: "Nitrogen"),
-              _ElementButton(symbol: 'C', color: CPKStandards.colorC, label: "Carbon"),
-              _ElementButton(symbol: 'H', color: CPKStandards.colorH, label: "Hydrogen"),
-              _ElementButton(symbol: 'O', color: CPKStandards.colorO, label: "Oxygen"),
-              _ElementButton(symbol: 'P', color: CPKStandards.colorP, label: "Phos."),
-              _ElementButton(symbol: 'S', color: CPKStandards.colorS, label: "Sulfur"),
-            ],
+            children: baseElements.map((sym) {
+              final el = PeriodicTable.getBySymbol(sym);
+              return _ElementButton(
+                symbol: sym,
+                color: el?.cpkColor ?? CPKStandards.getColor(sym),
+                label: el?.localizedName(lang) ?? sym,
+              );
+            }).toList(),
           ),
         ),
       ],
@@ -295,21 +340,29 @@ class _ElementButton extends ConsumerWidget {
     final selected = ref.watch(simulationSessionProvider.select((s) => s.selectedElementSymbol));
     final isActive = selected == symbol;
     final theme = Theme.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final element = PeriodicTable.getBySymbol(symbol);
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
         onTap: () {
-          final notifier = ref.read(simulationSessionProvider.notifier);
-          if (isActive) {
-            notifier.selectElement("");
+          final isCurrentlyActive = ref.read(simulationSessionProvider).selectedElementSymbol == symbol;
+          final sessionNotifier = ref.read(simulationSessionProvider.notifier);
+          final uiNotifier = ref.read(uIStateProvider.notifier);
+          if (isCurrentlyActive) {
+            sessionNotifier.selectElement(null);
+            uiNotifier.setHoverInfo(null);
           } else {
-            notifier.selectElement(symbol);
+            sessionNotifier.selectElement(symbol);
+            if (element != null) {
+              uiNotifier.setHoverInfo(element.toHoverInfo(lang, isPinned: true));
+            }
           }
         },
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 50,
+          width: 52,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isActive ? color.withValues(alpha: 0.2) : Colors.transparent,
@@ -358,6 +411,7 @@ class _MicroscopeToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,7 +419,7 @@ class _MicroscopeToolbar extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            "MICROSCOPE HOTSPOTS",
+            l10n.microscopeHotspots.toUpperCase(),
             style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.tertiary, fontWeight: FontWeight.bold),
           ),
         ),
@@ -373,12 +427,13 @@ class _MicroscopeToolbar extends ConsumerWidget {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _HotspotButton(type: 'leaf', icon: Icons.eco, label: "Leaf"),
-              _HotspotButton(type: 'stem', icon: Icons.straighten, label: "Stem"),
-              _HotspotButton(type: 'root', icon: Icons.account_tree, label: "Root"),
-              _HotspotButton(type: 'rhizosphere', icon: Icons.grain, label: "Rhizo."),
-              _HotspotButton(type: 'microbe', icon: Icons.bug_report, label: "Microbe"),
-              _HotspotButton(type: 'soilStructure', icon: Icons.layers, label: "Soil Struct."),
+              _HotspotButton(type: 'leaf', icon: Icons.eco, label: l10n.leaf),
+              _HotspotButton(type: 'stem', icon: Icons.straighten, label: l10n.stem),
+              _HotspotButton(type: 'apicalMeristem', icon: Icons.spa, label: l10n.apicalMeristem),
+              _HotspotButton(type: 'root', icon: Icons.account_tree, label: l10n.root),
+              _HotspotButton(type: 'rhizosphere', icon: Icons.grain, label: l10n.rhizosphere),
+              _HotspotButton(type: 'microbe', icon: Icons.bug_report, label: l10n.microbes),
+              _HotspotButton(type: 'soilStructure', icon: Icons.layers, label: l10n.soilStructure),
             ],
           ),
         ),
@@ -398,6 +453,7 @@ class _HotspotButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(simulationSessionProvider.select((s) => s.selectedInspectorType));
     final isActive = selected == type;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -407,10 +463,24 @@ class _HotspotButton extends ConsumerWidget {
         isActive: isActive,
         onPressed: () {
           final notifier = ref.read(simulationSessionProvider.notifier);
+          final uiNotifier = ref.read(uIStateProvider.notifier);
           if (isActive) {
             notifier.selectInspector(null);
+            uiNotifier.clearHoverInfo();
           } else {
             notifier.selectInspector(type);
+            final magType = MicroscopeInfoHelper.parseType(type);
+            if (magType != null) {
+              final state = ref.read(simulationProvider);
+              uiNotifier.setHoverInfo(
+                MicroscopeInfoHelper.createHoverInfo(
+                  type: magType,
+                  l: l10n,
+                  state: state,
+                  isPinned: true,
+                ),
+              );
+            }
           }
         },
       ),

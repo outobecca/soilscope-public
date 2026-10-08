@@ -41,7 +41,7 @@ final class SimulationProvider
   }
 }
 
-String _$simulationHash() => r'6f55b5a88b05b65c6dacec0812cfc9aaa9e5f794';
+String _$simulationHash() => r'b8f6bbdd230bf4e71e4d1e2054fab5e490ec0061';
 
 abstract class _$Simulation extends $Notifier<BiophysicalState> {
   BiophysicalState build();

@@ -3019,7 +3019,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get riskLabel => 'Riski';
 
   @override
-  String get apicalMeristem => 'KÄRKIMERISTEEMI';
+  String get apicalMeristem => 'Kärkimeristeemi';
 
   @override
   String get meristemDesc => 'Pääkasvuvyöhyke, joka perustuu jatkuvaan solunjakautumiseen.';
@@ -3232,4 +3232,73 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get co2ConcentrationLabel => 'CO₂-PISTOISUUS';
+
+  @override
+  String get methanogenicState => 'METANOGENEESI';
+
+  @override
+  String get sulfateReductionState => 'SULFAATIN PELKISTYS';
+
+  @override
+  String get ironReductionState => 'RAUDAN PELKISTYS';
+
+  @override
+  String get denitrifyingState => 'DENITRIFIKAATIO';
+
+  @override
+  String get aerobicStateUpper => 'AEROBINEN';
+
+  @override
+  String get visualizedElements => 'VISUALISOIDUT ALKUAINEET';
+
+  @override
+  String get microscopeHotspots => 'MIKROSKOOPIN KOHTEET';
+
+  @override
+  String get precipAbbr => 'SADE';
+
+  @override
+  String get selectElement => 'Valitse alkuaine';
+
+  @override
+  String get elementDetails => 'Alkuaineen tiedot';
+
+  @override
+  String get clearSelection => 'Tyhjennä valinta';
+
+  @override
+  String get parSunlight => 'PAR (AURINGONVALO)';
+
+  @override
+  String get gasEmissionsKey => 'KAASUPÄÄSTÖT (N₂O/CH₄)';
+
+  @override
+  String get activeGrowth => 'AKTIIVINEN KASVU';
+
+  @override
+  String get stressedState => 'STRESSITILA';
+
+  @override
+  String get rootTipLabel => 'JUUREN KÄRKI';
+
+  @override
+  String get activeCellDivision => 'AKTIIVINEN SOLUNJAKAUTUMINEN';
+
+  @override
+  String get primordia => 'LEHTIAIHEET';
+
+  @override
+  String get stemCells => 'KANTASOLUT';
+
+  @override
+  String get apicalDome => 'KÄRKIKUPU';
+
+  @override
+  String get nanovisionTitle => 'NANOVISION-MIKROSKOOPPI';
+
+  @override
+  String get magnification => 'Suurennos';
+
+  @override
+  String get moreInfo => 'Lisätietoja';
 }

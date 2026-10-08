@@ -6,7 +6,11 @@ import '../../providers/event_log_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../controls/fertilizer_modal.dart';
+import '../controls/element_selection_modal.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/periodic_table.dart';
+import 'components/process_magnifier_component.dart';
+import 'logic/microscope_info_helper.dart';
 
 class FlutterQuickActions extends ConsumerWidget {
   const FlutterQuickActions({super.key});
@@ -165,44 +169,25 @@ class FlutterQuickActions extends ConsumerWidget {
                 icon: session.isMicroscopeEnabled ? Icons.biotech_rounded : Icons.biotech_outlined,
                 label: l10n.microscope,
                 isActive: session.isMicroscopeEnabled,
-                onTap: () async {
-                  final RenderBox button = context.findRenderObject() as RenderBox;
-                  final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
-                  final RelativeRect position = RelativeRect.fromRect(
-                    Rect.fromPoints(
-                      button.localToGlobal(Offset.zero, ancestor: overlay),
-                      button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-                    ),
-                    Offset.zero & overlay.size,
-                  );
-                  
-                  if (!session.isMicroscopeEnabled) {
-                    ref.read(simulationSessionProvider.notifier).toggleMicroscope();
-                  }
-
-                  final String? selected = await showMenu<String>(
-                    context: context,
-                    position: position,
-                    items: [
-                      PopupMenuItem(value: 'off', child: Text(l10n.turnOffMicroscope)),
-                      const PopupMenuDivider(),
-                      PopupMenuItem(value: 'leaf', child: Text(l10n.leaf)),
-                      PopupMenuItem(value: 'stem', child: Text(l10n.stem)),
-                      PopupMenuItem(value: 'root', child: Text(l10n.root)),
-                      PopupMenuItem(value: 'rhizosphere', child: Text(l10n.rhizosphere)),
-                      PopupMenuItem(value: 'microbe', child: Text(l10n.microbes)),
-                      PopupMenuItem(value: 'soilStructure', child: Text(l10n.soilStructure)),
-                      PopupMenuItem(value: 'apicalMeristem', child: Text(l10n.apicalMeristem)),
-                    ],
-                  );
-                  
-                  if (selected != null) {
-                    if (selected == 'off') {
-                      ref.read(simulationSessionProvider.notifier).toggleMicroscope();
-                      ref.read(simulationSessionProvider.notifier).selectInspector(null);
-                    } else {
-                      ref.read(simulationSessionProvider.notifier).selectInspector(selected);
-                    }
+                onTap: () {
+                  final sessionNotifier = ref.read(simulationSessionProvider.notifier);
+                  final uiNotifier = ref.read(uIStateProvider.notifier);
+                  final wasEnabled = session.isMicroscopeEnabled;
+                  sessionNotifier.toggleMicroscope();
+                  if (!wasEnabled) {
+                    final targetName = session.selectedInspectorType ?? 'rhizosphere';
+                    final targetType = MicroscopeInfoHelper.parseType(targetName) ?? MagnifierType.rhizosphere;
+                    final state = ref.read(simulationProvider);
+                    uiNotifier.setHoverInfo(
+                      MicroscopeInfoHelper.createHoverInfo(
+                        type: targetType,
+                        l: l10n,
+                        state: state,
+                        isPinned: true,
+                      ),
+                    );
+                  } else {
+                    uiNotifier.clearHoverInfo();
                   }
                 },
               ),
@@ -286,7 +271,24 @@ class FlutterQuickActions extends ConsumerWidget {
             ),
 
             ...[
-              _buildElementButton(ref, 'N', CPKStandards.colorN, '${l10n.nitrate} (N)', session.selectedElementSymbol == 'N'),
+              ...['N', 'P', 'K', 'Ca', 'Mg', 'S', 'C', 'O', 'Fe']
+                  .map((sym) => _buildElementButton(
+                        context: context,
+                        ref: ref,
+                        symbol: sym,
+                        isSelected: session.selectedElementSymbol == sym,
+                      )),
+              if (session.selectedElementSymbol != null &&
+                  session.selectedElementSymbol!.isNotEmpty &&
+                  !['N', 'P', 'K', 'Ca', 'Mg', 'S', 'C', 'O', 'Fe']
+                      .contains(session.selectedElementSymbol))
+                _buildElementButton(
+                  context: context,
+                  ref: ref,
+                  symbol: session.selectedElementSymbol!,
+                  isSelected: true,
+                ),
+              _buildPeriodicTableLauncher(context, l10n),
             ].map((btn) => Padding(padding: const EdgeInsets.symmetric(horizontal: 2.0), child: btn)),
           ],
         ),
@@ -351,11 +353,23 @@ class FlutterQuickActions extends ConsumerWidget {
     );
   }
 
-  Widget _buildElementButton(WidgetRef ref, String symbol, Color color, String label, bool isSelected) {
+  Widget _buildElementButton({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String symbol,
+    required bool isSelected,
+  }) {
+    final lang = Localizations.localeOf(context).languageCode;
+    final element = PeriodicTable.getBySymbol(symbol);
+    final color = element?.cpkColor ?? CPKStandards.getColor(symbol);
+    final name = element?.localizedName(lang) ?? symbol;
+    final role = element?.localizedAgronomicRole(lang) ?? '';
+    final tooltipText = role.isNotEmpty ? '$name ($symbol) - $role' : '$name ($symbol)';
+
     return Tooltip(
-      message: label,
+      message: tooltipText,
       preferBelow: false,
-      verticalOffset: 22,
+      verticalOffset: 24,
       waitDuration: const Duration(milliseconds: 150),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -386,7 +400,19 @@ class FlutterQuickActions extends ConsumerWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () {
-            ref.read(simulationSessionProvider.notifier).selectElement(isSelected ? '' : symbol);
+            final isCurrentlySelected =
+                ref.read(simulationSessionProvider).selectedElementSymbol == symbol;
+            final sessionNotifier = ref.read(simulationSessionProvider.notifier);
+            final uiNotifier = ref.read(uIStateProvider.notifier);
+            if (isCurrentlySelected) {
+              sessionNotifier.selectElement(null);
+              uiNotifier.setHoverInfo(null);
+            } else {
+              sessionNotifier.selectElement(symbol);
+              if (element != null) {
+                uiNotifier.setHoverInfo(element.toHoverInfo(lang, isPinned: true));
+              }
+            }
           },
           child: Container(
             width: 28,
@@ -397,8 +423,58 @@ class FlutterQuickActions extends ConsumerWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: symbol == 'H' && !isSelected ? Colors.white70 : (symbol == 'H' ? Colors.black87 : Colors.white),
+                color: (color.computeLuminance() > 0.5 && isSelected)
+                    ? Colors.black
+                    : Colors.white,
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodicTableLauncher(BuildContext context, AppLocalizations l10n) {
+    return Tooltip(
+      message: l10n.allElements,
+      preferBelow: false,
+      verticalOffset: 24,
+      waitDuration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white24,
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black45,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.12),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => ElementSelectionModal.show(context),
+          child: Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.grid_view_rounded,
+              size: 15,
+              color: Colors.white,
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/models/scenario.dart';
+import '../../core/periodic_table.dart';
 
 part 'ui_state_provider.g.dart';
 
@@ -72,7 +73,7 @@ class HoverInfo {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UIState extends _$UIState {
   @override
   HoverInfo? build() => null;
@@ -130,6 +131,14 @@ class UIState extends _$UIState {
         state = null;
       });
     }
+  }
+
+  /// Clear any active hover or pinned info unconditionally
+  void clearHoverInfo() {
+    _pendingHoverInfo = null;
+    Future.microtask(() {
+      state = null;
+    });
   }
 
   /// Convenience method for showing pinned info from map
@@ -212,5 +221,41 @@ class VisualLayoutModeState extends _$VisualLayoutModeState {
     state = (state == VisualLayoutMode.organic)
         ? VisualLayoutMode.schematic
         : VisualLayoutMode.organic;
+  }
+}
+
+extension ElementInfoHoverExtension on ElementInfo {
+  HoverInfo toHoverInfo(
+    String langCode, {
+    bool isPinned = true,
+    Offset? screenPosition,
+  }) {
+    final isFi = langCode.toLowerCase().startsWith('fi');
+    String formulaDisplay;
+    if (typicalCharge > 0) {
+      formulaDisplay = typicalCharge == 1 ? '$symbol⁺' : '$symbol⁺$typicalCharge';
+    } else if (typicalCharge < 0) {
+      formulaDisplay = typicalCharge == -1 ? '$symbol⁻' : '$symbol⁻${typicalCharge.abs()}';
+    } else {
+      formulaDisplay = symbol;
+    }
+
+    return HoverInfo(
+      title: localizedName(langCode),
+      description: localizedSoilRole(langCode),
+      elementSymbol: symbol,
+      accentColor: cpkColor,
+      isPinned: isPinned,
+      screenPosition: screenPosition,
+      type: TooltipType.inspector,
+      formula: formulaDisplay,
+      stats: {
+        isFi ? 'Rooli' : 'Agronomic Role': localizedAgronomicRole(langCode),
+        isFi ? 'Luokka' : 'Category': localizedCategory(langCode),
+        isFi ? 'Järjestysluku' : 'Atomic Number': '$atomicNumber',
+        isFi ? 'Atomimassa' : 'Atomic Mass': '$atomicMass u',
+        isFi ? 'Ryhmä / Jakso' : 'Group / Period': '$group / $period',
+      },
+    );
   }
 }

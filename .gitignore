@@ -44,3 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .aider*
+
+# Gradle & Android build outputs
+.gradle/
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/

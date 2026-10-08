@@ -21,16 +21,19 @@ class SimulationSessionState {
 
   SimulationSessionState copyWith({
     String? selectedLayerId,
+    bool clearLayerId = false,
     String? selectedElementSymbol,
+    bool clearElementSymbol = false,
     String? selectedInspectorType,
+    bool clearInspectorType = false,
     bool? isMicroscopeEnabled,
     bool? isScrubbing,
     double? viewTime,
   }) {
     return SimulationSessionState(
-      selectedLayerId: selectedLayerId ?? this.selectedLayerId,
-      selectedElementSymbol: selectedElementSymbol ?? this.selectedElementSymbol,
-      selectedInspectorType: selectedInspectorType ?? this.selectedInspectorType,
+      selectedLayerId: clearLayerId ? null : (selectedLayerId ?? this.selectedLayerId),
+      selectedElementSymbol: clearElementSymbol ? null : (selectedElementSymbol ?? this.selectedElementSymbol),
+      selectedInspectorType: clearInspectorType ? null : (selectedInspectorType ?? this.selectedInspectorType),
       isMicroscopeEnabled: isMicroscopeEnabled ?? this.isMicroscopeEnabled,
       isScrubbing: isScrubbing ?? this.isScrubbing,
       viewTime: viewTime ?? this.viewTime,
@@ -48,25 +51,42 @@ class SimulationSession extends _$SimulationSession {
 
   void selectLayer(String? layerId) {
     Future.microtask(() {
-      state = state.copyWith(selectedLayerId: layerId);
+      state = state.copyWith(
+        selectedLayerId: layerId,
+        clearLayerId: layerId == null,
+      );
     });
   }
 
   void selectElement(String? symbol) {
     Future.microtask(() {
-      state = state.copyWith(selectedElementSymbol: symbol);
+      state = state.copyWith(
+        selectedElementSymbol: symbol,
+        clearElementSymbol: symbol == null || symbol.isEmpty,
+      );
     });
   }
 
   void selectInspector(String? type) {
     Future.microtask(() {
-      state = state.copyWith(selectedInspectorType: type);
+      state = state.copyWith(
+        selectedInspectorType: type,
+        clearInspectorType: type == null,
+        isMicroscopeEnabled: type != null ? true : state.isMicroscopeEnabled,
+      );
     });
   }
 
   void toggleMicroscope() {
     Future.microtask(() {
-      state = state.copyWith(isMicroscopeEnabled: !state.isMicroscopeEnabled);
+      final willEnable = !state.isMicroscopeEnabled;
+      state = state.copyWith(
+        isMicroscopeEnabled: willEnable,
+        selectedInspectorType: willEnable
+            ? (state.selectedInspectorType ?? 'rhizosphere')
+            : null,
+        clearInspectorType: !willEnable,
+      );
     });
   }
 

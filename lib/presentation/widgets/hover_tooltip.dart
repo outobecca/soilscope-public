@@ -23,11 +23,16 @@ class HoverTooltip extends ConsumerWidget {
             ? CPKStandards.getColor(info.elementSymbol!)
             : theme.colorScheme.primary);
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxAllowedWidth = screenWidth - 32;
+    final targetWidth = isPinned ? 320.0 : 270.0;
+    final effectiveMaxWidth = targetWidth > maxAllowedWidth ? maxAllowedWidth : targetWidth;
+
     return Material(
       color: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.all(16),
-        constraints: BoxConstraints(maxWidth: isPinned ? 320 : 270),
+        constraints: BoxConstraints(maxWidth: effectiveMaxWidth),
         decoration: BoxDecoration(
           color: const Color(0xFF0F172A).withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(20),

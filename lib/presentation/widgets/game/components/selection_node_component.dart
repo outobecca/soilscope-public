@@ -208,8 +208,8 @@ class SelectionNodeComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Exact circular hit detection for precision
+    // Generous circular hit detection for touch and mouse precision (56px diameter)
     final center = size / 2;
-    return point.distanceToSquared(center) <= 22 * 22;
+    return point.distanceToSquared(center) <= 28 * 28;
   }
 }

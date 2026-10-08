@@ -6002,7 +6002,7 @@ abstract class AppLocalizations {
   /// No description provided for @apicalMeristem.
   ///
   /// In en, this message translates to:
-  /// **'APICAL MERISTEM'**
+  /// **'Apical Meristem'**
   String get apicalMeristem;
 
   /// No description provided for @meristemDesc.
@@ -6424,6 +6424,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CO₂ CONCENTRATION'**
   String get co2ConcentrationLabel;
+
+  /// No description provided for @methanogenicState.
+  ///
+  /// In en, this message translates to:
+  /// **'METHANOGENIC'**
+  String get methanogenicState;
+
+  /// No description provided for @sulfateReductionState.
+  ///
+  /// In en, this message translates to:
+  /// **'SULFATE RED.'**
+  String get sulfateReductionState;
+
+  /// No description provided for @ironReductionState.
+  ///
+  /// In en, this message translates to:
+  /// **'IRON RED.'**
+  String get ironReductionState;
+
+  /// No description provided for @denitrifyingState.
+  ///
+  /// In en, this message translates to:
+  /// **'DENITRIFYING'**
+  String get denitrifyingState;
+
+  /// No description provided for @aerobicStateUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'AEROBIC'**
+  String get aerobicStateUpper;
+
+  /// No description provided for @visualizedElements.
+  ///
+  /// In en, this message translates to:
+  /// **'VISUALIZED ELEMENTS'**
+  String get visualizedElements;
+
+  /// No description provided for @microscopeHotspots.
+  ///
+  /// In en, this message translates to:
+  /// **'MICROSCOPE HOTSPOTS'**
+  String get microscopeHotspots;
+
+  /// No description provided for @precipAbbr.
+  ///
+  /// In en, this message translates to:
+  /// **'PRECIP'**
+  String get precipAbbr;
+
+  /// No description provided for @selectElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Element'**
+  String get selectElement;
+
+  /// No description provided for @elementDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Details'**
+  String get elementDetails;
+
+  /// No description provided for @clearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Selection'**
+  String get clearSelection;
+
+  /// No description provided for @parSunlight.
+  ///
+  /// In en, this message translates to:
+  /// **'PAR (SUNLIGHT)'**
+  String get parSunlight;
+
+  /// No description provided for @gasEmissionsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'GAS EMISSIONS (N₂O/CH₄)'**
+  String get gasEmissionsKey;
+
+  /// No description provided for @activeGrowth.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE GROWTH'**
+  String get activeGrowth;
+
+  /// No description provided for @stressedState.
+  ///
+  /// In en, this message translates to:
+  /// **'STRESSED'**
+  String get stressedState;
+
+  /// No description provided for @rootTipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ROOT TIP'**
+  String get rootTipLabel;
+
+  /// No description provided for @activeCellDivision.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE CELL DIVISION'**
+  String get activeCellDivision;
+
+  /// No description provided for @primordia.
+  ///
+  /// In en, this message translates to:
+  /// **'PRIMORDIA'**
+  String get primordia;
+
+  /// No description provided for @stemCells.
+  ///
+  /// In en, this message translates to:
+  /// **'STEM CELLS'**
+  String get stemCells;
+
+  /// No description provided for @apicalDome.
+  ///
+  /// In en, this message translates to:
+  /// **'APICAL DOME'**
+  String get apicalDome;
+
+  /// No description provided for @nanovisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NANOVISION MICROSCOPE'**
+  String get nanovisionTitle;
+
+  /// No description provided for @magnification.
+  ///
+  /// In en, this message translates to:
+  /// **'Magnification'**
+  String get magnification;
+
+  /// No description provided for @moreInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'More Information'**
+  String get moreInfo;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

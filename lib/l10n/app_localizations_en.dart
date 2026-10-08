@@ -3019,7 +3019,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get riskLabel => 'Risk';
 
   @override
-  String get apicalMeristem => 'APICAL MERISTEM';
+  String get apicalMeristem => 'Apical Meristem';
 
   @override
   String get meristemDesc => 'Primary growth zone driven by continuous cell division.';
@@ -3232,4 +3232,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get co2ConcentrationLabel => 'CO₂ CONCENTRATION';
+
+  @override
+  String get methanogenicState => 'METHANOGENIC';
+
+  @override
+  String get sulfateReductionState => 'SULFATE RED.';
+
+  @override
+  String get ironReductionState => 'IRON RED.';
+
+  @override
+  String get denitrifyingState => 'DENITRIFYING';
+
+  @override
+  String get aerobicStateUpper => 'AEROBIC';
+
+  @override
+  String get visualizedElements => 'VISUALIZED ELEMENTS';
+
+  @override
+  String get microscopeHotspots => 'MICROSCOPE HOTSPOTS';
+
+  @override
+  String get precipAbbr => 'PRECIP';
+
+  @override
+  String get selectElement => 'Select Element';
+
+  @override
+  String get elementDetails => 'Element Details';
+
+  @override
+  String get clearSelection => 'Clear Selection';
+
+  @override
+  String get parSunlight => 'PAR (SUNLIGHT)';
+
+  @override
+  String get gasEmissionsKey => 'GAS EMISSIONS (N₂O/CH₄)';
+
+  @override
+  String get activeGrowth => 'ACTIVE GROWTH';
+
+  @override
+  String get stressedState => 'STRESSED';
+
+  @override
+  String get rootTipLabel => 'ROOT TIP';
+
+  @override
+  String get activeCellDivision => 'ACTIVE CELL DIVISION';
+
+  @override
+  String get primordia => 'PRIMORDIA';
+
+  @override
+  String get stemCells => 'STEM CELLS';
+
+  @override
+  String get apicalDome => 'APICAL DOME';
+
+  @override
+  String get nanovisionTitle => 'NANOVISION MICROSCOPE';
+
+  @override
+  String get magnification => 'Magnification';
+
+  @override
+  String get moreInfo => 'More Information';
 }

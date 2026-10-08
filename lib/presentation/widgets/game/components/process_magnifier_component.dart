@@ -330,7 +330,7 @@ class ProcessMagnifierComponent extends PositionComponent
     canvas.drawOval(Rect.fromCenter(center: center + Offset(-6 - stomaOpening/2, 85), width: 12, height: 18), guardPaint);
     canvas.drawOval(Rect.fromCenter(center: center + Offset(6 + stomaOpening/2, 85), width: 12, height: 18), guardPaint);
 
-    _drawValueLabel(canvas, center, '${(plant.turgorPressure * 100).toStringAsFixed(0)}% Turgor');
+    _drawValueLabel(canvas, center, '${(plant.turgorPressure * 100).toStringAsFixed(0)}% ${game.l10n.turgorLabel}');
   }
 
   void _drawStemDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
@@ -391,7 +391,7 @@ class ProcessMagnifierComponent extends PositionComponent
       canvas.restore();
     }
     
-    _drawValueLabel(canvas, center, '${(plant.waterUptake * 1000).toStringAsFixed(2)} µl/s Flux');
+    _drawValueLabel(canvas, center, '${(plant.waterUptake * 1000).toStringAsFixed(2)} µl/s ${game.l10n.fluxLabel}');
   }
 
   void _drawRootDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
@@ -463,7 +463,7 @@ class ProcessMagnifierComponent extends PositionComponent
       canvas.drawCircle(center + Offset(math.cos(a) * d, math.sin(a) * d), 2.5, (_flowPaint..color = flowColor));
     }
 
-    _drawValueLabel(canvas, center, 'ROOT TIP: ${health > 0.8 ? "ACTIVE GROWTH" : "STRESSED"}');
+    _drawValueLabel(canvas, center, '${game.l10n.rootTipLabel}: ${health > 0.8 ? game.l10n.activeGrowth : game.l10n.stressedState}');
   }
 
   void _drawRhizosphereDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
@@ -587,7 +587,7 @@ class ProcessMagnifierComponent extends PositionComponent
       canvas.drawCircle(center + Offset(dx, dy), 1.5, (_cellDotPaint..color = const Color(0xFF4D7C0F).withValues(alpha: _opacity * 0.8)));
     }
 
-    _drawValueLabel(canvas, center, 'ACTIVE CELL DIVISION');
+    _drawValueLabel(canvas, center, game.l10n.activeCellDivision.toUpperCase());
   }
 
   void _drawSoilStructureDetail(Canvas canvas, Offset center, double time, BiophysicalState state) {
@@ -718,7 +718,7 @@ class ProcessMagnifierComponent extends PositionComponent
       MagnifierType.rhizosphere => [{'text': l.root, 'pos': const Offset(-160, -80)}, {'text': l.exudates, 'pos': const Offset(130, -50)}, {'text': l.microbes, 'pos': const Offset(130, 20)}, {'text': l.nutrient, 'pos': const Offset(130, 80)}],
       MagnifierType.microbe => [{'text': l.flagella, 'pos': const Offset(-160, -20)}, {'text': l.cellWall, 'pos': const Offset(-160, 50)}, {'text': l.dna, 'pos': const Offset(130, -30)}, {'text': l.enzymes, 'pos': const Offset(130, 50)}],
       MagnifierType.soilStructure => [{'text': l.aggregates, 'pos': const Offset(-160, -40)}, {'text': l.sandGrains, 'pos': const Offset(130, -40)}, {'text': l.cracks, 'pos': const Offset(130, 40)}, {'text': l.porosity, 'pos': const Offset(-160, 40)}],
-      MagnifierType.apicalMeristem => [{'text': 'PRIMORDIA', 'pos': const Offset(-160, -60)}, {'text': 'STEM CELLS', 'pos': const Offset(130, -30)}, {'text': 'APICAL DOME', 'pos': const Offset(130, 40)}],
+      MagnifierType.apicalMeristem => [{'text': l.primordia.toUpperCase(), 'pos': const Offset(-160, -60)}, {'text': l.stemCells.toUpperCase(), 'pos': const Offset(130, -30)}, {'text': l.apicalDome.toUpperCase(), 'pos': const Offset(130, 40)}],
     };
 
     final textStyle = TextStyle(
@@ -774,7 +774,7 @@ class ProcessMagnifierComponent extends PositionComponent
       MagnifierType.rhizosphere => l.rhizosphere.toUpperCase(),
       MagnifierType.microbe => l.microbialCell.toUpperCase(),
       MagnifierType.soilStructure => l.soilStructure.toUpperCase(),
-      MagnifierType.apicalMeristem => "APICAL MERISTEM",
+      MagnifierType.apicalMeristem => l.apicalMeristem.toUpperCase(),
     };
     final titleTp = TextPainter(
       text: TextSpan(

@@ -40,17 +40,28 @@ SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simu
 
 ### 🎮 Interaktiivinen Hallintapaneeli & Digital Twin
 - **Eristetty HUD-kerros (Viewport)**: Kamerasta riippumaton kiinteä käyttöliittymäkerros. Yhdistetyt `LayerHUDPanel` -blokit oikeassa reunassa ja `SoilTextureTriangle` -säätimet vasemmassa reunassa dynaamisella pystysuuntaisella asettelulla.
-- **Nanovision (Mikroskooppi)**: Palautettu mikroskooppiominaisuus, joka mahdollistaa yksityiskohtaisen poikkileikkausnäkymän juurista, lehdistä ja mikrobeista.
-- **3-Kerroksinen UI**: visualisointi keskittyy biologisesti aktiiviseen pintamaahan (Top 50cm)
+- **Nanovision HUD (Mikroskooppi & Solutason Analyysi)**: Kelluva, moderni lasimorfinen ohjainpaneeli ja syventävä 2D-solutason tarkastelu 7 eri biofysikaaliselle kohteelle:
+  - **Lehti (400x)**: Ilmaraot, fotosynteesin reaktioyhtälö ($6\text{ CO}_2 + 6\text{ H}_2\text{O} \to \text{C}_6\text{H}_{12}\text{O}_6 + 6\text{ O}_2$), turgor-paine ja transpiraatio.
+  - **Varsi (200x)**: Johtosolukko (ksyleemi/floeemi) ja veden aksiaalivirtauksen kaava ($J_v = L_p \cdot (\Delta\Psi_p - \sigma\Delta\Psi_s)$).
+  - **Kärkimeristeemi (800x)**: Kasvupisteen solunjakautuminen ($d(\text{Cell})/dt = \mu \cdot N \cdot P$), lehdenaiheet (primordia) ja kantasolut.
+  - **Juuri (400x)**: Juuren poikkileikkaus, soluseinät, Casparyn vyö ja veden imugradientti.
+  - **Ritsosfääri (600x)**: Juurieritteet, mikrobiston aktivaatio ($C_{\text{exudate}} \to \text{Biomassa} + \text{Entsyymit}$), pH ja redokstila.
+  - **Mikrobi (1200x)**: Soluhengityksen yhtälö, lämpötilariippuvuus (Q10) ja ATP-metabolia.
+  - **Maan rakenne (250x)**: Murenarakenne, aggregaattien stabiliteetti, savilamellit ja huokoisuus.
+- **Interaktiivinen Alkuaineiden Valinta & Jaksollinen Järjestelmä**:
+  - Responsiivinen jaksollisen järjestelmän popup-modaali (`ElementSelectionModal`), joka toimii kaikilla näyttökoilla myös mobiilissa.
+  - Pikaohjaimet tärkeimmille ravinteille (N, P, K, Ca, Mg, S, C, O, Fe) CPK-standardivärein.
+  - Yhtenäinen opettavainen infokortti (`HoverTooltip`), joka esittää valitun alkuaineen biologisen roolin, ionimuodot ja puutosoireet.
+- **3-Kerroksinen UI**: visualisointi keskittyy biologisesti aktiiviseen pintamaahan (Top 50cm).
 - **Atmosfäärin ohjaus**: Kaasunvaihdon ($CO_2$, $H_2O$) dynaamiset animaatiot synkronoitu kunkin kasvin lehvästön sijaintiin.
 - **Tieteelliset kaaviot**: Mollier-diagrammi ja PAR-näkymä Control Panelissa tarkempaan atmosfäärin analyysiin.
-- **Puhdas visuaalisuus**: teksti on poistettu animaatiosta ja korvattu tieteellisillä symboleilla ja CPK-standardeilla
+- **Puhdas visuaalisuus**: teksti on poistettu animaatiosta ja korvattu tieteellisillä symboleilla ja CPK-standardeilla.
 - **Isolate-pohjainen fysiikka (30 FPS)**: tuhansien hiukkasten dynaaminen laskenta on optimoitu tasaiseen 30 FPS tahtiin.
-- **LOD (Level of Detail)**: hiukkasrenderöinti skaalautuu zoom-tason mukaan suorituskyvyn varmistamiseksi
+- **LOD (Level of Detail)**: hiukkasrenderöinti skaalautuu zoom-tason mukaan suorituskyvyn varmistamiseksi.
 - **Full-Screen Immersive Digital Twin**: Simulaatio täyttää nyt koko ruudun dynaamisesti säätyvällä horisontilla ja ilmakehällä, poistaen aiemman "laatikkomaisen" rajoitteen.
 - **Flutter Overlay Inspector**: Korkean fideliteetin bioväylätietojen tarkastelu on toteutettu dynaamisena Flutter-kerroksena, joka mahdollistaa lasimaisen (glassmorphism) käyttöliittymän ja paremman luettavuuden.
-- **SPAC-kausaalisuusnuolet**: Kaasunvaihdon ja veden virtauksen animaatiot sisältävät nyt suuntanuolet ja realiaikaisen voimakkuussäädön, jotka visualisoivat biovirtauksia.
-- **Natiivit Pikatoiminnot (Quick Actions)**: Korvattu aiempi Flame-pohjainen toimintapalkki dynaamisilla ja responsiivisilla Flutter-widgeteillä, jotka sisältävät täydelliset työkaluvihjeet (tooltips) ja paremman käytettävyyden.
+- **SPAC-kausaalisuusnuolet**: Kaasunvaihdon ja veden virtauksen animaatiot sisältävät nyt suuntanuolet ja reaaliaikaisen voimakkuussäädön, jotka visualisoivat biovirtauksia.
+- **Natiivit Pikatoiminnot (Quick Actions)**: Responsiiviset Flutter-ohjaimet kattavilla, esteettömillä kosketusalueilla ja oikein sijoittuvilla työkaluvihjeillä (tooltips).
 - **Typenkierron havainnointitila**: Mahdollistaa N-yhdisteiden ($NH_4^+$, $NO_3^-$) korostamisen ja muiden himmentämisen `FlutterQuickActions`-paneelista.
 - **Tilan tallennus & Toisto**: Integroitu `SharedPreferences`-pohjainen tilan tallennus ja aikajanan toistonäppäimet.
 - **Dynaaminen Skenaarioeditori (Scenario Builder)**: Luo omia skenaarioita säätämällä maalajeja, alkukosteutta ja viljelysuunnitelmia (lannoitus, kastelu, muokkaus).
@@ -66,14 +77,14 @@ SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simu
   - **Nernst-yhtälö (Redox):** $pe = pe_0 - \frac{1}{n} \cdot \log_{10}\frac{[red]}{[ox]}$
   - **Chemotaxis (Fickin laki):** $J = -D \cdot \frac{C_2 - C_1}{dx}$
   - **Cost-Benefit (Vähimmän energian periaate):** $A = \frac{C}{D + P}$
-- **Live-evaluointi** simulaatiodatalla
+- **Live-evaluointi** simulaatiodatalla.
 - **UX-parannukset**: Työkaluvihjeet (Tooltips) ja reaaliaikainen yksiköiden muotoilu solmuille.
 
 ### 🔬 Validointi & Diagnostiikka
-- **Tilastolliset metriikat**: RMSE, NSE, R², MAE
-- **Kytkentämatriisi** järjestelmädiagnostiikkaan
+- **Tilastolliset metriikat**: RMSE, NSE, R², MAE.
+- **Kytkentämatriisi** järjestelmädiagnostiikkaan.
 - **Science Validation Tab**: Reaaliaikainen tilastollisten mittareiden (RMSE, NSE, R²) seuranta käyttöliittymässä.
-- **50 yksikkötestiä** biofysiikan solvereiden varmistamiseen
+- **75 automatisoitua yksikkö- ja widget-testiä** biofysiikan solvereiden, mikroskooppiohjainten ja käyttöliittymän varmistamiseen.
 
 ---
 

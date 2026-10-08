@@ -19,7 +19,7 @@ final class UIStateProvider extends $NotifierProvider<UIState, HoverInfo?> {
         argument: null,
         retry: null,
         name: r'uIStateProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -40,7 +40,7 @@ final class UIStateProvider extends $NotifierProvider<UIState, HoverInfo?> {
   }
 }
 
-String _$uIStateHash() => r'ac9737fb0c1fdde12cf622aea64d4a47cb1b569a';
+String _$uIStateHash() => r'00ef9abc7953e6269a59926713142b9a4ef30ee7';
 
 abstract class _$UIState extends $Notifier<HoverInfo?> {
   HoverInfo? build();
