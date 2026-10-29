@@ -109,17 +109,19 @@ class AnimatedEarthwormComponent extends PositionComponent
       _pickNewTarget();
     }
 
-    // Crawl towards target if not curled
+    // Crawl towards target if not curled (slow down on hover/pin so user can easily inspect)
     final direction = (_target! - position).normalized();
-    position.add(direction * speed * dt * (1.0 - _curlProgress));
+    final effectiveSpeed = (isHovered || isPinned) ? speed * 0.15 : speed;
+    position.add(direction * effectiveSpeed * dt * (1.0 - _curlProgress));
 
     // Strict Soil Bound Clamp (Bounding Box)
     position.y = position.y.clamp(game.soilSurfaceY + 15.0, game.soilSurfaceY + game.soilColumnHeight - 15.0).toDouble();
     position.x = position.x.clamp(game.soilLeftX + 15.0, game.soilLeftX + SoilScopeGame.soilColumnWidth - 15.0).toDouble();
 
     // Add some subtle sinusoidal wiggle to the main path
+    final wiggleScale = (isHovered || isPinned) ? 0.2 : 1.0;
     position.add(
-      Vector2(-direction.y, direction.x) * math.sin(_time * 2.0) * 0.5 * (1.0 - _curlProgress),
+      Vector2(-direction.y, direction.x) * math.sin(_time * 2.0) * 0.5 * (1.0 - _curlProgress) * wiggleScale,
     );
 
     // Segment update (peristalsis effect + rotation towards movement)
@@ -157,6 +159,23 @@ class AnimatedEarthwormComponent extends PositionComponent
     final darkColor = const Color(0xFF8E7670);
 
     if (_segments.length < 3) return;
+
+    // Hover / selection highlight glow around earthworm
+    if (isHovered || isPinned) {
+      final glowPaint = Paint()
+        ..color = const Color(0xFFFBBF24).withValues(alpha: isPinned ? 0.45 : 0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 8.0
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+      for (int i = 0; i < _segments.length - 1; i++) {
+        canvas.drawLine(
+          _segments[i].toOffset(),
+          _segments[i + 1].toOffset(),
+          glowPaint,
+        );
+      }
+    }
 
     // Draw the body with simplified segments and thinner stroke
     for (int i = 0; i < _segments.length - 1; i++) {
@@ -201,9 +220,9 @@ class AnimatedEarthwormComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch target (80x48 px area centered on the worm)
+    // Generous touch & hover target (100x60 px area centered on the worm)
     final center = size / 2;
-    return (point.x - center.x).abs() <= 40 && (point.y - center.y).abs() <= 24;
+    return (point.x - center.x).abs() <= 50 && (point.y - center.y).abs() <= 30;
   }
 
   @override
@@ -237,6 +256,8 @@ class AnimatedEarthwormComponent extends PositionComponent
                   : '${(topLayer.organicCarbon * 100).toStringAsFixed(2)}%',
             },
             isPinned: pinned,
+            accentColor: const Color(0xFFD97706),
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

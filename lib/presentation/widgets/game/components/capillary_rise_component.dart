@@ -19,6 +19,7 @@ class CapillaryRiseComponent extends Component
   CapillaryRiseComponent() : super(priority: 11);
 
   bool _isPinned = false;
+  bool _isHovered = false;
 
   @override
   void render(Canvas canvas) {
@@ -37,9 +38,10 @@ class CapillaryRiseComponent extends Component
     if (topLayer.waterContent > 0.3) return;
 
     final currentOpacity = cycleOpacity;
+    final isHighlighted = _isPinned || _isHovered;
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2 / zoom
+      ..strokeWidth = (isHighlighted ? 3.2 : 2.2) / zoom
       ..strokeCap = StrokeCap.round;
 
     // Render rising capillary "fingers" from the bottom groundwater upwards
@@ -102,6 +104,11 @@ class CapillaryRiseComponent extends Component
 
   @override
   bool containsLocalPoint(Vector2 point) {
+    final state = game.simulationState;
+    if (state == null || state.profile.layers.isEmpty) return false;
+    // Capillary rise is only active when surface layer is dry
+    if (state.profile.layers.first.waterContent > 0.3) return false;
+
     final soilX = game.soilLeftX;
     final soilWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
@@ -111,11 +118,10 @@ class CapillaryRiseComponent extends Component
       return false;
     }
 
-    // Check proximity to any of the 10 fingers
+    // Check proximity to any of the 10 fingers (generous 22px tolerance)
     for (int i = 0; i < 10; i++) {
       final startX = soilX + 40 + i * (soilWidth / 11) + math.sin(i * 123) * 15;
-      // The fingers are vertical-ish, check if X is close
-      if ((point.x - startX).abs() < 12.0) {
+      if ((point.x - startX).abs() < 22.0) {
         return true;
       }
     }
@@ -131,12 +137,14 @@ class CapillaryRiseComponent extends Component
 
   @override
   void onHoverEnter() {
+    _isHovered = true;
     final current = game.ref.read(uIStateProvider);
     if (current == null || !current.isPinned) _showInfo(pinned: false);
   }
 
   @override
   void onHoverExit() {
+    _isHovered = false;
     if (!_isPinned) {
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
     }
@@ -144,6 +152,12 @@ class CapillaryRiseComponent extends Component
 
   void _showInfo({bool pinned = false}) {
     final l = game.l10n;
+    final soilX = game.soilLeftX;
+    final soilWidth = SoilScopeGame.soilColumnWidth;
+    final surfaceY = game.soilSurfaceY;
+    final soilHeight = game.soilColumnHeight;
+    final anchorWorld = Vector2(soilX + soilWidth / 2, surfaceY + soilHeight * 0.7);
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.capillaryRiseTitle.toUpperCase(),
@@ -154,6 +168,8 @@ class CapillaryRiseComponent extends Component
           l.sourceLabel: l.groundwaterLabel,
         },
         isPinned: pinned,
+        accentColor: const Color(0xFF38BDF8),
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
   }

@@ -157,5 +157,25 @@
       "targetValue": 70.0,
       "type": "structure"
     }
+  ],
+  "tutorialSteps": [
+    {
+      "triggerTime": 0.0,
+      "targetId": "soilStructure",
+      "title": "Havaitse kyntöantura ja tiivistymä",
+      "description": "Tarkastele maaprofiilin A2- ja B1-kerroksia: huokoisuus on pudonnut kriittiselle tasolle ja tiheys on koholla (1700-1800 kg/m³). Vesi ei pääse imeytymään syvemmälle, mikä hidastaa juurten kasvua."
+    },
+    {
+      "triggerTime": 15.0,
+      "targetId": "controls",
+      "title": "Maan kuohkeutus ja syväjuuriset kasvit",
+      "description": "Avaa oikea hallintapaneeli ja suorita mekaaninen muokkaus pintakerroksen avaamiseksi. Kokeile myös kylvää syväjuurista aluskasvia (sinimailanen tai öljyretikka), joka luo bioporeja."
+    },
+    {
+      "triggerTime": 60.0,
+      "targetId": "root",
+      "title": "Seuraa juuriston tunkeutumista",
+      "description": "Tarkkaile juuriston kasvua Nanovision- tai mikroskooppitilassa. Juuret erittävät orgaanisia happoja ja limaa (EPS), jotka murustavat maata ja parantavat vedenjohtavuutta."
+    }
   ]
 }

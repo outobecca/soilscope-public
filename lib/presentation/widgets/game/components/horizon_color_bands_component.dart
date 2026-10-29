@@ -62,7 +62,7 @@ class HorizonColorBandsComponent extends Component
       final startY = surfaceY + (h['start'] as double) * soilHeight;
       final endY = surfaceY + (h['end'] as double) * soilHeight;
       if (event.localPosition.y >= startY && event.localPosition.y <= endY) {
-        _showHorizonInfo(h['id'] as String, pinned: true);
+        _showHorizonInfo(h['id'] as String, pinned: true, targetY: (startY + endY) / 2);
         break;
       }
     }
@@ -71,12 +71,10 @@ class HorizonColorBandsComponent extends Component
 
   @override
   void onHoverEnter() {
-    // We don't have a specific Y here to identify horizon, so we'll let Tap handle it
-    // or we could add complex logic to find the horizon under cursor.
-    // For now, simplicity.
+    // Handled dynamically via tap or gutter indicators
   }
 
-  void _showHorizonInfo(String id, {bool pinned = false}) {
+  void _showHorizonInfo(String id, {bool pinned = false, double? targetY}) {
     final l = game.l10n;
     String title = "";
     String desc = "";
@@ -88,12 +86,19 @@ class HorizonColorBandsComponent extends Component
       case 'C2': title = l.parentMaterialHorizon; desc = l.parentMaterialDesc; break;
       case 'R': title = l.bedrockHorizon; desc = l.bedrockDesc; break;
     }
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      targetY ?? (surfaceY + soilHeight / 2),
+    );
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: title.toUpperCase(),
         description: desc,
         stats: {l.type: l.horizonLabel(id)},
         isPinned: pinned,
+        accentColor: const Color(0xFF8D6E63),
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
   }

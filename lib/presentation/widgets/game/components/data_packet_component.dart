@@ -134,7 +134,8 @@ class DataPacket extends PositionComponent
       return;
     }
 
-    _progress += (speed * dt) / _pathLength();
+    final damp = _isSelected ? 0.15 : 1.0;
+    _progress += (speed * dt * damp) / _pathLength();
     if (_progress >= 1.0) {
       removeFromParent();
       return;
@@ -165,6 +166,13 @@ class DataPacket extends PositionComponent
       currentLen += segmentLen;
     }
     return path.last;
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Generous touch and hover target (52px diameter) around the 16px packet
+    final center = size / 2;
+    return point.distanceTo(center) <= 26.0;
   }
 
   @override
@@ -204,6 +212,8 @@ class DataPacket extends PositionComponent
             stats: info['stats'] as Map<String, String>,
             isPinned: pinned,
             legends: info['legends'] as List<LegendItem>?,
+            accentColor: color,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

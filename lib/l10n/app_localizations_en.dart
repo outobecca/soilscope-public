@@ -1040,7 +1040,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upward => 'Upward';
 
   @override
-  String get intoRoot => 'Atmosphere → Soil';
+  String get intoRoot => 'Into Root';
 
   @override
   String get intoLeaves => 'Into Leaves';
@@ -1175,7 +1175,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topsoilHorizon => 'Topsoil';
 
   @override
-  String get subsoilHorizon => 'Soil → Atmosphere';
+  String get subsoilHorizon => 'Subsoil';
 
   @override
   String get parentMaterialHorizon => 'Parent Material';
@@ -3301,4 +3301,666 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moreInfo => 'More Information';
+
+  @override
+  String get rootExudation => 'Root Exudation';
+
+  @override
+  String get activity => 'Activity';
+
+  @override
+  String get decompositionDesc => 'Organic matter decomposition and microbial mineralization.';
+
+  @override
+  String get mineralization => 'Mineralization';
+
+  @override
+  String get tutorialTitle => 'SoilScope User Guide';
+
+  @override
+  String tutorialStepCounter(Object current, Object total) {
+    return 'STEP $current / $total';
+  }
+
+  @override
+  String get tutorialNext => 'Next';
+
+  @override
+  String get tutorialPrev => 'Previous';
+
+  @override
+  String get tutorialSkip => 'Skip Tour';
+
+  @override
+  String get tutorialFinish => 'Start Exploring';
+
+  @override
+  String get tutorialQuickGuide => 'Quick Guide';
+
+  @override
+  String get tutorialStartTour => 'Start Tutorial Tour';
+
+  @override
+  String get tutorialRestart => 'Restart Tutorial';
+
+  @override
+  String get tutorialHelpTooltip => 'Application guide and tutorial';
+
+  @override
+  String get tutorialWelcomeTitle => 'Welcome to SoilScope!';
+
+  @override
+  String get tutorialWelcomeDesc => 'SoilScope is a scientific Soil-Plant-Atmosphere Continuum (SPAC) simulator. In this tutorial we introduce the key controls and views so you can manage the simulation and interpret biophysical processes effortlessly.';
+
+  @override
+  String get tutorialWelcomePoint1 => 'Shoot growth directly reflects root water and nutrient uptake capacity.';
+
+  @override
+  String get tutorialWelcomePoint2 => 'Water and ions migrate through the soil according to physical laws (Richards equation).';
+
+  @override
+  String get tutorialWelcomePoint3 => 'Soil microbes and mycorrhizal fungi convert organic matter into plant-available nutrients.';
+
+  @override
+  String get tutorialCanvasTitle => 'Simulation Canvas & Inspection Points';
+
+  @override
+  String get tutorialCanvasDesc => 'In the main view you observe a 2D physical world: shoot and root development, soil strata, and dynamic nutrient particle fluxes.';
+
+  @override
+  String get tutorialCanvasPoint1 => 'Click on glowing hotspots on soil and plant to launch microscopic cross-sectional analysis.';
+
+  @override
+  String get tutorialCanvasPoint2 => 'Hover over any component to inspect real-time scientific telemetry and chemical equations.';
+
+  @override
+  String get tutorialDashboardTitle => 'HUD Dashboard & Soil Profile';
+
+  @override
+  String get tutorialDashboardDesc => 'The left dashboard allows deep biophysical and biochemical inspection across all soil layers.';
+
+  @override
+  String get tutorialDashboardPoint1 => 'Monitor layer-by-layer moisture (θ), temperature, pH, redox potential, and electrical conductivity.';
+
+  @override
+  String get tutorialDashboardPoint2 => 'Soil Texture Triangle illustrates relative proportions of clay, silt, and sand.';
+
+  @override
+  String get tutorialDashboardPoint3 => 'Track MAOM and POM organic carbon pools and microbial biomass dynamics.';
+
+  @override
+  String get tutorialControlsTitle => 'Control Panel & Interventions';
+
+  @override
+  String get tutorialControlsDesc => 'Use the right control panel to adjust atmospheric drivers and apply agricultural management.';
+
+  @override
+  String get tutorialControlsPoint1 => 'Adjust weather: photosynthetic solar radiation (PAR), precipitation, air temperature, and CO₂.';
+
+  @override
+  String get tutorialControlsPoint2 => 'Interventions: irrigation, mineral or organic fertilization, cover cropping, and soil tillage.';
+
+  @override
+  String get tutorialControlsPoint3 => 'Note: Excessive tillage fractures mycorrhizal hyphal networks and over-fertilizing causes nitrate leaching.';
+
+  @override
+  String get tutorialTimelineTitle => 'Timeline & Simulation Speed';
+
+  @override
+  String get tutorialTimelineDesc => 'Control time progression and observe soil reactions across both diurnal and seasonal cycles.';
+
+  @override
+  String get tutorialTimelinePoint1 => 'Pause simulation at any moment to thoroughly inspect soil profile state.';
+
+  @override
+  String get tutorialTimelinePoint2 => 'Adjust simulation speed (1x, 2x, 5x, 10x) to accelerate plant growth and percolation.';
+
+  @override
+  String get tutorialTimelinePoint3 => 'Scrub the timeline to review earlier days and the impact of weather events.';
+
+  @override
+  String get tutorialObservationTitle => 'Observation Modes & Nanovision';
+
+  @override
+  String get tutorialObservationDesc => 'Use bottom quick buttons to isolate nutrient cycles and toggle cellular microscopy.';
+
+  @override
+  String get tutorialObservationPoint1 => 'Nitrogen cycle: Highlight ammonium and nitrate ions along with denitrification gas emissions.';
+
+  @override
+  String get tutorialObservationPoint2 => 'Nanovision: Inspect stomatal conductance, root apical meristems, and soil pores at up to 1200x magnification.';
+
+  @override
+  String get tutorialObservationPoint3 => 'Toggle dynamic flow trajectory vectors as needed.';
+
+  @override
+  String get tutorialGamificationTitle => 'Sustainability & Objectives';
+
+  @override
+  String get tutorialGamificationDesc => 'The top bar measures ecological sustainability and tracks scenario challenges.';
+
+  @override
+  String get tutorialGamificationPoint1 => 'Monitor soil health index, water saturation, microbial flux, and plant vitality.';
+
+  @override
+  String get tutorialGamificationPoint2 => 'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) to gain score.';
+
+  @override
+  String get tutorialGamificationPoint3 => 'Level up by managing the agroecosystem according to sound ecophysiological principles.';
+
+  @override
+  String get quickGuideTabUI => 'User Interface';
+
+  @override
+  String get quickGuideTabScience => 'SPAC Science';
+
+  @override
+  String get quickGuideTabTips => 'Practical Tips';
+
+  @override
+  String get quickGuideTitle => 'SoilScope Quick Guide';
+
+  @override
+  String get stepCompactedClay1Title => 'Identify Plow Pan & Compaction';
+
+  @override
+  String get stepCompactedClay1Desc => 'Observe soil layers A2 and B1: porosity is critically low and bulk density is elevated (1700-1800 kg/m³). Infiltration is blocked, inhibiting root elongation.';
+
+  @override
+  String get stepCompactedClay2Title => 'Soil Loosening & Deep-Rooted Plants';
+
+  @override
+  String get stepCompactedClay2Desc => 'Open the right control panel to perform mechanical aeration or subsoiling. Introduce deep-rooted cover crops to forge biopores.';
+
+  @override
+  String get stepCompactedClay3Title => 'Monitor Root Penetration';
+
+  @override
+  String get stepCompactedClay3Desc => 'Inspect root growth in Nanovision mode. Roots exude organic acids and mucilage (EPS) to stabilize aggregates and enhance hydraulic conductivity.';
+
+  @override
+  String get stepNitrateLeach1Title => 'Critical Nitrate Leaching Risk';
+
+  @override
+  String get stepNitrateLeach1Desc => 'Topsoil nitrate (NO₃⁻) is dangerously elevated (100 mg/kg) ahead of heavy rainfall. Because nitrate is a mobile anion, it leaches downward with percolating gravitational water.';
+
+  @override
+  String get stepNitrateLeach2Title => 'Sow Catch Crops & Regulate Hydrology';
+
+  @override
+  String get stepNitrateLeach2Desc => 'Open control panel. Cease fertilization and deploy fast-growing catch crops whose transpiration and uptake sequester free nitrate into biomass.';
+
+  @override
+  String get stepNitrateLeach3Title => 'Canopy Nutrient Assimilation';
+
+  @override
+  String get stepNitrateLeach3Desc => 'Observe leaf photosynthesis and stomatal conductance. Dense transpiration flux pulls soil solution upward, curtailing deep leaching.';
+
+  @override
+  String get stepNitrogenLock1Title => 'Microbial Nitrogen Immobilization (High C/N)';
+
+  @override
+  String get stepNitrogenLock1Desc => 'High-carbon straw residue (elevated C:N ratio) stimulates rapid microbial growth, assimilating available mineral nitrogen into biomass and starving the cash crop.';
+
+  @override
+  String get stepNitrogenLock2Title => 'Nitrogen Amendment or Legumes';
+
+  @override
+  String get stepNitrogenLock2Desc => 'Overcome nitrogen immobilization via targeted mineral N application or by intercropping legumes that fix atmospheric N₂ symbiotically.';
+
+  @override
+  String get stepNitrogenLock3Title => 'Observe Remineralization Phase';
+
+  @override
+  String get stepNitrogenLock3Desc => 'As microbial biomass turns over, net mineralization resumes. Ammonium and nitrate release into solution, while mineral-associated organic matter (MAOM) stabilizes long-term.';
+
+  @override
+  String get stepWaterlogging1Title => 'Waterlogging & Severe Anoxia';
+
+  @override
+  String get stepWaterlogging1Desc => 'Water table has reached saturation. Gaseous diffusion ceases, soil dissolved O₂ is consumed, and redox potential (Eh) plunges into reducing anaerobic conditions.';
+
+  @override
+  String get stepWaterlogging2Title => 'Root Hypoxia & Wilting';
+
+  @override
+  String get stepWaterlogging2Desc => 'Plant roots require O₂ for ATP-driven active nutrient and water uptake. Without aeration, stomata close, and the crop suffers paradoxical wilt despite water excess.';
+
+  @override
+  String get stepWaterlogging3Title => 'Improve Drainage & Transpiration';
+
+  @override
+  String get stepWaterlogging3Desc => 'Manage water balance: drain excess surface water, stop irrigation, and promote flood-tolerant species featuring internal aerenchyma tissue.';
+
+  @override
+  String get waterloggingTitle => 'Waterlogging & Flooding Challenge';
+
+  @override
+  String get waterloggingDesc => 'Manage root hypoxia and nutrient dynamics in saturated soil.';
+
+  @override
+  String get objectiveMaintainTurgor => 'Maintain Plant Turgor';
+
+  @override
+  String get objectiveRestoreAerobic => 'Restore Aerobic Conditions';
+
+  @override
+  String get fluxAtmosphereToSoil => 'Atmosphere → Soil';
+
+  @override
+  String get fluxSoilToAtmosphere => 'Soil → Atmosphere';
+
+  @override
+  String get tutorialActionOpenDashboard => 'Open Dashboard';
+
+  @override
+  String get tutorialActionOpenControls => 'Open Control Panel';
+
+  @override
+  String get tutorialActionTryPlayback => 'Try Playback';
+
+  @override
+  String get tutorialActionOpenNanovision => 'Open Nanovision';
+
+  @override
+  String get missionBriefingTitle => 'MISSION BRIEFING';
+
+  @override
+  String get missionScenarioBadge => 'SCENARIO';
+
+  @override
+  String get missionSubtitle => 'Mission description and scientific background';
+
+  @override
+  String get missionChallengeTitle => 'Challenge Description';
+
+  @override
+  String get missionRecommendationsTitle => 'Recommended Actions';
+
+  @override
+  String get missionScienceTitle => 'SPAC Biophysics Background';
+
+  @override
+  String get missionObjectivesTitle => 'Objectives';
+
+  @override
+  String get missionStatusAchieved => 'ACHIEVED';
+
+  @override
+  String get missionStatusPending => 'IN PROGRESS';
+
+  @override
+  String get missionOpenQuickGuide => 'Open Quick Guide';
+
+  @override
+  String get missionStartActions => 'Start Actions';
+
+  @override
+  String get missionNoActiveScenario => 'No active scenario';
+
+  @override
+  String get briefingCompactionProblem => 'Soil structure is severely compacted: bulk density has climbed up to 1700 kg/m³ and porosity has dropped below 30%. Water cannot infiltrate deeper layers, forming surface puddles. Plant roots cannot penetrate the hard clay pan due to excessive mechanical resistance.';
+
+  @override
+  String get briefingCompactionStep1 => 'Open the right control panel and perform topsoil tillage to loosen the compaction layer.';
+
+  @override
+  String get briefingCompactionStep2 => 'Sow a deep-rooted cover crop whose taproots drill biopores into the subsoil.';
+
+  @override
+  String get briefingCompactionStep3 => 'Avoid heavy downpours: keep precipitation moderate so enough soil air remains and surface slaking is prevented.';
+
+  @override
+  String get briefingCompactionStep4 => 'Monitor saturated hydraulic conductivity (kSat) and porosity development in the left HUD dashboard.';
+
+  @override
+  String get briefingCompactionScience => 'According to the van Genuchten model and 1D Richards equation, hydraulic conductivity drops by orders of magnitude in compacted soil. Root elongation stops when soil mechanical shear strength exceeds root cell turgor.';
+
+  @override
+  String get briefingLeachingProblem => 'Coarse sandy soil (70% sand) contains an excessive pool of free nitrate (100 mg/kg). Because sand\'s cation exchange capacity (CEC) and water retention capacity are very low, heavy rains flush nitrate directly into the groundwater layer, causing nutrient waste and eutrophication.';
+
+  @override
+  String get briefingLeachingStep1 => 'Establish rapid biomass crops to assimilate free nitrate before major rainfall.';
+
+  @override
+  String get briefingLeachingStep2 => 'Keep rainfall low or disable Auto Weather to prevent massive percolation.';
+
+  @override
+  String get briefingLeachingStep3 => 'Incorporate organic matter to elevate microbial carbon, triggering nitrate immobilization into microbial biomass.';
+
+  @override
+  String get briefingLeachingStep4 => 'Enable Nitrogen Cycle from the bottom bar to inspect nitrate ion trajectory vectors.';
+
+  @override
+  String get briefingLeachingScience => 'Nitrate (NO₃⁻) is an anion not bound electrostatically by clay minerals or humus. Transport follows the advection-dispersion equation along with gravitational water flow.';
+
+  @override
+  String get briefingLockProblem => 'A high volume of carbon-rich straw was added to the soil, driving the C/N ratio above the critical threshold of 25. Heterotrophic microbes consume all available mineral nitrogen (ammonium and nitrate) to decompose carbon, starving the crop of essential nitrogen.';
+
+  @override
+  String get briefingLockStep1 => 'Apply mineral nitrogen fertilizer from the control panel to supply readily available N to crops.';
+
+  @override
+  String get briefingLockStep2 => 'Raise temperature or optimize moisture to accelerate microbial respiration and decomposition turnover.';
+
+  @override
+  String get briefingLockStep3 => 'Open Nanovision microscope to monitor stomatal recovery and photosystem revival.';
+
+  @override
+  String get briefingLockStep4 => 'Track the C/N ratio in the HUD dashboard and watch for nitrogen release through microbial turnover (necromass).';
+
+  @override
+  String get briefingLockScience => 'Microbial biomass maintains a stoichiometric C/N ratio (~8:1). With surplus available carbon, microbes immobilize all inorganic nitrogen. Remineralization triggers once organic residue C/N falls below 20.';
+
+  @override
+  String get briefingWaterloggingProblem => 'Soil is completely water-saturated and pore air space is exhausted. Because gas diffusion in water is 10,000 times slower than in air, soil dissolved oxygen depletes within hours. Redox potential plunges into negative values (-150 mV), initiating denitrification and methanogenesis.';
+
+  @override
+  String get briefingWaterloggingStep1 => 'Immediately cease all irrigation and ensure rainfall is set to 0 mm.';
+
+  @override
+  String get briefingWaterloggingStep2 => 'Increase solar radiation (PAR) and air temperature to boost soil water loss via evapotranspiration.';
+
+  @override
+  String get briefingWaterloggingStep3 => 'Track gas emissions (N₂O and CH₄) in the HUD dashboard and watch redox potential climb back toward aerobic range (> 300 mV).';
+
+  @override
+  String get briefingWaterloggingStep4 => 'Inspect root system: avoid root rot and cell death induced by prolonged anoxia.';
+
+  @override
+  String get briefingWaterloggingScience => 'The thermodynamic redox ladder (Nernst equation) indicates that after O₂ depletion, electrons flow to nitrate (NO₃⁻ → N₂O/N₂), manganese and iron oxides, and ultimately to methane (CH₄).';
+
+  @override
+  String get briefingDefaultProblem => 'Balance soil physics and biochemistry to sustain vigorous crop growth.';
+
+  @override
+  String get briefingDefaultStep1 => 'Inspect soil profile state from the left HUD dashboard.';
+
+  @override
+  String get briefingDefaultStep2 => 'Adjust environmental drivers and management in the right control panel.';
+
+  @override
+  String get briefingDefaultStep3 => 'Track sustainability metrics and fulfill scenario objectives.';
+
+  @override
+  String get briefingDefaultScience => 'The SPAC continuum links soil pore physics, plant physiology, and atmospheric vapor pressure deficit.';
+
+  @override
+  String get quickGuideTabBiochemistry => 'Biochemistry';
+
+  @override
+  String get quickGuideTabGlossary => 'Glossary';
+
+  @override
+  String get quickGuideSubtitle => 'SPAC simulator features and scientific foundation';
+
+  @override
+  String get quickGuideClose => 'Close Guide';
+
+  @override
+  String get quickGuideCardUiDashboardTitle => 'HUD Dashboard (Left Sidebar)';
+
+  @override
+  String get quickGuideCardUiDashboardBody => 'Displays layer-by-layer soil metrics: volumetric water content (θ), temperature, pH, electrical conductivity (EC), and redox potential (Eh). Also includes the Soil Texture Triangle.';
+
+  @override
+  String get quickGuideCardUiControlsTitle => 'Control Panel & Interventions (Right Sidebar)';
+
+  @override
+  String get quickGuideCardUiControlsBody => 'Adjust atmospheric conditions (rain, PAR solar radiation, temperature, CO₂) and management practices like irrigation, N and P fertilization, cover crops, and tillage.';
+
+  @override
+  String get quickGuideCardUiTimelineTitle => 'Timeline & Speed Control (Bottom)';
+
+  @override
+  String get quickGuideCardUiTimelineBody => 'Pause simulation to inspect soil profile, adjust playback speed (1x, 2x, 5x, 10x), or scrub timeline backwards to review crop response.';
+
+  @override
+  String get quickGuideCardUiNanovisionTitle => 'Nanovision Microscope (Bottom / Hotspots)';
+
+  @override
+  String get quickGuideCardUiNanovisionBody => 'Explore cellular biophysics: stomata (400x), stem xylem (200x), apical meristems (800x), root cells (400x), rhizosphere (600x), and microbes (1200x).';
+
+  @override
+  String get quickGuideCardSciSpacTitle => 'SPAC — Soil-Plant-Atmosphere Continuum';
+
+  @override
+  String get quickGuideCardSciSpacBody => 'Water moves down a gradient of decreasing chemical water potential (ψ) from wet soil (ψ ≈ -0.03 MPa) to roots, up xylem conduits, and evaporates through stomata into atmosphere (ψ ≈ -100 MPa).';
+
+  @override
+  String get quickGuideCardSciHydraulicsTitle => 'Richards Equation & van Genuchten';
+
+  @override
+  String get quickGuideCardSciHydraulicsBody => 'Governs unsaturated fluid flow through porous soil matrix combining gravitational potential and matric suction pressure.';
+
+  @override
+  String get quickGuideCardSciBeerLambertTitle => 'Canopy Radiation Absorption (Beer-Lambert)';
+
+  @override
+  String get quickGuideCardSciBeerLambertBody => 'Solar PAR attenuates exponentially through plant canopy according to Leaf Area Index (LAI) and extinction coefficient k.';
+
+  @override
+  String get quickGuideCardBioSomTitle => 'Carbon Dynamics: MAOM vs POM';
+
+  @override
+  String get quickGuideCardBioSomBody => 'MAOM (Mineral-Associated Organic Matter) is stable humus protected on clay surfaces lasting centuries. POM (Particulate Organic Matter) is coarse, rapidly cycling plant residue.';
+
+  @override
+  String get quickGuideCardBioCnTitle => 'C/N Ratio & Nitrogen Lock';
+
+  @override
+  String get quickGuideCardBioCnBody => 'When C/N > 25 (e.g. straw), microbes immobilize mineral nitrogen. When C/N < 20 (e.g. legumes or manure), net mineralization releases nitrogen to plants.';
+
+  @override
+  String get quickGuideCardBioRedoxTitle => 'Redox Potential (Eh) & Electron Acceptors';
+
+  @override
+  String get quickGuideCardBioRedoxBody => 'Aerobic respiration operates above +300 mV using O₂. When waterlogged, microbes reduce NO₃⁻, Fe/Mn oxides, SO₄²⁻, and finally produce methane at -150 mV.';
+
+  @override
+  String get quickGuideCardTipWateringTitle => 'Optimize Irrigation Timing';
+
+  @override
+  String get quickGuideCardTipWateringBody => 'Avoid over-irrigation in heavy clay to prevent structural slaking and root rot. Maintain moisture between field capacity and wilting point.';
+
+  @override
+  String get quickGuideCardTipFertilizationTitle => 'Split Fertilizer Applications';
+
+  @override
+  String get quickGuideCardTipFertilizationBody => 'Apply nitrogen in synchronization with crop uptake demands to minimize nitrate leaching during rainy periods.';
+
+  @override
+  String get quickGuideCardTipCoverCropsTitle => 'Utilize Cover Crops';
+
+  @override
+  String get quickGuideCardTipCoverCropsBody => 'Cover crops scavenge residual nitrates, generate subsoil biopores, and fuel the soil microbial carbon bank.';
+
+  @override
+  String get quickGuideCardGlosLaiTitle => 'LAI — Leaf Area Index';
+
+  @override
+  String get quickGuideCardGlosLaiBody => 'Ratio of one-sided green leaf area per unit ground surface area (m²/m²).';
+
+  @override
+  String get quickGuideCardGlosVpdTitle => 'VPD — Vapor Pressure Deficit (kPa)';
+
+  @override
+  String get quickGuideCardGlosVpdBody => 'Difference between saturated and actual vapor pressure in the air. Drives atmospheric evaporative suction.';
+
+  @override
+  String get quickGuideCardGlosCecTitle => 'CEC — Cation Exchange Capacity';
+
+  @override
+  String get quickGuideCardGlosCecBody => 'Total capacity of a soil to hold exchangeable cations (Ca²⁺, Mg²⁺, K⁺, NH₄⁺) on negatively charged clay and humus.';
+
+  @override
+  String get quickGuideCardGlosParTitle => 'PAR — Photosynthetically Active Radiation';
+
+  @override
+  String get quickGuideCardGlosParBody => 'Solar spectral waveband from 400 to 700 nm utilized by plant chlorophyll for photosynthesis.';
+
+  @override
+  String get quickGuideCardGlosStomataTitle => 'Stomatal Conductance (gs)';
+
+  @override
+  String get quickGuideCardGlosStomataBody => 'Rate of CO₂ entry and water vapor exit through stomata, tightly governed by leaf turgor and abscisic acid.';
+
+  @override
+  String get quickGuideCardGlosEcTitle => 'EC — Electrical Conductivity (dS/m)';
+
+  @override
+  String get quickGuideCardGlosEcBody => 'Measure of soluble dissolved salts and ions in soil solution.';
+
+  @override
+  String get briefingButton => 'BRIEFING';
+
+  @override
+  String get quickGuideUiDashboardTitle => 'HUD Dashboard (Left Sidebar)';
+
+  @override
+  String get quickGuideUiDashboardBody => 'Access layer-specific soil metrics: water content (θ), temperature, pH, electrical conductivity (EC), and redox potential (Eh). Also includes the Soil Texture Triangle.';
+
+  @override
+  String get quickGuideUiControlsTitle => 'Control Panel & Interventions (Right Sidebar)';
+
+  @override
+  String get quickGuideUiControlsBody => 'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) and agricultural management such as irrigation, N and P fertilization, cover crops, and soil tillage.';
+
+  @override
+  String get quickGuideUiTimelineTitle => 'Timeline & Speed Control (Bottom)';
+
+  @override
+  String get quickGuideUiTimelineBody => 'Pause simulation to inspect soil profile, adjust playback speed (1x, 2x, 5x, 10x), or scrub timeline backwards to review development caused by interventions.';
+
+  @override
+  String get quickGuideUiNanovisionTitle => 'Nanovision Microscope (Bottom / Hotspots)';
+
+  @override
+  String get quickGuideUiNanovisionBody => 'Delve into cellular biophysics: observe leaf stomata (400x), stem xylem (200x), apical meristems (800x), root cellular structures (400x), rhizosphere (600x), and microbes (1200x).';
+
+  @override
+  String get quickGuideSciRichardsTitle => '1D Richards Equation & Capillarity';
+
+  @override
+  String get quickGuideSciRichardsBody => 'Soil water flow is driven by pressure head differences and matric water potential (van Genuchten model). Water percolates downward by gravity and matric suction, while capillary forces pull water toward the evaporation surface in dry soil.';
+
+  @override
+  String get quickGuideSciPhotosynthesisTitle => 'FvCB Photosynthesis & Tardieu Stomatal Model';
+
+  @override
+  String get quickGuideSciPhotosynthesisBody => 'Crop photosynthesis is driven by solar radiation (PAR), intercellular CO₂, and water availability. As soil dries, the plant closes stomata to prevent dehydration, which curtails carbon assimilation.';
+
+  @override
+  String get quickGuideSciSpacTitle => 'SPAC Continuum (Soil-Plant-Atmosphere Continuum)';
+
+  @override
+  String get quickGuideSciSpacBody => 'Water forms an unbroken liquid column from soil pores through root endodermis and xylem vessels to leaf stomata and into the atmosphere, propelled along a descending water potential gradient.';
+
+  @override
+  String get quickGuideBioNitrogenTitle => 'Nitrogen Cycle: Mineralization & Nitrification';
+
+  @override
+  String get quickGuideBioNitrogenBody => 'Organic nitrogen is mineralized by microbes into ammonium (NH₄⁺), which is oxidized into nitrate (NO₃⁻). Nitrate is readily absorbed by roots but leaches easily into groundwater during heavy precipitation.';
+
+  @override
+  String get quickGuideBioRedoxTitle => 'Anaerobiosis, Redox State & Denitrification';
+
+  @override
+  String get quickGuideBioRedoxBody => 'When soil is saturated, dissolved oxygen plunges. Microbes switch electron acceptors to nitrate and alternate oxides (TEA Redox ladder), generating nitrous oxide (N₂O) and methane (CH₄).';
+
+  @override
+  String get quickGuideBioCarbonTitle => 'Carbon Pump & Mycorrhizae (POM / MAOM)';
+
+  @override
+  String get quickGuideBioCarbonBody => 'Root exudates stimulate microbial activity (Priming Effect). Mycorrhizal fungi exchange plant carbon for soil phosphorus and nitrogen. Microbial necromass binds to mineral surfaces as stable carbon (MAOM).';
+
+  @override
+  String get quickGuideTipCompactionTitle => 'Compacted Clay Management';
+
+  @override
+  String get quickGuideTipCompactionBody => 'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter.';
+
+  @override
+  String get quickGuideTipLeachingTitle => 'Nitrate Leaching Prevention';
+
+  @override
+  String get quickGuideTipLeachingBody => 'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues and deploy cover or catch crops to capture excess nitrate in the root zone.';
+
+  @override
+  String get quickGuideTipLogicLabTitle => 'Logic Lab & Scientific Equations';
+
+  @override
+  String get quickGuideTipLogicLabBody => 'Test biophysical equations and parameter sensitivities by opening the Logic Lab menu from the top bar. Inspect Michaelis-Menten kinetics and the Nernst equation live!';
+
+  @override
+  String get quickGuideGlosThetaTitle => 'θ — Volumetric Water Content (m³/m³)';
+
+  @override
+  String get quickGuideGlosThetaBody => 'Soil water volume relative to total soil volume. 0.05 = permanent wilting point, 0.25 - 0.35 = optimal field capacity, > 0.45 = near-saturation or hypoxic flood state.';
+
+  @override
+  String get quickGuideGlosKsatTitle => 'kSat — Saturated Hydraulic Conductivity (m/s)';
+
+  @override
+  String get quickGuideGlosKsatBody => 'Capacity of soil to transmit water under saturated conditions. High in coarse sand (10⁻⁴ m/s = fast drainage), very low in compacted clay (10⁻⁷ - 10⁻⁹ m/s = surface water ponding).';
+
+  @override
+  String get quickGuideGlosEhTitle => 'Eh — Redox Potential (mV)';
+
+  @override
+  String get quickGuideGlosEhBody => 'Quantifies oxidation-reduction status. Aerobic soil (+400...+600 mV) sustains healthy root respiration and nitrification. Anaerobic soil (< +200 mV) triggers denitrification, iron reduction, and methanogenesis (-150 mV).';
+
+  @override
+  String get quickGuideGlosSomTitle => 'MAOM vs. POM — Organic Carbon Fractions';
+
+  @override
+  String get quickGuideGlosSomBody => 'MAOM (Mineral-Associated Organic Matter) is mineral-stabilized microbial carbon persisting for decades. POM (Particulate Organic Matter) is coarse, rapidly cycling plant particulate matter.';
+
+  @override
+  String get quickGuideGlosCnTitle => 'C/N Ratio — Carbon to Nitrogen Stoichiometry';
+
+  @override
+  String get quickGuideGlosCnBody => 'Determines balance between N mineralization and immobilization. When C/N > 25 (e.g. straw), microbes lock up all mineral N. When C/N < 20 (e.g. legumes or manure), plant-available nitrogen is released.';
+
+  @override
+  String get quickGuideGlosParTitle => 'PAR — Photosynthetically Active Radiation (µmol m⁻² s⁻¹)';
+
+  @override
+  String get quickGuideGlosParBody => 'Spectral waveband 400–700 nm absorbed by chlorophyll for carbon fixation (FvCB model). Direct midsummer sun reaches ~1500–2000 µmol m⁻² s⁻¹.';
+
+  @override
+  String get quickGuideGlosStomataTitle => 'Stomatal Conductance & Turgor';
+
+  @override
+  String get quickGuideGlosStomataBody => 'Stomatal pore conductance controls transpiration and CO₂ uptake. Under water deficit, cell turgor pressure drops and stomata close to prevent desiccation.';
+
+  @override
+  String get quickGuideGlosRichardsTitle => 'Richards Equation & van Genuchten';
+
+  @override
+  String get quickGuideGlosRichardsBody => 'Nonlinear partial differential equation describing water movement in unsaturated porous media, linking gravitational flow and matric suction (van Genuchten curve).';
+
+  @override
+  String get meterSoilHealth => 'SOIL HEALTH';
+
+  @override
+  String get meterMoisture => 'MOISTURE';
+
+  @override
+  String get meterMicrobes => 'MICROBES';
+
+  @override
+  String get meterPlantVitality => 'PLANT VITALITY';
+
+  @override
+  String get meterSoilHealthShort => 'SOIL';
+
+  @override
+  String get meterMoistureShort => 'WATER';
+
+  @override
+  String get meterMicrobesShort => 'MICR';
+
+  @override
+  String get meterPlantVitalityShort => 'PLANT';
 }

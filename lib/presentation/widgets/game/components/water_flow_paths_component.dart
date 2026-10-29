@@ -211,6 +211,34 @@ class WaterFlowPathsComponent extends Component
   }
 
   @override
+  bool containsLocalPoint(Vector2 point) {
+    final state = game.simulationState;
+    if (state == null || state.plants.isEmpty) return false;
+    final surfaceY = game.soilSurfaceY;
+    final soilHeight = game.soilColumnHeight;
+    final worldWidth = SoilScopeGame.logicalSize.x;
+    final soilX = game.soilLeftX;
+
+    // Check if within the soil column
+    if (point.y < surfaceY || point.y > surfaceY + soilHeight ||
+        point.x < soilX || point.x > soilX + SoilScopeGame.soilColumnWidth) {
+      return false;
+    }
+
+    // Check distance to root flow paths (generous 18px tolerance)
+    for (final plant in state.plants) {
+      for (final node in plant.rootSystem) {
+        final rx = SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX;
+        final ry = SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight);
+        if ((point.x - rx).abs() < 18.0 && (point.y - ry).abs() < 18.0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @override
   void onTapUp(TapUpEvent event) {
     _isPinned = !_isPinned;
     _showFlowInfo(pinned: _isPinned);
@@ -234,6 +262,11 @@ class WaterFlowPathsComponent extends Component
 
   void _showFlowInfo({bool pinned = false}) {
     final l = AppLocalizations.of(game.buildContext!)!;
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      game.soilSurfaceY + 120.0,
+    );
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.waterFlux.toUpperCase(),
@@ -245,6 +278,8 @@ class WaterFlowPathsComponent extends Component
           "Coupling": "SPAC-enabled",
         },
         isPinned: pinned,
+        accentColor: const Color(0xFF38BDF8),
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
   }

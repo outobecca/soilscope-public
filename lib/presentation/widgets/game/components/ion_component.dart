@@ -81,9 +81,10 @@ class IonComponent extends PositionComponent
     if (state == null) return;
     final time = game.currentTime();
 
-    // 1. Brownian-like movement (Diffusion)
-    double dx = math.sin(time * (3 + seed % 3) + seed) * 0.5;
-    double dy = math.cos(time * (2 + seed % 2) + seed) * 0.5;
+    // 1. Brownian-like movement (Diffusion) - dampen on hover/pin so user can easily inspect
+    final damp = (isHovered || isPinned) ? 0.15 : 1.0;
+    double dx = math.sin(time * (3 + seed % 3) + seed) * 0.5 * damp;
+    double dy = math.cos(time * (2 + seed % 2) + seed) * 0.5 * damp;
     position.add(Vector2(dx, dy));
 
     // 2. Attraction to roots (Uptake)
@@ -111,7 +112,7 @@ class IonComponent extends PositionComponent
 
       if (nearestRootPos != null) {
         final direction = (nearestRootPos - position).normalized();
-        final speed = (1.0 - math.sqrt(minDistSq) / 100.0).clamp(0.0, 1.0) * 15.0;
+        final speed = (1.0 - math.sqrt(minDistSq) / 100.0).clamp(0.0, 1.0) * 15.0 * damp;
         position.add(direction * speed * dt);
       }
     }
@@ -135,6 +136,25 @@ class IonComponent extends PositionComponent
       );
     }
 
+    // Hover and Selection glow halo
+    if (isHovered || isPinned) {
+      canvas.drawCircle(
+        center,
+        size.x * 1.5,
+        Paint()
+          ..color = color.withValues(alpha: isPinned ? 0.6 : 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0 / zoom,
+      );
+      canvas.drawCircle(
+        center,
+        size.x * 1.5,
+        Paint()
+          ..color = color.withValues(alpha: 0.15)
+          ..style = PaintingStyle.fill,
+      );
+    }
+
     MoleculeRenderer.drawMolecule(
       canvas,
       center,
@@ -148,9 +168,9 @@ class IonComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch target (48px diameter) around the 12px ion
+    // Generous touch and hover target (64px diameter) around the 12px ion
     final center = size / 2;
-    return point.distanceTo(center) <= 24.0;
+    return point.distanceTo(center) <= 32.0;
   }
 
   @override

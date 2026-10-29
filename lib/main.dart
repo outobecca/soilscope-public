@@ -23,6 +23,7 @@ import 'presentation/widgets/gamification_bar.dart';
 import 'presentation/widgets/controls/microscope_hud_controller.dart';
 import 'presentation/providers/simulation_session_provider.dart';
 import 'presentation/providers/ui_state_provider.dart';
+import 'presentation/providers/tutorial_provider.dart';
 
 void main() {
   runApp(const ProviderScope(child: SoilScopeApp()));
@@ -68,8 +69,6 @@ class MainSimulationScreen extends ConsumerStatefulWidget {
 
 class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   bool _initialized = false;
-  bool _isLeftSidebarOpen = false;
-  bool _isRightSidebarOpen = false;
 
   @override
   void initState() {
@@ -78,8 +77,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       final screenWidth = MediaQuery.of(context).size.width;
       if (screenWidth >= 1024) {
         // Desktop/Tablet
-        setState(() => _isLeftSidebarOpen = true);
+        ref.read(sidebarStateProvider.notifier).setLeft(true);
       }
+      ref.read(tutorialProvider.notifier).checkFirstTimeOnboarding();
     });
   }
 
@@ -111,34 +111,27 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   }
 
   void _toggleLeftSidebar() {
-    setState(() {
-      _isLeftSidebarOpen = !_isLeftSidebarOpen;
-      if (_isLeftSidebarOpen &&
-          MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint) {
-        _isRightSidebarOpen = false;
-      }
-    });
+    final isMobile =
+        MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
+    ref.read(sidebarStateProvider.notifier).toggleLeft(isMobile: isMobile);
   }
 
   void _toggleRightSidebar() {
-    setState(() {
-      _isRightSidebarOpen = !_isRightSidebarOpen;
-      if (_isRightSidebarOpen &&
-          MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint) {
-        _isLeftSidebarOpen = false;
-      }
-    });
+    final isMobile =
+        MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
+    ref.read(sidebarStateProvider.notifier).toggleRight(isMobile: isMobile);
   }
 
   Widget _buildLeftSidebar(bool isMobile, double screenWidth) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final sidebarWidth = isMobile ? screenWidth : 320.0;
+    final isOpen = ref.watch(sidebarStateProvider.select((s) => s.isLeftOpen));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isLeftSidebarOpen ? sidebarWidth : 0,
+      width: isOpen ? sidebarWidth : 0,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
@@ -147,7 +140,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
         border: Border(
           right: BorderSide(
             color: theme.colorScheme.outlineVariant,
-            width: _isLeftSidebarOpen ? 1 : 0,
+            width: isOpen ? 1 : 0,
           ),
         ),
       ),
@@ -174,7 +167,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                     ),
                     IconButton(
                       onPressed: () =>
-                          setState(() => _isLeftSidebarOpen = false),
+                          ref.read(sidebarStateProvider.notifier).setLeft(false),
                       icon: const Icon(Icons.chevron_left),
                       tooltip: l10n.hideSidebar,
                     ),
@@ -207,11 +200,12 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final sidebarWidth = isMobile ? screenWidth : 320.0;
+    final isOpen = ref.watch(sidebarStateProvider.select((s) => s.isRightOpen));
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isRightSidebarOpen ? sidebarWidth : 0,
+      width: isOpen ? sidebarWidth : 0,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
@@ -220,7 +214,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
         border: Border(
           left: BorderSide(
             color: theme.colorScheme.outlineVariant,
-            width: _isRightSidebarOpen ? 1 : 0,
+            width: isOpen ? 1 : 0,
           ),
         ),
       ),
@@ -238,7 +232,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                   children: [
                     IconButton(
                       onPressed: () =>
-                          setState(() => _isRightSidebarOpen = false),
+                          ref.read(sidebarStateProvider.notifier).setRight(false),
                       icon: const Icon(Icons.chevron_right),
                       tooltip: l10n.hideSidebar,
                     ),
@@ -350,6 +344,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
+    final sidebarState = ref.watch(sidebarStateProvider);
+    final isLeftSidebarOpen = sidebarState.isLeftOpen;
+    final isRightSidebarOpen = sidebarState.isRightOpen;
 
     if (l10n == null) {
       debugPrint('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
@@ -384,7 +381,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (!_isLeftSidebarOpen)
+                          if (!isLeftSidebarOpen)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: isMobile
@@ -398,10 +395,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                                       label: Text(l10n.dashboard.toUpperCase()),
                                     ),
                             ),
-                          if (!_isLeftSidebarOpen) const SizedBox(width: 12),
+                          if (!isLeftSidebarOpen) const SizedBox(width: 12),
                           const Expanded(child: GamificationBar()),
-                          if (!_isRightSidebarOpen) const SizedBox(width: 12),
-                          if (!_isRightSidebarOpen)
+                          if (!isRightSidebarOpen) const SizedBox(width: 12),
+                          if (!isRightSidebarOpen)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: isMobile
@@ -415,6 +412,29 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                                       label: Text(l10n.controls.toUpperCase()),
                                     ),
                             ),
+                          const SizedBox(width: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: isMobile
+                                ? IconButton.filledTonal(
+                                    onPressed: () {
+                                      ref
+                                          .read(tutorialProvider.notifier)
+                                          .startTutorial();
+                                    },
+                                    icon: const Icon(Icons.school_rounded),
+                                    tooltip: l10n.tutorialHelpTooltip,
+                                  )
+                                : FilledButton.tonalIcon(
+                                    onPressed: () {
+                                      ref
+                                          .read(tutorialProvider.notifier)
+                                          .startTutorial();
+                                    },
+                                    icon: const Icon(Icons.school_rounded),
+                                    label: Text(l10n.tutorialTab.toUpperCase()),
+                                  ),
+                          ),
                         ],
                       ),
                     ],
@@ -425,16 +445,16 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
             // 3. TIMELINE SLIDER
             Positioned(
-              left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
-              right: (_isRightSidebarOpen && !isMobile) ? 336 : 16,
+              left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
+              right: (isRightSidebarOpen && !isMobile) ? 336 : 16,
               bottom: 120, // Above quick actions
               child: const Center(child: TimelineSliderWidget()),
             ),
 
             // 4. QUICK ACTIONS (BOTTOM)
             Positioned(
-              left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
-              right: (_isRightSidebarOpen && !isMobile) ? 336 : 16,
+              left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
+              right: (isRightSidebarOpen && !isMobile) ? 336 : 16,
               bottom: 16,
               child: const Center(child: FlutterQuickActions()),
             ),
@@ -454,30 +474,43 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
                 if (!info.isPinned && info.screenPosition != null) {
                   final pos = info.screenPosition!;
-                  const tooltipWidth = 280.0;
-                  const tooltipHeight = 180.0;
+                  const tooltipWidth = 290.0;
+                  // Card height is typically 240-320px depending on stats & formula
+                  final statCount = info.stats?.length ?? 0;
+                  final hasFormula = info.formula != null;
+                  final hasLegends = info.legends != null && info.legends!.isNotEmpty;
+                  final estimatedHeight = 160.0 +
+                      (statCount * 26.0) +
+                      (hasFormula ? 45.0 : 0.0) +
+                      (hasLegends ? 50.0 : 0.0);
 
-                  double left = pos.dx + 20;
+                  // Horizontal: try right of anchor, flip to left if it exceeds screen
+                  double left = pos.dx + 24;
                   if (left + tooltipWidth > screenWidth - 16) {
-                    left = pos.dx - tooltipWidth - 16;
+                    left = pos.dx - tooltipWidth - 24;
                   }
                   if (left < 16) left = 16;
 
+                  // Vertical: reserve space for timeline slider & bottom action bar
+                  final bottomReserve = isMobile ? 120.0 : 160.0;
                   double top = pos.dy + 20;
-                  if (top + tooltipHeight > screenHeight - 80) {
-                    top = pos.dy - tooltipHeight - 16;
+                  if (top + estimatedHeight > screenHeight - bottomReserve) {
+                    top = pos.dy - estimatedHeight - 20;
                   }
-                  if (top < 16) top = 16;
+                  if (top < 70) top = 70; // Avoid top app bar
 
                   return Positioned(
                     left: left,
                     top: top,
-                    child: const HoverTooltip(),
+                    child: const IgnorePointer(
+                      ignoring: true,
+                      child: HoverTooltip(),
+                    ),
                   );
                 }
 
                 return Positioned(
-                  right: (_isRightSidebarOpen && !isMobile) ? 340 : 20,
+                  right: (isRightSidebarOpen && !isMobile) ? 340 : 20,
                   top: isMobile ? 80 : 140,
                   child: const SafeArea(child: HoverTooltip()),
                 );
@@ -494,16 +527,13 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
                 return Positioned(
                   top: isMobile ? 80 : 88,
-                  left: (_isLeftSidebarOpen && !isMobile) ? 336 : 16,
+                  left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
                   child: const SafeArea(child: MicroscopeHudController()),
                 );
               },
             ),
 
-            // 7. TUTORIAL OVERLAY
-            const Positioned.fill(child: TutorialOverlayWidget()),
-
-            // 8. LEFT SIDEBAR (DASHBOARD) - Placed last in Stack to cover everything when full width on mobile
+            // 8. LEFT SIDEBAR (DASHBOARD) - Placed to cover when full width on mobile
             Positioned(
               left: 0,
               top: 0,
@@ -511,13 +541,16 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               child: _buildLeftSidebar(isMobile, screenWidth),
             ),
 
-            // 9. RIGHT SIDEBAR (CONTROLS) - Placed last in Stack to cover everything when full width on mobile
+            // 9. RIGHT SIDEBAR (CONTROLS) - Placed to cover when full width on mobile
             Positioned(
               right: 0,
               top: 0,
               bottom: 0,
               child: _buildRightSidebar(isMobile, screenWidth),
             ),
+
+            // 10. TUTORIAL OVERLAY - Placed topmost to spotlight components and guide user
+            const Positioned.fill(child: TutorialOverlayWidget()),
             ],
           ),
         ),

@@ -10,11 +10,12 @@ import 'process_magnifier_component.dart';
 
 
 class InspectionTargetComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks {
+    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
   final MagnifierType type;
   final ProcessMagnifierComponent magnifier;
   double opacity = 1.0;
   bool _isPinned = false;
+  bool _isHovered = false;
 
   InspectionTargetComponent({
     required this.type,
@@ -43,7 +44,7 @@ class InspectionTargetComponent extends PositionComponent
     final bool isMicroscopeMode = session.isMicroscopeEnabled;
     final activeTutorial = game.ref.read(activeTutorialStepProvider);
     final isTutorialTarget = activeTutorial != null && activeTutorial.targetId == type.name;
-    final isHighlighted = _isPinned || magnifier.isVisible || isTutorialTarget;
+    final isHighlighted = _isPinned || _isHovered || magnifier.isVisible || isTutorialTarget;
 
     final baseColor = const Color(0xFF38BDF8);
     final double alphaMultiplier = isHighlighted ? 0.95 : (isMicroscopeMode ? 0.65 : 0.35);
@@ -102,6 +103,27 @@ class InspectionTargetComponent extends PositionComponent
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
     }
     event.handled = true;
+  }
+
+  @override
+  void onHoverEnter() {
+    if (opacity <= 0) return;
+    _isHovered = true;
+    final current = game.ref.read(uIStateProvider);
+    if (current == null || !current.isPinned) {
+      _showInspectionInfo(pinned: false);
+    }
+  }
+
+  @override
+  void onHoverExit() {
+    _isHovered = false;
+    if (!_isPinned) {
+      final current = game.ref.read(uIStateProvider);
+      if (current == null || !current.isPinned) {
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      }
+    }
   }
 
   void _showInspectionInfo({bool pinned = false}) {

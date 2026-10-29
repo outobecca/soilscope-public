@@ -9,6 +9,7 @@ import '../providers/simulation_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/scenarios_provider.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/tutorial/quick_guide_dialog.dart';
 
 class ScenarioSelectionScreen extends ConsumerStatefulWidget {
   const ScenarioSelectionScreen({super.key});
@@ -66,6 +67,16 @@ class _ScenarioSelectionScreenState
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.school_rounded),
+            tooltip: l10n.tutorialHelpTooltip,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const QuickGuideDialog(),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(
               Theme.of(context).brightness == Brightness.dark
                   ? Icons.light_mode
@@ -107,6 +118,8 @@ class _ScenarioSelectionScreenState
               ),
               const SizedBox(height: 16),
               _buildResumeCard(context, l10n, theme),
+              const SizedBox(height: 12),
+              _buildTutorialGuideCard(context, l10n, theme),
               const SizedBox(height: 12),
               _buildImportCard(context, l10n, theme),
               const SizedBox(height: 12),
@@ -320,6 +333,59 @@ class _ScenarioSelectionScreenState
     );
   }
 
+  Widget _buildTutorialGuideCard(
+    BuildContext context,
+    AppLocalizations l10n,
+    ThemeData theme,
+  ) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
+      ),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.08),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
+        leading: Icon(
+          Icons.school_rounded,
+          color: theme.colorScheme.primary,
+          size: 28,
+        ),
+        title: Text(
+          l10n.tutorialTitle,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        subtitle: Text(
+          'Tutustu sovelluksen toimintaan, SPAC-fysiikkaan ja viljelytoimenpiteisiin.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios_rounded,
+          color: theme.colorScheme.primary,
+          size: 18,
+        ),
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => const QuickGuideDialog(),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildImportCard(
     BuildContext context,
     AppLocalizations l10n,
@@ -455,6 +521,9 @@ class _ScenarioSelectionScreenState
     } else if (scenario.id == 'nitrogen_lock') {
       title = l10n.nitrogenLockTitle;
       desc = l10n.nitrogenLockDesc;
+    } else if (scenario.id == 'waterlogging') {
+      title = l10n.waterloggingTitle;
+      desc = l10n.waterloggingDesc;
     }
 
     return Card(

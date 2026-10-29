@@ -114,5 +114,25 @@
       "targetValue": 50.0,
       "type": "yield"
     }
+  ],
+  "tutorialSteps": [
+    {
+      "triggerTime": 0.0,
+      "targetId": "microbe",
+      "title": "Mikrobien typpilukko (High C/N)",
+      "description": "Maahan on lisätty runsaasti hiilipitoista olkea (korkea C/N-suhde). Mikrobit hajottavat hiiltä kiivaasti ja sitovat kaiken saatavilla olevan mineraalitypen (immobilisaatio), jolloin viljelykasvi alkaa kärsiä kloroosista."
+    },
+    {
+      "triggerTime": 20.0,
+      "targetId": "controls",
+      "title": "Täydennyslannoitus tai typensitojakasvit",
+      "description": "Purkaa typpilukko lisäämällä hallintapaneelista kohdennettu typpilannoitus mikrobien tarpeen tyydyttämiseksi tai lisäämällä typensitojakasveja (apila/palkokasvit), jotka hyödyntävät ilmakehän typpeä symbioosissa."
+    },
+    {
+      "triggerTime": 60.0,
+      "targetId": "rhizosphere",
+      "title": "Seuraa mineralisaation käynnistymistä",
+      "description": "Kun mikrobisto saavuttaa kyllästyspisteen, immobilisaatio kääntyy netto-mineralisaatioksi. Mineraalityppi (ammonium ja nitraatti) vapautuu jälleen kasvin juurten käyttöön ja MAOM-varasto karttuu."
+    }
   ]
 }

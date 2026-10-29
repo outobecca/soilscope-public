@@ -139,10 +139,11 @@ class PhotosynthesisIndicatorComponent extends Component
   @override
   bool containsLocalPoint(Vector2 point) {
     final state = game.ref.read(simulationProvider);
+    if (state.solarRadiation < 100) return false;
     for (final plant in state.plants) {
       final pg = _getPlantGeometry(plant);
       if ((point.y - (pg.surfaceY - pg.plantHeight / 2)).abs() < pg.plantHeight / 2 &&
-          (point.x - pg.plantCenterX).abs() < 25) {
+          (point.x - pg.plantCenterX).abs() < 60) {
         return true;
       }
     }
@@ -174,6 +175,13 @@ class PhotosynthesisIndicatorComponent extends Component
 
   void _showPhotoInfo({bool pinned = false}) {
     final l = game.l10n;
+    final state = game.ref.read(simulationProvider);
+    Offset? anchorScreen;
+    if (state.plants.isNotEmpty) {
+      final pg = _getPlantGeometry(state.plants.first);
+      final anchorWorld = Vector2(pg.plantCenterX, pg.surfaceY - pg.plantHeight * 0.6);
+      anchorScreen = game.worldToScreen(anchorWorld).toOffset();
+    }
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.photosynthesis.toUpperCase(),
@@ -184,6 +192,8 @@ class PhotosynthesisIndicatorComponent extends Component
           l.productLabel: l.sugarCompound,
         },
         isPinned: pinned,
+        accentColor: const Color(0xFF10B981),
+        screenPosition: anchorScreen,
       ),
     );
   }

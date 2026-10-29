@@ -86,6 +86,11 @@ class PHGradientComponent extends Component
 
   void _showPHInfo({bool pinned = false}) {
     final l = game.l10n;
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      surfaceY + soilHeight / 2,
+    );
+
     game.ref
         .read(uIStateProvider.notifier)
         .setHoverInfo(
@@ -97,6 +102,8 @@ class PHGradientComponent extends Component
               l.significanceLabel: l.nutrientAvailability,
             },
             isPinned: pinned,
+            accentColor: Colors.greenAccent,
+            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),
         );
   }

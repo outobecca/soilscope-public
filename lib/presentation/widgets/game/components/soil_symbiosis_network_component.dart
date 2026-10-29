@@ -42,9 +42,9 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // SURGICAL HIT-TESTING (Task 4/6):
-    // Only capture taps near nodes or edges to prevent blocking empty space.
-    final double threshold = 15.0;
+    // SURGICAL HIT-TESTING:
+    // Capture taps/hovers near nodes or edges with generous 22px threshold
+    final double threshold = 22.0;
     
     // Check nodes (approximate world to local if needed, but here they are world-space offsets)
     // Actually, in this component, we render using absolute world coordinates, 
@@ -533,6 +533,11 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
   }
 
   void _showInfo({bool pinned = false}) {
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      game.soilSurfaceY + 200.0,
+    );
+
     game.ref
         .read(uIStateProvider.notifier)
         .setHoverInfo(
@@ -546,6 +551,8 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
               "Nodes": "${_edges.length * 2}",
             },
             isPinned: pinned,
+            accentColor: const Color(0xFF2DD4BF),
+            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),
         );
   }

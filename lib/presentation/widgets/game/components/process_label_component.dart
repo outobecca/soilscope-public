@@ -161,6 +161,12 @@ class ProcessLabel extends PositionComponent
   }
 
   @override
+  bool containsLocalPoint(Vector2 point) {
+    final center = size / 2;
+    return point.distanceTo(center) <= 25.0;
+  }
+
+  @override
   void onTapUp(TapUpEvent event) {
     _isPinned = !_isPinned;
     if (_isPinned) {

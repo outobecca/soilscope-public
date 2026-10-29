@@ -157,5 +157,25 @@
       "targetValue": 200.0,
       "type": "structure"
     }
+  ],
+  "tutorialSteps": [
+    {
+      "triggerTime": 0.0,
+      "targetId": "soilStructure",
+      "title": "Maan hapenpuute ja vesiylijäämä",
+      "description": "Pohjavesipinta on noussut ja maahuokoset ovat täysin veden vallassa (kyllästystila). Kaasunvaihto ilmakehään on estynyt, maaperän happi (O₂) kuluu loppuun ja redox-potentiaali (Eh) romahtaa kohti anaerobisia lukemia."
+    },
+    {
+      "triggerTime": 20.0,
+      "targetId": "root",
+      "title": "Hapettomat juuret ja tukehtuminen",
+      "description": "Kasvien juuret tarvitsevat happea soluhengitykseen ja ATP-tuotantoon. Ilman happea aktiivinen veden ja ravinteiden otto loppuu, ilmaraot sulkeutuvat ja kasvi nuutuu vaikka vettä on ylenmäärin."
+    },
+    {
+      "triggerTime": 70.0,
+      "targetId": "controls",
+      "title": "Avaa ojitusta ja aktivoi haihduntaa",
+      "description": "Hallitse vesitilannetta: vähennä sadetusta, lisää salaojitusta/kuivatusta ja varmista kasvilajit jotka sietävät tulvimista tai muodostavat aerenkyymisolukkoa ilman kuljettamiseksi juuriin."
+    }
   ]
 }

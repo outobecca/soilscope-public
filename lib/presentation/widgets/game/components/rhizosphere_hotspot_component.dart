@@ -1,17 +1,21 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import '../../../../domain/models/soil_layer.dart';
+import '../../../providers/ui_state_provider.dart';
 import '../soil_scope_game.dart';
 
 /// A dynamic visual representation of a rhizosphere hotspot.
 /// Shows metabolic activity (acidification and exudation) around root tips.
-class RhizosphereHotspotComponent extends PositionComponent with HasGameReference<SoilScopeGame> {
+class RhizosphereHotspotComponent extends PositionComponent
+    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
   final String hotspotId;
   final String layerId;
   double intensity;
   final HotspotType type;
+  bool _isPinned = false;
 
   RhizosphereHotspotComponent({
     required this.hotspotId,
@@ -108,6 +112,88 @@ class RhizosphereHotspotComponent extends PositionComponent with HasGameReferenc
       ..style = PaintingStyle.fill;
     
     canvas.drawCircle(Offset(size.x / 2, size.y / 2), 4, paint);
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Generous touch & hover target (at least 35px radius)
+    final center = size / 2;
+    final r = math.max(size.x / 2, 35.0);
+    return point.distanceTo(center) <= r;
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    _isPinned = !_isPinned;
+    _showRhizosphereInfo(pinned: _isPinned);
+    event.handled = true;
+  }
+
+  @override
+  void onHoverEnter() {
+    _glow.paint.color = _getColor().withValues(alpha: 0.35 * intensity);
+    final current = game.ref.read(uIStateProvider);
+    if (current == null || !current.isPinned) {
+      _showRhizosphereInfo(pinned: false);
+    }
+  }
+
+  @override
+  void onHoverExit() {
+    _glow.paint.color = _getColor().withValues(alpha: 0.15 * intensity);
+    if (!_isPinned) {
+      final current = game.ref.read(uIStateProvider);
+      if (current == null || !current.isPinned) {
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      }
+    }
+  }
+
+  void _showRhizosphereInfo({bool pinned = false}) {
+    final l = game.l10n;
+    String title;
+    String desc;
+    Map<String, String> stats;
+
+    switch (type) {
+      case HotspotType.rhizosphere:
+        title = l.rhizosphere.toUpperCase();
+        desc = l.rhizosphereDesc;
+        stats = {
+          l.processLabel: l.rootExudation,
+          l.dynamicsLabel: 'pH -0.5 - 1.0',
+          l.activity: '${(intensity * 100).toStringAsFixed(0)}%',
+        };
+        break;
+      case HotspotType.decomposition:
+        title = l.organicHorizon.toUpperCase();
+        desc = l.decompositionDesc;
+        stats = {
+          l.processLabel: l.mineralization,
+          l.activity: '${(intensity * 100).toStringAsFixed(0)}%',
+        };
+        break;
+      case HotspotType.fungalHub:
+        title = "MYCORRHIZAL HUB";
+        desc = "Dense hyphal contact zone facilitating nutrient exchange with root cells.";
+        stats = {
+          "Symbiont": "Glomeromycota",
+          "Exchange": "C ↔ P",
+          l.activity: '${(intensity * 100).toStringAsFixed(0)}%',
+        };
+        break;
+    }
+
+    game.ref.read(uIStateProvider.notifier).setHoverInfo(
+      HoverInfo(
+        title: title,
+        description: desc,
+        stats: stats,
+        isPinned: pinned,
+        accentColor: _getColor(),
+        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+      ),
+    );
   }
 
   void triggerPulse() {

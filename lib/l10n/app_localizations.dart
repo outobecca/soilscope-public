@@ -2096,7 +2096,7 @@ abstract class AppLocalizations {
   /// No description provided for @intoRoot.
   ///
   /// In en, this message translates to:
-  /// **'Atmosphere → Soil'**
+  /// **'Into Root'**
   String get intoRoot;
 
   /// No description provided for @intoLeaves.
@@ -2366,7 +2366,7 @@ abstract class AppLocalizations {
   /// No description provided for @subsoilHorizon.
   ///
   /// In en, this message translates to:
-  /// **'Soil → Atmosphere'**
+  /// **'Subsoil'**
   String get subsoilHorizon;
 
   /// No description provided for @parentMaterialHorizon.
@@ -6562,6 +6562,1326 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More Information'**
   String get moreInfo;
+
+  /// No description provided for @rootExudation.
+  ///
+  /// In en, this message translates to:
+  /// **'Root Exudation'**
+  String get rootExudation;
+
+  /// No description provided for @activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activity;
+
+  /// No description provided for @decompositionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Organic matter decomposition and microbial mineralization.'**
+  String get decompositionDesc;
+
+  /// No description provided for @mineralization.
+  ///
+  /// In en, this message translates to:
+  /// **'Mineralization'**
+  String get mineralization;
+
+  /// No description provided for @tutorialTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SoilScope User Guide'**
+  String get tutorialTitle;
+
+  /// No description provided for @tutorialStepCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'STEP {current} / {total}'**
+  String tutorialStepCounter(Object current, Object total);
+
+  /// No description provided for @tutorialNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tutorialNext;
+
+  /// No description provided for @tutorialPrev.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get tutorialPrev;
+
+  /// No description provided for @tutorialSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip Tour'**
+  String get tutorialSkip;
+
+  /// No description provided for @tutorialFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Exploring'**
+  String get tutorialFinish;
+
+  /// No description provided for @tutorialQuickGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Guide'**
+  String get tutorialQuickGuide;
+
+  /// No description provided for @tutorialStartTour.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Tutorial Tour'**
+  String get tutorialStartTour;
+
+  /// No description provided for @tutorialRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Tutorial'**
+  String get tutorialRestart;
+
+  /// No description provided for @tutorialHelpTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Application guide and tutorial'**
+  String get tutorialHelpTooltip;
+
+  /// No description provided for @tutorialWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to SoilScope!'**
+  String get tutorialWelcomeTitle;
+
+  /// No description provided for @tutorialWelcomeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'SoilScope is a scientific Soil-Plant-Atmosphere Continuum (SPAC) simulator. In this tutorial we introduce the key controls and views so you can manage the simulation and interpret biophysical processes effortlessly.'**
+  String get tutorialWelcomeDesc;
+
+  /// No description provided for @tutorialWelcomePoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoot growth directly reflects root water and nutrient uptake capacity.'**
+  String get tutorialWelcomePoint1;
+
+  /// No description provided for @tutorialWelcomePoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Water and ions migrate through the soil according to physical laws (Richards equation).'**
+  String get tutorialWelcomePoint2;
+
+  /// No description provided for @tutorialWelcomePoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil microbes and mycorrhizal fungi convert organic matter into plant-available nutrients.'**
+  String get tutorialWelcomePoint3;
+
+  /// No description provided for @tutorialCanvasTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation Canvas & Inspection Points'**
+  String get tutorialCanvasTitle;
+
+  /// No description provided for @tutorialCanvasDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'In the main view you observe a 2D physical world: shoot and root development, soil strata, and dynamic nutrient particle fluxes.'**
+  String get tutorialCanvasDesc;
+
+  /// No description provided for @tutorialCanvasPoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Click on glowing hotspots on soil and plant to launch microscopic cross-sectional analysis.'**
+  String get tutorialCanvasPoint1;
+
+  /// No description provided for @tutorialCanvasPoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Hover over any component to inspect real-time scientific telemetry and chemical equations.'**
+  String get tutorialCanvasPoint2;
+
+  /// No description provided for @tutorialDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HUD Dashboard & Soil Profile'**
+  String get tutorialDashboardTitle;
+
+  /// No description provided for @tutorialDashboardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The left dashboard allows deep biophysical and biochemical inspection across all soil layers.'**
+  String get tutorialDashboardDesc;
+
+  /// No description provided for @tutorialDashboardPoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor layer-by-layer moisture (θ), temperature, pH, redox potential, and electrical conductivity.'**
+  String get tutorialDashboardPoint1;
+
+  /// No description provided for @tutorialDashboardPoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil Texture Triangle illustrates relative proportions of clay, silt, and sand.'**
+  String get tutorialDashboardPoint2;
+
+  /// No description provided for @tutorialDashboardPoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Track MAOM and POM organic carbon pools and microbial biomass dynamics.'**
+  String get tutorialDashboardPoint3;
+
+  /// No description provided for @tutorialControlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Control Panel & Interventions'**
+  String get tutorialControlsTitle;
+
+  /// No description provided for @tutorialControlsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the right control panel to adjust atmospheric drivers and apply agricultural management.'**
+  String get tutorialControlsDesc;
+
+  /// No description provided for @tutorialControlsPoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust weather: photosynthetic solar radiation (PAR), precipitation, air temperature, and CO₂.'**
+  String get tutorialControlsPoint1;
+
+  /// No description provided for @tutorialControlsPoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Interventions: irrigation, mineral or organic fertilization, cover cropping, and soil tillage.'**
+  String get tutorialControlsPoint2;
+
+  /// No description provided for @tutorialControlsPoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Excessive tillage fractures mycorrhizal hyphal networks and over-fertilizing causes nitrate leaching.'**
+  String get tutorialControlsPoint3;
+
+  /// No description provided for @tutorialTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline & Simulation Speed'**
+  String get tutorialTimelineTitle;
+
+  /// No description provided for @tutorialTimelineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Control time progression and observe soil reactions across both diurnal and seasonal cycles.'**
+  String get tutorialTimelineDesc;
+
+  /// No description provided for @tutorialTimelinePoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause simulation at any moment to thoroughly inspect soil profile state.'**
+  String get tutorialTimelinePoint1;
+
+  /// No description provided for @tutorialTimelinePoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust simulation speed (1x, 2x, 5x, 10x) to accelerate plant growth and percolation.'**
+  String get tutorialTimelinePoint2;
+
+  /// No description provided for @tutorialTimelinePoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Scrub the timeline to review earlier days and the impact of weather events.'**
+  String get tutorialTimelinePoint3;
+
+  /// No description provided for @tutorialObservationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation Modes & Nanovision'**
+  String get tutorialObservationTitle;
+
+  /// No description provided for @tutorialObservationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use bottom quick buttons to isolate nutrient cycles and toggle cellular microscopy.'**
+  String get tutorialObservationDesc;
+
+  /// No description provided for @tutorialObservationPoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen cycle: Highlight ammonium and nitrate ions along with denitrification gas emissions.'**
+  String get tutorialObservationPoint1;
+
+  /// No description provided for @tutorialObservationPoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Nanovision: Inspect stomatal conductance, root apical meristems, and soil pores at up to 1200x magnification.'**
+  String get tutorialObservationPoint2;
+
+  /// No description provided for @tutorialObservationPoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle dynamic flow trajectory vectors as needed.'**
+  String get tutorialObservationPoint3;
+
+  /// No description provided for @tutorialGamificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sustainability & Objectives'**
+  String get tutorialGamificationTitle;
+
+  /// No description provided for @tutorialGamificationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'The top bar measures ecological sustainability and tracks scenario challenges.'**
+  String get tutorialGamificationDesc;
+
+  /// No description provided for @tutorialGamificationPoint1.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor soil health index, water saturation, microbial flux, and plant vitality.'**
+  String get tutorialGamificationPoint1;
+
+  /// No description provided for @tutorialGamificationPoint2.
+  ///
+  /// In en, this message translates to:
+  /// **'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) to gain score.'**
+  String get tutorialGamificationPoint2;
+
+  /// No description provided for @tutorialGamificationPoint3.
+  ///
+  /// In en, this message translates to:
+  /// **'Level up by managing the agroecosystem according to sound ecophysiological principles.'**
+  String get tutorialGamificationPoint3;
+
+  /// No description provided for @quickGuideTabUI.
+  ///
+  /// In en, this message translates to:
+  /// **'User Interface'**
+  String get quickGuideTabUI;
+
+  /// No description provided for @quickGuideTabScience.
+  ///
+  /// In en, this message translates to:
+  /// **'SPAC Science'**
+  String get quickGuideTabScience;
+
+  /// No description provided for @quickGuideTabTips.
+  ///
+  /// In en, this message translates to:
+  /// **'Practical Tips'**
+  String get quickGuideTabTips;
+
+  /// No description provided for @quickGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SoilScope Quick Guide'**
+  String get quickGuideTitle;
+
+  /// No description provided for @stepCompactedClay1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Identify Plow Pan & Compaction'**
+  String get stepCompactedClay1Title;
+
+  /// No description provided for @stepCompactedClay1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Observe soil layers A2 and B1: porosity is critically low and bulk density is elevated (1700-1800 kg/m³). Infiltration is blocked, inhibiting root elongation.'**
+  String get stepCompactedClay1Desc;
+
+  /// No description provided for @stepCompactedClay2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil Loosening & Deep-Rooted Plants'**
+  String get stepCompactedClay2Title;
+
+  /// No description provided for @stepCompactedClay2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the right control panel to perform mechanical aeration or subsoiling. Introduce deep-rooted cover crops to forge biopores.'**
+  String get stepCompactedClay2Desc;
+
+  /// No description provided for @stepCompactedClay3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor Root Penetration'**
+  String get stepCompactedClay3Title;
+
+  /// No description provided for @stepCompactedClay3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect root growth in Nanovision mode. Roots exude organic acids and mucilage (EPS) to stabilize aggregates and enhance hydraulic conductivity.'**
+  String get stepCompactedClay3Desc;
+
+  /// No description provided for @stepNitrateLeach1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Critical Nitrate Leaching Risk'**
+  String get stepNitrateLeach1Title;
+
+  /// No description provided for @stepNitrateLeach1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Topsoil nitrate (NO₃⁻) is dangerously elevated (100 mg/kg) ahead of heavy rainfall. Because nitrate is a mobile anion, it leaches downward with percolating gravitational water.'**
+  String get stepNitrateLeach1Desc;
+
+  /// No description provided for @stepNitrateLeach2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Sow Catch Crops & Regulate Hydrology'**
+  String get stepNitrateLeach2Title;
+
+  /// No description provided for @stepNitrateLeach2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Open control panel. Cease fertilization and deploy fast-growing catch crops whose transpiration and uptake sequester free nitrate into biomass.'**
+  String get stepNitrateLeach2Desc;
+
+  /// No description provided for @stepNitrateLeach3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Canopy Nutrient Assimilation'**
+  String get stepNitrateLeach3Title;
+
+  /// No description provided for @stepNitrateLeach3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Observe leaf photosynthesis and stomatal conductance. Dense transpiration flux pulls soil solution upward, curtailing deep leaching.'**
+  String get stepNitrateLeach3Desc;
+
+  /// No description provided for @stepNitrogenLock1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Microbial Nitrogen Immobilization (High C/N)'**
+  String get stepNitrogenLock1Title;
+
+  /// No description provided for @stepNitrogenLock1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'High-carbon straw residue (elevated C:N ratio) stimulates rapid microbial growth, assimilating available mineral nitrogen into biomass and starving the cash crop.'**
+  String get stepNitrogenLock1Desc;
+
+  /// No description provided for @stepNitrogenLock2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen Amendment or Legumes'**
+  String get stepNitrogenLock2Title;
+
+  /// No description provided for @stepNitrogenLock2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Overcome nitrogen immobilization via targeted mineral N application or by intercropping legumes that fix atmospheric N₂ symbiotically.'**
+  String get stepNitrogenLock2Desc;
+
+  /// No description provided for @stepNitrogenLock3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Observe Remineralization Phase'**
+  String get stepNitrogenLock3Title;
+
+  /// No description provided for @stepNitrogenLock3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'As microbial biomass turns over, net mineralization resumes. Ammonium and nitrate release into solution, while mineral-associated organic matter (MAOM) stabilizes long-term.'**
+  String get stepNitrogenLock3Desc;
+
+  /// No description provided for @stepWaterlogging1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Waterlogging & Severe Anoxia'**
+  String get stepWaterlogging1Title;
+
+  /// No description provided for @stepWaterlogging1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Water table has reached saturation. Gaseous diffusion ceases, soil dissolved O₂ is consumed, and redox potential (Eh) plunges into reducing anaerobic conditions.'**
+  String get stepWaterlogging1Desc;
+
+  /// No description provided for @stepWaterlogging2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Root Hypoxia & Wilting'**
+  String get stepWaterlogging2Title;
+
+  /// No description provided for @stepWaterlogging2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Plant roots require O₂ for ATP-driven active nutrient and water uptake. Without aeration, stomata close, and the crop suffers paradoxical wilt despite water excess.'**
+  String get stepWaterlogging2Desc;
+
+  /// No description provided for @stepWaterlogging3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve Drainage & Transpiration'**
+  String get stepWaterlogging3Title;
+
+  /// No description provided for @stepWaterlogging3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage water balance: drain excess surface water, stop irrigation, and promote flood-tolerant species featuring internal aerenchyma tissue.'**
+  String get stepWaterlogging3Desc;
+
+  /// No description provided for @waterloggingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waterlogging & Flooding Challenge'**
+  String get waterloggingTitle;
+
+  /// No description provided for @waterloggingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage root hypoxia and nutrient dynamics in saturated soil.'**
+  String get waterloggingDesc;
+
+  /// No description provided for @objectiveMaintainTurgor.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintain Plant Turgor'**
+  String get objectiveMaintainTurgor;
+
+  /// No description provided for @objectiveRestoreAerobic.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Aerobic Conditions'**
+  String get objectiveRestoreAerobic;
+
+  /// No description provided for @fluxAtmosphereToSoil.
+  ///
+  /// In en, this message translates to:
+  /// **'Atmosphere → Soil'**
+  String get fluxAtmosphereToSoil;
+
+  /// No description provided for @fluxSoilToAtmosphere.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil → Atmosphere'**
+  String get fluxSoilToAtmosphere;
+
+  /// No description provided for @tutorialActionOpenDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Dashboard'**
+  String get tutorialActionOpenDashboard;
+
+  /// No description provided for @tutorialActionOpenControls.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Control Panel'**
+  String get tutorialActionOpenControls;
+
+  /// No description provided for @tutorialActionTryPlayback.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Playback'**
+  String get tutorialActionTryPlayback;
+
+  /// No description provided for @tutorialActionOpenNanovision.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Nanovision'**
+  String get tutorialActionOpenNanovision;
+
+  /// No description provided for @missionBriefingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MISSION BRIEFING'**
+  String get missionBriefingTitle;
+
+  /// No description provided for @missionScenarioBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'SCENARIO'**
+  String get missionScenarioBadge;
+
+  /// No description provided for @missionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mission description and scientific background'**
+  String get missionSubtitle;
+
+  /// No description provided for @missionChallengeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge Description'**
+  String get missionChallengeTitle;
+
+  /// No description provided for @missionRecommendationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended Actions'**
+  String get missionRecommendationsTitle;
+
+  /// No description provided for @missionScienceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SPAC Biophysics Background'**
+  String get missionScienceTitle;
+
+  /// No description provided for @missionObjectivesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Objectives'**
+  String get missionObjectivesTitle;
+
+  /// No description provided for @missionStatusAchieved.
+  ///
+  /// In en, this message translates to:
+  /// **'ACHIEVED'**
+  String get missionStatusAchieved;
+
+  /// No description provided for @missionStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'IN PROGRESS'**
+  String get missionStatusPending;
+
+  /// No description provided for @missionOpenQuickGuide.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Quick Guide'**
+  String get missionOpenQuickGuide;
+
+  /// No description provided for @missionStartActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Actions'**
+  String get missionStartActions;
+
+  /// No description provided for @missionNoActiveScenario.
+  ///
+  /// In en, this message translates to:
+  /// **'No active scenario'**
+  String get missionNoActiveScenario;
+
+  /// No description provided for @briefingCompactionProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil structure is severely compacted: bulk density has climbed up to 1700 kg/m³ and porosity has dropped below 30%. Water cannot infiltrate deeper layers, forming surface puddles. Plant roots cannot penetrate the hard clay pan due to excessive mechanical resistance.'**
+  String get briefingCompactionProblem;
+
+  /// No description provided for @briefingCompactionStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the right control panel and perform topsoil tillage to loosen the compaction layer.'**
+  String get briefingCompactionStep1;
+
+  /// No description provided for @briefingCompactionStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sow a deep-rooted cover crop whose taproots drill biopores into the subsoil.'**
+  String get briefingCompactionStep2;
+
+  /// No description provided for @briefingCompactionStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid heavy downpours: keep precipitation moderate so enough soil air remains and surface slaking is prevented.'**
+  String get briefingCompactionStep3;
+
+  /// No description provided for @briefingCompactionStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor saturated hydraulic conductivity (kSat) and porosity development in the left HUD dashboard.'**
+  String get briefingCompactionStep4;
+
+  /// No description provided for @briefingCompactionScience.
+  ///
+  /// In en, this message translates to:
+  /// **'According to the van Genuchten model and 1D Richards equation, hydraulic conductivity drops by orders of magnitude in compacted soil. Root elongation stops when soil mechanical shear strength exceeds root cell turgor.'**
+  String get briefingCompactionScience;
+
+  /// No description provided for @briefingLeachingProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Coarse sandy soil (70% sand) contains an excessive pool of free nitrate (100 mg/kg). Because sand\'s cation exchange capacity (CEC) and water retention capacity are very low, heavy rains flush nitrate directly into the groundwater layer, causing nutrient waste and eutrophication.'**
+  String get briefingLeachingProblem;
+
+  /// No description provided for @briefingLeachingStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Establish rapid biomass crops to assimilate free nitrate before major rainfall.'**
+  String get briefingLeachingStep1;
+
+  /// No description provided for @briefingLeachingStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep rainfall low or disable Auto Weather to prevent massive percolation.'**
+  String get briefingLeachingStep2;
+
+  /// No description provided for @briefingLeachingStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorporate organic matter to elevate microbial carbon, triggering nitrate immobilization into microbial biomass.'**
+  String get briefingLeachingStep3;
+
+  /// No description provided for @briefingLeachingStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Nitrogen Cycle from the bottom bar to inspect nitrate ion trajectory vectors.'**
+  String get briefingLeachingStep4;
+
+  /// No description provided for @briefingLeachingScience.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrate (NO₃⁻) is an anion not bound electrostatically by clay minerals or humus. Transport follows the advection-dispersion equation along with gravitational water flow.'**
+  String get briefingLeachingScience;
+
+  /// No description provided for @briefingLockProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'A high volume of carbon-rich straw was added to the soil, driving the C/N ratio above the critical threshold of 25. Heterotrophic microbes consume all available mineral nitrogen (ammonium and nitrate) to decompose carbon, starving the crop of essential nitrogen.'**
+  String get briefingLockProblem;
+
+  /// No description provided for @briefingLockStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply mineral nitrogen fertilizer from the control panel to supply readily available N to crops.'**
+  String get briefingLockStep1;
+
+  /// No description provided for @briefingLockStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Raise temperature or optimize moisture to accelerate microbial respiration and decomposition turnover.'**
+  String get briefingLockStep2;
+
+  /// No description provided for @briefingLockStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Nanovision microscope to monitor stomatal recovery and photosystem revival.'**
+  String get briefingLockStep3;
+
+  /// No description provided for @briefingLockStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Track the C/N ratio in the HUD dashboard and watch for nitrogen release through microbial turnover (necromass).'**
+  String get briefingLockStep4;
+
+  /// No description provided for @briefingLockScience.
+  ///
+  /// In en, this message translates to:
+  /// **'Microbial biomass maintains a stoichiometric C/N ratio (~8:1). With surplus available carbon, microbes immobilize all inorganic nitrogen. Remineralization triggers once organic residue C/N falls below 20.'**
+  String get briefingLockScience;
+
+  /// No description provided for @briefingWaterloggingProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil is completely water-saturated and pore air space is exhausted. Because gas diffusion in water is 10,000 times slower than in air, soil dissolved oxygen depletes within hours. Redox potential plunges into negative values (-150 mV), initiating denitrification and methanogenesis.'**
+  String get briefingWaterloggingProblem;
+
+  /// No description provided for @briefingWaterloggingStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Immediately cease all irrigation and ensure rainfall is set to 0 mm.'**
+  String get briefingWaterloggingStep1;
+
+  /// No description provided for @briefingWaterloggingStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase solar radiation (PAR) and air temperature to boost soil water loss via evapotranspiration.'**
+  String get briefingWaterloggingStep2;
+
+  /// No description provided for @briefingWaterloggingStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Track gas emissions (N₂O and CH₄) in the HUD dashboard and watch redox potential climb back toward aerobic range (> 300 mV).'**
+  String get briefingWaterloggingStep3;
+
+  /// No description provided for @briefingWaterloggingStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect root system: avoid root rot and cell death induced by prolonged anoxia.'**
+  String get briefingWaterloggingStep4;
+
+  /// No description provided for @briefingWaterloggingScience.
+  ///
+  /// In en, this message translates to:
+  /// **'The thermodynamic redox ladder (Nernst equation) indicates that after O₂ depletion, electrons flow to nitrate (NO₃⁻ → N₂O/N₂), manganese and iron oxides, and ultimately to methane (CH₄).'**
+  String get briefingWaterloggingScience;
+
+  /// No description provided for @briefingDefaultProblem.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance soil physics and biochemistry to sustain vigorous crop growth.'**
+  String get briefingDefaultProblem;
+
+  /// No description provided for @briefingDefaultStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect soil profile state from the left HUD dashboard.'**
+  String get briefingDefaultStep1;
+
+  /// No description provided for @briefingDefaultStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust environmental drivers and management in the right control panel.'**
+  String get briefingDefaultStep2;
+
+  /// No description provided for @briefingDefaultStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Track sustainability metrics and fulfill scenario objectives.'**
+  String get briefingDefaultStep3;
+
+  /// No description provided for @briefingDefaultScience.
+  ///
+  /// In en, this message translates to:
+  /// **'The SPAC continuum links soil pore physics, plant physiology, and atmospheric vapor pressure deficit.'**
+  String get briefingDefaultScience;
+
+  /// No description provided for @quickGuideTabBiochemistry.
+  ///
+  /// In en, this message translates to:
+  /// **'Biochemistry'**
+  String get quickGuideTabBiochemistry;
+
+  /// No description provided for @quickGuideTabGlossary.
+  ///
+  /// In en, this message translates to:
+  /// **'Glossary'**
+  String get quickGuideTabGlossary;
+
+  /// No description provided for @quickGuideSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SPAC simulator features and scientific foundation'**
+  String get quickGuideSubtitle;
+
+  /// No description provided for @quickGuideClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Guide'**
+  String get quickGuideClose;
+
+  /// No description provided for @quickGuideCardUiDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HUD Dashboard (Left Sidebar)'**
+  String get quickGuideCardUiDashboardTitle;
+
+  /// No description provided for @quickGuideCardUiDashboardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Displays layer-by-layer soil metrics: volumetric water content (θ), temperature, pH, electrical conductivity (EC), and redox potential (Eh). Also includes the Soil Texture Triangle.'**
+  String get quickGuideCardUiDashboardBody;
+
+  /// No description provided for @quickGuideCardUiControlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Control Panel & Interventions (Right Sidebar)'**
+  String get quickGuideCardUiControlsTitle;
+
+  /// No description provided for @quickGuideCardUiControlsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust atmospheric conditions (rain, PAR solar radiation, temperature, CO₂) and management practices like irrigation, N and P fertilization, cover crops, and tillage.'**
+  String get quickGuideCardUiControlsBody;
+
+  /// No description provided for @quickGuideCardUiTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline & Speed Control (Bottom)'**
+  String get quickGuideCardUiTimelineTitle;
+
+  /// No description provided for @quickGuideCardUiTimelineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause simulation to inspect soil profile, adjust playback speed (1x, 2x, 5x, 10x), or scrub timeline backwards to review crop response.'**
+  String get quickGuideCardUiTimelineBody;
+
+  /// No description provided for @quickGuideCardUiNanovisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nanovision Microscope (Bottom / Hotspots)'**
+  String get quickGuideCardUiNanovisionTitle;
+
+  /// No description provided for @quickGuideCardUiNanovisionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore cellular biophysics: stomata (400x), stem xylem (200x), apical meristems (800x), root cells (400x), rhizosphere (600x), and microbes (1200x).'**
+  String get quickGuideCardUiNanovisionBody;
+
+  /// No description provided for @quickGuideCardSciSpacTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SPAC — Soil-Plant-Atmosphere Continuum'**
+  String get quickGuideCardSciSpacTitle;
+
+  /// No description provided for @quickGuideCardSciSpacBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Water moves down a gradient of decreasing chemical water potential (ψ) from wet soil (ψ ≈ -0.03 MPa) to roots, up xylem conduits, and evaporates through stomata into atmosphere (ψ ≈ -100 MPa).'**
+  String get quickGuideCardSciSpacBody;
+
+  /// No description provided for @quickGuideCardSciHydraulicsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Richards Equation & van Genuchten'**
+  String get quickGuideCardSciHydraulicsTitle;
+
+  /// No description provided for @quickGuideCardSciHydraulicsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Governs unsaturated fluid flow through porous soil matrix combining gravitational potential and matric suction pressure.'**
+  String get quickGuideCardSciHydraulicsBody;
+
+  /// No description provided for @quickGuideCardSciBeerLambertTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Canopy Radiation Absorption (Beer-Lambert)'**
+  String get quickGuideCardSciBeerLambertTitle;
+
+  /// No description provided for @quickGuideCardSciBeerLambertBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar PAR attenuates exponentially through plant canopy according to Leaf Area Index (LAI) and extinction coefficient k.'**
+  String get quickGuideCardSciBeerLambertBody;
+
+  /// No description provided for @quickGuideCardBioSomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbon Dynamics: MAOM vs POM'**
+  String get quickGuideCardBioSomTitle;
+
+  /// No description provided for @quickGuideCardBioSomBody.
+  ///
+  /// In en, this message translates to:
+  /// **'MAOM (Mineral-Associated Organic Matter) is stable humus protected on clay surfaces lasting centuries. POM (Particulate Organic Matter) is coarse, rapidly cycling plant residue.'**
+  String get quickGuideCardBioSomBody;
+
+  /// No description provided for @quickGuideCardBioCnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'C/N Ratio & Nitrogen Lock'**
+  String get quickGuideCardBioCnTitle;
+
+  /// No description provided for @quickGuideCardBioCnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When C/N > 25 (e.g. straw), microbes immobilize mineral nitrogen. When C/N < 20 (e.g. legumes or manure), net mineralization releases nitrogen to plants.'**
+  String get quickGuideCardBioCnBody;
+
+  /// No description provided for @quickGuideCardBioRedoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Redox Potential (Eh) & Electron Acceptors'**
+  String get quickGuideCardBioRedoxTitle;
+
+  /// No description provided for @quickGuideCardBioRedoxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Aerobic respiration operates above +300 mV using O₂. When waterlogged, microbes reduce NO₃⁻, Fe/Mn oxides, SO₄²⁻, and finally produce methane at -150 mV.'**
+  String get quickGuideCardBioRedoxBody;
+
+  /// No description provided for @quickGuideCardTipWateringTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optimize Irrigation Timing'**
+  String get quickGuideCardTipWateringTitle;
+
+  /// No description provided for @quickGuideCardTipWateringBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid over-irrigation in heavy clay to prevent structural slaking and root rot. Maintain moisture between field capacity and wilting point.'**
+  String get quickGuideCardTipWateringBody;
+
+  /// No description provided for @quickGuideCardTipFertilizationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split Fertilizer Applications'**
+  String get quickGuideCardTipFertilizationTitle;
+
+  /// No description provided for @quickGuideCardTipFertilizationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply nitrogen in synchronization with crop uptake demands to minimize nitrate leaching during rainy periods.'**
+  String get quickGuideCardTipFertilizationBody;
+
+  /// No description provided for @quickGuideCardTipCoverCropsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Utilize Cover Crops'**
+  String get quickGuideCardTipCoverCropsTitle;
+
+  /// No description provided for @quickGuideCardTipCoverCropsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover crops scavenge residual nitrates, generate subsoil biopores, and fuel the soil microbial carbon bank.'**
+  String get quickGuideCardTipCoverCropsBody;
+
+  /// No description provided for @quickGuideCardGlosLaiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'LAI — Leaf Area Index'**
+  String get quickGuideCardGlosLaiTitle;
+
+  /// No description provided for @quickGuideCardGlosLaiBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratio of one-sided green leaf area per unit ground surface area (m²/m²).'**
+  String get quickGuideCardGlosLaiBody;
+
+  /// No description provided for @quickGuideCardGlosVpdTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'VPD — Vapor Pressure Deficit (kPa)'**
+  String get quickGuideCardGlosVpdTitle;
+
+  /// No description provided for @quickGuideCardGlosVpdBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Difference between saturated and actual vapor pressure in the air. Drives atmospheric evaporative suction.'**
+  String get quickGuideCardGlosVpdBody;
+
+  /// No description provided for @quickGuideCardGlosCecTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CEC — Cation Exchange Capacity'**
+  String get quickGuideCardGlosCecTitle;
+
+  /// No description provided for @quickGuideCardGlosCecBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Total capacity of a soil to hold exchangeable cations (Ca²⁺, Mg²⁺, K⁺, NH₄⁺) on negatively charged clay and humus.'**
+  String get quickGuideCardGlosCecBody;
+
+  /// No description provided for @quickGuideCardGlosParTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PAR — Photosynthetically Active Radiation'**
+  String get quickGuideCardGlosParTitle;
+
+  /// No description provided for @quickGuideCardGlosParBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar spectral waveband from 400 to 700 nm utilized by plant chlorophyll for photosynthesis.'**
+  String get quickGuideCardGlosParBody;
+
+  /// No description provided for @quickGuideCardGlosStomataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stomatal Conductance (gs)'**
+  String get quickGuideCardGlosStomataTitle;
+
+  /// No description provided for @quickGuideCardGlosStomataBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate of CO₂ entry and water vapor exit through stomata, tightly governed by leaf turgor and abscisic acid.'**
+  String get quickGuideCardGlosStomataBody;
+
+  /// No description provided for @quickGuideCardGlosEcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'EC — Electrical Conductivity (dS/m)'**
+  String get quickGuideCardGlosEcTitle;
+
+  /// No description provided for @quickGuideCardGlosEcBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Measure of soluble dissolved salts and ions in soil solution.'**
+  String get quickGuideCardGlosEcBody;
+
+  /// No description provided for @briefingButton.
+  ///
+  /// In en, this message translates to:
+  /// **'BRIEFING'**
+  String get briefingButton;
+
+  /// No description provided for @quickGuideUiDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'HUD Dashboard (Left Sidebar)'**
+  String get quickGuideUiDashboardTitle;
+
+  /// No description provided for @quickGuideUiDashboardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Access layer-specific soil metrics: water content (θ), temperature, pH, electrical conductivity (EC), and redox potential (Eh). Also includes the Soil Texture Triangle.'**
+  String get quickGuideUiDashboardBody;
+
+  /// No description provided for @quickGuideUiControlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Control Panel & Interventions (Right Sidebar)'**
+  String get quickGuideUiControlsTitle;
+
+  /// No description provided for @quickGuideUiControlsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) and agricultural management such as irrigation, N and P fertilization, cover crops, and soil tillage.'**
+  String get quickGuideUiControlsBody;
+
+  /// No description provided for @quickGuideUiTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline & Speed Control (Bottom)'**
+  String get quickGuideUiTimelineTitle;
+
+  /// No description provided for @quickGuideUiTimelineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause simulation to inspect soil profile, adjust playback speed (1x, 2x, 5x, 10x), or scrub timeline backwards to review development caused by interventions.'**
+  String get quickGuideUiTimelineBody;
+
+  /// No description provided for @quickGuideUiNanovisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nanovision Microscope (Bottom / Hotspots)'**
+  String get quickGuideUiNanovisionTitle;
+
+  /// No description provided for @quickGuideUiNanovisionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delve into cellular biophysics: observe leaf stomata (400x), stem xylem (200x), apical meristems (800x), root cellular structures (400x), rhizosphere (600x), and microbes (1200x).'**
+  String get quickGuideUiNanovisionBody;
+
+  /// No description provided for @quickGuideSciRichardsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1D Richards Equation & Capillarity'**
+  String get quickGuideSciRichardsTitle;
+
+  /// No description provided for @quickGuideSciRichardsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil water flow is driven by pressure head differences and matric water potential (van Genuchten model). Water percolates downward by gravity and matric suction, while capillary forces pull water toward the evaporation surface in dry soil.'**
+  String get quickGuideSciRichardsBody;
+
+  /// No description provided for @quickGuideSciPhotosynthesisTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FvCB Photosynthesis & Tardieu Stomatal Model'**
+  String get quickGuideSciPhotosynthesisTitle;
+
+  /// No description provided for @quickGuideSciPhotosynthesisBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop photosynthesis is driven by solar radiation (PAR), intercellular CO₂, and water availability. As soil dries, the plant closes stomata to prevent dehydration, which curtails carbon assimilation.'**
+  String get quickGuideSciPhotosynthesisBody;
+
+  /// No description provided for @quickGuideSciSpacTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SPAC Continuum (Soil-Plant-Atmosphere Continuum)'**
+  String get quickGuideSciSpacTitle;
+
+  /// No description provided for @quickGuideSciSpacBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Water forms an unbroken liquid column from soil pores through root endodermis and xylem vessels to leaf stomata and into the atmosphere, propelled along a descending water potential gradient.'**
+  String get quickGuideSciSpacBody;
+
+  /// No description provided for @quickGuideBioNitrogenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen Cycle: Mineralization & Nitrification'**
+  String get quickGuideBioNitrogenTitle;
+
+  /// No description provided for @quickGuideBioNitrogenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Organic nitrogen is mineralized by microbes into ammonium (NH₄⁺), which is oxidized into nitrate (NO₃⁻). Nitrate is readily absorbed by roots but leaches easily into groundwater during heavy precipitation.'**
+  String get quickGuideBioNitrogenBody;
+
+  /// No description provided for @quickGuideBioRedoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Anaerobiosis, Redox State & Denitrification'**
+  String get quickGuideBioRedoxTitle;
+
+  /// No description provided for @quickGuideBioRedoxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When soil is saturated, dissolved oxygen plunges. Microbes switch electron acceptors to nitrate and alternate oxides (TEA Redox ladder), generating nitrous oxide (N₂O) and methane (CH₄).'**
+  String get quickGuideBioRedoxBody;
+
+  /// No description provided for @quickGuideBioCarbonTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbon Pump & Mycorrhizae (POM / MAOM)'**
+  String get quickGuideBioCarbonTitle;
+
+  /// No description provided for @quickGuideBioCarbonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Root exudates stimulate microbial activity (Priming Effect). Mycorrhizal fungi exchange plant carbon for soil phosphorus and nitrogen. Microbial necromass binds to mineral surfaces as stable carbon (MAOM).'**
+  String get quickGuideBioCarbonBody;
+
+  /// No description provided for @quickGuideTipCompactionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compacted Clay Management'**
+  String get quickGuideTipCompactionTitle;
+
+  /// No description provided for @quickGuideTipCompactionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter.'**
+  String get quickGuideTipCompactionBody;
+
+  /// No description provided for @quickGuideTipLeachingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrate Leaching Prevention'**
+  String get quickGuideTipLeachingTitle;
+
+  /// No description provided for @quickGuideTipLeachingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues and deploy cover or catch crops to capture excess nitrate in the root zone.'**
+  String get quickGuideTipLeachingBody;
+
+  /// No description provided for @quickGuideTipLogicLabTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logic Lab & Scientific Equations'**
+  String get quickGuideTipLogicLabTitle;
+
+  /// No description provided for @quickGuideTipLogicLabBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Test biophysical equations and parameter sensitivities by opening the Logic Lab menu from the top bar. Inspect Michaelis-Menten kinetics and the Nernst equation live!'**
+  String get quickGuideTipLogicLabBody;
+
+  /// No description provided for @quickGuideGlosThetaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'θ — Volumetric Water Content (m³/m³)'**
+  String get quickGuideGlosThetaTitle;
+
+  /// No description provided for @quickGuideGlosThetaBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil water volume relative to total soil volume. 0.05 = permanent wilting point, 0.25 - 0.35 = optimal field capacity, > 0.45 = near-saturation or hypoxic flood state.'**
+  String get quickGuideGlosThetaBody;
+
+  /// No description provided for @quickGuideGlosKsatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'kSat — Saturated Hydraulic Conductivity (m/s)'**
+  String get quickGuideGlosKsatTitle;
+
+  /// No description provided for @quickGuideGlosKsatBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Capacity of soil to transmit water under saturated conditions. High in coarse sand (10⁻⁴ m/s = fast drainage), very low in compacted clay (10⁻⁷ - 10⁻⁹ m/s = surface water ponding).'**
+  String get quickGuideGlosKsatBody;
+
+  /// No description provided for @quickGuideGlosEhTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Eh — Redox Potential (mV)'**
+  String get quickGuideGlosEhTitle;
+
+  /// No description provided for @quickGuideGlosEhBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantifies oxidation-reduction status. Aerobic soil (+400...+600 mV) sustains healthy root respiration and nitrification. Anaerobic soil (< +200 mV) triggers denitrification, iron reduction, and methanogenesis (-150 mV).'**
+  String get quickGuideGlosEhBody;
+
+  /// No description provided for @quickGuideGlosSomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MAOM vs. POM — Organic Carbon Fractions'**
+  String get quickGuideGlosSomTitle;
+
+  /// No description provided for @quickGuideGlosSomBody.
+  ///
+  /// In en, this message translates to:
+  /// **'MAOM (Mineral-Associated Organic Matter) is mineral-stabilized microbial carbon persisting for decades. POM (Particulate Organic Matter) is coarse, rapidly cycling plant particulate matter.'**
+  String get quickGuideGlosSomBody;
+
+  /// No description provided for @quickGuideGlosCnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'C/N Ratio — Carbon to Nitrogen Stoichiometry'**
+  String get quickGuideGlosCnTitle;
+
+  /// No description provided for @quickGuideGlosCnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Determines balance between N mineralization and immobilization. When C/N > 25 (e.g. straw), microbes lock up all mineral N. When C/N < 20 (e.g. legumes or manure), plant-available nitrogen is released.'**
+  String get quickGuideGlosCnBody;
+
+  /// No description provided for @quickGuideGlosParTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PAR — Photosynthetically Active Radiation (µmol m⁻² s⁻¹)'**
+  String get quickGuideGlosParTitle;
+
+  /// No description provided for @quickGuideGlosParBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Spectral waveband 400–700 nm absorbed by chlorophyll for carbon fixation (FvCB model). Direct midsummer sun reaches ~1500–2000 µmol m⁻² s⁻¹.'**
+  String get quickGuideGlosParBody;
+
+  /// No description provided for @quickGuideGlosStomataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stomatal Conductance & Turgor'**
+  String get quickGuideGlosStomataTitle;
+
+  /// No description provided for @quickGuideGlosStomataBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stomatal pore conductance controls transpiration and CO₂ uptake. Under water deficit, cell turgor pressure drops and stomata close to prevent desiccation.'**
+  String get quickGuideGlosStomataBody;
+
+  /// No description provided for @quickGuideGlosRichardsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Richards Equation & van Genuchten'**
+  String get quickGuideGlosRichardsTitle;
+
+  /// No description provided for @quickGuideGlosRichardsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nonlinear partial differential equation describing water movement in unsaturated porous media, linking gravitational flow and matric suction (van Genuchten curve).'**
+  String get quickGuideGlosRichardsBody;
+
+  /// No description provided for @meterSoilHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'SOIL HEALTH'**
+  String get meterSoilHealth;
+
+  /// No description provided for @meterMoisture.
+  ///
+  /// In en, this message translates to:
+  /// **'MOISTURE'**
+  String get meterMoisture;
+
+  /// No description provided for @meterMicrobes.
+  ///
+  /// In en, this message translates to:
+  /// **'MICROBES'**
+  String get meterMicrobes;
+
+  /// No description provided for @meterPlantVitality.
+  ///
+  /// In en, this message translates to:
+  /// **'PLANT VITALITY'**
+  String get meterPlantVitality;
+
+  /// No description provided for @meterSoilHealthShort.
+  ///
+  /// In en, this message translates to:
+  /// **'SOIL'**
+  String get meterSoilHealthShort;
+
+  /// No description provided for @meterMoistureShort.
+  ///
+  /// In en, this message translates to:
+  /// **'WATER'**
+  String get meterMoistureShort;
+
+  /// No description provided for @meterMicrobesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'MICR'**
+  String get meterMicrobesShort;
+
+  /// No description provided for @meterPlantVitalityShort.
+  ///
+  /// In en, this message translates to:
+  /// **'PLANT'**
+  String get meterPlantVitalityShort;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

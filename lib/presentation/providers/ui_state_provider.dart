@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Ref;
 import 'package:flutter/foundation.dart';
 import '../../domain/models/scenario.dart';
 import '../../core/periodic_table.dart';
@@ -111,7 +112,10 @@ class UIState extends _$UIState {
   /// Update just the screen position (for mouse following)
   void updateScreenPosition(Offset pos) {
     if (state != null && !state!.isPinned) {
-      state = state!.copyWith(screenPosition: pos);
+      final currentPos = state!.screenPosition;
+      if (currentPos == null || (pos - currentPos).distance > 80.0) {
+        state = state!.copyWith(screenPosition: pos);
+      }
     }
   }
 
@@ -259,3 +263,53 @@ extension ElementInfoHoverExtension on ElementInfo {
     );
   }
 }
+
+class SidebarState {
+  final bool isLeftOpen;
+  final bool isRightOpen;
+
+  const SidebarState({
+    this.isLeftOpen = false,
+    this.isRightOpen = false,
+  });
+
+  SidebarState copyWith({
+    bool? isLeftOpen,
+    bool? isRightOpen,
+  }) {
+    return SidebarState(
+      isLeftOpen: isLeftOpen ?? this.isLeftOpen,
+      isRightOpen: isRightOpen ?? this.isRightOpen,
+    );
+  }
+}
+
+class SidebarStateNotifier extends Notifier<SidebarState> {
+  @override
+  SidebarState build() => const SidebarState();
+
+  void toggleLeft({bool isMobile = false}) {
+    final next = !state.isLeftOpen;
+    state = state.copyWith(
+      isLeftOpen: next,
+      isRightOpen: (next && isMobile) ? false : state.isRightOpen,
+    );
+  }
+
+  void toggleRight({bool isMobile = false}) {
+    final next = !state.isRightOpen;
+    state = state.copyWith(
+      isRightOpen: next,
+      isLeftOpen: (next && isMobile) ? false : state.isLeftOpen,
+    );
+  }
+
+  void setLeft(bool open) => state = state.copyWith(isLeftOpen: open);
+  void setRight(bool open) => state = state.copyWith(isRightOpen: open);
+  void closeAll() => state = const SidebarState(isLeftOpen: false, isRightOpen: false);
+}
+
+final sidebarStateProvider =
+    NotifierProvider<SidebarStateNotifier, SidebarState>(
+        SidebarStateNotifier.new);
+

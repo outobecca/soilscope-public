@@ -73,9 +73,9 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Selection radius matches the visual swarm radius
+    // Generous selection radius for comfortable hovering
     final center = size / 2;
-    return point.distanceTo(center) < 40.0; 
+    return point.distanceTo(center) < 48.0; 
   }
 
   @override
@@ -164,7 +164,8 @@ class AnimatedMicrobeComponent extends PositionComponent
       final maxSpeed = (isFeeding ? 18.0 : 55.0) * (1.0 + activityFactor * 0.2);
       if (_velocity.length > maxSpeed) _velocity.scaleTo(maxSpeed);
 
-      position.add(_velocity * vdt);
+      final moveMultiplier = (isHovered || isPinned) ? 0.15 : 1.0;
+      position.add(_velocity * vdt * moveMultiplier);
       
       final soilX = game.soilLeftX;
       final soilWidth = SoilScopeGame.soilColumnWidth;
@@ -399,6 +400,25 @@ class AnimatedMicrobeComponent extends PositionComponent
     canvas.translate(center.dx, center.dy);
     canvas.scale(_pulseScale);
     canvas.translate(-center.dx, -center.dy);
+
+    // Hover and Selection halo
+    if (isHovered || isPinned) {
+      canvas.drawCircle(
+        center,
+        28.0,
+        Paint()
+          ..color = const Color(0xFFFACC15).withValues(alpha: isPinned ? 0.6 : 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 / zoom,
+      );
+      canvas.drawCircle(
+        center,
+        28.0,
+        Paint()
+          ..color = const Color(0xFFFACC15).withValues(alpha: 0.1)
+          ..style = PaintingStyle.fill,
+      );
+    }
 
     // 1. Central Core (Hotspot requirement)
     final coreRadius = 4.0;

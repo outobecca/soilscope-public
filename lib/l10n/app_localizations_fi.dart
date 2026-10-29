@@ -1040,7 +1040,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get upward => 'Ylöspäin';
 
   @override
-  String get intoRoot => 'Ilmakehä → Maa';
+  String get intoRoot => 'Juureen';
 
   @override
   String get intoLeaves => 'Lehtiin';
@@ -1175,7 +1175,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get topsoilHorizon => 'Ruokamulta';
 
   @override
-  String get subsoilHorizon => 'Maa → Ilmakehä';
+  String get subsoilHorizon => 'Jankko';
 
   @override
   String get parentMaterialHorizon => 'Pohjamaa';
@@ -2714,7 +2714,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get logicLabMixinLabel => 'Tutoriaalin rakennustyökalu (Logic Lab Mixin)';
 
   @override
-  String get admin => 'Admin';
+  String get admin => 'Ylläpitäjä';
 
   @override
   String get closeAction => 'Sulje';
@@ -2978,19 +2978,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get nitrateDesc => 'Erittäin liikkuva typpimuoto. Liukenee veteen ja huuhtoutuu helposti.';
 
   @override
-  String get nitrogenTitleLong => 'TYPPI (Nitrogen)';
+  String get nitrogenTitleLong => 'TYPPI (N)';
 
   @override
   String get nitrogenDescLong => 'Tärkein kasvuravinne. Proteiinien, klorofyllin ja nukleiinihappojen rakennusaine.';
 
   @override
-  String get phosphorusTitleLong => 'FOSFORI (Phosphorus)';
+  String get phosphorusTitleLong => 'FOSFORI (P)';
 
   @override
   String get phosphorusDescLong => 'ATP:n ja DNA:n komponentti. Erittäin heikosti liikkuva.';
 
   @override
-  String get potassiumTitleLong => 'KALIUM (Potassium)';
+  String get potassiumTitleLong => 'KALIUM (K)';
 
   @override
   String get potassiumDescLong => 'Säätelee stomien avautumista ja vesitasapainoa.';
@@ -3208,7 +3208,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get biasLabel => 'Bias (Harha)';
 
   @override
-  String get ioaLabel => 'Index of Agreement (d)';
+  String get ioaLabel => 'Yhteensopivuusindeksi (d)';
 
   @override
   String get groupPeriod => 'Ryhmä / Jakso';
@@ -3301,4 +3301,666 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get moreInfo => 'Lisätietoja';
+
+  @override
+  String get rootExudation => 'Juurieritys';
+
+  @override
+  String get activity => 'Aktiivisuus';
+
+  @override
+  String get decompositionDesc => 'Orgaanisen aineksen hajoaminen ja mikrobien mineralisaatio.';
+
+  @override
+  String get mineralization => 'Mineralisaatio';
+
+  @override
+  String get tutorialTitle => 'SoilScope-käyttöopas';
+
+  @override
+  String tutorialStepCounter(Object current, Object total) {
+    return 'VAIHE $current / $total';
+  }
+
+  @override
+  String get tutorialNext => 'Seuraava';
+
+  @override
+  String get tutorialPrev => 'Edellinen';
+
+  @override
+  String get tutorialSkip => 'Ohita opastus';
+
+  @override
+  String get tutorialFinish => 'Aloita tutkiminen';
+
+  @override
+  String get tutorialQuickGuide => 'Pikaopas';
+
+  @override
+  String get tutorialStartTour => 'Käynnistä tutoriaali';
+
+  @override
+  String get tutorialRestart => 'Aloita opastus uudelleen';
+
+  @override
+  String get tutorialHelpTooltip => 'Sovelluksen käyttöohjeet ja tutoriaali';
+
+  @override
+  String get tutorialWelcomeTitle => 'Tervetuloa SoilScopeen!';
+
+  @override
+  String get tutorialWelcomeDesc => 'SoilScope on tieteellinen maaperä-kasvi-ilmakehä-jatkumon (SPAC) simulaattori. Tässä opastuksessa tutustumme sovelluksen tärkeimpiin toimintoihin, jotta voit hallita simulaatiota ja tulkita biokemiallisia prosesseja vaivattomasti.';
+
+  @override
+  String get tutorialWelcomePoint1 => 'Kasvin verson kasvu heijastaa juuriston veden ja ravinteiden ottoa.';
+
+  @override
+  String get tutorialWelcomePoint2 => 'Vesi ja ionit liikkuvat maaprofiilissa fysiikan lakien (Richards-yhtälö) mukaisesti.';
+
+  @override
+  String get tutorialWelcomePoint3 => 'Maaperän mikrobit ja sienijuuret (mykorritsa) muuntavat ravinteita kasville sopivaan muotoon.';
+
+  @override
+  String get tutorialCanvasTitle => 'Simulaationäkymä & Tarkastelupisteet';
+
+  @override
+  String get tutorialCanvasDesc => 'Päänäkymässä näet 2D-fysiikkamaailman: kasvin verson, juuriston kasvun ja maannoskerrokset sekä ravinnehiukkasten dynaamisen virtauksen.';
+
+  @override
+  String get tutorialCanvasPoint1 => 'Klikkaa maassa ja kasvissa hehkuvia kohdepisteitä (hotspots) avataksesi mikroskooppisen analyysin.';
+
+  @override
+  String get tutorialCanvasPoint2 => 'Vie hiiri minkä tahansa elementin päälle nähdäksesi reaaliaikaisia tieteellisiä arvoja ja kaavoja.';
+
+  @override
+  String get tutorialDashboardTitle => 'Tilannekeskus (HUD Dashboard)';
+
+  @override
+  String get tutorialDashboardDesc => 'Vasemman reunan tilannekeskuksesta pääset tarkastelemaan maaprofiilin fysiikkaa ja biokemiaa syvällisesti.';
+
+  @override
+  String get tutorialDashboardPoint1 => 'Tarkastele kerroskohtaista kosteutta (θ), lämpötilaa, pH-arvoa, redokspotentiaalia ja sähkönjohtavuutta.';
+
+  @override
+  String get tutorialDashboardPoint2 => 'Maalajikolmio (Texture Triangle) näyttää saven, hiedan ja hiekan jakauman.';
+
+  @override
+  String get tutorialDashboardPoint3 => 'Seuraa orgaanisen aineksen MAOM- ja POM-hiilivarastoja sekä mikrobien aktiivisuutta.';
+
+  @override
+  String get tutorialControlsTitle => 'Hallintapaneeli & Toimenpiteet';
+
+  @override
+  String get tutorialControlsDesc => 'Oikean reunan hallintapaneelista säädät ympäristöä ja suoritat viljelytoimenpiteitä.';
+
+  @override
+  String get tutorialControlsPoint1 => 'Säädä säätilaa: auringon PAR-valosäteily, sade, ilman lämpötila ja CO₂-pitoisuus.';
+
+  @override
+  String get tutorialControlsPoint2 => 'Viljelytoimenpiteet: kastelu, typpi- ja fosforilannoitus, kerääjäkasvit sekä maan muokkaus (kyntö).';
+
+  @override
+  String get tutorialControlsPoint3 => 'Huomioi: Liiallinen muokkaus tuhoaa sienirihmastoja ja ylilannoitus voi aiheuttaa nitraattihuuhtoutumaa.';
+
+  @override
+  String get tutorialTimelineTitle => 'Aikajana & Simulaationopeus';
+
+  @override
+  String get tutorialTimelineDesc => 'Hallitse ajan kulkua ja tarkkaile maaperän dynaamisia reaktioita lyhyellä ja pitkällä aikavälillä.';
+
+  @override
+  String get tutorialTimelinePoint1 => 'Pysäytä simulaatio analysoidaksesi maaperän profiilia tietyllä ajanhetkellä.';
+
+  @override
+  String get tutorialTimelinePoint2 => 'Muuta nopeutta (1x, 2x, 5x, 10x) nopeuttaaksesi kasvin kasvua ja ravinteiden suotautumista.';
+
+  @override
+  String get tutorialTimelinePoint3 => 'Kelaa aikajanaa tarkastellaksesi aiempia päiviä ja säähäiriöiden vaikutuksia.';
+
+  @override
+  String get tutorialObservationTitle => 'Havainnointitilat & Nanovision';
+
+  @override
+  String get tutorialObservationDesc => 'Alapalkin pikapainikkeilla eristät ravinnekiertoja ja siirryt solutason mikroskooppiin.';
+
+  @override
+  String get tutorialObservationPoint1 => 'Typen kierto: Korosta ammonium- ja nitraattipartikkelit sekä denitrifikaation kaasupäästöt.';
+
+  @override
+  String get tutorialObservationPoint2 => 'Nanovision: Tutki lehtien ilmarakoja, juuren kärkimeristeemiä ja maaperän huokosia jopa 1200x suurennoksella.';
+
+  @override
+  String get tutorialObservationPoint3 => 'Kytke hiukkasvirtauslinjat päälle tai pois tarpeen mukaan.';
+
+  @override
+  String get tutorialGamificationTitle => 'Kestävyys & Tehtävätavoitteet';
+
+  @override
+  String get tutorialGamificationDesc => 'Yläpalkki arvioi ekologista kestävyyttä ja opastaa skenaarioiden haasteissa.';
+
+  @override
+  String get tutorialGamificationPoint1 => 'Seuraa maan terveysindeksiä, vesikyllästeisyyttä, mikrobiston tilaa ja kasvin vitaliteettia.';
+
+  @override
+  String get tutorialGamificationPoint2 => 'Suorita skenaarion tavoitteet (esim. hiilensidonta tai ravinnehukkien minimointi) ansaitaksesi pisteitä.';
+
+  @override
+  String get tutorialGamificationPoint3 => 'Saavuta uusia tasoja toimimalla kestävän viljelyn ja ekofysiologian periaatteiden mukaisesti.';
+
+  @override
+  String get quickGuideTabUI => 'Käyttöliittymä';
+
+  @override
+  String get quickGuideTabScience => 'SPAC-Tiede';
+
+  @override
+  String get quickGuideTabTips => 'Käytännön vinkit';
+
+  @override
+  String get quickGuideTitle => 'SoilScope-Pikaopas';
+
+  @override
+  String get stepCompactedClay1Title => 'Havaitse kyntöantura ja tiivistymä';
+
+  @override
+  String get stepCompactedClay1Desc => 'Tarkastele maaprofiilin A2- ja B1-kerroksia: huokoisuus on pudonnut kriittiselle tasolle ja tiheys on koholla (1700-1800 kg/m³). Vesi ei pääse imeytymään syvemmälle, mikä hidastaa juurten kasvua.';
+
+  @override
+  String get stepCompactedClay2Title => 'Maan kuohkeutus ja syväjuuriset kasvit';
+
+  @override
+  String get stepCompactedClay2Desc => 'Avaa oikea hallintapaneeli ja suorita mekaaninen muokkaus pintakerroksen avaamiseksi. Kokeile myös kylvää syväjuurista aluskasvia (sinimailanen tai öljyretikka), joka luo bioporeja.';
+
+  @override
+  String get stepCompactedClay3Title => 'Seuraa juuriston tunkeutumista';
+
+  @override
+  String get stepCompactedClay3Desc => 'Tarkkaile juuriston kasvua Nanovision- tai mikroskooppitilassa. Juuret erittävät orgaanisia happoja ja limaa (EPS), jotka murustavat maata ja parantavat vedenjohtavuutta.';
+
+  @override
+  String get stepNitrateLeach1Title => 'Vaarallinen nitraattipitoisuus';
+
+  @override
+  String get stepNitrateLeach1Desc => 'A-kerroksen nitraattipitoisuus (NO₃⁻) on vaarallisen korkea (100 mg/kg) ja rankkasade lähestyy. Koska nitraatti on negatiivisesti varautunut anioni, se ei sitoudu maahiukkasiin vaan huuhtoutuu vapaan veden mukana pohjaveteen.';
+
+  @override
+  String get stepNitrateLeach2Title => 'Kylvä kerääjäkasveja ja säädä kastelua';
+
+  @override
+  String get stepNitrateLeach2Desc => 'Avaa hallintapaneeli. Vältä lisälannoitusta ja ota käyttöön kerääjäkasveja, joiden aktiivinen transpirointi sitoo vapaata nitraattia kasvimassaan ennen kuin sade huuhtoo sen pohjamaahan.';
+
+  @override
+  String get stepNitrateLeach3Title => 'Ravinteiden hyödyntäminen lehdistössä';
+
+  @override
+  String get stepNitrateLeach3Desc => 'Tarkkaile lehtien fotosynteesiä ja ilmarakojen johtavuutta. Terve ja tiheä kasvillisuus nostaa vettä maasta transpiraatiovirralla, mikä estää liuoksen perkolointia syvempiin kerroksiin.';
+
+  @override
+  String get stepNitrogenLock1Title => 'Mikrobien typpilukko (High C/N)';
+
+  @override
+  String get stepNitrogenLock1Desc => 'Maahan on lisätty runsaasti hiilipitoista olkea (korkea C/N-suhde). Mikrobit hajottavat hiiltä kiivaasti ja sitovat kaiken saatavilla olevan mineraalitypen (immobilisaatio), jolloin viljelykasvi alkaa kärsiä kloroosista.';
+
+  @override
+  String get stepNitrogenLock2Title => 'Täydennyslannoitus tai typensitojakasvit';
+
+  @override
+  String get stepNitrogenLock2Desc => 'Purkaa typpilukko lisäämällä hallintapaneelista kohdennettu typpilannoitus mikrobien tarpeen tyydyttämiseksi tai lisäämällä typensitojakasveja (apila/palkokasvit), jotka hyödyntävät ilmakehän typpeä symbioosissa.';
+
+  @override
+  String get stepNitrogenLock3Title => 'Seuraa mineralisaation käynnistymistä';
+
+  @override
+  String get stepNitrogenLock3Desc => 'Kun mikrobisto saavuttaa kyllästyspisteen, immobilisaatio kääntyy netto-mineralisaatioksi. Mineraalityppi (ammonium ja nitraatti) vapautuu jälleen kasvin juurten käyttöön ja MAOM-varasto karttuu.';
+
+  @override
+  String get stepWaterlogging1Title => 'Maan hapenpuute ja vesiylijäämä';
+
+  @override
+  String get stepWaterlogging1Desc => 'Pohjavesipinta on noussut ja maahuokoset ovat täysin veden vallassa (kyllästystila). Kaasunvaihto ilmakehään on estynyt, maaperän happi (O₂) kuluu loppuun ja redox-potentiaali (Eh) romahtaa kohti anaerobisia lukemia.';
+
+  @override
+  String get stepWaterlogging2Title => 'Hapettomat juuret ja tukehtuminen';
+
+  @override
+  String get stepWaterlogging2Desc => 'Kasvien juuret tarvitsevat happea soluhengitykseen ja ATP-tuotantoon. Ilman happea aktiivinen veden ja ravinteiden otto loppuu, ilmaraot sulkeutuvat ja kasvi nuutuu vaikka vettä on ylenmäärin.';
+
+  @override
+  String get stepWaterlogging3Title => 'Avaa ojitusta ja aktivoi haihduntaa';
+
+  @override
+  String get stepWaterlogging3Desc => 'Hallitse vesitilannetta: vähennä sadetusta, lisää salaojitusta/kuivatusta ja varmista kasvilajit jotka sietävät tulvimista tai muodostavat aerenkyymisolukkoa ilman kuljettamiseksi juuriin.';
+
+  @override
+  String get waterloggingTitle => 'Hapeton tulva-alue -haaste';
+
+  @override
+  String get waterloggingDesc => 'Hallitse hapenpuutetta ja ravinteiden huuhtoutumista tulvivassa maassa.';
+
+  @override
+  String get objectiveMaintainTurgor => 'Ylläpidä kasvin turgoria';
+
+  @override
+  String get objectiveRestoreAerobic => 'Palauta aerobiset olot';
+
+  @override
+  String get fluxAtmosphereToSoil => 'Ilmakehä → Maa';
+
+  @override
+  String get fluxSoilToAtmosphere => 'Maa → Ilmakehä';
+
+  @override
+  String get tutorialActionOpenDashboard => 'Avaa tilannekeskus';
+
+  @override
+  String get tutorialActionOpenControls => 'Avaa hallintapaneeli';
+
+  @override
+  String get tutorialActionTryPlayback => 'Kokeile toistoa';
+
+  @override
+  String get tutorialActionOpenNanovision => 'Avaa Nanovision';
+
+  @override
+  String get missionBriefingTitle => 'TEHTÄVÄNANTO';
+
+  @override
+  String get missionScenarioBadge => 'SKENAARIO';
+
+  @override
+  String get missionSubtitle => 'Tehtävän kuvaus ja tieteellinen tausta';
+
+  @override
+  String get missionChallengeTitle => 'Haasteen kuvaus';
+
+  @override
+  String get missionRecommendationsTitle => 'Toimenpidesuositukset';
+
+  @override
+  String get missionScienceTitle => 'SPAC-Biofysiikan tausta';
+
+  @override
+  String get missionObjectivesTitle => 'Tavoitteet';
+
+  @override
+  String get missionStatusAchieved => 'SAAVUTETTU';
+
+  @override
+  String get missionStatusPending => 'KESKEN';
+
+  @override
+  String get missionOpenQuickGuide => 'Avaa pikaopas';
+
+  @override
+  String get missionStartActions => 'Aloita toimenpiteet';
+
+  @override
+  String get missionNoActiveScenario => 'Ei aktiivista skenaariota';
+
+  @override
+  String get briefingCompactionProblem => 'Maan rakenne on raskaasti tiivistynyt: tilavuuspaino on kohonnut jopa 1700 kg/m³ ja huokoisuus on pudonnut alle 30 %. Vesi ei pääse imeytymään syvempiin kerroksiin vaan muodostaa pintaan lammikoita. Kasvin juuret eivät läpäise kovaa savikerrosta mekaanisen vastuksen vuoksi.';
+
+  @override
+  String get briefingCompactionStep1 => 'Avaa oikean reunan hallintapaneeli ja suorita pintamaan muokkaus (äestys) murustamaan tiivistymää.';
+
+  @override
+  String get briefingCompactionStep2 => 'Kylvä syväjuurinen kerääjäkasvi (Cover Crop), jonka pääjuuret kairaavat makrohuokosia pohjamaahan.';
+
+  @override
+  String get briefingCompactionStep3 => 'Vältä rankkasateita: pidä sademäärä maltillisena, jotta maahan jää riittävästi ilmatilaa ja vesi ei lietä pintaa.';
+
+  @override
+  String get briefingCompactionStep4 => 'Seuraa vasemmasta tilannekeskuksesta kyllästyneen vedenjohtavuuden (kSat) ja huokoisuuden kehitystä.';
+
+  @override
+  String get briefingCompactionScience => 'van Genuchten -mallin ja 1D Richards -yhtälön mukaisesti tiivistyneessä maassa vedenjohtavuus romahtaa useita kertalukuja. Juuriston pituuskasvu pysähtyy, kun maan leikkauslujuus ylittää juuren soluturgorin.';
+
+  @override
+  String get briefingLeachingProblem => 'Karkeassa hietamaassa (70 % hiekkaa) on suuri määrä vapaata nitraattia (100 mg/kg). Koska hiekan kationinvaihtokapasiteetti (CEC) ja vedenpidätyskyky ovat hyvin matalia, rankkasateet huuhtovat nitraatin suoraan pohjavesikerrokseen aiheuttaen ravinnehukkaa ja rehevöitymistä.';
+
+  @override
+  String get briefingLeachingStep1 => 'Kylvä nopeasti biomassaa tuottava kasvi ottamaan vapaa nitraatti talteen ennen voimakasta sadetta.';
+
+  @override
+  String get briefingLeachingStep2 => 'Pidä sademäärä pienenä tai säädä autoWeather pois päältä estääksesi massiivisen suotautumisen.';
+
+  @override
+  String get briefingLeachingStep3 => 'Lisää orgaanista ainesta nostamaan mikrobiston hiilimäärää, mikä laukaisee nitraatin sitomisen mikrobimassaan (immobilisaatio).';
+
+  @override
+  String get briefingLeachingStep4 => 'Kytke alapalkista Typen kierto päälle nähdäksesi nitraatti-ionien virtausvektorit.';
+
+  @override
+  String get briefingLeachingScience => 'Nitraatti (NO₃⁻) on negatiivisesti varautunut anioni, jota savimineraalit ja humus eivät sido sähköstaattisesti. Kulkeutuminen tapahtuu advektio-dispersio -yhtälön mukaisesti veden mukana.';
+
+  @override
+  String get briefingLockProblem => 'Maahan lisättiin suuri määrä hiilirikasta olkea, jolloin maaperän C/N-suhde nousi yli kriittisen arvon 25. Heterotrofiset maaperämikrobit kuluttavat kaiken vapaan typen (ammoniumin ja nitraatin) hajottaakseen hiiltä, jolloin viljelykasvi kärsii ankarasta typenpuutteesta.';
+
+  @override
+  String get briefingLockStep1 => 'Suorita typpilannoitus (Fertilize) hallintapaneelista täydentämään kasveille heti käyttökelpoista typpeä.';
+
+  @override
+  String get briefingLockStep2 => 'Nosta lämpötilaa tai optimoi kosteus kiihdyttämään mikrobien hengitystä ja hajotustyötä.';
+
+  @override
+  String get briefingLockStep3 => 'Avaa Nanovision-mikroskooppi ja tarkastele lehden ilmarakojen ja yhteyttämisen elpymistä.';
+
+  @override
+  String get briefingLockStep4 => 'Seuraa tilannekeskuksesta C/N-suhdetta ja mikrobien kuoleman kautta vapautuvaa typpeä (nekromassa).';
+
+  @override
+  String get briefingLockScience => 'Mikrobien biomassalla on kiinteä C/N-suhde (n. 8:1). Kun saatavilla on ylimäärin hiiltä, mikrobit immobilisoivat kaiken epäorgaanisen typen. Vapautuminen (mineralisaatio) käynnistyy vasta, kun orgaanisen aineksen C/N laskee alle 20:n.';
+
+  @override
+  String get briefingWaterloggingProblem => 'Maaperä on täysin veden kyllästämä ja ilmatila huokosissa on loppunut. Koska kaasujen diffuusio vedessä on 10 000 kertaa ilmaa hitaampaa, maaperän happi loppuu tunneissa. Redox-potentiaali putoaa syvälle negatiiviseksi (-150 mV), mikä käynnistää denitrifikaation ja metanogeneesin.';
+
+  @override
+  String get briefingWaterloggingStep1 => 'Pysäytä välittömästi kaikki kastelu ja varmista, että sademäärä on 0 mm.';
+
+  @override
+  String get briefingWaterloggingStep2 => 'Nosta auringonvaloa (PAR) ja ilman lämpötilaa kiihdyttämään maaveden haihduntaa (evapotranspiraatio).';
+
+  @override
+  String get briefingWaterloggingStep3 => 'Tarkkaile tilannekeskuksesta kaasupäästöjä (N₂O ja CH₄) sekä redox-potentiaalin nousua kohti aerobista aluetta (> 300 mV).';
+
+  @override
+  String get briefingWaterloggingStep4 => 'Tarkastele juuristoa: vältä juurimätää ja hapenpuutteen aiheuttamaa solukuolemaa.';
+
+  @override
+  String get briefingWaterloggingScience => 'Nernst-yhtälön mukainen redox-asteikko (TEA-redox-tikapuut) osoittaa, että hapen (O₂) kuluttua elektronit ohjautuvat nitraatille (NO₃⁻ → N₂O/N₂), mangaani- ja rautaoksideille ja lopulta metaaniksi (CH₄).';
+
+  @override
+  String get briefingDefaultProblem => 'Tasapainota maaperän fysiikka ja biokemia kasvin terveen kasvun varmistamiseksi.';
+
+  @override
+  String get briefingDefaultStep1 => 'Tarkastele maaprofiilin tilaa vasemmasta tilannekeskuksesta.';
+
+  @override
+  String get briefingDefaultStep2 => 'Säädä säätilaa ja toimenpiteitä oikeasta hallintapaneelista.';
+
+  @override
+  String get briefingDefaultStep3 => 'Seuraa kestävyyspisteitä ja suorita skenaarion tavoitteet.';
+
+  @override
+  String get briefingDefaultScience => 'SPAC-jatkumo yhdistää maaperän huokoisuuden, kasvin fysiologian ja ilmakehän haihduntapaineen.';
+
+  @override
+  String get quickGuideTabBiochemistry => 'Biokemia';
+
+  @override
+  String get quickGuideTabGlossary => 'Sanakirja';
+
+  @override
+  String get quickGuideSubtitle => 'SPAC-simulaattorin toiminnot ja tieteellinen perusta';
+
+  @override
+  String get quickGuideClose => 'Sulje opas';
+
+  @override
+  String get quickGuideCardUiDashboardTitle => 'Tilannekeskus (Dashboard - Vasen palkki)';
+
+  @override
+  String get quickGuideCardUiDashboardBody => 'Avaa maaperän kerroskohtaiset mittarit: vesipitoisuus (θ), lämpötila, pH, sähkönjohtavuus (EC) ja redokspotentiaali (Eh). Sisältää myös maalajikolmion (Texture Triangle), jolla näet maannoksen koostumuksen.';
+
+  @override
+  String get quickGuideCardUiControlsTitle => 'Hallintapaneeli & Viljely (Oikea palkki)';
+
+  @override
+  String get quickGuideCardUiControlsBody => 'Säädä sääolosuhteita (sade, auringonpaiste PAR, lämpötila, CO₂) sekä viljelytoimenpiteitä kuten kastelu, typpi- ja fosforilannoitus, kerääjäkasvit ja maan muokkaus.';
+
+  @override
+  String get quickGuideCardUiTimelineTitle => 'Aikajana & Nopeudensäätö (Alhaalla)';
+
+  @override
+  String get quickGuideCardUiTimelineBody => 'Pysäytä simulaatio hetkeksi tarkastelua varten, valitse nopeus (1x, 2x, 5x, 10x) tai kelaa päiviä taaksepäin nähdäksesi toimenpiteiden aiheuttaman kehityskulun.';
+
+  @override
+  String get quickGuideCardUiNanovisionTitle => 'Nanovision-mikroskooppi (Alhaalla / Hotspots)';
+
+  @override
+  String get quickGuideCardUiNanovisionBody => 'Syvenny solutason biofysiikkaan: tarkastele lehtien ilmarakoja (400x), verson ksyleemiä (200x), kärkimeristeemiä (800x), juuren solurakenteita (400x), ritsosfääriä (600x) ja mikrobeja (1200x).';
+
+  @override
+  String get quickGuideCardSciSpacTitle => 'SPAC — Maaperä-Kasvi-Ilmakehä -jatkumo';
+
+  @override
+  String get quickGuideCardSciSpacBody => 'Vesi liikkuu laskevan vesipotentiaalin (ψ) ajamana maasta (ψ ≈ -0,03 MPa) juuriin, edelleen ksyleemiin ja haihtuu ilmarakojen kautta ilmakehään (ψ ≈ -100 MPa).';
+
+  @override
+  String get quickGuideCardSciHydraulicsTitle => 'Richards-yhtälö & van Genuchten';
+
+  @override
+  String get quickGuideCardSciHydraulicsBody => 'Määrittää veden virtauksen kyllästymättömässä huokosverkostossa. Kuvaa kapillaarista imupainetta ja painovoiman vaikutusta.';
+
+  @override
+  String get quickGuideCardSciBeerLambertTitle => 'Säteilyn vaimeneminen (Beer-Lambert)';
+
+  @override
+  String get quickGuideCardSciBeerLambertBody => 'Auringon säteily vaimenee kasvustossa eksponentiaalisesti lehtiala-indeksin (LAI) ja sammumiskertoimen (k) funktiona.';
+
+  @override
+  String get quickGuideCardBioSomTitle => 'Hiilen dynamiikka: MAOM vs POM';
+
+  @override
+  String get quickGuideCardBioSomBody => 'MAOM (Mineral-Associated Organic Matter) on mineraalien pintoihin suojattua pysyvää humusta. POM on karkeaa, nopeasti kiertävää kasvijätettä.';
+
+  @override
+  String get quickGuideCardBioCnTitle => 'C/N-suhde ja Typpilukko';
+
+  @override
+  String get quickGuideCardBioCnBody => 'Määrää typen mineralisaation ja immobilisaation. Kun C/N > 25 (olki), mikrobit sitovat kaiken vapaan typen. Kun C/N < 20 (apila/lanta), typpeä vapautuu kasville.';
+
+  @override
+  String get quickGuideCardBioRedoxTitle => 'Redox-potentiaali (Eh) & Elektroninsiirto';
+
+  @override
+  String get quickGuideCardBioRedoxBody => 'Aerobinen soluhengitys vaatii Eh > +300 mV (O₂). Hapen ehtyessä siirrytään nitraatin pelkistykseen, rauta/mangaanioksideihin ja metanogeneesiin (-150 mV).';
+
+  @override
+  String get quickGuideCardTipWateringTitle => 'Kastelun ajoitus ja määrä';
+
+  @override
+  String get quickGuideCardTipWateringBody => 'Vältä liikakastelua savimailla estääksesi liettymistä ja juuriston tukehtumista. Pidä kosteus kenttäkapasiteetin ja lakastumisrajan välissä.';
+
+  @override
+  String get quickGuideCardTipFertilizationTitle => 'Jaettu lannoitus';
+
+  @override
+  String get quickGuideCardTipFertilizationBody => 'Kohdista typpilannoitus kasvin aktiivisimpaan kasvuvaiheeseen välttääksesi nitraatin huuhtoutumista pohjaveteen rankkasateilla.';
+
+  @override
+  String get quickGuideCardTipCoverCropsTitle => 'Hyödynnä kerääjäkasveja';
+
+  @override
+  String get quickGuideCardTipCoverCropsBody => 'Kerääjäkasvit sitovat ylimääräistä nitraattia, luovat syviä bioporeja ja kerryttävät orgaanista hiiltä.';
+
+  @override
+  String get quickGuideCardGlosLaiTitle => 'LAI — Lehtialaindeksi';
+
+  @override
+  String get quickGuideCardGlosLaiBody => 'Kasvuston lehtipinta-alan suhde maan pinta-alaan (m²/m²).';
+
+  @override
+  String get quickGuideCardGlosVpdTitle => 'VPD — Höyrynpainealijäämä (kPa)';
+
+  @override
+  String get quickGuideCardGlosVpdBody => 'Ilman kyllästys- ja todellisen höyrynpaineen erotus. Ohjaa ilmakehän haihdutuskysyntää.';
+
+  @override
+  String get quickGuideCardGlosCecTitle => 'CEC — Kationinvaihtokapasiteetti';
+
+  @override
+  String get quickGuideCardGlosCecBody => 'Maan kyky pidättää positiivisesti varautuneita kationeja savi- ja humuspartikkeleiden pinnoilla.';
+
+  @override
+  String get quickGuideCardGlosParTitle => 'PAR — Fotosynteettisesti aktiivinen säteily';
+
+  @override
+  String get quickGuideCardGlosParBody => 'Valon aallonpituusalue 400–700 nm, jota lehtivihreä hyödyntää yhteyttämisessä.';
+
+  @override
+  String get quickGuideCardGlosStomataTitle => 'Ilmarakojen johtavuus (gs)';
+
+  @override
+  String get quickGuideCardGlosStomataBody => 'Ilmarakojen kyky päästää CO₂:ta sisään ja vesihöyryä ulos; reagoi lehtien soluturgoriin.';
+
+  @override
+  String get quickGuideCardGlosEcTitle => 'EC — Sähkönjohtavuus (dS/m)';
+
+  @override
+  String get quickGuideCardGlosEcBody => 'Maaliuoksen liukoisten suolojen ja ionien kokonaismäärän mittari.';
+
+  @override
+  String get briefingButton => 'OHJE';
+
+  @override
+  String get quickGuideUiDashboardTitle => 'Tilannekeskus (Dashboard - Vasen palkki)';
+
+  @override
+  String get quickGuideUiDashboardBody => 'Avaa maaperän kerroskohtaiset mittarit: vesipitoisuus (θ), lämpötila, pH, sähkönjohtavuus (EC) ja redokspotentiaali (Eh). Sisältää myös maalajikolmion (Texture Triangle), jolla näet maannoksen koostumuksen.';
+
+  @override
+  String get quickGuideUiControlsTitle => 'Hallintapaneeli & Viljely (Oikea palkki)';
+
+  @override
+  String get quickGuideUiControlsBody => 'Säädä sääolosuhteita (sade, auringonpaiste PAR, lämpötila, CO₂) sekä viljelytoimenpiteitä kuten kastelu, typpi- ja fosforilannoitus, kerääjäkasvit ja maan muokkaus.';
+
+  @override
+  String get quickGuideUiTimelineTitle => 'Aikajana & Nopeudensäätö (Alhaalla)';
+
+  @override
+  String get quickGuideUiTimelineBody => 'Pysäytä simulaatio hetkeksi tarkastelua varten, valitse nopeus (1x, 2x, 5x, 10x) tai kelaa päiviä taaksepäin nähdäksesi toimenpiteiden aiheuttaman kehityskulun.';
+
+  @override
+  String get quickGuideUiNanovisionTitle => 'Nanovision-mikroskooppi (Alhaalla / Hotspots)';
+
+  @override
+  String get quickGuideUiNanovisionBody => 'Syvenny solutason biofysiikkaan: tarkastele lehtien ilmarakoja (400x), verson ksyleemiä (200x), kärkimeristeemiä (800x), juuren solurakenteita (400x), ritsosfääriä (600x) ja mikrobeja (1200x).';
+
+  @override
+  String get quickGuideSciRichardsTitle => '1D Richards-yhtälö & Kapillaarisuus';
+
+  @override
+  String get quickGuideSciRichardsBody => 'Veden virtaus maassa perustuu paine-eroihin ja maaveden potentiaaliin (van Genuchten -malli). Vesi suotautuu alaspäin painovoiman ja imuvoiman ajamana, mutta kuivassa maassa kapillaarivoimat nostavat vettä kohti haihtumispintaa.';
+
+  @override
+  String get quickGuideSciPhotosynthesisTitle => 'FvCB-fotosynteesi & Tardieu-ilmarakomalli';
+
+  @override
+  String get quickGuideSciPhotosynthesisBody => 'Kasvin yhteyttämisteho määräytyy auringon säteilyn (PAR), lehtien sisäisen CO₂-pitoisuuden ja veden saatavuuden kautta. Kun maaperä kuivuu, kasvi sulkee ilmaraot estääkseen kuivumisen, mikä hidastaa kasvua.';
+
+  @override
+  String get quickGuideSciSpacTitle => 'SPAC-jatkumo (Soil-Plant-Atmosphere Continuum)';
+
+  @override
+  String get quickGuideSciSpacBody => 'Vesi muodostaa katkeamattoman nestejatkumon maaperän huokosista juuren endodermiksen ja verson johtosolukon kautta lehtien ilmarakoihin ja ilmakehään veden potentiaaligradientin mukaisesti.';
+
+  @override
+  String get quickGuideBioNitrogenTitle => 'Typen kierto: Mineralisaatio & Nitrifikaatio';
+
+  @override
+  String get quickGuideBioNitrogenBody => 'Orgaaninen typpi muuttuu mikrobien toimesta ammoniumiksi (NH₄⁺), joka nitrifioituu nitraatiksi (NO₃⁻). Nitraatti on kasveille helppokäyttöistä, mutta suotautuu helposti pohjaveteen rankkasateilla.';
+
+  @override
+  String get quickGuideBioRedoxTitle => 'Anaerobia, Redoksitila & Denitrifikaatio';
+
+  @override
+  String get quickGuideBioRedoxBody => 'Maan vettyessä hapen määrä romahtaa. Mikrobit alkavat käyttää elektroneja nitraatille ja muille yhdisteille (TEA Redox-tikapuut), jolloin muodostuu typpioksiduulia (N₂O) ja metaania (CH₄).';
+
+  @override
+  String get quickGuideBioCarbonTitle => 'Hiilipumppu & Mykorritsa (POM / MAOM)';
+
+  @override
+  String get quickGuideBioCarbonBody => 'Kasvien juurieritteet aktivoivat mikrobit (Priming Effect). Sienijuuret vaihtavat kasvin hiiltä maaperän fosforiin ja typpeen. Osa mikrobijätteestä sitoutuu pysyvästi mineraalipinnoille stabiiliksi hiileksi (MAOM).';
+
+  @override
+  String get quickGuideTipCompactionTitle => 'Tiivistyneen savimaan hoito';
+
+  @override
+  String get quickGuideTipCompactionBody => 'Käytä kevyttä muokkausta pintakerroksen avaamiseen ja kylvä syväjuurinen kerääjäkasvi. Vältä raskaiden koneiden käyttöä märällä maalla ja tue mikrobistoa orgaanisella aineksella.';
+
+  @override
+  String get quickGuideTipLeachingTitle => 'Nitraatin huuhtoutumisen esto';
+
+  @override
+  String get quickGuideTipLeachingBody => 'Vältä suuria kertalannoituksia ennen ennustettua sadetta. Yhdistä mineraalityppi orgaaniseen ainekseen ja käytä syyskasveja tai aluskasveja sitomaan ylimääräinen typpi juuristovyöhykkeeseen.';
+
+  @override
+  String get quickGuideTipLogicLabTitle => 'Logic Lab & Tieteelliset kaavat';
+
+  @override
+  String get quickGuideTipLogicLabBody => 'Voit kokeilla matemaattisia kaavoja ja biofysiikan riippuvuuksia avaamalla Logic Lab -valikon yläreunan valikosta. Siellä näet mm. Michaelis-Menten -kinetiikan ja Nernst-yhtälön livenä!';
+
+  @override
+  String get quickGuideGlosThetaTitle => 'θ — Maaveden tilavuuspitoisuus (m³/m³)';
+
+  @override
+  String get quickGuideGlosThetaBody => 'Maan vesipitoisuus suhteessa kokonaistilavuuteen. 0.05 = erittäin kuiva maa (lakastumisraja), 0.25 - 0.35 = optimaalinen kenttäkapasiteetti, > 0.45 = lähes kyllästynyt tai hapeton tulvatila.';
+
+  @override
+  String get quickGuideGlosKsatTitle => 'kSat — Kyllästynyt vedenjohtavuus (m/s)';
+
+  @override
+  String get quickGuideGlosKsatBody => 'Maan kyky johtaa vettä kyllästystilassa. Karkealla hiekalla suuri (10⁻⁴ m/s = vesi valuu heti läpi), tiivistyneellä savella hyvin pieni (10⁻⁷ - 10⁻⁹ m/s = vesi seisoo pinnalla aiheuttaen pintalietettä).';
+
+  @override
+  String get quickGuideGlosEhTitle => 'Eh — Redokspotentiaali (mV)';
+
+  @override
+  String get quickGuideGlosEhBody => 'Kuvaa maaperän hapetus-pelkistystilaa. Aerobinen maaperä (+400...+600 mV) tukee normaalia juurihengitystä ja nitrifikaatiota. Anaerobisessa maassa (< +200 mV) denitrifikaatio, raudan pelkistys ja metanogeneesi (-150 mV) käynnistyvät.';
+
+  @override
+  String get quickGuideGlosSomTitle => 'MAOM vs. POM — Orgaanisen hiilen jakeet';
+
+  @override
+  String get quickGuideGlosSomBody => 'MAOM (Mineral-Associated Organic Matter) on mineraalipinnoille suojautunutta mikrobijohdannaista hiiltä, joka säilyy maassa vuosikymmeniä. POM (Particulate Organic Matter) on karkeaa, nopeasti kiertävää kasvijätettä.';
+
+  @override
+  String get quickGuideGlosCnTitle => 'C/N-suhde — Hiili-typpisuhde';
+
+  @override
+  String get quickGuideGlosCnBody => 'Määrää typen mineralisaation ja immobilisaation tasapainon. Kun C/N > 25 (esim. olki), mikrobit sitovat kaiken vapaan typen (typpilukko). Kun C/N < 20 (esim. apila tai lanta), typpeä vapautuu kasville.';
+
+  @override
+  String get quickGuideGlosParTitle => 'PAR — Fotosynteettinen säteily (µmol m⁻² s⁻¹)';
+
+  @override
+  String get quickGuideGlosParBody => 'Aallonpituusalue 400–700 nm, jota lehtien klorofylli käyttää yhteyttämiseen (FvCB-malli). Suora kesäaurinko vastaa n. 1500–2000 µmol m⁻² s⁻¹.';
+
+  @override
+  String get quickGuideGlosStomataTitle => 'Stomataali-konduktanssi & Turgor';
+
+  @override
+  String get quickGuideGlosStomataBody => 'Ilmarakojen johtavuus säätelee transpiraatiota ja CO₂:n ottoa. Tardieu-mallin mukaisesti vesistressissä solujen turgorpaine laskee, jolloin ilmaraot sulkeutuvat estääkseen kuivumisen.';
+
+  @override
+  String get quickGuideGlosRichardsTitle => 'Richards-yhtälö & van Genuchten';
+
+  @override
+  String get quickGuideGlosRichardsBody => 'Epälineaarinen osittaisdifferentiaaliyhtälö maaveden virtaukselle kyllästymättömässä huokosverkostossa. Yhdistää painovoiman ja kapillaarisen imupaineen (van Genuchten -käyrä).';
+
+  @override
+  String get meterSoilHealth => 'MAA TERVEYS';
+
+  @override
+  String get meterMoisture => 'KOSTEUS';
+
+  @override
+  String get meterMicrobes => 'MIKROBIT';
+
+  @override
+  String get meterPlantVitality => 'KASVI VITALITEETTI';
+
+  @override
+  String get meterSoilHealthShort => 'MAA';
+
+  @override
+  String get meterMoistureShort => 'VESI';
+
+  @override
+  String get meterMicrobesShort => 'MIKR';
+
+  @override
+  String get meterPlantVitalityShort => 'KASVI';
 }

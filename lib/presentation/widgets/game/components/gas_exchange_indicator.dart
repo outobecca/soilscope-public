@@ -300,11 +300,11 @@ class AtmosphericFluxIndicator extends PositionComponent
   @override
   bool containsLocalPoint(Vector2 point) {
     if (isCurved && startOffset != null && endOffset != null) {
-      // Create a rect that encompasses the curve
-      final rect = Rect.fromPoints(startOffset!, endOffset!).inflate(15);
+      // Create a rect that encompasses the curve with generous margin
+      final rect = Rect.fromPoints(startOffset!, endOffset!).inflate(24);
       return rect.contains(point.toOffset());
     }
-    return point.length < 15.0;
+    return point.length < 24.0;
   }
 
   @override
@@ -358,14 +358,14 @@ class AtmosphericFluxIndicator extends PositionComponent
       case FluxType.o2Diffusion:
         title = l.o2DiffusionTitle;
         desc = l.oxygenDiffusionDesc;
-        stats = {l.directionLabel: l.intoRoot, l.importance: l.aerobicState};
+        stats = {l.directionLabel: l.fluxAtmosphereToSoil, l.importance: l.aerobicState};
         symbol = 'O';
         accent = CPKStandards.colorO;
         break;
       case FluxType.n2oEmission:
         title = l.n2oEmissionTitle;
         desc = l.nitrogenLossDenit;
-        stats = {l.source: l.subsoilHorizon, l.riskLabel: l.greenhouseGas};
+        stats = {l.source: l.fluxSoilToAtmosphere, l.riskLabel: l.greenhouseGas};
         symbol = 'N';
         accent = CPKStandards.colorN;
         break;

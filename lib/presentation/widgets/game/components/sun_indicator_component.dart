@@ -205,6 +205,8 @@ class SunIndicatorComponent extends PositionComponent
                   '${((state.plants.isNotEmpty ? state.plants.first.lightTransmission : 1.0) * 100).toStringAsFixed(0)}%',
             },
             isPinned: pinned,
+            accentColor: Colors.amberAccent,
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),
         );
   }

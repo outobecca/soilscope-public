@@ -54,6 +54,12 @@ class MissionPanel extends ConsumerWidget {
               case 'crop_vitality':
                 title = l10n.objectiveCropVitality;
                 break;
+              case 'wet_yield':
+                title = l10n.objectiveMaintainTurgor;
+                break;
+              case 'wet_eh':
+                title = l10n.objectiveRestoreAerobic;
+                break;
             }
 
             return Padding(

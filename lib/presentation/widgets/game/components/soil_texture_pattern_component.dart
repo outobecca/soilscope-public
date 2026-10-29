@@ -149,7 +149,7 @@ class SoilTexturePatternComponent extends Component
     for (final layer in state.profile.layers) {
       final layerHeight = layer.thickness * scaleY;
       if (event.localPosition.y >= currentY && event.localPosition.y <= currentY + layerHeight) {
-        _showTextureInfo(layer, pinned: true);
+        _showTextureInfo(layer, pinned: true, targetY: currentY + layerHeight / 2);
         break;
       }
       currentY += layerHeight;
@@ -157,8 +157,13 @@ class SoilTexturePatternComponent extends Component
     event.handled = true;
   }
 
-  void _showTextureInfo(dynamic layer, {bool pinned = false}) {
+  void _showTextureInfo(dynamic layer, {bool pinned = false, double? targetY}) {
     final l = game.l10n;
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      targetY ?? (surfaceY + 100.0),
+    );
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.soilStructureTexture.toUpperCase(),
@@ -169,6 +174,8 @@ class SoilTexturePatternComponent extends Component
           l.clay: '${(layer.clayFraction * 100).toStringAsFixed(0)}%',
         },
         isPinned: pinned,
+        accentColor: const Color(0xFFA1887F),
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
   }

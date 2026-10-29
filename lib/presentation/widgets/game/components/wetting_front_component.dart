@@ -58,7 +58,7 @@ class WettingFrontComponent extends Component
   @override
   bool containsLocalPoint(Vector2 point) {
     if (point.x < simulationX || point.x > simulationX + simulationWidth) return false;
-    return (point.y - _lastFrontY).abs() < 15;
+    return (point.y - _lastFrontY).abs() < 28;
   }
 
   @override
@@ -86,6 +86,7 @@ class WettingFrontComponent extends Component
 
   void _showFrontInfo({bool pinned = false}) {
     final l = game.l10n;
+    final anchorWorld = Vector2(simulationX + simulationWidth / 2, _lastFrontY);
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.wettingFrontTitle.toUpperCase(),
@@ -96,6 +97,8 @@ class WettingFrontComponent extends Component
           l.stateLabel: l.saturationLabel,
         },
         isPinned: pinned,
+        accentColor: const Color(0xFF38BDF8),
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
   }

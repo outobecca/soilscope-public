@@ -157,5 +157,25 @@
       "targetValue": 40.0,
       "type": "yield"
     }
+  ],
+  "tutorialSteps": [
+    {
+      "triggerTime": 0.0,
+      "targetId": "dashboard",
+      "title": "Vaarallinen nitraattipitoisuus",
+      "description": "A-kerroksen nitraattipitoisuus (NO₃⁻) on vaarallisen korkea (100 mg/kg) ja rankkasade lähestyy. Koska nitraatti on negatiivisesti varautunut anioni, se ei sitoudu maahiukkasiin vaan huuhtoutuu vapaan veden mukana pohjaveteen."
+    },
+    {
+      "triggerTime": 20.0,
+      "targetId": "controls",
+      "title": "Kylvä kerääjäkasveja ja säädä kastelua",
+      "description": "Avaa hallintapaneeli. Vältä lisälannoitusta ja ota käyttöön kerääjäkasveja, joiden aktiivinen transpirointi sitoo vapaata nitraattia kasvimassaan ennen kuin sade huuhtoo sen pohjamaahan."
+    },
+    {
+      "triggerTime": 75.0,
+      "targetId": "leaf",
+      "title": "Ravinteiden hyödyntäminen lehdistössä",
+      "description": "Tarkkaile lehtien fotosynteesiä ja ilmarakojen johtavuutta. Terve ja tiheä kasvillisuus nostaa vettä maasta transpiraatiovirralla, mikä estää liuoksen perkolointia syvempiin kerroksiin."
+    }
   ]
 }

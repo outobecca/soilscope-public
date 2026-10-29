@@ -1031,11 +1031,18 @@ class AnimatedPlantComponent extends PositionComponent
 
         canvas.drawCircle(
           pos.toOffset(),
-          8 / zoom,
+          12 / zoom,
           Paint()
-            ..color = Colors.white.withValues(alpha: 0.3)
+            ..color = const Color(0xFF34D399).withValues(alpha: 0.8)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.0,
+            ..strokeWidth = 2.0 / zoom,
+        );
+        canvas.drawCircle(
+          pos.toOffset(),
+          6 / zoom,
+          Paint()
+            ..color = const Color(0xFF34D399).withValues(alpha: 0.3)
+            ..style = PaintingStyle.fill,
         );
       }
     }
@@ -2173,19 +2180,19 @@ class AnimatedPlantComponent extends PositionComponent
     final plant = _plantData;
     if (plant == null) return false;
 
-    // Check shoot (stem + leaves)
+    // Check shoot (stem + leaves) with generous horizontal width for spreading leaves
     final shootScale =
         0.5 + (plant.totalBiomass / 1000.0).clamp(0.0, 1.5) + _growthBoost;
     final shootHeight = 320.0 * shootScale;
     final shootRect = Rect.fromLTWH(
-      -40 * shootScale,
+      -100 * shootScale,
       -shootHeight,
-      80 * shootScale,
+      200 * shootScale,
       shootHeight,
     );
     if (shootRect.contains(point.toOffset())) return true;
 
-    // Check against root nodes (increased radius for selectability)
+    // Check against root nodes (increased radius to 32.0 for effortless targeting)
     final nodes = plant.rootSystem;
     for (int i = 0; i < nodes.length; i++) {
       final pos = _mapRootToLocal(
@@ -2195,7 +2202,7 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (point.distanceTo(pos) < 24.0) return true;
+      if (point.distanceTo(pos) < 32.0) return true;
     }
     return false;
   }
@@ -2207,8 +2214,11 @@ class AnimatedPlantComponent extends PositionComponent
 
     final localPos = event.localPosition;
 
-    // Update root hovering index
-    _hoveredRootIndex = null;
+    // Check root hovering with accurate root info and coordinate targeting
+    int? foundRootIndex;
+    Vector2? foundRootPos;
+    RootNode? foundRootNode;
+
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
       final pos = _mapRootToLocal(
@@ -2218,14 +2228,45 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (localPos.distanceTo(pos) < 24.0) {
-        _hoveredRootIndex = i;
-        if (!isHovered) _showPlantInfo(pinned: false);
-        return;
+      if (localPos.distanceTo(pos) < 32.0) {
+        foundRootIndex = i;
+        foundRootPos = pos;
+        foundRootNode = node;
+        break;
       }
     }
 
-    if (isHovered) _showPlantInfo(pinned: false);
+    if (foundRootIndex != null) {
+      if (_hoveredRootIndex != foundRootIndex) {
+        _hoveredRootIndex = foundRootIndex;
+        final current = game.ref.read(uIStateProvider);
+        if (current == null || !current.isPinned) {
+          final info = _getRootInfo(foundRootNode!, plant);
+          game.ref.read(uIStateProvider.notifier).setHoverInfo(
+            HoverInfo(
+              title: info['title'] as String,
+              description: info['description'] as String,
+              stats: info['stats'] as Map<String, String>?,
+              isPinned: false,
+              accentColor: info['accentColor'] as Color?,
+              screenPosition: game.worldToScreen(absolutePositionOf(foundRootPos!)).toOffset(),
+            ),
+          );
+        }
+      }
+      return;
+    }
+
+    // When moving away from roots onto shoot or moving within shoot
+    if (_hoveredRootIndex != null) {
+      _hoveredRootIndex = null;
+      final current = game.ref.read(uIStateProvider);
+      if (current == null || !current.isPinned) {
+        _showPlantInfo(pinned: false, localHoverY: localPos.y);
+      }
+    } else if (isHovered) {
+      _showPlantInfo(pinned: false, localHoverY: localPos.y);
+    }
     super.onPointerMove(event);
   }
 
@@ -2236,7 +2277,7 @@ class AnimatedPlantComponent extends PositionComponent
 
     final localPos = event.localPosition;
 
-    // Check for root node selection (increased radius)
+    // Check for root node selection (generous 32px radius)
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
       final pos = _mapRootToLocal(
@@ -2246,10 +2287,11 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (localPos.distanceTo(pos) < 24.0) {
+      if (localPos.distanceTo(pos) < 32.0) {
         _pinnedRootIndex = i;
         final info = _getRootInfo(node, plant);
         info['screenPosition'] = game.worldToScreen(absolutePositionOf(pos)).toOffset();
+        info['isPinned'] = true;
         game.ref
             .read(uIStateProvider.notifier)
             .showInfo(info);
@@ -2260,7 +2302,7 @@ class AnimatedPlantComponent extends PositionComponent
 
     _pinnedRootIndex = null;
     _isPinned = !_isPinned;
-    _showPlantInfo(pinned: _isPinned);
+    _showPlantInfo(pinned: _isPinned, localHoverY: localPos.y);
 
     if (_isPinned) {
       final isShoot = localPos.y < 0;
@@ -2308,10 +2350,21 @@ class AnimatedPlantComponent extends PositionComponent
     };
   }
 
-  void _showPlantInfo({bool pinned = false}) {
+  void _showPlantInfo({bool pinned = false, double? localHoverY}) {
     final l = game.l10n;
     final plant = _plantData;
     if (plant == null) return;
+
+    final shootScale =
+        0.5 + (plant.totalBiomass / 1000.0).clamp(0.0, 1.5) + _growthBoost;
+    final shootHeight = 320.0 * shootScale;
+
+    // Anchor near the canopy/shoot when hovering above ground, otherwise center shoot
+    final targetY = localHoverY != null && localHoverY < 0
+        ? localHoverY.clamp(-shootHeight, -20.0)
+        : -shootHeight * 0.55;
+    final anchorWorld = absolutePositionOf(Vector2(0, targetY));
+
     game.ref
         .read(uIStateProvider.notifier)
         .setHoverInfo(
@@ -2327,7 +2380,7 @@ class AnimatedPlantComponent extends PositionComponent
             },
             isPinned: pinned,
             accentColor: const Color(0xFF10B981), // Emerald
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),
         );
   }

@@ -9,6 +9,7 @@ import '../../domain/solvers/mycorrhiza_solver.dart';
 import '../providers/simulation_provider.dart';
 import '../../core/app_theme.dart';
 import '../../l10n/app_localizations.dart';
+import 'tutorial/mission_briefing_dialog.dart';
 
 class GamificationBar extends ConsumerWidget {
   const GamificationBar({super.key});
@@ -78,6 +79,7 @@ class GamificationBar extends ConsumerWidget {
           child: isMobile
               ? _buildMobileLayout(
                   context,
+                  l10n: l10n,
                   soilHealth: uiState.soilHealth,
                   waterSat: uiState.waterSat,
                   microbeFlux: uiState.microbeFlux,
@@ -94,7 +96,7 @@ class GamificationBar extends ConsumerWidget {
                   children: [
                     // SOIL HEALTH METER
                     HealthMeterWidget(
-                      title: "MAA TERVEYS",
+                      title: l10n?.meterSoilHealth ?? "MAA TERVEYS",
                       value: uiState.soilHealth,
                       color: uiState.soilColor,
                       gradient: const LinearGradient(
@@ -105,7 +107,7 @@ class GamificationBar extends ConsumerWidget {
 
                     // WATER SATURATION
                     HealthMeterWidget(
-                      title: "KOSTEUS",
+                      title: l10n?.meterMoisture ?? "KOSTEUS",
                       value: uiState.waterSat,
                       color: Colors.blueAccent,
                       gradient: const LinearGradient(
@@ -127,7 +129,7 @@ class GamificationBar extends ConsumerWidget {
 
                     // MICROBE FLUX
                     HealthMeterWidget(
-                      title: "MIKROBIT",
+                      title: l10n?.meterMicrobes ?? "MIKROBIT",
                       value: uiState.microbeFlux,
                       color: Colors.pinkAccent,
                       gradient: const LinearGradient(
@@ -138,7 +140,7 @@ class GamificationBar extends ConsumerWidget {
 
                     // PLANT HEALTH METER
                     HealthMeterWidget(
-                      title: "KASVI VITALITEETTI",
+                      title: l10n?.meterPlantVitality ?? "KASVI VITALITEETTI",
                       value: uiState.plantHealth,
                       color: uiState.plantColor,
                       gradient: const LinearGradient(
@@ -155,6 +157,7 @@ class GamificationBar extends ConsumerWidget {
 
   Widget _buildMobileLayout(
     BuildContext context, {
+    required AppLocalizations? l10n,
     required double soilHealth,
     required double waterSat,
     required double microbeFlux,
@@ -173,10 +176,10 @@ class GamificationBar extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildMiniMeter(context, "MAA", soilHealth, soilColor, Icons.grass_rounded),
-            _buildMiniMeter(context, "VESI", waterSat, Colors.blueAccent, Icons.water_drop_rounded),
-            _buildMiniMeter(context, "MIKR", microbeFlux, Colors.pinkAccent, Icons.hub_rounded),
-            _buildMiniMeter(context, "KASVI", plantHealth, plantColor, Icons.local_florist_rounded),
+            _buildMiniMeter(context, l10n?.meterSoilHealthShort ?? "MAA", soilHealth, soilColor, Icons.grass_rounded),
+            _buildMiniMeter(context, l10n?.meterMoistureShort ?? "VESI", waterSat, Colors.blueAccent, Icons.water_drop_rounded),
+            _buildMiniMeter(context, l10n?.meterMicrobesShort ?? "MIKR", microbeFlux, Colors.pinkAccent, Icons.hub_rounded),
+            _buildMiniMeter(context, l10n?.meterPlantVitalityShort ?? "KASVI", plantHealth, plantColor, Icons.local_florist_rounded),
           ],
         ),
         const SizedBox(height: 8),
@@ -222,6 +225,36 @@ class GamificationBar extends ConsumerWidget {
                 ],
               ),
             ),
+            if (state.currentScenario?.objectives.isNotEmpty == true) ...[
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const MissionBriefingDialog(),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.flag_rounded, size: 11, color: const Color(0xFFC084FC)),
+                      const SizedBox(width: 2),
+                      Text(
+                        l10n?.briefingButton ?? 'OHJE',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFC084FC),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ],
@@ -633,9 +666,35 @@ class XpLevelPanelWidget extends StatelessWidget {
     required this.buffs,
   });
 
+  String _getLocalizedObjectiveTitle(
+      MissionObjective obj, AppLocalizations? l10n) {
+    if (l10n == null) return obj.title;
+    switch (obj.id) {
+      case 'clay_yield':
+        return l10n.objectiveProduceBiomass;
+      case 'clay_health':
+        return l10n.objectiveRestoreHealth;
+      case 'leaching_prevention':
+        return l10n.objectivePreventLeaching;
+      case 'yield_target':
+        return l10n.objectiveReachYield;
+      case 'nitrogen_unlock':
+        return l10n.objectiveUnlockNitrogen;
+      case 'crop_vitality':
+        return l10n.objectiveCropVitality;
+      case 'wet_yield':
+        return l10n.objectiveMaintainTurgor;
+      case 'wet_eh':
+        return l10n.objectiveRestoreAerobic;
+      default:
+        return obj.title;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Expanded(
       flex: 2,
@@ -709,44 +768,74 @@ class XpLevelPanelWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (objectives.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+            InkWell(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const MissionBriefingDialog(),
+                );
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: objectives.map((obj) {
-                    final isMet = metObjectiveIds.contains(obj.id);
-                    final color = isMet
-                        ? Colors.greenAccent
-                        : Colors.grey.shade400;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                  children: [
+                    Icon(
+                      Icons.flag_rounded,
+                      size: 11,
+                      color: const Color(0xFFC084FC),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n?.briefingButton ?? 'OHJE',
+                      style: TextStyle(
+                        color: const Color(0xFFC084FC),
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isMet
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            color: color,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            obj.title,
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 9,
-                              fontWeight: isMet
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                        children: objectives.map((obj) {
+                          final isMet = metObjectiveIds.contains(obj.id);
+                          final color = isMet
+                              ? Colors.greenAccent
+                              : Colors.grey.shade400;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isMet
+                                      ? Icons.check_circle_rounded
+                                      : Icons.radio_button_unchecked_rounded,
+                                  color: color,
+                                  size: 11,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _getLocalizedObjectiveTitle(obj, l10n),
+                                  style: TextStyle(
+                                    color: color,
+                                    fontSize: 8.5,
+                                    fontWeight: isMet
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
                 ),
               ),
             ),

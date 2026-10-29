@@ -143,7 +143,8 @@ class MoleculeParticleComponent extends PositionComponent
 
     final flowMode = game.ref.read(particleFlowModeProvider);
     final boost = flowMode ? 2.5 : 1.0;
-    final vdt = getPerceptualDt(dt) * boost;
+    final damp = (isHovered || isPinned) ? 0.15 : 1.0;
+    final vdt = getPerceptualDt(dt) * boost * damp;
     if (_isAbsorbed) {
       return; // Handled by removeFromParent immediately
     }
@@ -285,6 +286,18 @@ class MoleculeParticleComponent extends PositionComponent
     // 1. CYCLE GLOW
     renderCycleGlow(canvas, center, 4.0);
 
+    // Hover / selection highlight halo
+    if (isHovered || isPinned) {
+      canvas.drawCircle(
+        center,
+        14.0 / zoom,
+        Paint()
+          ..color = moleculeColor.withValues(alpha: isPinned ? 0.7 : 0.45)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 / zoom,
+      );
+    }
+
     // 2. MOLECULAR RENDERING (Unified)
     MoleculeRenderer.drawMolecule(
       canvas,
@@ -306,9 +319,9 @@ class MoleculeParticleComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch target (48px diameter) around the 6px molecule particle
+    // Generous touch & hover target (60px diameter) around the 6px molecule particle
     final center = size / 2;
-    return point.distanceTo(center) <= 24.0;
+    return point.distanceTo(center) <= 30.0;
   }
 
   @override

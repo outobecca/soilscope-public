@@ -64,31 +64,65 @@ class NitrousOxideBubbleComponent extends Component
     }
   }
 
+  bool _isPinned = false;
+
   @override
   bool containsLocalPoint(Vector2 point) {
+    final state = game.ref.read(simulationProvider);
+    if (state.profile.layers.isEmpty) return false;
+    final topLayer = state.profile.layers.first;
+    final double airFilledPorosity = (topLayer.porosity - topLayer.waterContent).clamp(0.0, 1.0);
+    final double fWaterAerobic = airFilledPorosity > 0.05 ? 1.0 : (airFilledPorosity / 0.05);
+    final double fWaterAnaerobic = 1.0 - fWaterAerobic;
+    // Only capture hover/taps when bubbles are actively being emitted
+    if (fWaterAnaerobic <= 0.5) return false;
+
     final soilX = game.soilLeftX;
     final soilWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
     return point.y <= surfaceY &&
-        point.y >= surfaceY - 75 &&
+        point.y >= surfaceY - 80 &&
         point.x >= soilX &&
         point.x <= soilX + soilWidth;
   }
 
   @override
+  void onTapUp(TapUpEvent event) {
+    _isPinned = !_isPinned;
+    _showN2OInfo(pinned: _isPinned);
+    event.handled = true;
+  }
+
+  @override
   void onHoverEnter() {
+    final current = game.ref.read(uIStateProvider);
+    if (current == null || !current.isPinned) {
+      _showN2OInfo(pinned: false);
+    }
+  }
+
+  @override
+  void onHoverExit() {
+    if (!_isPinned) {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
+  }
+
+  void _showN2OInfo({bool pinned = false}) {
     final l = game.l10n;
+    final soilX = game.soilLeftX;
+    final soilWidth = SoilScopeGame.soilColumnWidth;
+    final surfaceY = game.soilSurfaceY;
+    final anchorWorld = Vector2(soilX + soilWidth / 2, surfaceY - 40);
+
     game.ref.read(uIStateProvider.notifier).setHoverInfo(
       HoverInfo(
         title: l.moleculeNitrousOxideTitle,
         description: l.moleculeNitrousOxideDesc,
         accentColor: Colors.pinkAccent,
+        isPinned: pinned,
+        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );
-  }
-
-  @override
-  void onHoverExit() {
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
   }
 }

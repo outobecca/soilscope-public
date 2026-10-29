@@ -31,6 +31,7 @@ class BubbleComponent extends CircleComponent
   final int seed;
   final double speed;
   bool _isPinned = false;
+  bool _isHovered = false;
 
   BubbleComponent({
     required this.type,
@@ -72,9 +73,9 @@ class BubbleComponent extends CircleComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Increase hit area for easier tapping
+    // Generous hit area (56px diameter) for effortless hover and tap
     final center = size / 2;
-    return (point - center).length < 20.0;
+    return (point - center).length < 28.0;
   }
 
   @override
@@ -84,7 +85,8 @@ class BubbleComponent extends CircleComponent
     
     final flowMode = game.ref.read(particleFlowModeProvider);
     final boost = flowMode ? 2.5 : 1.0;
-    final boostedDt = dt * boost;
+    final damp = (_isHovered || _isPinned) ? 0.15 : 1.0;
+    final boostedDt = dt * boost * damp;
     final time = game.currentTime();
 
     // O₂ moves DOWN (diffusion into soil), others rise UP
@@ -105,7 +107,7 @@ class BubbleComponent extends CircleComponent
     }
 
     // Enhanced Wobble: sine wave drift simulates fluid dynamics in soil pores
-    position.x += math.sin(time * 3.5 * boost + seed) * 0.3 * boost;
+    position.x += math.sin(time * 3.5 * boost + seed) * 0.3 * boost * damp;
     
     // Subtle size pulse representing gas expansion
     final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 * boost + seed);
@@ -142,13 +144,13 @@ class BubbleComponent extends CircleComponent
       Paint()..color = Colors.white.withValues(alpha: 0.5 * alphaScale),
     );
 
-    // Selection highlight when pinned
-    if (_isPinned) {
+    // Selection & hover highlight
+    if (_isHovered || _isPinned) {
       final highlightPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.6)
+        ..color = Colors.white.withValues(alpha: _isPinned ? 0.7 : 0.45)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
-      canvas.drawCircle(center, radius + 2, highlightPaint);
+        ..strokeWidth = _isPinned ? 1.5 : 1.0;
+      canvas.drawCircle(center, radius + 3, highlightPaint);
     }
   }
 
@@ -161,6 +163,7 @@ class BubbleComponent extends CircleComponent
 
   @override
   void onHoverEnter() {
+    _isHovered = true;
     final currentInfo = game.ref.read(uIStateProvider);
     if (currentInfo == null || !currentInfo.isPinned) {
       _showBubbleInfo(pinned: false);
@@ -169,6 +172,7 @@ class BubbleComponent extends CircleComponent
 
   @override
   void onHoverExit() {
+    _isHovered = false;
     if (!_isPinned) {
       final currentInfo = game.ref.read(uIStateProvider);
       if (currentInfo == null || !currentInfo.isPinned) {

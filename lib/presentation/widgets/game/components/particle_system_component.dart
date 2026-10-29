@@ -29,7 +29,7 @@ class MolecularParticleFieldComponent extends Component
         LODRenderMixin {
   @override
   bool containsLocalPoint(Vector2 point) {
-    const double threshold = 20.0;
+    const double threshold = 28.0;
     const double thresholdSq = threshold * threshold;
     const int stride = 10;
 
@@ -320,18 +320,39 @@ class MolecularParticleFieldComponent extends Component
   @override
   void onPointerMove(PointerMoveEvent event) {
     final worldPos = game.camera.globalToLocal(event.canvasPosition);
-    _hoveredParticleId = null;
 
-    if (game.camera.viewfinder.zoom < 1.0) return; // Reduced from 1.5
+    if (game.camera.viewfinder.zoom < 0.8) return;
 
-    double minHoverDist = 15.0;
+    double minHoverDist = 24.0;
+    int? nearestHoverIndex;
     for (int i = 0; i < _particleData.length; i += 10) {
       final px = _particleData[i + 1];
       final py = _particleData[i + 2];
       final dist = (worldPos - Vector2(px, py)).length;
       if (dist < minHoverDist) {
         minHoverDist = dist;
-        _hoveredParticleId = _particleData[i].toInt();
+        nearestHoverIndex = i;
+      }
+    }
+
+    if (nearestHoverIndex != null) {
+      final pId = _particleData[nearestHoverIndex].toInt();
+      if (_hoveredParticleId != pId) {
+        _hoveredParticleId = pId;
+        final current = game.ref.read(uIStateProvider);
+        if (current == null || !current.isPinned) {
+          _showParticleInfoFromIndex(nearestHoverIndex, pinned: false);
+        }
+      }
+    } else {
+      if (_hoveredParticleId != null) {
+        _hoveredParticleId = null;
+        if (_pinnedParticleId == null) {
+          final current = game.ref.read(uIStateProvider);
+          if (current != null && !current.isPinned) {
+            game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+          }
+        }
       }
     }
   }
@@ -339,6 +360,12 @@ class MolecularParticleFieldComponent extends Component
   @override
   void onHoverExit() {
     _hoveredParticleId = null;
+    if (_pinnedParticleId == null) {
+      final current = game.ref.read(uIStateProvider);
+      if (current != null && !current.isPinned) {
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      }
+    }
   }
 
   @override
@@ -433,13 +460,20 @@ class MolecularParticleFieldComponent extends Component
 
     Future.microtask(() {
       if (!isMounted) return;
+      final px = _particleData[index + 1];
+      final py = _particleData[index + 2];
+      final screenPos = game.worldToScreen(Vector2(px, py)).toOffset();
+      final molType = MoleculeRenderer.mapParticleToMolecule(type);
+
       game.ref.read(uIStateProvider.notifier).setHoverInfo(
             HoverInfo(
               title: title,
               description: desc,
               stats: stats,
-              formula: MoleculeRenderer.getMoleculeFormula(MoleculeRenderer.mapParticleToMolecule(type)),
+              formula: MoleculeRenderer.getMoleculeFormula(molType),
               isPinned: pinned,
+              accentColor: MoleculeRenderer.getMoleculeColor(molType),
+              screenPosition: screenPos,
             ),
           );
     });

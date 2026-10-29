@@ -84,6 +84,11 @@ class RedoxGradientComponent extends Component
 
   void _showRedoxInfo({bool pinned = false}) {
     final l = game.l10n;
+    final anchorWorld = Vector2(
+      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
+      surfaceY + soilHeight / 2,
+    );
+
     game.ref
         .read(uIStateProvider.notifier)
         .setHoverInfo(
@@ -95,6 +100,8 @@ class RedoxGradientComponent extends Component
               "Significance": "O₂ Availability",
             },
             isPinned: pinned,
+            accentColor: const Color(0xFF0EA5E9),
+            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),
         );
   }
