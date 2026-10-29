@@ -359,14 +359,14 @@ class _ScenarioSelectionScreenState
           size: 28,
         ),
         title: Text(
-          l10n.tutorialTitle,
+          l10n.tutorialGuideCardTitle,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.primary,
           ),
         ),
         subtitle: Text(
-          'Tutustu sovelluksen toimintaan, SPAC-fysiikkaan ja viljelytoimenpiteisiin.',
+          l10n.tutorialGuideCardDesc,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

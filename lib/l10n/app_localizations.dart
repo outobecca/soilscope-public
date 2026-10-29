@@ -7882,6 +7882,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PLANT'**
   String get meterPlantVitalityShort;
+
+  /// No description provided for @tutorialGuideCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SoilScope User Guide & Tutorial'**
+  String get tutorialGuideCardTitle;
+
+  /// No description provided for @tutorialGuideCardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore application features, SPAC biophysics, and management interventions.'**
+  String get tutorialGuideCardDesc;
+
+  /// No description provided for @tutorialTryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try action:'**
+  String get tutorialTryAction;
+
+  /// No description provided for @scenarioMissionGuideBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'SCENARIO MISSION & GUIDE'**
+  String get scenarioMissionGuideBadge;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

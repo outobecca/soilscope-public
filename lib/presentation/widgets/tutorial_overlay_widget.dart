@@ -48,13 +48,11 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
       );
     }
 
-    // Scenario-specific step handling
-    if (scenarioStep != null) {
-      return _buildScenarioStepOverlay(context, scenarioStep);
-    }
-
-    // Regular onboarding tour
+    // Regular onboarding tour takes priority when visible
     if (!tutorialState.isVisible) {
+      if (scenarioStep != null) {
+        return _buildScenarioStepOverlay(context, scenarioStep);
+      }
       return const SizedBox.shrink();
     }
 
@@ -66,7 +64,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
     final screenSize = MediaQuery.of(context).size;
     final isMobile = screenSize.width < 700;
 
-    final cardAlignment = _determineCardAlignment(currentStep.target, isMobile);
+    const cardAlignment = Alignment.center;
 
     return Material(
       color: Colors.transparent,
@@ -322,7 +320,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Kokeile toimintoa:',
+                                  l10n.tutorialTryAction,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -441,35 +439,6 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
         ],
       ),
     );
-  }
-
-  Alignment _determineCardAlignment(TutorialTargetArea target, bool isMobile) {
-    if (isMobile) {
-      if (target == TutorialTargetArea.timeline ||
-          target == TutorialTargetArea.observation) {
-        return Alignment.topCenter;
-      }
-      return Alignment.bottomCenter;
-    }
-
-    switch (target) {
-      case TutorialTargetArea.welcome:
-        return Alignment.center;
-      case TutorialTargetArea.canvas:
-        return const Alignment(0.65, 0.0);
-      case TutorialTargetArea.inspection:
-        return const Alignment(0.65, -0.2);
-      case TutorialTargetArea.dashboard:
-        return const Alignment(0.65, 0.0);
-      case TutorialTargetArea.controls:
-        return const Alignment(-0.65, 0.0);
-      case TutorialTargetArea.timeline:
-        return const Alignment(0.0, -0.4);
-      case TutorialTargetArea.observation:
-        return const Alignment(0.0, -0.4);
-      case TutorialTargetArea.gamification:
-        return const Alignment(0.0, 0.35);
-    }
   }
 
   Widget _buildScenarioStepOverlay(
@@ -602,7 +571,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'SKENAARIOTEHTÄVÄ & OHJE',
+                              l10n.scenarioMissionGuideBadge,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,

@@ -18,16 +18,8 @@ class SpotlightPainter extends CustomPainter {
   Rect? getTargetRect(Size size) {
     switch (target) {
       case TutorialTargetArea.welcome:
-        return null;
-
       case TutorialTargetArea.canvas:
-        final width = math.min(size.width * 0.75, 480.0);
-        final height = math.min(size.height * 0.38, 280.0);
-        return Rect.fromCenter(
-          center: Offset(size.width * 0.5, size.height * 0.42),
-          width: width,
-          height: height,
-        );
+        return null;
 
       case TutorialTargetArea.inspection:
         return Rect.fromCenter(

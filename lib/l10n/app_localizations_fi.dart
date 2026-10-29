@@ -3963,4 +3963,16 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get meterPlantVitalityShort => 'KASVI';
+
+  @override
+  String get tutorialGuideCardTitle => 'SoilScope-opastus & Käyttöopas';
+
+  @override
+  String get tutorialGuideCardDesc => 'Tutustu sovelluksen toimintaan, SPAC-fysiikkaan ja viljelytoimenpiteisiin.';
+
+  @override
+  String get tutorialTryAction => 'Kokeile toimintoa:';
+
+  @override
+  String get scenarioMissionGuideBadge => 'SKENAARIOTEHTÄVÄ & OHJE';
 }

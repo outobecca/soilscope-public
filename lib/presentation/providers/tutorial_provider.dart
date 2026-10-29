@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/scenario.dart';
 import '../../l10n/app_localizations.dart';
-import 'ui_state_provider.dart';
-import 'simulation_provider.dart';
-import 'simulation_session_provider.dart';
 
 enum TutorialTargetArea {
   welcome,
@@ -92,54 +89,37 @@ class TutorialNotifier extends Notifier<TutorialState> {
       getDescription: _getCanvasDesc,
       getPoints: _getCanvasPoints,
     ),
-    TutorialStepItem(
+    const TutorialStepItem(
       id: 'dashboard',
       target: TutorialTargetArea.dashboard,
       icon: Icons.dashboard_rounded,
       getTitle: _getDashboardTitle,
       getDescription: _getDashboardDesc,
       getPoints: _getDashboardPoints,
-      actionLabel: (l10n) => l10n.tutorialActionOpenDashboard,
-      onAction: (ref) => ref.read(sidebarStateProvider.notifier).setLeft(true),
     ),
-    TutorialStepItem(
+    const TutorialStepItem(
       id: 'controls',
       target: TutorialTargetArea.controls,
       icon: Icons.tune_rounded,
       getTitle: _getControlsTitle,
       getDescription: _getControlsDesc,
       getPoints: _getControlsPoints,
-      actionLabel: (l10n) => l10n.tutorialActionOpenControls,
-      onAction: (ref) => ref.read(sidebarStateProvider.notifier).setRight(true),
     ),
-    TutorialStepItem(
+    const TutorialStepItem(
       id: 'timeline',
       target: TutorialTargetArea.timeline,
       icon: Icons.timelapse_rounded,
       getTitle: _getTimelineTitle,
       getDescription: _getTimelineDesc,
       getPoints: _getTimelinePoints,
-      actionLabel: (l10n) => l10n.tutorialActionTryPlayback,
-      onAction: (ref) {
-        final isRunning =
-            ref.read(simulationProvider.select((s) => s.isRunning));
-        if (isRunning) {
-          ref.read(simulationProvider.notifier).stop();
-        } else {
-          ref.read(simulationProvider.notifier).start();
-        }
-      },
     ),
-    TutorialStepItem(
+    const TutorialStepItem(
       id: 'observation',
       target: TutorialTargetArea.observation,
       icon: Icons.visibility_rounded,
       getTitle: _getObservationTitle,
       getDescription: _getObservationDesc,
       getPoints: _getObservationPoints,
-      actionLabel: (l10n) => l10n.tutorialActionOpenNanovision,
-      onAction: (ref) =>
-          ref.read(simulationSessionProvider.notifier).toggleMicroscope(),
     ),
     const TutorialStepItem(
       id: 'gamification',

@@ -3963,4 +3963,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get meterPlantVitalityShort => 'PLANT';
+
+  @override
+  String get tutorialGuideCardTitle => 'SoilScope User Guide & Tutorial';
+
+  @override
+  String get tutorialGuideCardDesc => 'Explore application features, SPAC biophysics, and management interventions.';
+
+  @override
+  String get tutorialTryAction => 'Try action:';
+
+  @override
+  String get scenarioMissionGuideBadge => 'SCENARIO MISSION & GUIDE';
 }

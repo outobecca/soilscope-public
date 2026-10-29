@@ -18,7 +18,6 @@ import '../../domain/solvers/particle_physics_isolate.dart';
 
 import 'event_log_provider.dart';
 import 'simulation_session_provider.dart';
-import 'ui_state_provider.dart';
 
 part 'simulation_provider.g.dart';
 
@@ -38,7 +37,6 @@ class Simulation extends _$Simulation {
   int _tickCount = 0;
   // Timeline for scrubbing (entries must have `history: []` to avoid nesting).
   final List<BiophysicalState> _history = [];
-  final Set<String> _triggeredTutorialSteps = {};
 
   BiophysicalState _stripHistory(BiophysicalState s) =>
       s.copyWith(history: const []);
@@ -247,20 +245,6 @@ class Simulation extends _$Simulation {
             debugPrint('[SimulationProvider] Applying event: ${event.type} at ${event.executionTime}');
             processedState = _applyEvent(processedState, event);
             eventApplied = true;
-          }
-        }
-
-        // Scenario Tutorial Steps Triggers
-        for (final step in state.currentScenario!.tutorialSteps) {
-          final stepKey = '${step.triggerTime}_${step.targetId}';
-          if (!_triggeredTutorialSteps.contains(stepKey) &&
-              processedState.timeElapsed >= step.triggerTime &&
-              state.timeElapsed < step.triggerTime) {
-            _triggeredTutorialSteps.add(stepKey);
-            debugPrint('[SimulationProvider] Triggering tutorial step: ${step.title} at ${step.triggerTime}');
-            ref.read(activeTutorialStepProvider.notifier).setTutorialStep(step);
-            stop();
-            break;
           }
         }
       }
@@ -728,24 +712,11 @@ class Simulation extends _$Simulation {
   }
 
   void loadScenario(Scenario scenario) {
-    _triggeredTutorialSteps.clear();
     state = state.copyWith(
       currentScenario: scenario,
       profile: scenario.initialProfile,
     );
     _syncIsolate();
-
-    if (scenario.tutorialSteps.isNotEmpty) {
-      final initialStep = scenario.tutorialSteps.firstWhere(
-        (s) => s.triggerTime <= 0,
-        orElse: () => scenario.tutorialSteps.first,
-      );
-      if (initialStep.triggerTime <= 0) {
-        _triggeredTutorialSteps.add('${initialStep.triggerTime}_${initialStep.targetId}');
-        ref.read(activeTutorialStepProvider.notifier).setTutorialStep(initialStep);
-        stop();
-      }
-    }
   }
 
   Future<void> preCalculateTimeline(int days) async {

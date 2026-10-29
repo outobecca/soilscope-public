@@ -1507,5 +1507,9 @@
   "meterSoilHealthShort": "SOIL",
   "meterMoistureShort": "WATER",
   "meterMicrobesShort": "MICR",
-  "meterPlantVitalityShort": "PLANT"
+  "meterPlantVitalityShort": "PLANT",
+  "tutorialGuideCardTitle": "SoilScope User Guide & Tutorial",
+  "tutorialGuideCardDesc": "Explore application features, SPAC biophysics, and management interventions.",
+  "tutorialTryAction": "Try action:",
+  "scenarioMissionGuideBadge": "SCENARIO MISSION & GUIDE"
 }

@@ -1507,5 +1507,9 @@
   "meterSoilHealthShort": "MAA",
   "meterMoistureShort": "VESI",
   "meterMicrobesShort": "MIKR",
-  "meterPlantVitalityShort": "KASVI"
+  "meterPlantVitalityShort": "KASVI",
+  "tutorialGuideCardTitle": "SoilScope-opastus & Käyttöopas",
+  "tutorialGuideCardDesc": "Tutustu sovelluksen toimintaan, SPAC-fysiikkaan ja viljelytoimenpiteisiin.",
+  "tutorialTryAction": "Kokeile toimintoa:",
+  "scenarioMissionGuideBadge": "SKENAARIOTEHTÄVÄ & OHJE"
 }
