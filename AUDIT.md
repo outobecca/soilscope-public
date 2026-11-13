@@ -309,7 +309,7 @@ At audit time: `animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart`
 
 **Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (secure storage/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
 
-**Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; the 1,334-line painter moved to `animated_plant_component_painting.dart`. The provider is 853 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
+**Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; 1,334 lines of drawing code moved to `animated_plant_component_painting.dart` (1,390 lines including its extension wrapper). The provider is 851 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
 
 #### F3 — Manual state merging is brittle · P2
 `_mergeSimulationState` (`simulation_provider.dart:293`) re-implements "which side owns which field" by hand, with a comment saying the main thread is the source of truth. Every new field added to `BiophysicalState` silently defaults to isolate-owned until someone remembers to add it here. That is how A1-type bugs happen.
@@ -409,7 +409,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 > **Close-out status (2026-11-13).** Reconciled item by item against
 > `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
-> clean, `flutter test --no-pub` passes 101 tests, and
+> clean, `flutter test --no-pub` passes 102 tests, and
 > `flutter build web --release --wasm` succeeds. "Done" means the change is in
 > the tree and, where the behaviour is testable, asserted by the named test.
 >
@@ -417,14 +417,14 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > |----|--------|----------|
 > | A1 | Done | `loadScenario` stops both isolates and clears history; reset asserted in `simulation_provider_test`. |
 > | A2 | Done | `SimulationPersistence.hasSavedState` requires a stored key or a live run; resume cases in `simulation_provider_test`. |
-> | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token; snapshot-count test. |
+> | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token; snapshot-count and cancel tests in `simulation_provider_test`. |
 > | A4 | Done | `SimulationRuntime` has a 10 s initialization timeout; failure state, banner with retry (`engineFailureProvider`); timeout cancelled on dispose. |
 > | A5 | Done | Builder uses `customScenarioDesc` from the ARB files. |
 > | A6 | Done | Logic Lab evaluates for display only; `_applyOutputsToSimulation` is the sole mutation path. |
 > | B1 | Done | `LayoutBuilder` phone/tablet/desktop tiers; `responsive_layout_test` at 390/768/1024. |
 > | B2 | Done | `SafeArea` around the simulation chrome; same test. |
-> | B3 | Done | Dialog width and height clamped to the viewport; same test. |
-> | B4 | Done | Logic Lab wrapped in `InteractiveViewer`; same test. |
+> | B3 | Done | Dialog width and height are clamped to the viewport in code; not asserted by the chrome test. |
+> | B4 | Done | Logic Lab is wrapped in `InteractiveViewer`; the chrome test does not mount Logic Lab. |
 > | B5 | Done | XP bar sized by its parent `LayoutBuilder`, not the screen. |
 > | B6 | Done | Five primary 48 dp actions plus Manage/View/Elements/Navigate sheets; `element_selection_test`. |
 > | B7 | Done | 11–12 px label floor and a 200% text pass in `responsive_layout_test`. |
@@ -445,7 +445,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | D5 | Done | Faintest labels lifted to AA contrast. |
 > | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 101. |
+> | E3 | Done | English README intro; test count updated to 102. |
 > | F1 | Done | 21 unreferenced modules and their dead tests removed. |
 > | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |

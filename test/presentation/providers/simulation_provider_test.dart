@@ -189,6 +189,31 @@ void main() {
     });
   });
 
+  group('pre-calculation snapshots', () {
+    test('three days produce the start plus twelve six-hourly snapshots',
+        () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('snapshots'));
+      final completed = await notifier.preCalculateTimeline(3);
+
+      expect(completed, isTrue);
+      final history = container.read(simulationProvider).history;
+      expect(history, hasLength(13));
+      expect(history.first.timeElapsed, 0);
+      expect(history[1].timeElapsed, closeTo(3600, 1));
+      for (var i = 2; i < history.length; i++) {
+        expect(
+          history[i].timeElapsed - history[i - 1].timeElapsed,
+          closeTo(21600, 1),
+          reason: 'snapshots must stay six simulated hours apart',
+        );
+      }
+    });
+  });
+
   group('state ownership', () {
     test('every BiophysicalState field is classified as UI- or engine-owned',
         () {
