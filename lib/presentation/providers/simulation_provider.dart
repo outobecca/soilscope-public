@@ -9,10 +9,11 @@ import '../../domain/models/soil_layer.dart';
 import '../../domain/models/plant.dart';
 import '../../domain/actions/simulation_actions.dart';
 import '../../domain/models/scenario.dart';
-import '../../domain/solvers/simulation_isolate.dart';
-import '../../domain/solvers/simulation_engine.dart';
 import '../../domain/solvers/particle_physics_isolate.dart';
 import '../../domain/services/simulation_persistence.dart';
+import '../../domain/services/simulation_runtime.dart';
+import '../../domain/services/simulation_tick_processor.dart';
+import '../../domain/services/timeline_precalculation.dart';
 
 import 'event_log_provider.dart';
 import 'simulation_session_provider.dart';
@@ -23,14 +24,12 @@ part 'simulation_provider.g.dart';
 class Simulation extends _$Simulation {
   final SimulationPersistence _persistence = SimulationPersistence();
 
-  late SimulationIsolateManager _isolateManager;
-  late ParticlePhysicsIsolateManager particleIsolate;
-  StreamSubscription<BiophysicalState>? _stateSubscription;
-  Timer? _initWatchdog;
-  double _particleMinX = -7400;
-  double _particleMaxX = 8600;
-  double _particleWorldHeight = 1000;
-  double _particleSurfaceY = 450;
+  late SimulationRuntime _runtime;
+  late SimulationTickProcessor _tickProcessor;
+
+  /// Shared particle runtime; Flame components send their particle commands
+  /// through this manager.
+  ParticlePhysicsIsolateManager get particleIsolate => _runtime.particles;
 
   int _tickCount = 0;
 
@@ -71,10 +70,6 @@ class Simulation extends _$Simulation {
     _historyView = List.unmodifiable(_history);
   }
 
-  /// Simulation time between scrubber snapshots, so the history depth does not
-  /// depend on playback speed.
-  static const double _historyIntervalSeconds = 600.0;
-
   BiophysicalState _stripHistory(BiophysicalState s) =>
       s.copyWith(history: const []);
 
@@ -91,18 +86,13 @@ class Simulation extends _$Simulation {
     _disposed = false;
     _pendingState = null;
 
-    _isolateManager = SimulationIsolateManager();
-    particleIsolate = ParticlePhysicsIsolateManager();
-    _initIsolate();
-    particleIsolate.init();
+    _runtime = SimulationRuntime();
+    _tickProcessor = SimulationTickProcessor(history: _history);
+    _initializeRuntime();
 
     ref.onDispose(() {
       _disposed = true;
-      _initWatchdog?.cancel();
-      _initWatchdog = null;
-      _stateSubscription?.cancel();
-      _isolateManager.dispose();
-      particleIsolate.dispose();
+      _runtime.dispose();
     });
 
     final defaultProfile = SoilProfile(
@@ -286,12 +276,7 @@ class Simulation extends _$Simulation {
     if (_disposed || !ref.mounted || state.isInitializing) return;
     ref.read(engineFailureProvider.notifier).setFailed(false);
     state = state.copyWith(isInitializing: true);
-    _initIsolate();
-  }
-
-  void _handleInitTimeout() {
-    if (_disposed || !ref.mounted || !state.isInitializing) return;
-    _failInitialization();
+    _initializeRuntime();
   }
 
   void _failInitialization() {
@@ -305,123 +290,52 @@ class Simulation extends _$Simulation {
         );
   }
 
-  Future<void> _initIsolate() async {
-    debugPrint('[SimulationProvider] _initIsolate started');
-    // Watchdog: a hung spawn must not leave the splash forever. A plain
-    // Future.timeout would keep its timer alive after the provider disposes.
-    _initWatchdog?.cancel();
-    _initWatchdog = Timer(const Duration(seconds: 10), _handleInitTimeout);
-    try {
-      await _isolateManager.init();
-    } catch (e, stack) {
-      debugPrint('[SimulationProvider] Engine initialization failed: $e');
-      debugPrintStack(stackTrace: stack);
-      _failInitialization();
-      return;
-    } finally {
-      _initWatchdog?.cancel();
-      _initWatchdog = null;
-    }
-    debugPrint('[SimulationProvider] IsolateManager initialized');
-    if (_disposed || !ref.mounted) return;
-    ref.read(engineFailureProvider.notifier).setFailed(false);
-    _stateSubscription = _isolateManager.stateStream.listen((newState) {
-      if (_disposed || !ref.mounted) return;
-      // Drop frames from a paused run, including a tick that was already in
-      // flight when the user paused or switched scenarios. Without this a late
-      // tick could overwrite the freshly reset profile after loadScenario().
-      if (!state.isRunning) return;
-      // While scrubbing, freeze the background simulation result from affecting display
-      final session = ref.read(simulationSessionProvider);
-      if (session.isScrubbing) return;
-
-      BiophysicalState processedState = newState.copyWith(isInitializing: false);
-      bool eventApplied = false;
-
-      // Cultivation Event Triggers
-      if (state.currentScenario != null) {
-        for (final event in state.currentScenario!.cultivationPlan) {
-          if (processedState.timeElapsed >= event.executionTime && 
-              state.timeElapsed < event.executionTime) {
-            if (kDebugMode) {
-              debugPrint('[SimulationProvider] Applying event: ${event.type} at ${event.executionTime}');
-            }
-            processedState = _applyEvent(processedState, event);
-            eventApplied = true;
-          }
-        }
-      }
-
-      if (eventApplied) {
-        _isolateManager.updateState(processedState, processedState.precipitation);
-      }
-
-      // The engine already computed the score during this tick; recomputing it
-      // here duplicated work with a different dt (the solver ignores dt).
-      final entry = _mergeSimulationState(processedState, state);
-      
-      final lastSnapshotTime = _history.isEmpty
-          ? double.negativeInfinity
-          : _history.last.timeElapsed;
-      if (_history.length <= 1 ||
-          entry.timeElapsed - lastSnapshotTime >= _historyIntervalSeconds) {
-        _history.add(_stripHistory(entry));
-        if (_history.length > 500) {
-          _history.removeAt(0);
-        }
-        _rebuildHistoryView();
-      }
-
-      _pendingState = entry;
-      Future.microtask(() {
-        if (!_disposed && _pendingState != null) {
-          state = _pendingState!.copyWith(history: _historyView);
-          _pendingState = null;
-        }
-      });
-      
-      _tickCount++;
-      if (_tickCount >= 50) {
-        _tickCount = 0;
-        _saveState();
-      }
-    });
-    
-    // Set initializing to false after setup is complete and we are ready for commands
-    if (!_disposed && ref.mounted) {
-      state = state.copyWith(isInitializing: false);
-      debugPrint('[SimulationProvider] _initIsolate finished: isInitializing=${state.isInitializing}');
-    }
-  }
-
-  /// Merges background simulation results with current Control state.
-  /// Preserves user overrides from [localState] while taking biophysical results from [remoteState].
-  BiophysicalState _mergeSimulationState(BiophysicalState remoteState, BiophysicalState localState) {
-    return remoteState.copyWith(
-      isInitializing: false,
-      // Preserve Control State (Main thread is source of truth)
-      isRunning: localState.isRunning,
-      timeScale: localState.timeScale,
-      autoWeather: localState.autoWeather,
-      hasCoverCrop: localState.hasCoverCrop,
-      solarRadiationOverride: localState.solarRadiationOverride,
-      
-      // Atmospheric inputs: Take from isolate ONLY if autoWeather is on
-      airTemperature: localState.autoWeather ? remoteState.airTemperature : localState.airTemperature,
-      relativeHumidity: localState.autoWeather ? remoteState.relativeHumidity : localState.relativeHumidity,
-      precipitation: localState.autoWeather ? remoteState.precipitation : localState.precipitation,
-      atmCO2: localState.autoWeather ? remoteState.atmCO2 : localState.atmCO2,
-
-      // Preserve Scenario (Isolate shouldn't change scenario structure)
-      currentScenario: localState.currentScenario,
+  Future<void> _initializeRuntime() async {
+    await _runtime.initialize(
+      readState: () => state,
+      isScrubbing: () => ref.read(simulationSessionProvider).isScrubbing,
+      onTick: _handleEngineTick,
+      onFailure: _failInitialization,
+      onReady: _handleRuntimeReady,
     );
   }
 
-  void _syncIsolate() {
-    if (state.isRunning) {
-      _isolateManager.updateState(_stripHistory(state), state.precipitation);
+  void _handleRuntimeReady() {
+    if (_disposed || !ref.mounted) return;
+    ref.read(engineFailureProvider.notifier).setFailed(false);
+    state = state.copyWith(isInitializing: false);
+    debugPrint('[SimulationProvider] runtime ready');
+  }
+
+  void _handleEngineTick(BiophysicalState engineState) {
+    if (_disposed || !ref.mounted) return;
+
+    final result = _tickProcessor.process(
+      engineState: engineState,
+      uiState: state,
+    );
+    if (result.eventApplied) {
+      _runtime.updateEngineState(result.eventState);
+    }
+    if (result.snapshotAdded) {
+      _rebuildHistoryView();
+    }
+
+    _pendingState = result.entry;
+    Future.microtask(() {
+      if (!_disposed && _pendingState != null) {
+        state = _pendingState!.copyWith(history: _historyView);
+        _pendingState = null;
+      }
+    });
+
+    _tickCount++;
+    if (_tickCount >= 50) {
+      _tickCount = 0;
+      _saveState();
     }
   }
+  void _syncIsolate() => _runtime.sync(state);
 
   void start() {
     debugPrint('[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}');
@@ -436,20 +350,13 @@ class Simulation extends _$Simulation {
     _syncIsolate(); // Ensure isolate has the latest state before starting
     debugPrint('[SimulationProvider] start() isolate synced');
     
-    _isolateManager.start();
-    particleIsolate.start(
-      _particleMinX,
-      _particleMaxX,
-      _particleWorldHeight,
-      _particleSurfaceY,
-    );
+    _runtime.start();
     debugPrint('[SimulationProvider] start() SUCCESS: all isolate managers started');
   }
 
   void stop() {
     state = state.copyWith(isRunning: false);
-    _isolateManager.stop();
-    particleIsolate.stop();
+    _runtime.stop();
     _saveState();
   }
 
@@ -793,8 +700,7 @@ class Simulation extends _$Simulation {
   void loadScenario(Scenario scenario) {
     // Stop the current run first so the isolate cannot push frames from the
     // previous scenario into the fresh one.
-    _isolateManager.stop();
-    particleIsolate.stop();
+    _runtime.stop();
 
     final initial = _stripHistory(
       _initialState(
@@ -837,8 +743,7 @@ class Simulation extends _$Simulation {
     final totalDays = days.clamp(1, 180).toInt();
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
     state = state.copyWith(isRunning: false);
-    _isolateManager.stop();
-    particleIsolate.stop();
+    _runtime.stop();
 
     final startState = _stripHistory(state);
     final computedHistory = <BiophysicalState>[startState];
@@ -857,7 +762,7 @@ class Simulation extends _$Simulation {
       final daysThisChunk = chunkDays < remaining ? chunkDays : remaining;
 
       final (nextState, chunkHistory) = await compute(
-        _preCalculateTimelineTask,
+        preCalculateTimelineTask,
         (cursor, daysThisChunk),
       );
 
@@ -887,18 +792,13 @@ class Simulation extends _$Simulation {
   }
 
   void configureParticleDomain(double minX, double maxX, double height, double surfaceY) {
-    _particleMinX = minX;
-    _particleMaxX = maxX;
-    _particleWorldHeight = height;
-    _particleSurfaceY = surfaceY;
-    if (state.isRunning) {
-      particleIsolate.start(
-        _particleMinX,
-        _particleMaxX,
-        _particleWorldHeight,
-        _particleSurfaceY,
-      );
-    }
+    _runtime.configureParticleDomain(
+      minX,
+      maxX,
+      height,
+      surfaceY,
+      isRunning: state.isRunning,
+    );
   }
 }
 
@@ -949,60 +849,3 @@ int _lowerBound(List<BiophysicalState> history, double time) {
   }
   return low;
 }
-
-(BiophysicalState, List<BiophysicalState>) _preCalculateTimelineTask(
-  (BiophysicalState, int) args,
-) {
-  final initialState = args.$1;
-  final days = args.$2;
-  final List<BiophysicalState> history = [];
-  BiophysicalState currentState = initialState;
-
-  const double dt = 3600.0; // 1 hour steps
-  final totalTicks = (days * 24).toInt();
-  
-  for (int i = 0; i < totalTicks; i++) {
-    // 1. Check cultivation events
-    if (currentState.currentScenario != null) {
-      for (final event in currentState.currentScenario!.cultivationPlan) {
-        if (event.executionTime >= currentState.timeElapsed && 
-            event.executionTime < currentState.timeElapsed + dt) {
-          currentState = _applyEvent(currentState, event);
-        }
-      }
-    }
-    
-    // 2. Advance simulation
-    currentState = SimulationEngine.tick(currentState, dt);
-    
-    // 3. Save snapshot (every 6 hours)
-    if (i % 6 == 0) {
-      history.add(currentState.copyWith(history: []));
-    }
-  }
-  return (currentState, history);
-}
-
-BiophysicalState _applyEvent(BiophysicalState state, CultivationEvent event) {
-  switch (event.type) {
-    case 'till':
-      return SimulationActions.applyTillage(state);
-    case 'fertilize':
-      if (event.layerId != null) {
-        // Use extraData for nutrient symbol if present, default to 'N'
-        final symbol = event.extraData ?? 'N';
-        return SimulationActions.applyNutrients(
-          state,
-          event.layerId!,
-          symbol,
-          event.amount,
-        );
-      }
-      return state;
-    case 'water':
-      return state.copyWith(precipitation: event.amount);
-    default:
-      return state;
-  }
-}
-

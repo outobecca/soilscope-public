@@ -201,6 +201,8 @@ Future<void> init() async {
 
 **Fix:** on web, either (a) move the engine to a `Worker` (compile-time shared code via `dart:js_interop`), or (b) at minimum run the tick on an idle callback with a budget check and skip/downscale work when `SchedulerBinding.instance.currentFrameTimeStamp` shows we are behind. Also stop pretending the manager is an isolate on web — the naming actively misleads.
 
+**Resolved at option (b):** `SimulationIsolateManager._runWebLoop` times each tick and yields to the browser when it exceeds 16 ms. Option (a), a Worker, is explicitly optional and remains future scope; it is not required by this audit.
+
 #### C2 — 30-day pre-calculation blocks the UI · P0 (web)
 Measured **967 ms for 720 ticks** on this machine. Mid-range phones are typically 3–5× slower, and on web it is on the UI thread. The UI offers no progress, no cancel, and the button can be tapped repeatedly.
 
@@ -307,7 +309,7 @@ At audit time: `animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart`
 
 **Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (secure storage/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
 
-**Resolved so far:** `SimulationPersistence` now owns storage, migration and load/save (`lib/domain/services/simulation_persistence.dart`), and 1,334 lines of drawing and visual-particle code moved to `animated_plant_component_painting.dart`, leaving the component at 1,094 lines. The runtime/command split and the HUD/logic-lab decomposition remain; they are behaviour-neutral refactors, not defects.
+**Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; the 1,334-line painter moved to `animated_plant_component_painting.dart`. The provider is 853 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
 
 #### F3 — Manual state merging is brittle · P2
 `_mergeSimulationState` (`simulation_provider.dart:293`) re-implements "which side owns which field" by hand, with a comment saying the main thread is the source of truth. Every new field added to `BiophysicalState` silently defaults to isolate-owned until someone remembers to add it here. That is how A1-type bugs happen.
@@ -367,6 +369,8 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 **Fix:** commit 1–3 reference datasets (measured θ(z,t) and NO₃⁻ profiles), add `test/validation/` that runs the engine and asserts NSE/RMSE thresholds. Print a model-version + parameter-set hash in the validation tab.
 
+**Deferred because the data does not exist in the repo:** the exact missing inputs are layer-resolved measured volumetric water content θ(z,t) and nitrate NO₃⁻ concentration series at matching depths and times, plus units, site/soil metadata and provenance. Unblocked by committing those CSVs under `test/validation/fixtures/` and adding NSE/RMSE assertions with thresholds agreed from the source data.
+
 #### G3 — Timeline history is thin at high speed · P3
 `_history` keeps 500 snapshots, one per 200 ms tick, each advancing `2.0 × timeScale` seconds. At 1× that is ~17 min of sim time; at 10× it is ~2.8 h. The scrubber therefore shows a different depth of history depending on playback speed, with no indication. Store snapshots at fixed sim-time intervals (e.g. every 600 s) instead of fixed tick counts.
 
@@ -405,7 +409,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 > **Close-out status (2026-11-13).** Reconciled item by item against
 > `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
-> clean, `flutter test --no-pub` passes 97 tests, and
+> clean, `flutter test --no-pub` passes 101 tests, and
 > `flutter build web --release --wasm` succeeds. "Done" means the change is in
 > the tree and, where the behaviour is testable, asserted by the named test.
 >
@@ -414,7 +418,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | A1 | Done | `loadScenario` stops both isolates and clears history; reset asserted in `simulation_provider_test`. |
 > | A2 | Done | `SimulationPersistence.hasSavedState` requires a stored key or a live run; resume cases in `simulation_provider_test`. |
 > | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token; snapshot-count test. |
-> | A4 | Done | 10 s `_initWatchdog`, failure state, banner with retry (`engineFailureProvider`); watchdog cancelled on dispose. |
+> | A4 | Done | `SimulationRuntime` has a 10 s initialization timeout; failure state, banner with retry (`engineFailureProvider`); timeout cancelled on dispose. |
 > | A5 | Done | Builder uses `customScenarioDesc` from the ARB files. |
 > | A6 | Done | Logic Lab evaluates for display only; `_applyOutputsToSimulation` is the sole mutation path. |
 > | B1 | Done | `LayoutBuilder` phone/tablet/desktop tiers; `responsive_layout_test` at 390/768/1024. |
@@ -425,7 +429,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | B6 | Done | Five primary 48 dp actions plus Manage/View/Elements/Navigate sheets; `element_selection_test`. |
 > | B7 | Done | 11–12 px label floor and a 200% text pass in `responsive_layout_test`. |
 > | B8 | Done | Remembered three-card gesture intro before the first run. |
-> | C1 | Done (audit minimum) | Web runs in-thread but yields after a >16 ms tick (audit option b); a Worker (option a) is not implemented. Wasm runs single-threaded without COOP/COEP. |
+> | C1 | Done (audit minimum; Worker optional) | The audit allowed a Worker (a) **or** an in-thread budgeted loop (b); (b) is implemented with a >16 ms yield. A Worker is optional future scope, not unfinished audit work. Wasm runs single-threaded without COOP/COEP. |
 > | C2 | Done | Chunked pre-calculation with progress, cancel and a 180-day cap. |
 > | C3 | Done | `_syncSpotlightTicker` starts and stops the controller with tutorial visibility. |
 > | C4 | Done | `BlurSurface` falls back to a solid panel on compact screens. |
@@ -433,7 +437,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | C6 | Done | PWA manifest, title, theme colour, OG metadata and Android label. |
 > | C7 | Done | `--wasm` build succeeds; lab: first frame 137 ms warm, LCP 238 ms cold, 3.6 MB wasm; splash marks `soilscope-first-frame`. |
 > | C8 | Done | Control panel selects `profile.layers`; `updateLayer` applies synchronously. |
-> | C9 | Done | Per-tick web logs sit behind `kDebugMode`; UI build traces removed. |
+> | C9 | Done | The per-tick web log and the per-rebuild UI trace sit behind `kDebugMode`. |
 > | D1 | Done | Health bars and index chips expose semantics; the HUD data table is the accessible equivalent. |
 > | D2 | Done | pH badges pair colour with an acid/neutral/alkaline icon. |
 > | D3 | Done | Type floor raised; 200% text layout verified. |
@@ -441,31 +445,30 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | D5 | Done | Faintest labels lifted to AA contrast. |
 > | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 97. |
+> | E3 | Done | English README intro; test count updated to 101. |
 > | F1 | Done | 21 unreferenced modules and their dead tests removed. |
-> | F2 | Partial | `SimulationPersistence` extracted; the 1,334-line painter block moved to `animated_plant_component_painting.dart`; provider runtime/commands and HUD/logic-lab splits remain. |
+> | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |
 > | F4 | Done | Score computed once; cached `_historyView`; `_lowerBound` scrub search; validation only under `kDebugMode`. |
 > | F5 | Done | Provider, responsive, stability, palette and two screen-golden tests (`test/presentation/screens/goldens/`). |
 > | F6 | Done | CI runs `flutter analyze --fatal-infos` and the Finnish guard; index files untracked; scratch in `tool/`. |
 > | F7 | Done | SoilScope labels, real description and manifest metadata. |
 > | G1 | Done | Stable hydrology sub-step with a 200-tick stability test. |
-> | G2 | Deferred | Needs measured θ(z,t) and NO₃⁻ reference profiles; see open items. |
+> | G2 | Deferred | Needs measured θ(z,t) and NO₃⁻ reference profiles; see remaining scope. |
 > | G3 | Done | History snapshots at fixed 600 s simulation intervals. |
 > | G4 | Done | Mycorrhiza state persisted; JSON round-trip test. |
 >
-> **Open items.**
-> - **G2 — deferred, external data.** The gate needs measured θ(z,t) and NO₃⁻
->   profiles with provenance. Inventing thresholds would be worse than no gate.
->   Unblocked by adding reference CSVs under `test/validation/fixtures/` with an
->   NSE/RMSE assertion.
-> - **F2 — partial, structural.** The two riskiest mixes are separated
->   (persistence and the 1,334-line plant painter). The provider still owns
->   isolate lifecycle and commands, and the HUD and Logic Lab screens remain
->   large. This is a behaviour-neutral refactor with no failing acceptance test;
->   it stopped at the safe seams rather than rewriting 3,000 lines at once.
-> - **C1 Worker — optional.** The audit's minimum (b) is implemented; a Worker
->   remains a larger web-only improvement, not a blocker for this build.
+> **Remaining scope.**
+> - **G2 — deferred, external data.** The gate needs layer-resolved measured
+>   volumetric water content θ(z,t) and nitrate NO₃⁻ concentration profiles at
+>   matching depths and times, with units, site/soil metadata and provenance.
+>   Inventing those numbers would be worse than no gate. Unblocked by adding the
+>   reference CSVs under `test/validation/fixtures/` and asserting agreed
+>   NSE/RMSE thresholds in `test/validation/`.
+> - **C1 — closed at the audit's stated minimum; the Worker is optional.** The
+>   audit offered two fixes: (a) a Worker or (b) an in-thread loop with a budget
+>   check. Option (b) is implemented. A Worker is future web work, not an
+>   unfinished audit item.
 
 ### Week 1 — correctness and the mobile floor (highest value per hour)
 1. A1 scenario reset, A2 resume detection, A3 await/progress/cancel pre-calculation (P0).
