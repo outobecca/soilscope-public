@@ -1512,5 +1512,14 @@
   "tutorialGuideCardDesc": "Explore application features, SPAC biophysics, and management interventions.",
   "tutorialTryAction": "Try action:",
   "scenarioMissionGuideBadge": "SCENARIO MISSION & GUIDE",
-  "calculationFailed": "Timeline calculation failed. Try a shorter period."
+  "calculationFailed": "Timeline calculation failed. Try a shorter period.",
+  "realTime": "REAL TIME",
+  "levelLabel": "LEVEL",
+  "qualityExcellent": "EXCELLENT",
+  "qualityModerate": "MODERATE",
+  "qualityCritical": "CRITICAL",
+  "buffDrought": "DROUGHT",
+  "buffRain": "RAIN",
+  "buffCoverCrop": "COVER CROP",
+  "buffSymbiosis": "SYMBIOSIS"
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,8 +76,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final screenWidth = MediaQuery.of(context).size.width;
-      if (screenWidth >= 1024) {
-        // Desktop/Tablet
+      if (screenWidth >= AppTheme.expandedBreakpoint) {
+        // Wide desktop: show the dashboard by default.
         ref.read(sidebarStateProvider.notifier).setLeft(true);
       }
       ref.read(tutorialProvider.notifier).checkFirstTimeOnboarding();
@@ -111,21 +112,24 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   }
 
   void _toggleLeftSidebar() {
-    final isMobile =
-        MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
-    ref.read(sidebarStateProvider.notifier).toggleLeft(isMobile: isMobile);
+    final isOverlay =
+        MediaQuery.of(context).size.width < AppTheme.expandedBreakpoint;
+    ref.read(sidebarStateProvider.notifier).toggleLeft(isOverlay: isOverlay);
   }
 
   void _toggleRightSidebar() {
-    final isMobile =
-        MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
-    ref.read(sidebarStateProvider.notifier).toggleRight(isMobile: isMobile);
+    final isOverlay =
+        MediaQuery.of(context).size.width < AppTheme.expandedBreakpoint;
+    ref.read(sidebarStateProvider.notifier).toggleRight(isOverlay: isOverlay);
   }
 
-  Widget _buildLeftSidebar(bool isMobile, double screenWidth) {
+  Widget _buildLeftSidebar(bool isCompact, double screenWidth) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final sidebarWidth = isMobile ? screenWidth : 320.0;
+    final isExpanded = screenWidth >= AppTheme.expandedBreakpoint;
+    final sidebarWidth = isCompact
+        ? screenWidth
+        : (isExpanded ? 320.0 : (screenWidth * 0.55).clamp(320.0, 420.0));
     final isOpen = ref.watch(sidebarStateProvider.select((s) => s.isLeftOpen));
 
     return AnimatedContainer(
@@ -135,7 +139,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
-          alpha: isMobile ? 0.98 : 0.85,
+          alpha: isExpanded ? 0.85 : 0.97,
         ),
         border: Border(
           right: BorderSide(
@@ -196,10 +200,13 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     );
   }
 
-  Widget _buildRightSidebar(bool isMobile, double screenWidth) {
+  Widget _buildRightSidebar(bool isCompact, double screenWidth) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final sidebarWidth = isMobile ? screenWidth : 320.0;
+    final isExpanded = screenWidth >= AppTheme.expandedBreakpoint;
+    final sidebarWidth = isCompact
+        ? screenWidth
+        : (isExpanded ? 320.0 : (screenWidth * 0.55).clamp(320.0, 420.0));
     final isOpen = ref.watch(sidebarStateProvider.select((s) => s.isRightOpen));
 
     return AnimatedContainer(
@@ -209,7 +216,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
-          alpha: isMobile ? 0.98 : 0.85,
+          alpha: isExpanded ? 0.85 : 0.97,
         ),
         border: Border(
           left: BorderSide(
@@ -293,7 +300,9 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   Widget build(BuildContext context) {
     final isInitializing = ref.watch(simulationProvider.select((s) => s.isInitializing));
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
-    debugPrint('[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized');
+    if (kDebugMode) {
+      debugPrint('[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized');
+    }
 
     // 1. Listen for the initialization to complete
     ref.listen(simulationProvider.select((s) => s.isInitializing), (previous, next) {
@@ -344,6 +353,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;
     final isMobile = screenWidth < AppTheme.mobileBreakpoint;
+    final isExpanded = screenWidth >= AppTheme.expandedBreakpoint;
+    // Between phone and desktop the labelled top-bar buttons leave the HUD
+    // strip too little room, so switch them to icons earlier than a phone.
+    final useCompactTopBar = screenWidth < 1000;
     final sidebarState = ref.watch(sidebarStateProvider);
     final isLeftSidebarOpen = sidebarState.isLeftOpen;
     final isRightSidebarOpen = sidebarState.isRightOpen;
@@ -384,10 +397,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                           if (!isLeftSidebarOpen)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
-                              child: isMobile
+                              child: useCompactTopBar
                                   ? IconButton.filledTonal(
                                       onPressed: _toggleLeftSidebar,
                                       icon: const Icon(Icons.menu),
+                                      tooltip: l10n.dashboard,
                                     )
                                   : FilledButton.tonalIcon(
                                       onPressed: _toggleLeftSidebar,
@@ -401,10 +415,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                           if (!isRightSidebarOpen)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
-                              child: isMobile
+                              child: useCompactTopBar
                                   ? IconButton.filledTonal(
                                       onPressed: _toggleRightSidebar,
                                       icon: const Icon(Icons.settings),
+                                      tooltip: l10n.controls,
                                     )
                                   : FilledButton.tonalIcon(
                                       onPressed: _toggleRightSidebar,
@@ -415,7 +430,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                           const SizedBox(width: 8),
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: isMobile
+                            child: useCompactTopBar
                                 ? IconButton.filledTonal(
                                     onPressed: () {
                                       ref
@@ -445,18 +460,24 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
             // 3. TIMELINE SLIDER
             Positioned(
-              left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
-              right: (isRightSidebarOpen && !isMobile) ? 336 : 16,
+              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
+              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
               bottom: 120, // Above quick actions
-              child: const Center(child: TimelineSliderWidget()),
+              child: const SafeArea(
+                top: false,
+                child: Center(child: TimelineSliderWidget()),
+              ),
             ),
 
             // 4. QUICK ACTIONS (BOTTOM)
             Positioned(
-              left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
-              right: (isRightSidebarOpen && !isMobile) ? 336 : 16,
+              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
+              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
               bottom: 16,
-              child: const Center(child: FlutterQuickActions()),
+              child: const SafeArea(
+                top: false,
+                child: Center(child: FlutterQuickActions()),
+              ),
             ),
 
             // 5. OVERLAYS (NOTIFICATIONS)
@@ -510,7 +531,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                 }
 
                 return Positioned(
-                  right: (isRightSidebarOpen && !isMobile) ? 340 : 20,
+                  right: (isRightSidebarOpen && isExpanded) ? 340 : 20,
                   top: isMobile ? 80 : 140,
                   child: const SafeArea(child: HoverTooltip()),
                 );
@@ -527,7 +548,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
                 return Positioned(
                   top: isMobile ? 80 : 88,
-                  left: (isLeftSidebarOpen && !isMobile) ? 336 : 16,
+                  left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
                   child: const SafeArea(child: MicroscopeHudController()),
                 );
               },

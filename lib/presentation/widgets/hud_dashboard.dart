@@ -152,10 +152,12 @@ class _HUDHeader extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.index),
-        content: const SizedBox(
-          width: 500,
-          height: 600,
-          child: InformaticsView(),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 500,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+          ),
+          child: const SingleChildScrollView(child: InformaticsView()),
         ),
         actions: [
           TextButton(
@@ -210,6 +212,7 @@ class _HUDScrubber extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final historyEmpty = ref.watch(
       simulationProvider.select((s) => s.history.isEmpty),
     );
@@ -236,7 +239,7 @@ class _HUDScrubber extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              isScrubbing ? 'AIKAJANA (SIRTOLA)' : 'REAAALIAIKA',
+              isScrubbing ? l10n.historyMode.toUpperCase() : l10n.realTime,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: isScrubbing
                     ? theme.colorScheme.primary

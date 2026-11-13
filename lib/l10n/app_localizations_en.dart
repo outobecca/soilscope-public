@@ -3978,4 +3978,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calculationFailed => 'Timeline calculation failed. Try a shorter period.';
+
+  @override
+  String get realTime => 'REAL TIME';
+
+  @override
+  String get levelLabel => 'LEVEL';
+
+  @override
+  String get qualityExcellent => 'EXCELLENT';
+
+  @override
+  String get qualityModerate => 'MODERATE';
+
+  @override
+  String get qualityCritical => 'CRITICAL';
+
+  @override
+  String get buffDrought => 'DROUGHT';
+
+  @override
+  String get buffRain => 'RAIN';
+
+  @override
+  String get buffCoverCrop => 'COVER CROP';
+
+  @override
+  String get buffSymbiosis => 'SYMBIOSIS';
 }

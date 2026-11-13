@@ -6,6 +6,11 @@ class AppTheme {
   // Constants
   static const double mobileBreakpoint = 600.0;
 
+  /// Above this width the sidebars may stay open beside the canvas. Between
+  /// [mobileBreakpoint] and this value they behave as overlays so the canvas
+  /// keeps most of the screen on tablets.
+  static const double expandedBreakpoint = 1200.0;
+
   // Nordic Colors
   static const Color nordicBlue = Color(0xFF1E293B);
   static const Color nordicSnow = Color(0xFFF8FAFC);

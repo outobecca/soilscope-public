@@ -1512,5 +1512,14 @@
   "tutorialGuideCardDesc": "Tutustu sovelluksen toimintaan, SPAC-fysiikkaan ja viljelytoimenpiteisiin.",
   "tutorialTryAction": "Kokeile toimintoa:",
   "scenarioMissionGuideBadge": "SKENAARIOTEHTÄVÄ & OHJE",
-  "calculationFailed": "Aikajanan laskenta epäonnistui. Kokeile lyhyempää jaksoa."
+  "calculationFailed": "Aikajanan laskenta epäonnistui. Kokeile lyhyempää jaksoa.",
+  "realTime": "REAALIAIKA",
+  "levelLabel": "TASO",
+  "qualityExcellent": "ERINOMAINEN",
+  "qualityModerate": "KOHTALAINEN",
+  "qualityCritical": "KRIITTINEN",
+  "buffDrought": "KUIVUUS",
+  "buffRain": "SADE",
+  "buffCoverCrop": "PEITEKASVI",
+  "buffSymbiosis": "SYMBIOOSI"
 }

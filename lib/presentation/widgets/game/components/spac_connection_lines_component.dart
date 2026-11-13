@@ -21,7 +21,13 @@ class SPACConnectionLinesComponent extends Component
   @override
   void render(Canvas canvas) {
     final state = game.simulationState;
-    if (state == null || state.plants.isEmpty) return;
+    // No layers means no soil column: the connection anchors below would be
+    // meaningless (and reading layers.first would throw).
+    if (state == null ||
+        state.plants.isEmpty ||
+        state.profile.layers.isEmpty) {
+      return;
+    }
 
     final activeCycle = game.ref.read(activeCycleProvider);
     final isNitrogenCycleMode = activeCycle == ObservationCycle.nitrogen;

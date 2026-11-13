@@ -3978,4 +3978,31 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get calculationFailed => 'Aikajanan laskenta epäonnistui. Kokeile lyhyempää jaksoa.';
+
+  @override
+  String get realTime => 'REAALIAIKA';
+
+  @override
+  String get levelLabel => 'TASO';
+
+  @override
+  String get qualityExcellent => 'ERINOMAINEN';
+
+  @override
+  String get qualityModerate => 'KOHTALAINEN';
+
+  @override
+  String get qualityCritical => 'KRIITTINEN';
+
+  @override
+  String get buffDrought => 'KUIVUUS';
+
+  @override
+  String get buffRain => 'SADE';
+
+  @override
+  String get buffCoverCrop => 'PEITEKASVI';
+
+  @override
+  String get buffSymbiosis => 'SYMBIOOSI';
 }

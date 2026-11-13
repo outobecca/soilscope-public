@@ -288,19 +288,19 @@ class SidebarStateNotifier extends Notifier<SidebarState> {
   @override
   SidebarState build() => const SidebarState();
 
-  void toggleLeft({bool isMobile = false}) {
+  void toggleLeft({bool isOverlay = false}) {
     final next = !state.isLeftOpen;
     state = state.copyWith(
       isLeftOpen: next,
-      isRightOpen: (next && isMobile) ? false : state.isRightOpen,
+      isRightOpen: (next && isOverlay) ? false : state.isRightOpen,
     );
   }
 
-  void toggleRight({bool isMobile = false}) {
+  void toggleRight({bool isOverlay = false}) {
     final next = !state.isRightOpen;
     state = state.copyWith(
       isRightOpen: next,
-      isLeftOpen: (next && isMobile) ? false : state.isLeftOpen,
+      isLeftOpen: (next && isOverlay) ? false : state.isLeftOpen,
     );
   }
 

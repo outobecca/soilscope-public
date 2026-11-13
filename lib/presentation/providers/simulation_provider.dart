@@ -243,7 +243,20 @@ class Simulation extends _$Simulation {
 
   Future<void> _initIsolate() async {
     debugPrint('[SimulationProvider] _initIsolate started');
-    await _isolateManager.init();
+    try {
+      await _isolateManager.init();
+    } catch (e, stack) {
+      debugPrint('[SimulationProvider] Engine initialization failed: $e');
+      debugPrintStack(stackTrace: stack);
+      if (_disposed || !ref.mounted) return;
+      // Never leave the app stuck on the splash if the isolate cannot start.
+      state = state.copyWith(isInitializing: false);
+      ref.read(eventLogProvider.notifier).addEvent(
+            'Simulation engine failed to start.',
+            state.timeElapsed,
+          );
+      return;
+    }
     debugPrint('[SimulationProvider] IsolateManager initialized');
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
       if (_disposed || !ref.mounted) return;

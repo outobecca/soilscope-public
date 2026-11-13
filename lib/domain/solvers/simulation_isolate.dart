@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
 import '../models/plant.dart';
@@ -155,8 +155,19 @@ class SimulationIsolateManager {
     }
     _initialized = true;
 
-    _receivePort = ReceivePort();
-    _isolate = await Isolate.spawn(simulationIsolateEntry, _receivePort!.sendPort);
+    try {
+      _receivePort = ReceivePort();
+      _isolate = await Isolate.spawn(
+        simulationIsolateEntry,
+        _receivePort!.sendPort,
+      );
+    } catch (e) {
+      // Allow a later retry to attempt the spawn again.
+      _initialized = false;
+      _receivePort?.close();
+      _receivePort = null;
+      rethrow;
+    }
 
     _receivePort!.listen((message) {
       if (message is SendPort) {
@@ -190,7 +201,9 @@ class SimulationIsolateManager {
     debugPrint('[SimulationIsolateManager] _runWebLoop: starting loop');
     while (_isWebRunning) {
       if (_currentState != null) {
-        debugPrint('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
+        if (kDebugMode) {
+          debugPrint('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
+        }
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
           // On Web, compute() might hang or behave inconsistently. 

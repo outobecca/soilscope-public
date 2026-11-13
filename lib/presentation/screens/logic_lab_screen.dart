@@ -23,11 +23,24 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
   String _currentExample = 'nitrification';
   PaletteType _activePalette = PaletteType.none;
   int _nodeCounter = 100;
+  TransformationController? _graphController;
 
   @override
   void initState() {
     super.initState();
     _initNitrificationGraph();
+  }
+
+  @override
+  void dispose() {
+    _graphController?.dispose();
+    super.dispose();
+  }
+
+  /// Keeps the palette usable when the screen is narrower than its width.
+  double _paletteWidth(BuildContext context, double preferred) {
+    final width = MediaQuery.sizeOf(context).width;
+    return width < 600 ? width * 0.85 : preferred;
   }
 
   void _initNitrificationGraph() {
@@ -650,31 +663,62 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
       ),
       body: Stack(
         children: [
-          // Ruudukko taustalla
-          const Positioned.fill(child: GridBackground()),
+          // The canvas is pannable and zoomable; the node layout is wider than
+          // a phone screen, so this is what makes it reachable on mobile.
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final fitScale =
+                    (constraints.maxWidth / 1200).clamp(0.35, 1.0).toDouble();
+                _graphController ??= TransformationController(
+                  Matrix4.diagonal3Values(fitScale, fitScale, 1),
+                );
+                return InteractiveViewer(
+                  transformationController: _graphController,
+                  constrained: false,
+                  minScale: 0.25,
+                  maxScale: 2.5,
+                  boundaryMargin: const EdgeInsets.all(600),
+                  child: SizedBox(
+                    width: 1200,
+                    height: 900,
+                    child: Stack(
+                      children: [
+                        // Ruudukko taustalla
+                        const Positioned.fill(child: GridBackground()),
 
-          // Langat
-          CustomPaint(
-            size: Size.infinite,
-            painter: ConnectionPainter(
-              nodes: _graph.nodes,
-              connections: _graph.connections,
-            ),
-          ),
+                        // Langat
+                        CustomPaint(
+                          size: Size.infinite,
+                          painter: ConnectionPainter(
+                            nodes: _graph.nodes,
+                            connections: _graph.connections,
+                          ),
+                        ),
 
-          // Nodet
-          ..._graph.nodes.map(
-            (node) => NodeWidget(
-              node: node,
-              onDrag: (newPos) {
-                setState(() {
-                  final index = _graph.nodes.indexWhere((n) => n.id == node.id);
-                  _graph.nodes[index] = node.copyWith(position: newPos);
-                });
+                        // Nodet
+                        ..._graph.nodes.map(
+                          (node) => NodeWidget(
+                            node: node,
+                            onDrag: (newPos) {
+                              setState(() {
+                                final index = _graph.nodes
+                                    .indexWhere((n) => n.id == node.id);
+                                _graph.nodes[index] =
+                                    node.copyWith(position: newPos);
+                              });
+                            },
+                            onValueChanged: node.type == NodeType.constant
+                                ? (newValue) =>
+                                    _updateConstantValue(node.id, newValue)
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               },
-              onValueChanged: node.type == NodeType.constant
-                  ? (newValue) => _updateConstantValue(node.id, newValue)
-                  : null,
             ),
           ),
 
@@ -684,7 +728,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
               top: 0,
               right: 0,
               bottom: 0,
-              width: 320,
+              width: _paletteWidth(context, 320),
               child: InputPalette(
                 onSelect: _addNode,
                 onClose: () =>
@@ -698,7 +742,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
               top: 0,
               right: 0,
               bottom: 0,
-              width: 360,
+              width: _paletteWidth(context, 360),
               child: FunctionPalette(
                 onSelect: _addFunctionNode,
                 onClose: () =>

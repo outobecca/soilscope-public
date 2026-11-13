@@ -490,9 +490,11 @@ class FlutterQuickActions extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.eventLog),
-        content: SizedBox(
-          width: 400,
-          height: 500,
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 400,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+          ),
           child: events.isEmpty
               ? Center(child: Text(l10n.noEvents))
               : ListView.builder(

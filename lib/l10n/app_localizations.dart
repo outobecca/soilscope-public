@@ -7912,6 +7912,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Timeline calculation failed. Try a shorter period.'**
   String get calculationFailed;
+
+  /// No description provided for @realTime.
+  ///
+  /// In en, this message translates to:
+  /// **'REAL TIME'**
+  String get realTime;
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LEVEL'**
+  String get levelLabel;
+
+  /// No description provided for @qualityExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'EXCELLENT'**
+  String get qualityExcellent;
+
+  /// No description provided for @qualityModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'MODERATE'**
+  String get qualityModerate;
+
+  /// No description provided for @qualityCritical.
+  ///
+  /// In en, this message translates to:
+  /// **'CRITICAL'**
+  String get qualityCritical;
+
+  /// No description provided for @buffDrought.
+  ///
+  /// In en, this message translates to:
+  /// **'DROUGHT'**
+  String get buffDrought;
+
+  /// No description provided for @buffRain.
+  ///
+  /// In en, this message translates to:
+  /// **'RAIN'**
+  String get buffRain;
+
+  /// No description provided for @buffCoverCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'COVER CROP'**
+  String get buffCoverCrop;
+
+  /// No description provided for @buffSymbiosis.
+  ///
+  /// In en, this message translates to:
+  /// **'SYMBIOSIS'**
+  String get buffSymbiosis;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
