@@ -36,6 +36,10 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
   // Tutorial highlights builder
   final List<ScenarioTutorialStep> _tutorialSteps = [];
   double _tutTime = 1.0;
+
+  // Pre-calculation progress
+  bool _isCalculating = false;
+  double _calcProgress = 0.0;
   String _tutTarget = 'leaf'; // leaf, root, rhizosphere, soilStructure
   String _tutTitle = '';
   String _tutDesc = '';
@@ -148,69 +152,163 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.buildScenarioTitle),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(icon: const Icon(Icons.tune), text: l10n.parametersTab),
-            Tab(icon: const Icon(Icons.agriculture), text: l10n.actionsTab),
-            Tab(icon: const Icon(Icons.school), text: l10n.tutorialTab),
-          ],
+    return PopScope(
+      canPop: !_isCalculating,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.buildScenarioTitle),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(icon: const Icon(Icons.tune), text: l10n.parametersTab),
+              Tab(icon: const Icon(Icons.agriculture), text: l10n.actionsTab),
+              Tab(icon: const Icon(Icons.school), text: l10n.tutorialTab),
+            ],
+          ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildParamTab(theme, l10n),
-          _buildCultivationTab(theme, l10n),
-          _buildTutorialTab(theme, l10n),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Row(
+        body: Stack(
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  final sc = _buildScenario();
-                  ref.read(simulationProvider.notifier).loadScenario(sc);
-                  // Trigger Pre-calculation
-                  ref.read(simulationProvider.notifier).preCalculateTimeline(_durationDays.toInt());
-                  Navigator.of(context).pushNamed('/simulation');
-                },
-                icon: const Icon(Icons.calculate),
-                label: Text(l10n.calculateDays(_durationDays.toInt())),
-              ),
+            TabBarView(
+              controller: _tabController,
+              children: [
+                _buildParamTab(theme, l10n),
+                _buildCultivationTab(theme, l10n),
+                _buildTutorialTab(theme, l10n),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: () {
-                  final sc = _buildScenario();
-                  ref.read(simulationProvider.notifier).loadScenario(sc);
-                  ref.read(simulationProvider.notifier).start();
-                  Navigator.of(context).pushNamed('/simulation');
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: Text(l10n.startLive),
-              ),
-            ),
+            if (_isCalculating)
+              Positioned.fill(child: _buildCalculationOverlay(theme, l10n)),
           ],
         ),
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isCalculating ? null : _preCalculateAndOpen,
+                  icon: const Icon(Icons.calculate),
+                  label: Text(l10n.calculateDays(_durationDays.toInt())),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _isCalculating ? null : _startLive,
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(l10n.startLive),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  void _startLive() {
+    final scenario = _buildScenario();
+    ref.read(simulationProvider.notifier)
+      ..loadScenario(scenario)
+      ..start();
+    Navigator.of(context).pushNamed('/simulation');
+  }
+
+  /// Runs the pre-calculation to completion, reporting progress, and only
+  /// navigates once the timeline is ready.
+  Future<void> _preCalculateAndOpen() async {
+    if (_isCalculating) return;
+
+    final l10n = AppLocalizations.of(context)!;
+    final scenario = _buildScenario();
+    final notifier = ref.read(simulationProvider.notifier);
+    final days = _durationDays.toInt();
+
+    setState(() {
+      _isCalculating = true;
+      _calcProgress = 0.0;
+    });
+
+    notifier.loadScenario(scenario);
+
+    try {
+      await notifier.preCalculateTimeline(
+        days,
+        onProgress: (progress) {
+          if (mounted) setState(() => _calcProgress = progress);
+        },
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushNamed('/simulation');
+    } catch (error, stack) {
+      debugPrint('Timeline pre-calculation failed: $error');
+      debugPrintStack(stackTrace: stack);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.calculationFailed),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isCalculating = false);
+    }
+  }
+
+  Widget _buildCalculationOverlay(ThemeData theme, AppLocalizations l10n) {
+    return Stack(
+      children: [
+        const ModalBarrier(dismissible: false, color: Colors.black54),
+        Center(
+          child: Card(
+            margin: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 360),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: _calcProgress),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.preparingSimulation,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.simulationLengthDays(_durationDays.toInt()),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(_calcProgress * 100).clamp(0, 100).round()} %',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

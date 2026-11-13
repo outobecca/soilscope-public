@@ -170,7 +170,18 @@ class Simulation extends _$Simulation {
       surfaceAlbedo: 0.2,
       slope: 0.0,
     );
-    final defaultPlant = Plant(
+    final defaultState = _initialState(defaultProfile, isInitializing: true);
+
+    final defaultEntry = _stripHistory(defaultState);
+    _history
+      ..clear()
+      ..add(defaultEntry);
+
+    return defaultEntry.copyWith(history: List.unmodifiable(_history));
+  }
+
+  Plant _seedPlant() {
+    return Plant(
       id: "plant_1",
       species: "Wheat",
       age: 1.0,
@@ -199,29 +210,35 @@ class Simulation extends _$Simulation {
       totalBiomass: 150.0,
       rootBiomass: 60.0,
     );
+  }
 
-    final defaultState = BiophysicalState(
-      profile: defaultProfile,
-      plants: [defaultPlant.copyWith(baseX: 0.5)],
+  /// Builds a clean state for [profile] at t=0 with a single seedling.
+  ///
+  /// Used for the default profile on first launch and whenever a scenario is
+  /// loaded, so a new scenario never inherits the previous run's clock, plants
+  /// or history.
+  BiophysicalState _initialState(
+    SoilProfile profile, {
+    Scenario? scenario,
+    bool isInitializing = false,
+    double timeScale = 1.0,
+  }) {
+    return BiophysicalState(
+      profile: profile,
+      plants: [_seedPlant().copyWith(baseX: 0.5)],
       timeElapsed: 0,
       precipitation: 0.0,
       airTemperature: 293.15,
       relativeHumidity: 0.5,
       atmCO2: 0.017,
       autoWeather: false,
-      timeScale: 1.0,
+      timeScale: timeScale,
       hasCoverCrop: false,
       isRunning: false,
-      isInitializing: true,
-      history: [],
+      isInitializing: isInitializing,
+      history: const [],
+      currentScenario: scenario,
     );
-
-    final defaultEntry = _stripHistory(defaultState);
-    _history
-      ..clear()
-      ..add(defaultEntry);
-
-    return defaultEntry.copyWith(history: List.unmodifiable(_history));
   }
 
   Future<void> _initIsolate() async {
@@ -230,6 +247,10 @@ class Simulation extends _$Simulation {
     debugPrint('[SimulationProvider] IsolateManager initialized');
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
       if (_disposed || !ref.mounted) return;
+      // Drop frames from a paused run, including a tick that was already in
+      // flight when the user paused or switched scenarios. Without this a late
+      // tick could overwrite the freshly reset profile after loadScenario().
+      if (!state.isRunning) return;
       // While scrubbing, freeze the background simulation result from affecting display
       final session = ref.read(simulationSessionProvider);
       if (session.isScrubbing) return;
@@ -643,11 +664,22 @@ class Simulation extends _$Simulation {
   }
 
   Future<bool> hasSavedState() async {
-    final hasSecure = await _storage.containsKey(key: _stateKey);
-    if (hasSecure) return true;
+    try {
+      if (await _storage.containsKey(key: _stateKey)) return true;
+    } catch (e) {
+      debugPrint('Error checking secure storage for saved state: $e');
+    }
 
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(_stateKey) || _history.isNotEmpty;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.containsKey(_stateKey)) return true;
+    } catch (e) {
+      debugPrint('Error checking saved state in preferences: $e');
+    }
+
+    // A run that has started but has not reached the periodic save yet.
+    // A pristine provider only has the default entry, which is not a session.
+    return _history.length > 1;
   }
 
   Future<bool> loadLastState() async {
@@ -667,9 +699,9 @@ class Simulation extends _$Simulation {
       try {
         final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
         final loadedState = BiophysicalState.fromJson(jsonMap);
-        if (_history.isEmpty) {
-          _history.add(_stripHistory(loadedState));
-        }
+        _history
+          ..clear()
+          ..add(_stripHistory(loadedState));
         state = loadedState.copyWith(history: List.unmodifiable(_history));
         _syncIsolate();
         return true;
@@ -677,7 +709,7 @@ class Simulation extends _$Simulation {
         debugPrint('Error loading saved state: $e');
       }
     }
-    if (_history.isNotEmpty) {
+    if (_history.length > 1) {
       state = _history.last.copyWith(history: List.unmodifiable(_history));
       return true;
     }
@@ -712,30 +744,89 @@ class Simulation extends _$Simulation {
   }
 
   void loadScenario(Scenario scenario) {
-    state = state.copyWith(
-      currentScenario: scenario,
-      profile: scenario.initialProfile,
+    // Stop the current run first so the isolate cannot push frames from the
+    // previous scenario into the fresh one.
+    _isolateManager.stop();
+    particleIsolate.stop();
+
+    final initial = _stripHistory(
+      _initialState(
+        scenario.initialProfile,
+        scenario: scenario,
+        timeScale: state.timeScale,
+      ),
     );
+
+    _history
+      ..clear()
+      ..add(initial);
+
+    state = initial.copyWith(
+      history: List.unmodifiable(_history),
+      isInitializing: false,
+    );
+
+    final session = ref.read(simulationSessionProvider.notifier);
+    session.setScrubbing(false);
+    session.setViewTime(0);
+
     _syncIsolate();
+    _saveState();
   }
 
-  Future<void> preCalculateTimeline(int days) async {
+  /// Pre-computes a timeline for [days] simulated days.
+  ///
+  /// The work runs in day-sized chunks so the caller can render progress and
+  /// the UI can breathe between chunks. This matters on web, where [compute]
+  /// executes on the main thread.
+  Future<bool> preCalculateTimeline(
+    int days, {
+    void Function(double progress)? onProgress,
+  }) async {
+    final totalDays = days.clamp(1, 365).toInt();
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
     state = state.copyWith(isRunning: false);
     _isolateManager.stop();
     particleIsolate.stop();
 
-    // Use a compute task to run fast simulation
-    final computedHistory = await compute(_preCalculateTimelineTask, (state, days));
-    _history.clear();
-    _history.addAll(computedHistory);
+    final startState = _stripHistory(state);
+    final computedHistory = <BiophysicalState>[startState];
+    var cursor = startState;
+    var processedDays = 0;
+    final chunkDays = (totalDays / 20).ceil().clamp(1, totalDays).toInt();
 
-    if (_history.isNotEmpty) {
-      state = _history.first.copyWith(
-        history: List.unmodifiable(_history),
+    onProgress?.call(0);
+    while (processedDays < totalDays) {
+      final remaining = totalDays - processedDays;
+      final daysThisChunk = chunkDays < remaining ? chunkDays : remaining;
+
+      final (nextState, chunkHistory) = await compute(
+        _preCalculateTimelineTask,
+        (cursor, daysThisChunk),
       );
-      ref.read(simulationSessionProvider.notifier).setViewTime(_history.first.timeElapsed);
+
+      cursor = nextState;
+      computedHistory.addAll(chunkHistory);
+      processedDays += daysThisChunk;
+      onProgress?.call(processedDays / totalDays);
+
+      // Yield so a progress indicator can repaint between chunks.
+      await Future<void>.delayed(Duration.zero);
     }
+
+    _history
+      ..clear()
+      ..addAll(computedHistory);
+
+    state = computedHistory.first.copyWith(
+      history: List.unmodifiable(_history),
+      isInitializing: false,
+    );
+    ref
+        .read(simulationSessionProvider.notifier)
+        .setViewTime(computedHistory.first.timeElapsed);
+
+    return true;
   }
 
   void configureParticleDomain(double minX, double maxX, double height, double surfaceY) {
@@ -776,12 +867,14 @@ BiophysicalState displayedSimulationState(Ref ref) {
   return simState;
 }
 
-List<BiophysicalState> _preCalculateTimelineTask((BiophysicalState, int) args) {
+(BiophysicalState, List<BiophysicalState>) _preCalculateTimelineTask(
+  (BiophysicalState, int) args,
+) {
   final initialState = args.$1;
   final days = args.$2;
   final List<BiophysicalState> history = [];
   BiophysicalState currentState = initialState;
-  
+
   const double dt = 3600.0; // 1 hour steps
   final totalTicks = (days * 24).toInt();
   
@@ -804,7 +897,7 @@ List<BiophysicalState> _preCalculateTimelineTask((BiophysicalState, int) args) {
       history.add(currentState.copyWith(history: []));
     }
   }
-  return history;
+  return (currentState, history);
 }
 
 BiophysicalState _applyEvent(BiophysicalState state, CultivationEvent event) {

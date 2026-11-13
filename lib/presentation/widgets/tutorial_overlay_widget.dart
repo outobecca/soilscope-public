@@ -26,7 +26,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
-    )..repeat();
+    );
   }
 
   @override
@@ -35,10 +35,25 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
     super.dispose();
   }
 
+  /// Runs the spotlight animation only while the tour is actually visible.
+  /// A repeating controller left running keeps the app requesting frames
+  /// forever, even after the tutorial has been dismissed.
+  void _syncSpotlightTicker(bool shouldRun) {
+    if (shouldRun && !_animController.isAnimating) {
+      _animController.repeat();
+    } else if (!shouldRun && _animController.isAnimating) {
+      _animController.stop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tutorialState = ref.watch(tutorialProvider);
     final scenarioStep = ref.watch(activeTutorialStepProvider);
+
+    _syncSpotlightTicker(
+      tutorialState.isVisible && !tutorialState.isQuickGuideOpen,
+    );
 
     // If quick guide is open, show modal dialog
     if (tutorialState.isQuickGuideOpen) {

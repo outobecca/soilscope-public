@@ -1511,5 +1511,6 @@
   "tutorialGuideCardTitle": "SoilScope User Guide & Tutorial",
   "tutorialGuideCardDesc": "Explore application features, SPAC biophysics, and management interventions.",
   "tutorialTryAction": "Try action:",
-  "scenarioMissionGuideBadge": "SCENARIO MISSION & GUIDE"
+  "scenarioMissionGuideBadge": "SCENARIO MISSION & GUIDE",
+  "calculationFailed": "Timeline calculation failed. Try a shorter period."
 }

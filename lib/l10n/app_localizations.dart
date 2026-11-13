@@ -7906,6 +7906,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SCENARIO MISSION & GUIDE'**
   String get scenarioMissionGuideBadge;
+
+  /// No description provided for @calculationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline calculation failed. Try a shorter period.'**
+  String get calculationFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

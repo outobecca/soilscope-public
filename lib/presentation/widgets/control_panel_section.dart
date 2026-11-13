@@ -20,21 +20,26 @@ class ControlPanelSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final layers = state.profile.layers;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 1. Layer Quick Selector Bar
-        _buildLayerSelector(context, ref, layers, selectedId, l10n, theme),
-        const SizedBox(height: 16),
+    // Provide a Material ancestor inside the sidebar's decorated container so
+    // the nested ExpansionTiles can paint ink without a debug assertion.
+    return Material(
+      type: MaterialType.transparency,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Layer Quick Selector Bar
+          _buildLayerSelector(context, ref, layers, selectedId, l10n, theme),
+          const SizedBox(height: 16),
 
-        // 2. Section Content
-        if (selectedId == "atmosphere")
-          _buildAtmosphereSection(context, l10n)
-        else if (selectedId != null)
-          _buildLayerProperties(context, ref, state, selectedId, theme, l10n)
-        else
-          _buildEmptyState(context, ref, layers, theme, l10n),
-      ],
+          // 2. Section Content
+          if (selectedId == "atmosphere")
+            _buildAtmosphereSection(context, l10n)
+          else if (selectedId != null)
+            _buildLayerProperties(context, ref, state, selectedId, theme, l10n)
+          else
+            _buildEmptyState(context, ref, layers, theme, l10n),
+        ],
+      ),
     );
   }
 

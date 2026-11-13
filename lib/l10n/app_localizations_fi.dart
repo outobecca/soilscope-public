@@ -3975,4 +3975,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get scenarioMissionGuideBadge => 'SKENAARIOTEHTÄVÄ & OHJE';
+
+  @override
+  String get calculationFailed => 'Aikajanan laskenta epäonnistui. Kokeile lyhyempää jaksoa.';
 }

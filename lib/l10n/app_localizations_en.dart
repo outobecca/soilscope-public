@@ -3975,4 +3975,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scenarioMissionGuideBadge => 'SCENARIO MISSION & GUIDE';
+
+  @override
+  String get calculationFailed => 'Timeline calculation failed. Try a shorter period.';
 }

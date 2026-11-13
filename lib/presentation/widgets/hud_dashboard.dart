@@ -43,39 +43,45 @@ class HUDDashboard extends ConsumerWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _HUDHeader(),
-            const SizedBox(height: 16),
-            const _HUDSustainabilityMetrics(),
-            const _HUDScrubber(),
-            Divider(color: theme.colorScheme.outlineVariant, height: 16),
-            const _HUDIndices(),
-            const _HUDSelectedLayerDetails(),
-            Divider(color: theme.colorScheme.outlineVariant, height: 16),
-            const _HUDPlantVitality(),
-            const SizedBox(height: 8),
-            const _HUDZoomIndicator(),
-            const Divider(height: 16),
-            ExpansionTile(
-              title: Text(
-                l10n.visualKey.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+        // The container paints its own decoration, so it must not sit between
+        // the ExpansionTiles and their Material ancestor (ink + ListTile
+        // background would be hidden, and Flutter asserts on it in debug).
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _HUDHeader(),
+              const SizedBox(height: 16),
+              const _HUDSustainabilityMetrics(),
+              const _HUDScrubber(),
+              Divider(color: theme.colorScheme.outlineVariant, height: 16),
+              const _HUDIndices(),
+              const _HUDSelectedLayerDetails(),
+              Divider(color: theme.colorScheme.outlineVariant, height: 16),
+              const _HUDPlantVitality(),
+              const SizedBox(height: 8),
+              const _HUDZoomIndicator(),
+              const Divider(height: 16),
+              ExpansionTile(
+                title: Text(
+                  l10n.visualKey.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
+                dense: true,
+                tilePadding: EdgeInsets.zero,
+                children: const [
+                  VisualKeyWidget(),
+                  SizedBox(height: 8),
+                  TeachingKeyWidget(),
+                ],
               ),
-              dense: true,
-              tilePadding: EdgeInsets.zero,
-              children: const [
-                VisualKeyWidget(),
-                SizedBox(height: 8),
-                TeachingKeyWidget(),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -53,6 +53,17 @@ class _ScenarioSelectionScreenState
     );
   }
 
+  /// Opens a child route and refreshes the saved-session status when the user
+  /// comes back. Without this the resume card keeps the state it had when the
+  /// screen was first built.
+  Future<void> _openRoute(String route) async {
+    await Navigator.of(context).pushNamed(route);
+    if (!mounted) return;
+    await _refreshSavedStateStatus();
+  }
+
+  Future<void> _openSimulation() => _openRoute('/simulation');
+
   @override
   Widget build(BuildContext context) {
     final scenariosAsync = ref.watch(scenariosProvider);
@@ -319,11 +330,12 @@ class _ScenarioSelectionScreenState
                     return;
                   }
                   if (loaded) {
-                    Navigator.of(context).pushNamed('/simulation');
+                    await _openSimulation();
                   } else {
                     _showSnack(context, l10n.resumeFailed);
                   }
                 } catch (e, stack) {
+                  if (!context.mounted) return;
                   _showSnack(context, 'Error resuming simulation: $e', background: Colors.red);
                   debugPrint('Error resuming simulation: $e');
                   debugPrintStack(stackTrace: stack);
@@ -444,10 +456,7 @@ class _ScenarioSelectionScreenState
             ref.read(simulationProvider.notifier).loadScenario(scenario);
             if (context.mounted) {
               _showSnack(context, l10n.importSuccess);
-              await _refreshSavedStateStatus();
-              if (context.mounted) {
-                Navigator.of(context).pushNamed('/simulation');
-              }
+              await _openSimulation();
             }
           } catch (_) {
             if (context.mounted) {
@@ -496,9 +505,7 @@ class _ScenarioSelectionScreenState
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        onTap: () {
-          Navigator.of(context).pushNamed('/scenario_builder');
-        },
+        onTap: () => _openRoute('/scenario_builder'),
       ),
     );
   }
@@ -534,11 +541,12 @@ class _ScenarioSelectionScreenState
         side: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           try {
             ref.read(simulationProvider.notifier).loadScenario(scenario);
-            Navigator.of(context).pushNamed('/simulation');
+            await _openSimulation();
           } catch (e, stack) {
+            if (!context.mounted) return;
             _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
             debugPrint('Error starting simulation: $e');
             debugPrintStack(stackTrace: stack);
@@ -619,13 +627,14 @@ class _ScenarioSelectionScreenState
                 children: [
                   const Spacer(),
                   FilledButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       try {
                         ref
                             .read(simulationProvider.notifier)
                             .loadScenario(scenario);
-                        Navigator.of(context).pushNamed('/simulation');
+                        await _openSimulation();
                       } catch (e, stack) {
+                        if (!context.mounted) return;
                         _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
                         debugPrint('Error starting simulation: $e');
                         debugPrintStack(stackTrace: stack);
