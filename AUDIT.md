@@ -391,6 +391,14 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 ## 5. Recommended roadmap
 
+> **Progress.** Week 1 items 1–5 and item 7 (B4) are implemented: scenario
+> reset, resume gating, chunked pre-calculation, the tablet layout tier, safe
+> areas, dialog constraints, the XP bar, the tutorial ticker, the gamification
+> and timeline ARB strings, the CI analyzer step, and Logic Lab pan/zoom.
+> `test/presentation/screens/responsive_layout_test.dart` guards the phone and
+> tablet tiers. D1 and C9 are partially done (health-bar semantics, hot-path
+> logging). Next: B6 action bar, B8 onboarding, B7 type scale.
+
 ### Week 1 — correctness and the mobile floor (highest value per hour)
 1. A1 scenario reset, A2 resume detection, A3 await/progress/cancel pre-calculation (P0).
 2. B1 tablet layout tier, B2 `SafeArea`, B3 dialog constraints, B5 XP bar. (Each is small and independently shippable.)
