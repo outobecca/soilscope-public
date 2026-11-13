@@ -1523,5 +1523,19 @@
   "buffCoverCrop": "COVER CROP",
   "buffSymbiosis": "SYMBIOSIS",
   "customScenarioDesc": "A custom scenario built from your own soil and weather settings.",
-  "applyToSimulation": "Apply to simulation"
+  "applyToSimulation": "Apply to simulation",
+  "moreActions": "More actions",
+  "manageSection": "MANAGE",
+  "viewSection": "VIEW",
+  "elementsSection": "ELEMENTS",
+  "navigateSection": "NAVIGATE",
+  "introTitle1": "Welcome to SoilScope",
+  "introBody1": "A living soil column. Watch water, nutrients and microbes respond to your decisions.",
+  "introTitle2": "Pan and zoom",
+  "introBody2": "Drag the canvas to move around and pinch to zoom in on roots, pores and hotspots.",
+  "introTitle3": "Tap to inspect",
+  "introBody3": "Tap any hotspot or soil layer to see what is happening and why.",
+  "introNext": "Next",
+  "introStart": "Start",
+  "introSkip": "Skip"
 }

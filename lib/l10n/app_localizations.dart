@@ -7978,6 +7978,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply to simulation'**
   String get applyToSimulation;
+
+  /// No description provided for @moreActions.
+  ///
+  /// In en, this message translates to:
+  /// **'More actions'**
+  String get moreActions;
+
+  /// No description provided for @manageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'MANAGE'**
+  String get manageSection;
+
+  /// No description provided for @viewSection.
+  ///
+  /// In en, this message translates to:
+  /// **'VIEW'**
+  String get viewSection;
+
+  /// No description provided for @elementsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'ELEMENTS'**
+  String get elementsSection;
+
+  /// No description provided for @navigateSection.
+  ///
+  /// In en, this message translates to:
+  /// **'NAVIGATE'**
+  String get navigateSection;
+
+  /// No description provided for @introTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to SoilScope'**
+  String get introTitle1;
+
+  /// No description provided for @introBody1.
+  ///
+  /// In en, this message translates to:
+  /// **'A living soil column. Watch water, nutrients and microbes respond to your decisions.'**
+  String get introBody1;
+
+  /// No description provided for @introTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'Pan and zoom'**
+  String get introTitle2;
+
+  /// No description provided for @introBody2.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the canvas to move around and pinch to zoom in on roots, pores and hotspots.'**
+  String get introBody2;
+
+  /// No description provided for @introTitle3.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to inspect'**
+  String get introTitle3;
+
+  /// No description provided for @introBody3.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any hotspot or soil layer to see what is happening and why.'**
+  String get introBody3;
+
+  /// No description provided for @introNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get introNext;
+
+  /// No description provided for @introStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get introStart;
+
+  /// No description provided for @introSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get introSkip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

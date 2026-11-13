@@ -4011,4 +4011,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get applyToSimulation => 'Apply to simulation';
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String get manageSection => 'MANAGE';
+
+  @override
+  String get viewSection => 'VIEW';
+
+  @override
+  String get elementsSection => 'ELEMENTS';
+
+  @override
+  String get navigateSection => 'NAVIGATE';
+
+  @override
+  String get introTitle1 => 'Welcome to SoilScope';
+
+  @override
+  String get introBody1 => 'A living soil column. Watch water, nutrients and microbes respond to your decisions.';
+
+  @override
+  String get introTitle2 => 'Pan and zoom';
+
+  @override
+  String get introBody2 => 'Drag the canvas to move around and pinch to zoom in on roots, pores and hotspots.';
+
+  @override
+  String get introTitle3 => 'Tap to inspect';
+
+  @override
+  String get introBody3 => 'Tap any hotspot or soil layer to see what is happening and why.';
+
+  @override
+  String get introNext => 'Next';
+
+  @override
+  String get introStart => 'Start';
+
+  @override
+  String get introSkip => 'Skip';
 }

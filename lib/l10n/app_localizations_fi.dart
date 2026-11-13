@@ -4011,4 +4011,46 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get applyToSimulation => 'Käytä simulaatioon';
+
+  @override
+  String get moreActions => 'Lisää toimintoja';
+
+  @override
+  String get manageSection => 'HALLINTA';
+
+  @override
+  String get viewSection => 'NÄKYMÄ';
+
+  @override
+  String get elementsSection => 'ALKUAINEET';
+
+  @override
+  String get navigateSection => 'SIIRTYMINEN';
+
+  @override
+  String get introTitle1 => 'Tervetuloa SoilScopeen';
+
+  @override
+  String get introBody1 => 'Elävä maaprofiili. Seuraa, miten vesi, ravinteet ja mikrobit reagoivat valintoihisi.';
+
+  @override
+  String get introTitle2 => 'Liiku ja zoomaa';
+
+  @override
+  String get introBody2 => 'Vedä kangasta liikkuaksesi ja nipistä zoomataksesi juuriin, huokosiin ja keskuksiin.';
+
+  @override
+  String get introTitle3 => 'Napauta ja tutki';
+
+  @override
+  String get introBody3 => 'Napauta keskusta tai maakerrosta nähdäksesi, mitä siellä tapahtuu ja miksi.';
+
+  @override
+  String get introNext => 'Seuraava';
+
+  @override
+  String get introStart => 'Aloita';
+
+  @override
+  String get introSkip => 'Ohita';
 }

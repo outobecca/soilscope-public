@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/app_localizations.dart';
 import '../../domain/models/scenario.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,10 +25,33 @@ class _ScenarioSelectionScreenState
   bool _isCheckingSavedState = true;
   bool _hasSavedState = false;
 
+  static const _gestureIntroSeenKey = 'gesture_intro_seen_v1';
+
   @override
   void initState() {
     super.initState();
     _refreshSavedStateStatus();
+    _maybeShowGestureIntro();
+  }
+
+  /// Three cards that teach pan/zoom/tap before the first run, instead of
+  /// dropping a new mobile user into a full-screen canvas with no affordance.
+  Future<void> _maybeShowGestureIntro() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_gestureIntroSeenKey) ?? false) return;
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (_) => const _GestureIntroDialog(),
+        );
+        await prefs.setBool(_gestureIntroSeenKey, true);
+      });
+    } catch (_) {
+      // No preferences available (e.g. widget tests): skip the intro.
+    }
   }
 
   Future<void> _refreshSavedStateStatus() async {
@@ -647,6 +671,125 @@ class _ScenarioSelectionScreenState
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GestureIntroDialog extends StatefulWidget {
+  const _GestureIntroDialog();
+
+  @override
+  State<_GestureIntroDialog> createState() => _GestureIntroDialogState();
+}
+
+class _GestureIntroDialogState extends State<_GestureIntroDialog> {
+  final PageController _controller = PageController();
+  int _page = 0;
+
+  static const _icons = [
+    Icons.eco_rounded,
+    Icons.zoom_in_rounded,
+    Icons.touch_app_rounded,
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final pages = [
+      (l10n.introTitle1, l10n.introBody1),
+      (l10n.introTitle2, l10n.introBody2),
+      (l10n.introTitle3, l10n.introBody3),
+    ];
+    final isLast = _page == pages.length - 1;
+
+    return AlertDialog(
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 380,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 220,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: pages.length,
+                onPageChanged: (index) => setState(() => _page = index),
+                itemBuilder: (context, index) => SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _icons[index],
+                        size: 56,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        pages[index].$1,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(pages[index].$2, textAlign: TextAlign.center),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(l10n.introSkip),
+                ),
+                Row(
+                  children: List.generate(
+                    pages.length,
+                    (index) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: index == _page
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (isLast) {
+                      Navigator.of(context).pop();
+                    } else {
+                      _controller.nextPage(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  },
+                  child: Text(isLast ? l10n.introStart : l10n.introNext),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

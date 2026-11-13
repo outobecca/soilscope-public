@@ -1523,5 +1523,19 @@
   "buffCoverCrop": "PEITEKASVI",
   "buffSymbiosis": "SYMBIOOSI",
   "customScenarioDesc": "Oma skenaario, joka rakennetaan valitsemistasi maa- ja sääasetuksista.",
-  "applyToSimulation": "Käytä simulaatioon"
+  "applyToSimulation": "Käytä simulaatioon",
+  "moreActions": "Lisää toimintoja",
+  "manageSection": "HALLINTA",
+  "viewSection": "NÄKYMÄ",
+  "elementsSection": "ALKUAINEET",
+  "navigateSection": "SIIRTYMINEN",
+  "introTitle1": "Tervetuloa SoilScopeen",
+  "introBody1": "Elävä maaprofiili. Seuraa, miten vesi, ravinteet ja mikrobit reagoivat valintoihisi.",
+  "introTitle2": "Liiku ja zoomaa",
+  "introBody2": "Vedä kangasta liikkuaksesi ja nipistä zoomataksesi juuriin, huokosiin ja keskuksiin.",
+  "introTitle3": "Napauta ja tutki",
+  "introBody3": "Napauta keskusta tai maakerrosta nähdäksesi, mitä siellä tapahtuu ja miksi.",
+  "introNext": "Seuraava",
+  "introStart": "Aloita",
+  "introSkip": "Ohita"
 }

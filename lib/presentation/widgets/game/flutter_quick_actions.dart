@@ -12,26 +12,36 @@ import '../../../../core/periodic_table.dart';
 import 'components/process_magnifier_component.dart';
 import 'logic/microscope_info_helper.dart';
 
+/// Five primary controls stay on the canvas; everything else lives in a
+/// grouped sheet so the toolbar is thumb-reachable on a phone.
 class FlutterQuickActions extends ConsumerWidget {
   const FlutterQuickActions({super.key});
+
+  static const List<String> _quickElements = [
+    'N',
+    'P',
+    'K',
+    'Ca',
+    'Mg',
+    'S',
+    'C',
+    'O',
+    'Fe',
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     final timeScale = ref.watch(simulationProvider.select((s) => s.timeScale));
-    final autoWeather = ref.watch(simulationProvider.select((s) => s.autoWeather));
-    final precipitation = ref.watch(simulationProvider.select((s) => s.precipitation));
-    final hasCoverCrop = ref.watch(simulationProvider.select((s) => s.hasCoverCrop));
-    
     final session = ref.watch(simulationSessionProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: theme.colorScheme.outlineVariant, width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -41,259 +51,87 @@ class FlutterQuickActions extends ConsumerWidget {
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ...[
-              // Play/Pause
-              _buildActionButton(
-                context: context,
-                icon: isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                label: isRunning ? l10n.pause : l10n.play,
-                isActive: isRunning,
-                onTap: () {
-                  final notifier = ref.read(simulationProvider.notifier);
-                  if (isRunning) {
-                    notifier.stop();
-                  } else {
-                    notifier.start();
-                  }
-                },
-              ),
-              
-              // Time Scale
-              _buildActionButton(
-                context: context,
-                icon: Icons.speed_rounded,
-                label: '${timeScale}x',
-                isActive: timeScale > 1.0,
-                onTap: () {
-                  final speeds = [0.5, 1.0, 2.0, 5.0, 10.0];
-                  final currentIndex = speeds.indexOf(timeScale);
-                  final nextIndex = (currentIndex + 1) % speeds.length;
-                  ref.read(simulationProvider.notifier).setSpeed(speeds[nextIndex]);
-                },
-              ),
-              
-              // Weather
-              _buildActionButton(
-                context: context,
-                icon: Icons.cloudy_snowing,
-                label: l10n.autoWeather,
-                isActive: autoWeather,
-                onTap: () {
-                  ref.read(simulationProvider.notifier).toggleAutoWeather();
-                },
-              ),
-
-              // Rain
-              _buildActionButton(
-                context: context,
-                icon: precipitation > 0 ? Icons.water_drop_rounded : Icons.water_drop_outlined,
-                label: l10n.rain,
-                isActive: precipitation > 0,
-                onTap: () {
-                  final notifier = ref.read(simulationProvider.notifier);
-                  notifier.setPrecipitation(precipitation > 0 ? 0.0 : 10.0);
-                },
-              ),
-
-              // Tillage
-              _buildActionButton(
-                context: context,
-                icon: Icons.agriculture_rounded,
-                label: l10n.tillage,
-                isActive: false,
-                onTap: () {
-                  ref.read(simulationProvider.notifier).applyTillage();
-                },
-              ),
-
-              // Cover Crop
-              _buildActionButton(
-                context: context,
-                icon: Icons.eco_rounded,
-                label: l10n.coverCrop,
-                isActive: hasCoverCrop,
-                onTap: () {
-                  if (!hasCoverCrop) {
-                    ref.read(simulationProvider.notifier).applyCoverCrop();
-                  }
-                },
-              ),
-
-              // Fertilizer
-              _buildActionButton(
-                context: context,
-                icon: Icons.science_rounded,
-                label: l10n.fertilize,
-                isActive: false,
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => const FertilizerModal(),
-                  );
-                },
-              ),
-
-              // Timeline
-              _buildActionButton(
-                context: context,
-                icon: Icons.linear_scale_rounded,
-                label: l10n.timeline,
-                isActive: session.isScrubbing,
-                onTap: () {
-                  final notifier = ref.read(simulationProvider.notifier);
-                  if (session.isScrubbing) {
-                    notifier.stopScrubbing();
-                  } else {
-                    notifier.startScrubbing();
-                  }
-                },
-              ),
-
-              // Event Log
-              _buildActionButton(
-                context: context,
-                icon: Icons.history_rounded,
-                label: l10n.eventLog,
-                isActive: false,
-                onTap: () => _showEventLog(context, ref, l10n),
-              ),
-
-              // Microscope
-              _buildActionButton(
-                context: context,
-                icon: session.isMicroscopeEnabled ? Icons.biotech_rounded : Icons.biotech_outlined,
-                label: l10n.microscope,
-                isActive: session.isMicroscopeEnabled,
-                onTap: () {
-                  final sessionNotifier = ref.read(simulationSessionProvider.notifier);
-                  final uiNotifier = ref.read(uIStateProvider.notifier);
-                  final wasEnabled = session.isMicroscopeEnabled;
-                  sessionNotifier.toggleMicroscope();
-                  if (!wasEnabled) {
-                    final targetName = session.selectedInspectorType ?? 'rhizosphere';
-                    final targetType = MicroscopeInfoHelper.parseType(targetName) ?? MagnifierType.rhizosphere;
-                    final state = ref.read(simulationProvider);
-                    uiNotifier.setHoverInfo(
-                      MicroscopeInfoHelper.createHoverInfo(
-                        type: targetType,
-                        l: l10n,
-                        state: state,
-                        isPinned: true,
-                      ),
-                    );
-                  } else {
-                    uiNotifier.clearHoverInfo();
-                  }
-                },
-              ),
-
-              // Science Reference
-              _buildActionButton(
-                context: context,
-                icon: Icons.menu_book_rounded,
-                label: l10n.scienceReference.toUpperCase(),
-                isActive: false,
-                onTap: () {
-                  Navigator.pushNamed(context, '/science_reference');
-                },
-              ),
-
-              // Logic Lab
-              _buildActionButton(
-                context: context,
-                icon: Icons.science_outlined,
-                label: l10n.logicLab,
-                isActive: false,
-                onTap: () {
-                  Navigator.pushNamed(context, '/logic_lab');
-                },
-              ),
-
-              // Observation Cycle Toggle
-              _buildActionButton(
-                context: context,
-                icon: ref.watch(activeCycleProvider) != ObservationCycle.none ? Icons.published_with_changes : Icons.published_with_changes_outlined,
-                label: ref.watch(activeCycleProvider) == ObservationCycle.none ? l10n.observation.toUpperCase() : ref.watch(activeCycleProvider).name.toUpperCase(),
-                isActive: ref.watch(activeCycleProvider) != ObservationCycle.none,
-                onTap: () {
-                  final current = ref.read(activeCycleProvider);
-                  final values = ObservationCycle.values;
-                  final nextIndex = (values.indexOf(current) + 1) % values.length;
-                  ref.read(activeCycleProvider.notifier).setCycle(values[nextIndex]);
-                },
-              ),
-
-              // Flow Toggle
-              _buildActionButton(
-                context: context,
-                icon: ref.watch(particleFlowModeProvider) ? Icons.device_hub_rounded : Icons.device_hub_outlined,
-                label: l10n.flows,
-                isActive: ref.watch(particleFlowModeProvider),
-                onTap: () {
-                  ref.read(particleFlowModeProvider.notifier).toggle();
-                },
-              ),
-
-              // Schematic Toggle
-              _buildActionButton(
-                context: context,
-                icon: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic ? Icons.account_tree_rounded : Icons.account_tree_outlined,
-                label: l10n.schematic.toUpperCase(),
-                isActive: ref.watch(visualLayoutModeStateProvider) == VisualLayoutMode.schematic,
-                onTap: () {
-                  ref.read(visualLayoutModeStateProvider.notifier).toggle();
-                },
-              ),
-
-              // Scenario Builder
-              _buildActionButton(
-                context: context,
-                icon: Icons.edit_rounded,
-                label: l10n.modify,
-                isActive: false,
-                onTap: () {
-                  Navigator.pushNamed(context, '/scenario_builder');
-                },
-              ),
-            ].map((btn) => Padding(padding: const EdgeInsets.symmetric(horizontal: 4.0), child: btn)),
-
-            const SizedBox(
-              height: 24,
-              child: VerticalDivider(
-                width: 20,
-                thickness: 1,
-              ),
-            ),
-
-            ...[
-              ...['N', 'P', 'K', 'Ca', 'Mg', 'S', 'C', 'O', 'Fe']
-                  .map((sym) => _buildElementButton(
-                        context: context,
-                        ref: ref,
-                        symbol: sym,
-                        isSelected: session.selectedElementSymbol == sym,
-                      )),
-              if (session.selectedElementSymbol != null &&
-                  session.selectedElementSymbol!.isNotEmpty &&
-                  !['N', 'P', 'K', 'Ca', 'Mg', 'S', 'C', 'O', 'Fe']
-                      .contains(session.selectedElementSymbol))
-                _buildElementButton(
-                  context: context,
-                  ref: ref,
-                  symbol: session.selectedElementSymbol!,
-                  isSelected: true,
-                ),
-              _buildPeriodicTableLauncher(context, l10n),
-            ].map((btn) => Padding(padding: const EdgeInsets.symmetric(horizontal: 2.0), child: btn)),
-          ],
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildActionButton(
+            context: context,
+            icon: isRunning ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            label: isRunning ? l10n.pause : l10n.play,
+            isActive: isRunning,
+            onTap: () {
+              final notifier = ref.read(simulationProvider.notifier);
+              isRunning ? notifier.stop() : notifier.start();
+            },
+          ),
+          _buildActionButton(
+            context: context,
+            icon: Icons.speed_rounded,
+            label: '${timeScale}x',
+            isActive: timeScale > 1.0,
+            onTap: () {
+              const speeds = [0.5, 1.0, 2.0, 5.0, 10.0];
+              final next = (speeds.indexOf(timeScale) + 1) % speeds.length;
+              ref.read(simulationProvider.notifier).setSpeed(speeds[next]);
+            },
+          ),
+          _buildActionButton(
+            context: context,
+            icon: Icons.linear_scale_rounded,
+            label: l10n.timeline,
+            isActive: session.isScrubbing,
+            onTap: () {
+              final notifier = ref.read(simulationProvider.notifier);
+              session.isScrubbing
+                  ? notifier.stopScrubbing()
+                  : notifier.startScrubbing();
+            },
+          ),
+          _buildActionButton(
+            context: context,
+            icon: session.isMicroscopeEnabled
+                ? Icons.biotech_rounded
+                : Icons.biotech_outlined,
+            label: l10n.microscope,
+            isActive: session.isMicroscopeEnabled,
+            onTap: () => _toggleMicroscope(ref, l10n, session),
+          ),
+          _buildActionButton(
+            context: context,
+            icon: Icons.more_horiz_rounded,
+            label: l10n.moreActions,
+            isActive: false,
+            onTap: () => _showMoreSheet(context, ref, l10n),
+          ),
+        ],
       ),
     );
+  }
+
+  void _toggleMicroscope(
+    WidgetRef ref,
+    AppLocalizations l10n,
+    SimulationSessionState session,
+  ) {
+    final sessionNotifier = ref.read(simulationSessionProvider.notifier);
+    final uiNotifier = ref.read(uIStateProvider.notifier);
+    final wasEnabled = session.isMicroscopeEnabled;
+    sessionNotifier.toggleMicroscope();
+    if (!wasEnabled) {
+      final targetName = session.selectedInspectorType ?? 'rhizosphere';
+      final targetType =
+          MicroscopeInfoHelper.parseType(targetName) ?? MagnifierType.rhizosphere;
+      uiNotifier.setHoverInfo(
+        MicroscopeInfoHelper.createHoverInfo(
+          type: targetType,
+          l: l10n,
+          state: ref.read(simulationProvider),
+          isPinned: true,
+        ),
+      );
+    } else {
+      uiNotifier.clearHoverInfo();
+    }
   }
 
   Widget _buildActionButton({
@@ -304,52 +142,304 @@ class FlutterQuickActions extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    final activeColor = theme.colorScheme.primary;
-    final inactiveColor = theme.colorScheme.surfaceContainerHighest;
 
     return Tooltip(
       message: label,
       preferBelow: false,
       verticalOffset: 24,
-      waitDuration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.35),
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      textStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.3,
-      ),
       child: Material(
-        color: isActive ? activeColor : inactiveColor,
+        color: isActive
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceContainerHighest,
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+          // 48 dp minimum touch target.
+          child: SizedBox(
+            width: 48,
+            height: 48,
             child: Icon(
               icon,
-              color: isActive ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
-              size: 20,
+              color: isActive
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
+              size: 22,
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _showMoreSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
+    final parentContext = context;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        void close() => Navigator.of(sheetContext).pop();
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.62,
+          minChildSize: 0.35,
+          maxChildSize: 0.92,
+          builder: (context, controller) {
+            final autoWeather =
+                ref.watch(simulationProvider.select((s) => s.autoWeather));
+            final precipitation =
+                ref.watch(simulationProvider.select((s) => s.precipitation));
+            final hasCoverCrop =
+                ref.watch(simulationProvider.select((s) => s.hasCoverCrop));
+            final session = ref.watch(simulationSessionProvider);
+            final cycle = ref.watch(activeCycleProvider);
+            final flowOn = ref.watch(particleFlowModeProvider);
+            final schematic =
+                ref.watch(visualLayoutModeStateProvider) ==
+                    VisualLayoutMode.schematic;
+
+            return ListView(
+              controller: controller,
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+              children: [
+                _sectionTitle(l10n.manageSection, context),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.cloudy_snowing,
+                  label: l10n.autoWeather,
+                  isActive: autoWeather,
+                  onTap: () {
+                    ref.read(simulationProvider.notifier).toggleAutoWeather();
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: precipitation > 0
+                      ? Icons.water_drop_rounded
+                      : Icons.water_drop_outlined,
+                  label: l10n.rain,
+                  isActive: precipitation > 0,
+                  onTap: () {
+                    ref
+                        .read(simulationProvider.notifier)
+                        .setPrecipitation(precipitation > 0 ? 0.0 : 10.0);
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.agriculture_rounded,
+                  label: l10n.tillage,
+                  isActive: false,
+                  onTap: () {
+                    ref.read(simulationProvider.notifier).applyTillage();
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.eco_rounded,
+                  label: l10n.coverCrop,
+                  isActive: hasCoverCrop,
+                  onTap: () {
+                    if (!hasCoverCrop) {
+                      ref.read(simulationProvider.notifier).applyCoverCrop();
+                    }
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.science_rounded,
+                  label: l10n.fertilize,
+                  isActive: false,
+                  onTap: () {
+                    close();
+                    showDialog(
+                      context: parentContext,
+                      builder: (_) => const FertilizerModal(),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 8),
+                _sectionTitle(l10n.viewSection, context),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.history_rounded,
+                  label: l10n.eventLog,
+                  isActive: false,
+                  onTap: () {
+                    close();
+                    _showEventLog(parentContext, ref, l10n);
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: Icons.published_with_changes,
+                  label: cycle == ObservationCycle.none
+                      ? l10n.observation.toUpperCase()
+                      : cycle.name.toUpperCase(),
+                  isActive: cycle != ObservationCycle.none,
+                  onTap: () {
+                    final values = ObservationCycle.values;
+                    final next =
+                        (values.indexOf(cycle) + 1) % values.length;
+                    ref.read(activeCycleProvider.notifier).setCycle(
+                          values[next],
+                        );
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: flowOn
+                      ? Icons.device_hub_rounded
+                      : Icons.device_hub_outlined,
+                  label: l10n.flows,
+                  isActive: flowOn,
+                  onTap: () {
+                    ref.read(particleFlowModeProvider.notifier).toggle();
+                    close();
+                  },
+                ),
+                _buildActionTile(
+                  context: context,
+                  icon: schematic
+                      ? Icons.account_tree_rounded
+                      : Icons.account_tree_outlined,
+                  label: l10n.schematic.toUpperCase(),
+                  isActive: schematic,
+                  onTap: () {
+                    ref.read(visualLayoutModeStateProvider.notifier).toggle();
+                    close();
+                  },
+                ),
+
+                const SizedBox(height: 8),
+                _sectionTitle(l10n.elementsSection, context),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ..._quickElements.map(
+                      (symbol) => _buildElementButton(
+                        context: context,
+                        ref: ref,
+                        symbol: symbol,
+                        isSelected: session.selectedElementSymbol == symbol,
+                        onChanged: close,
+                      ),
+                    ),
+                    if (session.selectedElementSymbol != null &&
+                        session.selectedElementSymbol!.isNotEmpty &&
+                        !_quickElements.contains(session.selectedElementSymbol))
+                      _buildElementButton(
+                        context: context,
+                        ref: ref,
+                        symbol: session.selectedElementSymbol!,
+                        isSelected: true,
+                        onChanged: close,
+                      ),
+                    _buildPeriodicTableLauncher(
+                      context,
+                      l10n,
+                      onOpen: () {
+                        close();
+                        ElementSelectionModal.show(parentContext);
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+                _sectionTitle(l10n.navigateSection, context),
+                _buildNavigationTile(
+                  context: context,
+                  parentContext: parentContext,
+                  icon: Icons.menu_book_rounded,
+                  label: l10n.scienceReference,
+                  route: '/science_reference',
+                ),
+                _buildNavigationTile(
+                  context: context,
+                  parentContext: parentContext,
+                  icon: Icons.science_outlined,
+                  label: l10n.logicLab,
+                  route: '/logic_lab',
+                ),
+                _buildNavigationTile(
+                  context: context,
+                  parentContext: parentContext,
+                  icon: Icons.edit_rounded,
+                  label: l10n.modify,
+                  route: '/scenario_builder',
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _sectionTitle(String title, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+      ),
+    );
+  }
+
+  Widget _buildActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        icon,
+        color: isActive ? theme.colorScheme.primary : null,
+      ),
+      title: Text(label),
+      trailing: isActive ? const Icon(Icons.check_rounded) : null,
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildNavigationTile({
+    required BuildContext context,
+    required BuildContext parentContext,
+    required IconData icon,
+    required String label,
+    required String route,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: () {
+        Navigator.of(context).pop();
+        Navigator.pushNamed(parentContext, route);
+      },
     );
   }
 
@@ -358,51 +448,30 @@ class FlutterQuickActions extends ConsumerWidget {
     required WidgetRef ref,
     required String symbol,
     required bool isSelected,
+    required VoidCallback onChanged,
   }) {
     final lang = Localizations.localeOf(context).languageCode;
     final element = PeriodicTable.getBySymbol(symbol);
     final color = element?.cpkColor ?? CPKStandards.getColor(symbol);
     final name = element?.localizedName(lang) ?? symbol;
-    final role = element?.localizedAgronomicRole(lang) ?? '';
-    final tooltipText = role.isNotEmpty ? '$name ($symbol) - $role' : '$name ($symbol)';
 
     return Tooltip(
-      message: tooltipText,
-      preferBelow: false,
-      verticalOffset: 24,
-      waitDuration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.6),
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      textStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
+      message: name,
       child: Material(
         color: isSelected ? color : color.withValues(alpha: 0.25),
         shape: CircleBorder(
-          side: isSelected ? const BorderSide(color: Colors.white, width: 2) : BorderSide.none,
+          side: isSelected
+              ? const BorderSide(color: Colors.white, width: 2)
+              : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () {
             final isCurrentlySelected =
-                ref.read(simulationSessionProvider).selectedElementSymbol == symbol;
-            final sessionNotifier = ref.read(simulationSessionProvider.notifier);
+                ref.read(simulationSessionProvider).selectedElementSymbol ==
+                    symbol;
+            final sessionNotifier =
+                ref.read(simulationSessionProvider.notifier);
             final uiNotifier = ref.read(uIStateProvider.notifier);
             if (isCurrentlySelected) {
               sessionNotifier.selectElement(null);
@@ -410,22 +479,26 @@ class FlutterQuickActions extends ConsumerWidget {
             } else {
               sessionNotifier.selectElement(symbol);
               if (element != null) {
-                uiNotifier.setHoverInfo(element.toHoverInfo(lang, isPinned: true));
+                uiNotifier.setHoverInfo(
+                  element.toHoverInfo(lang, isPinned: true),
+                );
               }
             }
+            onChanged();
           },
-          child: Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            child: Text(
-              symbol,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: (color.computeLuminance() > 0.5 && isSelected)
-                    ? Colors.black
-                    : Colors.white,
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Text(
+                symbol,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: (color.computeLuminance() > 0.5 && isSelected)
+                      ? Colors.black
+                      : Colors.white,
+                ),
               ),
             ),
           ),
@@ -434,46 +507,25 @@ class FlutterQuickActions extends ConsumerWidget {
     );
   }
 
-  Widget _buildPeriodicTableLauncher(BuildContext context, AppLocalizations l10n) {
+  Widget _buildPeriodicTableLauncher(
+    BuildContext context,
+    AppLocalizations l10n, {
+    required VoidCallback onOpen,
+  }) {
     return Tooltip(
       message: l10n.allElements,
-      preferBelow: false,
-      verticalOffset: 24,
-      waitDuration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white24,
-          width: 1,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      textStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-      ),
       child: Material(
         color: Colors.white.withValues(alpha: 0.12),
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => ElementSelectionModal.show(context),
-          child: Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            child: const Icon(
+          onTap: onOpen,
+          child: const SizedBox(
+            width: 48,
+            height: 48,
+            child: Icon(
               Icons.grid_view_rounded,
-              size: 15,
+              size: 20,
               color: Colors.white,
             ),
           ),
@@ -481,8 +533,6 @@ class FlutterQuickActions extends ConsumerWidget {
       ),
     );
   }
-
-
 
   void _showEventLog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     final events = ref.read(eventLogProvider);

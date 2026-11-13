@@ -48,7 +48,11 @@ class SoilScopeApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      initialRoute: '/',
+      // No explicit initialRoute: on web this lets defaultRouteName honour
+      // the URL (e.g. /#/simulation survives a refresh).
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (_) => const ScenarioSelectionScreen(),
+      ),
       routes: {
         '/': (context) => const ScenarioSelectionScreen(),
         '/simulation': (context) => const MainSimulationScreen(),

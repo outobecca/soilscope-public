@@ -39,6 +39,14 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      // Elements now live in the grouped "more" sheet; the primary bar keeps
+      // only the five high-frequency controls.
+      expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+      await tester.pumpAndSettle();
+
       // Verify essential nutrient buttons are present: N, P, K, Ca, Mg, S, C, O, Fe
       expect(find.text('N'), findsOneWidget);
       expect(find.text('P'), findsOneWidget);
@@ -57,7 +65,7 @@ void main() {
       expect(container.read(simulationSessionProvider).selectedElementSymbol, isNull);
       expect(container.read(uIStateProvider), isNull);
 
-      // Tap on Phosphorus 'P' button
+      // Tap on Phosphorus 'P' button; the sheet closes on selection.
       await tester.tap(find.text('P'));
       await tester.pumpAndSettle();
 
@@ -73,7 +81,11 @@ void main() {
       expect(pInfo.stats?['Rooli'], equals('Pääravinne'));
       expect(pInfo.isPinned, isTrue);
 
-      // Tap 'P' again to deselect
+      // Reopen the sheet and tap 'P' again to deselect.
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('P'));
       await tester.pumpAndSettle();
 
