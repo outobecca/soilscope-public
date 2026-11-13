@@ -372,7 +372,7 @@ class _NutrientSliderRow extends StatelessWidget {
                       Text(
                         element.localizedCategory(lang),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ],

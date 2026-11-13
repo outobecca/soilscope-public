@@ -462,6 +462,28 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               ),
             ),
 
+            // Engine failure banner with a retry action.
+            if (ref.watch(engineFailureProvider))
+              Positioned(
+                top: 76,
+                left: 16,
+                right: 16,
+                child: SafeArea(
+                  child: MaterialBanner(
+                    content: Text(l10n.engineStartFailed),
+                    leading: const Icon(Icons.error_outline),
+                    actions: [
+                      TextButton(
+                        onPressed: () => ref
+                            .read(simulationProvider.notifier)
+                            .retryInitialization(),
+                        child: Text(l10n.retryAction),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             // 3. TIMELINE SLIDER
             Positioned(
               left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,

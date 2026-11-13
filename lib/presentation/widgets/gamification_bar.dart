@@ -38,7 +38,7 @@ class GamificationBar extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
-              l10n?.preparingSoil ?? "VALMISTELLAAN MAAPERÄÄ...",
+              l10n!.preparingSoil,
               style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
             ),
           ),
@@ -810,7 +810,7 @@ class XpLevelPanelWidget extends StatelessWidget {
             'XP $metObjectives / $totalObjectives',
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white70,
-              fontSize: 8,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
           ),

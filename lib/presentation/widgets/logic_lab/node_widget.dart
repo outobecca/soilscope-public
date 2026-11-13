@@ -144,7 +144,7 @@ class NodeWidget extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
+                fontSize: 11,
                 fontFamily: 'monospace',
               ),
             ),
@@ -153,7 +153,7 @@ class NodeWidget extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
+                fontSize: 11,
                 fontFamily: 'monospace',
               ),
             ),

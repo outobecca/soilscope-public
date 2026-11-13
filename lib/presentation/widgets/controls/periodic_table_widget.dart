@@ -515,7 +515,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
                                 child: Text(
                                   el.localizedAgronomicRole(lang),
                                   style: TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.onSurface,
                                   ),

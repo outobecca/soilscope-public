@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/foundation.dart';
 
@@ -14,6 +12,7 @@ import '../../domain/models/scenario.dart';
 import '../../domain/solvers/simulation_isolate.dart';
 import '../../domain/solvers/simulation_engine.dart';
 import '../../domain/solvers/particle_physics_isolate.dart';
+import '../../domain/services/simulation_persistence.dart';
 
 import 'event_log_provider.dart';
 import 'simulation_session_provider.dart';
@@ -22,8 +21,7 @@ part 'simulation_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class Simulation extends _$Simulation {
-  static const _storage = FlutterSecureStorage(aOptions: AndroidOptions());
-  static const _stateKey = 'last_biophysical_state';
+  final SimulationPersistence _persistence = SimulationPersistence();
 
   late SimulationIsolateManager _isolateManager;
   late ParticlePhysicsIsolateManager particleIsolate;
@@ -65,6 +63,13 @@ class Simulation extends _$Simulation {
   };
   // Timeline for scrubbing (entries must have `history: []` to avoid nesting).
   final List<BiophysicalState> _history = [];
+
+  /// Immutable view handed to widgets, rebuilt only when _history changes.
+  List<BiophysicalState> _historyView = const [];
+
+  void _rebuildHistoryView() {
+    _historyView = List.unmodifiable(_history);
+  }
 
   /// Simulation time between scrubber snapshots, so the history depth does not
   /// depend on playback speed.
@@ -210,8 +215,9 @@ class Simulation extends _$Simulation {
     _history
       ..clear()
       ..add(defaultEntry);
+    _rebuildHistoryView();
 
-    return defaultEntry.copyWith(history: List.unmodifiable(_history));
+    return defaultEntry.copyWith(history: _historyView);
   }
 
   Plant _seedPlant() {
@@ -275,6 +281,14 @@ class Simulation extends _$Simulation {
     );
   }
 
+  /// Retries a failed engine start without restarting the app.
+  void retryInitialization() {
+    if (_disposed || !ref.mounted || state.isInitializing) return;
+    ref.read(engineFailureProvider.notifier).setFailed(false);
+    state = state.copyWith(isInitializing: true);
+    _initIsolate();
+  }
+
   void _handleInitTimeout() {
     if (_disposed || !ref.mounted || !state.isInitializing) return;
     _failInitialization();
@@ -282,6 +296,7 @@ class Simulation extends _$Simulation {
 
   void _failInitialization() {
     if (_disposed || !ref.mounted) return;
+    ref.read(engineFailureProvider.notifier).setFailed(true);
     // Never leave the app stuck on the splash if the isolate cannot start.
     state = state.copyWith(isInitializing: false);
     ref.read(eventLogProvider.notifier).addEvent(
@@ -308,6 +323,8 @@ class Simulation extends _$Simulation {
       _initWatchdog = null;
     }
     debugPrint('[SimulationProvider] IsolateManager initialized');
+    if (_disposed || !ref.mounted) return;
+    ref.read(engineFailureProvider.notifier).setFailed(false);
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
       if (_disposed || !ref.mounted) return;
       // Drop frames from a paused run, including a tick that was already in
@@ -352,12 +369,13 @@ class Simulation extends _$Simulation {
         if (_history.length > 500) {
           _history.removeAt(0);
         }
+        _rebuildHistoryView();
       }
 
       _pendingState = entry;
       Future.microtask(() {
         if (!_disposed && _pendingState != null) {
-          state = _pendingState!.copyWith(history: List.unmodifiable(_history));
+          state = _pendingState!.copyWith(history: _historyView);
           _pendingState = null;
         }
       });
@@ -719,63 +737,27 @@ class Simulation extends _$Simulation {
   }
 
 
-  Future<void> _saveState() async {
-    try {
-      final jsonStr = jsonEncode(state.toJson());
-      await _storage.write(key: _stateKey, value: jsonStr);
-    } catch (e) {
-      debugPrint('Error saving state: $e');
-    }
-  }
+  Future<void> _saveState() => _persistence.save(state);
 
-  Future<bool> hasSavedState() async {
-    try {
-      if (await _storage.containsKey(key: _stateKey)) return true;
-    } catch (e) {
-      debugPrint('Error checking secure storage for saved state: $e');
-    }
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (prefs.containsKey(_stateKey)) return true;
-    } catch (e) {
-      debugPrint('Error checking saved state in preferences: $e');
-    }
-
-    // A run that has started but has not reached the periodic save yet.
-    // A pristine provider only has the default entry, which is not a session.
-    return _history.length > 1;
-  }
+  Future<bool> hasSavedState() => _persistence.hasSavedState(
+        // A run that has started but has not reached the periodic save yet.
+        // A pristine provider only has the default entry, not a session.
+        hasLiveRun: _history.length > 1,
+      );
 
   Future<bool> loadLastState() async {
-    String? jsonStr = await _storage.read(key: _stateKey);
-
-    // Migration logic from SharedPreferences to FlutterSecureStorage
-    if (jsonStr == null) {
-      final prefs = await SharedPreferences.getInstance();
-      jsonStr = prefs.getString(_stateKey);
-      if (jsonStr != null) {
-        await _storage.write(key: _stateKey, value: jsonStr);
-        await prefs.remove(_stateKey);
-      }
-    }
-
-    if (jsonStr != null) {
-      try {
-        final jsonMap = jsonDecode(jsonStr) as Map<String, dynamic>;
-        final loadedState = BiophysicalState.fromJson(jsonMap);
-        _history
-          ..clear()
-          ..add(_stripHistory(loadedState));
-        state = loadedState.copyWith(history: List.unmodifiable(_history));
-        _syncIsolate();
-        return true;
-      } catch (e) {
-        debugPrint('Error loading saved state: $e');
-      }
+    final loadedState = await _persistence.load();
+    if (loadedState != null) {
+      _history
+        ..clear()
+        ..add(_stripHistory(loadedState));
+      _rebuildHistoryView();
+      state = loadedState.copyWith(history: _historyView);
+      _syncIsolate();
+      return true;
     }
     if (_history.length > 1) {
-      state = _history.last.copyWith(history: List.unmodifiable(_history));
+      state = _history.last.copyWith(history: _historyView);
       return true;
     }
     return false;
@@ -825,9 +807,10 @@ class Simulation extends _$Simulation {
     _history
       ..clear()
       ..add(initial);
+    _rebuildHistoryView();
 
     state = initial.copyWith(
-      history: List.unmodifiable(_history),
+      history: _historyView,
       isInitializing: false,
     );
 
@@ -890,9 +873,10 @@ class Simulation extends _$Simulation {
     _history
       ..clear()
       ..addAll(computedHistory);
+    _rebuildHistoryView();
 
     state = computedHistory.first.copyWith(
-      history: List.unmodifiable(_history),
+      history: _historyView,
       isInitializing: false,
     );
     ref
@@ -918,6 +902,17 @@ class Simulation extends _$Simulation {
   }
 }
 
+/// True when the engine failed to initialize and the user can retry.
+class EngineFailureNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setFailed(bool value) => state = value;
+}
+
+final engineFailureProvider =
+    NotifierProvider<EngineFailureNotifier, bool>(EngineFailureNotifier.new);
+
 @Riverpod(keepAlive: true)
 BiophysicalState displayedSimulationState(Ref ref) {
   final simState = ref.watch(simulationProvider);
@@ -926,8 +921,8 @@ BiophysicalState displayedSimulationState(Ref ref) {
   if (session.isScrubbing) {
     final history = simState.history;
     if (history.isEmpty) return simState;
-    final index = history.indexWhere((s) => s.timeElapsed >= session.viewTime);
-    if (index == -1) return history.last;
+    final index = _lowerBound(history, session.viewTime);
+    if (index >= history.length) return history.last;
     if (index == 0) return history.first;
     final before = history[index - 1];
     final after = history[index];
@@ -938,6 +933,21 @@ BiophysicalState displayedSimulationState(Ref ref) {
     return after;
   }
   return simState;
+}
+
+/// First index whose snapshot is at or after [time]; history is sorted.
+int _lowerBound(List<BiophysicalState> history, double time) {
+  var low = 0;
+  var high = history.length;
+  while (low < high) {
+    final mid = low + ((high - low) >> 1);
+    if (history[mid].timeElapsed < time) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
 }
 
 (BiophysicalState, List<BiophysicalState>) _preCalculateTimelineTask(

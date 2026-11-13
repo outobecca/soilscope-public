@@ -104,7 +104,7 @@ class ScientificOverlaysComponent extends Component
         soilX + soilWidth - 100,
         currentY + 5,
         color: Colors.white.withValues(alpha: 0.35),
-        fontSize: 9 / zoom,
+        fontSize: 11 / zoom,
         bold: true,
       );
 
@@ -162,7 +162,7 @@ class ScientificOverlaysComponent extends Component
         text: label,
         style: TextStyle(
           color: const Color(0xFF455A64),
-          fontSize: 9 / zoom,
+          fontSize: 11 / zoom,
           fontFamily: 'monospace',
           fontWeight: FontWeight.bold,
         ),
@@ -259,7 +259,7 @@ class ScientificOverlaysComponent extends Component
         text: 'SURFACE (Z=0)',
         style: TextStyle(
           color: Color(0xFF8B5CF6),
-          fontSize: 8,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
           fontFamily: 'monospace',
@@ -277,7 +277,7 @@ class ScientificOverlaysComponent extends Component
       x,
       y,
       color: const Color(0xFF0EA5E9),
-      fontSize: 9,
+      fontSize: 11,
       bold: true,
     );
   }

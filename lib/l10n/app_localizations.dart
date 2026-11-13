@@ -8122,6 +8122,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Functions available'**
   String get logicLabAvailable;
+
+  /// No description provided for @engineStartFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The simulation engine could not start.'**
+  String get engineStartFailed;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryAction;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

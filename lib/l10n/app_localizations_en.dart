@@ -4083,4 +4083,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logicLabAvailable => 'Functions available';
+
+  @override
+  String get engineStartFailed => 'The simulation engine could not start.';
+
+  @override
+  String get retryAction => 'Retry';
 }

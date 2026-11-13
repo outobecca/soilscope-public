@@ -1547,5 +1547,7 @@
   "columnBiomass": "Biomass",
   "logicLabFunctions": "Functions & Operations",
   "logicLabSearch": "Search...",
-  "logicLabAvailable": "Functions available"
+  "logicLabAvailable": "Functions available",
+  "engineStartFailed": "The simulation engine could not start.",
+  "retryAction": "Retry"
 }

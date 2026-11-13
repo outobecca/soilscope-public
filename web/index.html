@@ -68,6 +68,9 @@
   </div>
   <script>
     window.addEventListener('flutter-first-frame', function () {
+      if (window.performance && performance.mark) {
+        performance.mark('soilscope-first-frame');
+      }
       var splash = document.getElementById('splash');
       if (splash) splash.remove();
     });

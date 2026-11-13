@@ -119,7 +119,7 @@ class InspectionPanel extends ConsumerWidget {
                               l10n.selected.toUpperCase(),
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.primary,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

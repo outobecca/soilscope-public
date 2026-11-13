@@ -18,7 +18,138 @@ class InputDefinition {
     required this.icon,
     required this.color,
   });
+
+  bool get hasEnglishCopy =>
+      _englishLabels.containsKey(operation) &&
+      _englishDescriptions.containsKey(operation);
+
+  String labelFor(bool isFi) =>
+      isFi ? label : (_englishLabels[operation] ?? label);
+
+  String descriptionFor(bool isFi) =>
+      isFi ? description : (_englishDescriptions[operation] ?? description);
 }
+
+/// English copy for the input palette. The Finnish fields above remain the
+/// source of truth for the Finnish locale.
+const Map<String, String> _englishLabels = {
+  'temp': 'Temperature',
+  'moisture': 'Water content',
+  'saturation': 'Saturation',
+  'porosity': 'Porosity',
+  'ksat': 'Ksat',
+  'ph': 'pH',
+  'redox_pe': 'Redox (pe)',
+  'redox_eh': 'Redox (Eh)',
+  'ec': 'EC',
+  'cec': 'CEC',
+  'nh4': 'NH₄⁺',
+  'no3': 'NO₃⁻',
+  'org_n': 'Org-N',
+  'mic_n': 'Mic-N',
+  'total_n': 'Total N',
+  'p_sol': 'P (soluble)',
+  'p_sorb': 'P (sorbed)',
+  'k_sol': 'K (soluble)',
+  'k_exch': 'K (exchangeable)',
+  'org_c': 'Org-C',
+  'pom': 'POM',
+  'maom': 'MAOM',
+  'mic_bio': 'Microbial biomass',
+  'o2': 'O₂',
+  'co2': 'CO₂',
+  'co2_atm': 'CO₂ (atm)',
+  'clay': 'Clay',
+  'sand': 'Sand',
+  'silt': 'Silt',
+  'agg_stab': 'Aggregate stability',
+  'hyphae': 'Hyphae',
+  'eps': 'EPS',
+  'necro': 'Necromass',
+  'turgor': 'Turgor',
+  'lai': 'LAI',
+  'biomass': 'Biomass',
+  'root_bio': 'Root biomass',
+  'psi_leaf': 'ψ_leaf',
+  'n_uptake': 'N uptake',
+  'h2o_uptake': 'H₂O uptake',
+  'precip': 'Precipitation',
+  'air_temp': 'Air temperature',
+  'rh': 'RH',
+  'time': 'Time',
+  'myc_colon': 'Colonization',
+  'myc_c': 'C→fungus',
+  'myc_p': 'P→plant',
+  'myc_hyphae': 'Hyphae',
+};
+
+const Map<String, String> _englishDescriptions = {
+  'temp': 'Soil layer temperature',
+  'moisture': 'Volumetric water content',
+  'saturation': 'θ/θs ratio',
+  'porosity': 'Total pore volume',
+  'ksat': 'Saturated hydraulic conductivity',
+  'ph': 'Acidity',
+  'redox_pe': 'Redox potential in pe units',
+  'redox_eh': 'Redox potential',
+  'ec': 'Electrical conductivity',
+  'cec': 'Cation exchange capacity',
+  'nh4': 'Ammonium',
+  'no3': 'Nitrate',
+  'org_n': 'Organic nitrogen',
+  'mic_n': 'Microbial nitrogen',
+  'total_n': 'Total nitrogen',
+  'p_sol': 'Soluble phosphate',
+  'p_sorb': 'Sorbed phosphate',
+  'k_sol': 'Soluble potassium',
+  'k_exch': 'Exchangeable potassium',
+  'org_c': 'Organic carbon',
+  'pom': 'Particulate organic matter',
+  'maom': 'Mineral-associated organic matter',
+  'mic_bio': 'Microbial biomass',
+  'o2': 'Soil oxygen content',
+  'co2': 'Soil carbon dioxide',
+  'co2_atm': 'Atmospheric CO₂',
+  'clay': 'Clay fraction',
+  'sand': 'Sand fraction',
+  'silt': 'Silt fraction',
+  'agg_stab': 'Aggregate stability',
+  'hyphae': 'Hyphal density',
+  'eps': 'Extracellular polysaccharide',
+  'necro': 'Dead microbial biomass',
+  'turgor': 'Water potential',
+  'lai': 'Leaf area index',
+  'biomass': 'Total biomass',
+  'root_bio': 'Root biomass',
+  'psi_leaf': 'Leaf water potential',
+  'n_uptake': 'Nitrogen uptake',
+  'h2o_uptake': 'Water uptake',
+  'precip': 'Precipitation amount',
+  'air_temp': 'Air temperature',
+  'rh': 'Relative humidity',
+  'time': 'Elapsed time',
+  'myc_colon': 'Root colonization rate',
+  'myc_c': 'Carbon transfer plant→fungus',
+  'myc_p': 'Phosphorus transfer fungus→plant',
+  'myc_hyphae': 'Mycorrhizal hyphal length',
+};
+
+const Map<String, String> _englishInputCategories = {
+  'Maaperän fysiikka': 'Soil physics',
+  'Maaperän kemia': 'Soil chemistry',
+  'Typpi': 'Nitrogen',
+  'Fosfori & Kalium': 'Phosphorus & Potassium',
+  'Hiili & Orgaaninen': 'Carbon & Organic',
+  'Kaasut': 'Gases',
+  'Rakenne': 'Structure',
+  'Biologinen': 'Biological',
+  'Kasvi': 'Plant',
+  'Ympäristö': 'Environment',
+  'Mykoritsa': 'Mycorrhiza',
+};
+
+String inputCategoryLabel(String category, bool isFi) =>
+    isFi ? category : (_englishInputCategories[category] ?? category);
 
 /// Kaikki tuetut input-kategoriat ja niiden inputit.
 final Map<String, List<InputDefinition>> inputCategories = {
@@ -452,6 +583,7 @@ class _InputPaletteState extends State<InputPalette> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isFi = Localizations.localeOf(context).languageCode == 'fi';
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -482,7 +614,7 @@ class _InputPaletteState extends State<InputPalette> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Simulaatio-inputit',
+                    isFi ? 'Simulaatio-inputit' : 'Simulation inputs',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.bold,
@@ -504,7 +636,7 @@ class _InputPaletteState extends State<InputPalette> {
             child: TextField(
               style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
-                hintText: 'Hae...',
+                hintText: isFi ? 'Hae...' : 'Search...',
                 hintStyle: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
@@ -537,8 +669,8 @@ class _InputPaletteState extends State<InputPalette> {
                     .where(
                       (input) =>
                           _searchQuery.isEmpty ||
-                          input.label.toLowerCase().contains(_searchQuery) ||
-                          input.description.toLowerCase().contains(
+                          input.labelFor(isFi).toLowerCase().contains(_searchQuery) ||
+                          input.descriptionFor(isFi).toLowerCase().contains(
                             _searchQuery,
                           ) ||
                           input.operation.toLowerCase().contains(_searchQuery),
@@ -575,7 +707,7 @@ class _InputPaletteState extends State<InputPalette> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              category.key,
+                              inputCategoryLabel(category.key, isFi),
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.bold,
@@ -610,6 +742,7 @@ class _InputPaletteState extends State<InputPalette> {
                       ...filteredInputs.map(
                         (input) => _InputTile(
                           input: input,
+                          isFi: isFi,
                           onTap: () => widget.onSelect(input),
                         ),
                       ),
@@ -630,7 +763,7 @@ class _InputPaletteState extends State<InputPalette> {
               ),
             ),
             child: Text(
-              '${inputCategories.values.expand((e) => e).length} inputtia käytettävissä',
+              '${inputCategories.values.expand((e) => e).length} ${isFi ? 'inputtia käytettävissä' : 'inputs available'}',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 11,
@@ -646,9 +779,14 @@ class _InputPaletteState extends State<InputPalette> {
 
 class _InputTile extends StatelessWidget {
   final InputDefinition input;
+  final bool isFi;
   final VoidCallback onTap;
 
-  const _InputTile({required this.input, required this.onTap});
+  const _InputTile({
+    required this.input,
+    required this.isFi,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -687,7 +825,7 @@ class _InputTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        input.label,
+                        input.labelFor(isFi),
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w500,
@@ -695,7 +833,7 @@ class _InputTile extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        input.description,
+                        input.descriptionFor(isFi),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 11,
@@ -709,7 +847,7 @@ class _InputTile extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.4),
                     fontFamily: 'monospace',
-                    fontSize: 10,
+                    fontSize: 11,
                   ),
                 ),
                 const SizedBox(width: 4),

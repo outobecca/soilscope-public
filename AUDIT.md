@@ -231,6 +231,8 @@ For a landscape-first soil column, locking an installed PWA to portrait is activ
 
 **Fix:** `flutter build web --wasm` evaluation, deferred component loading, and a real `flutter_bootstrap.js` loader with a branded splash and progress. Measure LCP on a throttled profile before/after; don't optimize blind.
 
+**Measured:** the wasm build succeeds (`main.dart.wasm` 3.6 MB, `skwasm.wasm` fetched from gstatic). On a local loopback run with the branded splash: cold LCP 238 ms, warm `soilscope-first-frame` mark 137 ms, app initialized and all assets 200. Single-threaded skwasm because the host sends no COOP/COEP headers. Budget: keep first frame under 1 s and LCP under 500 ms on this lab path; both are documented here rather than asserted by CI, which has no browser profile.
+
 #### C8 — Whole-provider watch rebuilds the control panel at 5 Hz · P2
 `control_panel_section.dart:19` does `ref.watch(simulationProvider)` — the entire 10 KB state — and rebuilds ~30 `SliderControl`s on every isolate tick (every 200 ms). Sliders the user is dragging are rebuilt from underneath, and `updateLayer` additionally defers through `Future.microtask` (`simulation_provider.dart:454`), so the thumb can lag the finger.
 
@@ -301,9 +303,11 @@ Some may be referenced dynamically through provider names, but `soil_solver` (a 
 **Fix:** delete or move to `experimental/`; if intentional, document why in a file header.
 
 #### F2 — Three files carry a disproportionate share · P2
-`animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart` 918, `simulation_provider.dart` 832, `logic_lab_screen.dart` 812. The plant component mixes growth, rendering, morphing and root drawing; the provider mixes isolate lifecycle, persistence, simulation actions and UI merging. These are the files that make a first contribution hard.
+At audit time: `animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart` 918, `simulation_provider.dart` 832, `logic_lab_screen.dart` 812. The plant component mixed growth, rendering, morphing and root drawing; the provider mixed isolate lifecycle, persistence, simulation actions and UI merging.
 
 **Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (secure storage/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
+
+**Resolved so far:** `SimulationPersistence` now owns storage, migration and load/save (`lib/domain/services/simulation_persistence.dart`), and 1,334 lines of drawing and visual-particle code moved to `animated_plant_component_painting.dart`, leaving the component at 1,094 lines. The runtime/command split and the HUD/logic-lab decomposition remain; they are behaviour-neutral refactors, not defects.
 
 #### F3 — Manual state merging is brittle · P2
 `_mergeSimulationState` (`simulation_provider.dart:293`) re-implements "which side owns which field" by hand, with a comment saying the main thread is the source of truth. Every new field added to `BiophysicalState` silently defaults to isolate-owned until someone remembers to add it here. That is how A1-type bugs happen.
@@ -318,7 +322,7 @@ Some may be referenced dynamically through provider names, but `soil_solver` (a 
 None is fatal at 3 layers; all three scale badly once the model grows (and the README says the plan is more complexity). Cheap fixes: recompute the score once, keep the history as an immutable `List` swapped only on append, binary-search the scrub time.
 
 #### F5 — Verification is thin where it matters · P2
-24 test files for 178 source files: the solvers are reasonably covered (hydrology, chemistry, nutrients, gas, plant), but there is **no** test for the simulation provider's real behaviour — the one present is a placeholder:
+24 test files for 178 source files: the solvers were reasonably covered (hydrology, chemistry, nutrients, gas, plant), but there was **no** test for the simulation provider's real behaviour — the one present was a placeholder:
 
 ```dart
 test('Migration from SharedPreferences to FlutterSecureStorage', () async {
@@ -330,6 +334,8 @@ test('Migration from SharedPreferences to FlutterSecureStorage', () async {
 That is the exact area where A1/A2 live. There are also no golden/screenshot tests for a UI this custom.
 
 **Fix:** add tests for (a) scenario switch resets state, (b) resume availability, (c) pre-calculation produces N snapshots, (d) a 200-tick mass-balance invariant (N and water conserved within tolerance). Add one golden per key screen at 390×844 and 1024×768.
+
+**Resolved:** the placeholder was replaced with provider tests for reset, resume, cancel and snapshot count; `simulation_engine_stability_test` runs 200 ticks; `scenario_golden_test` covers 390×844 and 1024×768.
 
 #### F6 — CI never runs the analyzer; repo carries 8 MB of scratch · P2
 `.github/workflows/deploy_web.yml` runs `flutter test` then builds. `flutter analyze` — the check that actually catches the dead imports and typos in this codebase — is not run. It passes today; a gate keeps it passing.
@@ -369,7 +375,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 ---
 
-## 4. Measurements (this machine)
+## 4. Baseline measurements at audit time (this machine)
 
 | Metric | Value |
 |---|---|
@@ -387,40 +393,79 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 | Unreferenced files | 21 |
 | `debugPrint` calls | 79 |
 
+> After the close-out: `flutter analyze --fatal-infos` reports 0 issues and
+> `flutter test` passes 97; unreferenced files and sub-11 px labels are gone,
+> and Finnish literals remain only in the guarded palette source and the
+> legacy tutorial matcher. The performance rows above are audit-time baselines;
+> the new wasm and LCP figures are recorded under C7.
+
 ---
 
-## 5. Recommended roadmap
+## 5. Recommended roadmap (historical; status lives in the close-out table)
 
-> **Progress.** All findings are addressed except the architectural and
-> measurement-dependent items listed at the end of this block.
+> **Close-out status (2026-11-13).** Reconciled item by item against
+> `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
+> clean, `flutter test --no-pub` passes 97 tests, and
+> `flutter build web --release --wasm` succeeds. "Done" means the change is in
+> the tree and, where the behaviour is testable, asserted by the named test.
 >
-> - **Correctness:** A1–A6 (reset, resume gating, awaited and cancellable
->   pre-calculation, initialization watchdog, builder copy, Logic Lab side
->   effects moved out of build).
-> - **Mobile:** B1–B8 (three layout tiers, safe areas, viewport dialogs,
->   pan/zoom Logic Lab, parent-sized XP bar, five-action bar with grouped
->   sheets, 48 dp targets, 11–12 px minimum labels, remembered three-card
->   gesture intro).
-> - **Web:** chunked pre-calculation with progress, cancel and a 180-day cap;
->   frame-budget yield on the in-thread web loop; cheap blur on phones; URL
->   routing that survives refresh; real PWA and app metadata; branded bootstrap
->   splash; selected-layer panel rebuilds; guarded hot-path logging.
-> - **Accessibility:** health bars and index chips expose semantics, the HUD
->   contains a labelled data table, pH pairs colour with a direction icon, and
->   the faintest secondary text was lifted to AA contrast.
-> - **Localization:** timeline, gamification and periodic-table strings, an
->   English Logic Lab palette, the device locale on first run, and an English
->   README summary.
-> - **Code health:** 21 dead files removed, root scratch untracked or moved to
->   `tool/`, CI runs the analyzer, mycorrhiza persists, duplicate score
->   recomputation removed, an explicit state-ownership classifier, and
->   provider, responsive-layout and 200-tick stability tests.
+> | ID | Status | Evidence |
+> |----|--------|----------|
+> | A1 | Done | `loadScenario` stops both isolates and clears history; reset asserted in `simulation_provider_test`. |
+> | A2 | Done | `SimulationPersistence.hasSavedState` requires a stored key or a live run; resume cases in `simulation_provider_test`. |
+> | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token; snapshot-count test. |
+> | A4 | Done | 10 s `_initWatchdog`, failure state, banner with retry (`engineFailureProvider`); watchdog cancelled on dispose. |
+> | A5 | Done | Builder uses `customScenarioDesc` from the ARB files. |
+> | A6 | Done | Logic Lab evaluates for display only; `_applyOutputsToSimulation` is the sole mutation path. |
+> | B1 | Done | `LayoutBuilder` phone/tablet/desktop tiers; `responsive_layout_test` at 390/768/1024. |
+> | B2 | Done | `SafeArea` around the simulation chrome; same test. |
+> | B3 | Done | Dialog width and height clamped to the viewport; same test. |
+> | B4 | Done | Logic Lab wrapped in `InteractiveViewer`; same test. |
+> | B5 | Done | XP bar sized by its parent `LayoutBuilder`, not the screen. |
+> | B6 | Done | Five primary 48 dp actions plus Manage/View/Elements/Navigate sheets; `element_selection_test`. |
+> | B7 | Done | 11–12 px label floor and a 200% text pass in `responsive_layout_test`. |
+> | B8 | Done | Remembered three-card gesture intro before the first run. |
+> | C1 | Done (audit minimum) | Web runs in-thread but yields after a >16 ms tick (audit option b); a Worker (option a) is not implemented. Wasm runs single-threaded without COOP/COEP. |
+> | C2 | Done | Chunked pre-calculation with progress, cancel and a 180-day cap. |
+> | C3 | Done | `_syncSpotlightTicker` starts and stops the controller with tutorial visibility. |
+> | C4 | Done | `BlurSurface` falls back to a solid panel on compact screens. |
+> | C5 | Done | `initialRoute` removed; `onUnknownRoute` plus `defaultRouteName` keep refresh and deep links. |
+> | C6 | Done | PWA manifest, title, theme colour, OG metadata and Android label. |
+> | C7 | Done | `--wasm` build succeeds; lab: first frame 137 ms warm, LCP 238 ms cold, 3.6 MB wasm; splash marks `soilscope-first-frame`. |
+> | C8 | Done | Control panel selects `profile.layers`; `updateLayer` applies synchronously. |
+> | C9 | Done | Per-tick web logs sit behind `kDebugMode`; UI build traces removed. |
+> | D1 | Done | Health bars and index chips expose semantics; the HUD data table is the accessible equivalent. |
+> | D2 | Done | pH badges pair colour with an acid/neutral/alkaline icon. |
+> | D3 | Done | Type floor raised; 200% text layout verified. |
+> | D4 | Done | `_HUDDataView` ExpansionTile exposes the layer table. |
+> | D5 | Done | Faintest labels lifted to AA contrast. |
+> | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
+> | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
+> | E3 | Done | English README intro; test count updated to 97. |
+> | F1 | Done | 21 unreferenced modules and their dead tests removed. |
+> | F2 | Partial | `SimulationPersistence` extracted; the 1,334-line painter block moved to `animated_plant_component_painting.dart`; provider runtime/commands and HUD/logic-lab splits remain. |
+> | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |
+> | F4 | Done | Score computed once; cached `_historyView`; `_lowerBound` scrub search; validation only under `kDebugMode`. |
+> | F5 | Done | Provider, responsive, stability, palette and two screen-golden tests (`test/presentation/screens/goldens/`). |
+> | F6 | Done | CI runs `flutter analyze --fatal-infos` and the Finnish guard; index files untracked; scratch in `tool/`. |
+> | F7 | Done | SoilScope labels, real description and manifest metadata. |
+> | G1 | Done | Stable hydrology sub-step with a 200-tick stability test. |
+> | G2 | Deferred | Needs measured θ(z,t) and NO₃⁻ reference profiles; see open items. |
+> | G3 | Done | History snapshots at fixed 600 s simulation intervals. |
+> | G4 | Done | Mycorrhiza state persisted; JSON round-trip test. |
 >
-> **Deliberately deferred:** F2 (splitting the three god files) is an
-> architecture refactor rather than a defect; G2 needs committed measured
-> reference datasets — inventing thresholds would be worse than none; C1's web
-> Worker and C7's wasm/LCP measurement need a profiled browser session; golden
-> tests need reviewed reference images.
+> **Open items.**
+> - **G2 — deferred, external data.** The gate needs measured θ(z,t) and NO₃⁻
+>   profiles with provenance. Inventing thresholds would be worse than no gate.
+>   Unblocked by adding reference CSVs under `test/validation/fixtures/` with an
+>   NSE/RMSE assertion.
+> - **F2 — partial, structural.** The two riskiest mixes are separated
+>   (persistence and the 1,334-line plant painter). The provider still owns
+>   isolate lifecycle and commands, and the HUD and Logic Lab screens remain
+>   large. This is a behaviour-neutral refactor with no failing acceptance test;
+>   it stopped at the safe seams rather than rewriting 3,000 lines at once.
+> - **C1 Worker — optional.** The audit's minimum (b) is implemented; a Worker
+>   remains a larger web-only improvement, not a blocker for this build.
 
 ### Week 1 — correctness and the mobile floor (highest value per hour)
 1. A1 scenario reset, A2 resume detection, A3 await/progress/cancel pre-calculation (P0).

@@ -104,6 +104,8 @@ String functionCategoryLabel(String category, bool isFi) =>
     isFi ? category : (_englishCategories[category] ?? category);
 
 extension FunctionDefinitionL10n on FunctionDefinition {
+  bool get hasEnglishCopy => _englishCopy.containsKey(operation);
+
   String labelFor(bool isFi) =>
       isFi ? label : (_englishCopy[operation]?.label ?? label);
 
@@ -730,7 +732,7 @@ class _FunctionTile extends StatelessWidget {
                               '→ $label',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 9,
+                                fontSize: 11,
                               ),
                             ),
                           ),

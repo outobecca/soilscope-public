@@ -4083,4 +4083,10 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get logicLabAvailable => 'Toimintoja saatavilla';
+
+  @override
+  String get engineStartFailed => 'Simulaatiomoottori ei käynnistynyt.';
+
+  @override
+  String get retryAction => 'Yritä uudelleen';
 }

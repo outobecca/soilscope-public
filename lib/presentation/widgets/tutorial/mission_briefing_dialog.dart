@@ -113,7 +113,7 @@ class MissionBriefingDialog extends ConsumerWidget {
                                 child: Text(
                                   l10n.missionBriefingTitle,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary,
                                     letterSpacing: 1.2,
@@ -287,7 +287,7 @@ class MissionBriefingDialog extends ConsumerWidget {
                               Text(
                                 isMet ? l10n.missionStatusAchieved : l10n.missionStatusPending,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: isMet ? Colors.greenAccent : Colors.white70,
                                 ),

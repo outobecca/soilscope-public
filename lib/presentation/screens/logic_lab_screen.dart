@@ -529,11 +529,12 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
   }
 
   void _addNode(InputDefinition input) {
+    final isFi = Localizations.localeOf(context).languageCode == 'fi';
     setState(() {
       _nodeCounter++;
       final newNode = LogicNode(
         id: 'node_$_nodeCounter',
-        label: input.label,
+        label: input.labelFor(isFi),
         type: NodeType.input,
         operation: input.operation,
         color: input.color,

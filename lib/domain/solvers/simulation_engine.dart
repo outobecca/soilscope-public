@@ -116,8 +116,9 @@ class SimulationEngine {
         precipitation: step == 0 ? precipitation : 0.0,
       );
 
-      // Validate after each step
-      if (!_validateBiophysicalState(currentState)) {
+      // Validation is a debug invariant: keep it in development, not in the
+      // release tick where it walks every layer and plant per sub-step.
+      if (kDebugMode && !_validateBiophysicalState(currentState)) {
         debugPrint('[SimulationEngine] WARNING: Invalid state at step $step, sanitizing...');
         currentState = _sanitizeState(currentState);
       }
@@ -126,7 +127,7 @@ class SimulationEngine {
     final newScore = ScoringSolver.solve(currentState, dt);
 
     final result = currentState.copyWith(score: newScore);
-    if (!_validateBiophysicalState(result)) {
+    if (kDebugMode && !_validateBiophysicalState(result)) {
       debugPrint('[SimulationEngine] ERROR: Final state invalid, returning previous state');
       return state;
     }

@@ -639,7 +639,7 @@ class ProcessMagnifierComponent extends PositionComponent
         text: text,
         style: TextStyle(
           color: Colors.cyanAccent.withValues(alpha: _opacity),
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           fontFamily: 'monospace',
         ),
@@ -691,7 +691,7 @@ class ProcessMagnifierComponent extends PositionComponent
         text: level,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 9,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           fontFamily: 'monospace',
         ),

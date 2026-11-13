@@ -1547,5 +1547,7 @@
   "columnBiomass": "Biomassa",
   "logicLabFunctions": "Funktiot & Operaatiot",
   "logicLabSearch": "Hae...",
-  "logicLabAvailable": "Toimintoja saatavilla"
+  "logicLabAvailable": "Toimintoja saatavilla",
+  "engineStartFailed": "Simulaatiomoottori ei käynnistynyt.",
+  "retryAction": "Yritä uudelleen"
 }

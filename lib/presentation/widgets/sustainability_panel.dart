@@ -59,12 +59,16 @@ class SustainabilityPanel extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                l10n.systemHealth.toUpperCase(),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+              Expanded(
+                child: Text(
+                  l10n.systemHealth.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
             ],
@@ -164,7 +168,7 @@ class SustainabilityPanel extends ConsumerWidget {
                 l10n.index.toUpperCase(),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 8,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -198,7 +202,7 @@ class SustainabilityPanel extends ConsumerWidget {
               '${(value * 100).toStringAsFixed(0)}%',
               style: TextStyle(
                 color: color,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
               ),

@@ -44,7 +44,10 @@ jobs:
         run: flutter pub get
 
       - name: Run Analyzer
-        run: flutter analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Check Hardcoded Finnish
+        run: python3 tool/check_hardcoded_finnish.py
 
       - name: Run Tests
         run: flutter test
