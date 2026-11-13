@@ -464,6 +464,35 @@ class MycorrhizaState {
     this.fungalBiomass = 0.0,
   });
 
+  factory MycorrhizaState.fromJson(Map<String, dynamic> json) {
+    return MycorrhizaState(
+      rootColonization: (json['rootColonization'] as num?)?.toDouble() ?? 0.0,
+      totalHyphalLength:
+          (json['totalHyphalLength'] as num?)?.toDouble() ?? 0.0,
+      layerHyphalDensities: (json['layerHyphalDensities'] as List<dynamic>?)
+              ?.map((e) => (e as num).toDouble())
+              .toList() ??
+          const [],
+      carbonTransferredToday:
+          (json['carbonTransferredToday'] as num?)?.toDouble() ?? 0.0,
+      pTransferredToday:
+          (json['pTransferredToday'] as num?)?.toDouble() ?? 0.0,
+      nTransferredToday:
+          (json['nTransferredToday'] as num?)?.toDouble() ?? 0.0,
+      fungalBiomass: (json['fungalBiomass'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'rootColonization': rootColonization,
+        'totalHyphalLength': totalHyphalLength,
+        'layerHyphalDensities': layerHyphalDensities,
+        'carbonTransferredToday': carbonTransferredToday,
+        'pTransferredToday': pTransferredToday,
+        'nTransferredToday': nTransferredToday,
+        'fungalBiomass': fungalBiomass,
+      };
+
   MycorrhizaState copyWith({
     double? rootColonization,
     double? totalHyphalLength,

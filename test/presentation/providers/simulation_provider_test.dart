@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:soilscope/domain/models/biophysical_state.dart';
 import 'package:soilscope/domain/models/scenario.dart';
 import 'package:soilscope/domain/models/soil_layer.dart';
 import 'package:soilscope/domain/models/soil_profile.dart';
+import 'package:soilscope/domain/solvers/mycorrhiza_solver.dart';
 import 'package:soilscope/presentation/providers/simulation_provider.dart';
+import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
 
 SoilProfile _profile(String id) {
   return SoilProfile(
@@ -158,6 +163,79 @@ void main() {
       );
 
       expect(await notifier.hasSavedState(), isTrue);
+    });
+  });
+
+  group('pre-calculation cancellation', () {
+    test('cancelling leaves the timeline and scrub state untouched', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('cancel'));
+      final before = container.read(simulationProvider).history.length;
+
+      final completed = await notifier.preCalculateTimeline(
+        30,
+        shouldCancel: () => true,
+      );
+
+      expect(completed, isFalse);
+      expect(container.read(simulationProvider).history.length, before);
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isFalse,
+      );
+    });
+  });
+
+  group('state ownership', () {
+    test('every BiophysicalState field is classified as UI- or engine-owned',
+        () {
+      final state = BiophysicalState(
+        profile: _profile('classification'),
+        plants: const [],
+        timeElapsed: 0,
+      );
+
+      // `history` is excluded from JSON to avoid recursive nesting.
+      final fields = state.toJson().keys.toSet()..add('history');
+      final classified = {
+        ...Simulation.uiFields,
+        ...Simulation.engineFields,
+      };
+
+      expect(
+        fields.difference(classified),
+        isEmpty,
+        reason: 'new state fields must be added to the UI or engine set',
+      );
+      expect(
+        classified.difference(fields),
+        isEmpty,
+        reason: 'classifier names that no longer exist',
+      );
+    });
+
+    test('mycorrhiza state survives a JSON round trip', () {
+      final state = BiophysicalState(
+        profile: _profile('mycorrhiza'),
+        plants: const [],
+        timeElapsed: 0,
+        mycorrhizaState: const MycorrhizaState(
+          rootColonization: 0.4,
+          fungalBiomass: 12.5,
+          layerHyphalDensities: [1.0, 2.0],
+        ),
+      );
+
+      final decoded = BiophysicalState.fromJson(
+        jsonDecode(jsonEncode(state)) as Map<String, dynamic>,
+      );
+
+      expect(decoded.mycorrhizaState?.rootColonization, 0.4);
+      expect(decoded.mycorrhizaState?.fungalBiomass, 12.5);
+      expect(decoded.mycorrhizaState?.layerHyphalDensities, [1.0, 2.0]);
     });
   });
 }

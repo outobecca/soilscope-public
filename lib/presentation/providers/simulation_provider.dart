@@ -34,6 +34,34 @@ class Simulation extends _$Simulation {
   double _particleSurfaceY = 450;
 
   int _tickCount = 0;
+
+  /// Fields the UI owns when an engine tick is merged into the session.
+  /// The companion test asserts that every state field is classified here or
+  /// in [kSimulationEngineFields], so new fields cannot silently drift.
+  static const Set<String> uiFields = {
+    'isRunning',
+    'timeScale',
+    'autoWeather',
+    'hasCoverCrop',
+    'solarRadiationOverride',
+    'airTemperature',
+    'relativeHumidity',
+    'precipitation',
+    'atmCO2',
+    'currentScenario',
+  };
+
+  /// Fields the simulation engine owns during a tick.
+  static const Set<String> engineFields = {
+    'profile',
+    'plants',
+    'timeElapsed',
+    'soilEvaporation',
+    'isInitializing',
+    'history',
+    'score',
+    'mycorrhizaState',
+  };
   // Timeline for scrubbing (entries must have `history: []` to avoid nesting).
   final List<BiophysicalState> _history = [];
 
@@ -500,12 +528,10 @@ class Simulation extends _$Simulation {
       return l;
     }).toList();
 
-    Future.microtask(() {
-      if (!_disposed) {
-        state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-        _syncIsolate();
-      }
-    });
+    if (_disposed) return;
+    // Apply synchronously so a dragged slider never lags a frame behind.
+    state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+    _syncIsolate();
   }
 
   /// Convenience wrapper for updating a single soil layer parameter by string name.
@@ -802,6 +828,7 @@ class Simulation extends _$Simulation {
   Future<bool> preCalculateTimeline(
     int days, {
     void Function(double progress)? onProgress,
+    bool Function()? shouldCancel,
   }) async {
     final totalDays = days.clamp(1, 365).toInt();
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
@@ -817,6 +844,11 @@ class Simulation extends _$Simulation {
 
     onProgress?.call(0);
     while (processedDays < totalDays) {
+      if (shouldCancel?.call() ?? false) {
+        ref.read(simulationSessionProvider.notifier).setScrubbing(false);
+        return false;
+      }
+
       final remaining = totalDays - processedDays;
       final daysThisChunk = chunkDays < remaining ? chunkDays : remaining;
 

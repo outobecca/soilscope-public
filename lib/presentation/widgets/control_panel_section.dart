@@ -13,12 +13,15 @@ class ControlPanelSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(simulationProvider);
+    // Watch only the layer list: plants, clock, weather and score updates no
+    // longer rebuild thirty sliders five times a second.
+    final layers = ref.watch(
+      simulationProvider.select((s) => s.profile.layers),
+    );
     final session = ref.watch(simulationSessionProvider);
     final selectedId = session.selectedLayerId;
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final layers = state.profile.layers;
 
     // Provide a Material ancestor inside the sidebar's decorated container so
     // the nested ExpansionTiles can paint ink without a debug assertion.
@@ -35,7 +38,7 @@ class ControlPanelSection extends ConsumerWidget {
           if (selectedId == "atmosphere")
             _buildAtmosphereSection(context, l10n)
           else if (selectedId != null)
-            _buildLayerProperties(context, ref, state, selectedId, theme, l10n)
+            _buildLayerProperties(context, ref, layers, selectedId, theme, l10n)
           else
             _buildEmptyState(context, ref, layers, theme, l10n),
         ],
@@ -134,14 +137,14 @@ class ControlPanelSection extends ConsumerWidget {
   Widget _buildLayerProperties(
     BuildContext context,
     WidgetRef ref,
-    dynamic state,
+    List<SoilLayer> layers,
     String selectedId,
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final layer = (state.profile.layers as List<SoilLayer>).firstWhere(
+    final layer = layers.firstWhere(
       (l) => l.id == selectedId,
-      orElse: () => (state.profile.layers as List<SoilLayer>).first,
+      orElse: () => layers.first,
     );
 
     return Column(

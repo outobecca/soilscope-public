@@ -39,6 +39,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
 
   // Pre-calculation progress
   bool _isCalculating = false;
+  bool _calcCancelled = false;
   double _calcProgress = 0.0;
   String _tutTarget = 'leaf'; // leaf, root, rhizosphere, soilStructure
   String _tutTitle = '';
@@ -236,19 +237,21 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
 
     setState(() {
       _isCalculating = true;
+      _calcCancelled = false;
       _calcProgress = 0.0;
     });
 
     notifier.loadScenario(scenario);
 
     try {
-      await notifier.preCalculateTimeline(
+      final completed = await notifier.preCalculateTimeline(
         days,
         onProgress: (progress) {
           if (mounted) setState(() => _calcProgress = progress);
         },
+        shouldCancel: () => _calcCancelled,
       );
-      if (!mounted) return;
+      if (!mounted || !completed) return;
       Navigator.of(context).pushNamed('/simulation');
     } catch (error, stack) {
       debugPrint('Timeline pre-calculation failed: $error');
@@ -301,6 +304,11 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
                         fontWeight: FontWeight.bold,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => setState(() => _calcCancelled = true),
+                      child: Text(l10n.cancelAction),
                     ),
                   ],
                 ),

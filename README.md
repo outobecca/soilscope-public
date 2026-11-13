@@ -1,5 +1,11 @@
 # SoilScope - Soil-Plant-Atmosphere Simulator
 
+> **In English:** SoilScope is a scientifically grounded soil–plant–atmosphere
+> continuum (SPAC) simulator that combines gamified learning with computational
+> ecophysiology. It was built as a horticulture thesis project using agentic
+> coding, runs on Flutter (web, Android, iOS), and ships in English and Finnish.
+> See [AUDIT.md](AUDIT.md) for the engineering audit and roadmap.
+
 SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simulaattori, joka yhdistää pelillistetyn oppimisen ja laskennallisen ekofysiologian. Sovellus on kehitetty osana puutarhatalouden hortonomin (AMK) opinnäytetyötä, Agentic Coding-menetelmin.
 
 ---
@@ -20,7 +26,6 @@ SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simu
 - **Jarvis kompensoiva vedenotto** - kuivat kerrokset kompensoivat
 - **C-ROOT** dynaaminen juuriarkkitehtuuri gravotropismilla (pääjuuret kasvavat pystysuoraan alaspäin)
 - **Synkronoitu usean kasvin SPAC-jatkumo**: Animaatiot ja ratkaisijat tukevat useita kasveja samanaikaisesti, versot ja juuret on ankkuroitu täsmälleen samaan pisteeseen.
-- **Orgaaninen kasvikomponentti**: Proceduraalinen `CustomPainter`-pohjainen kasvi, joka visualisoi verson ja juuriston kasvua dynaamisesti.
 - **Hiilen hallinta (POM/MAOM)**: Dynaaminen labiilin ja stabiilin hiilen säätely, Rhizosphere Priming Effect -ketjun aktivointi ja hiukkasfysiikan Q10-vaste.
 - **Dynaaminen virtausseuranta**: ravinteet ja vesi hakeutuvat todellisiin juurenpäihin
 
@@ -84,7 +89,7 @@ SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simu
 - **Tilastolliset metriikat**: RMSE, NSE, R², MAE.
 - **Kytkentämatriisi** järjestelmädiagnostiikkaan.
 - **Science Validation Tab**: Reaaliaikainen tilastollisten mittareiden (RMSE, NSE, R²) seuranta käyttöliittymässä.
-- **75 automatisoitua yksikkö- ja widget-testiä** biofysiikan solvereiden, mikroskooppiohjainten ja käyttöliittymän varmistamiseen.
+- **87 automatisoitua yksikkö- ja widget-testiä** biofysiikan solvereiden, mikroskooppiohjainten ja käyttöliittymän varmistamiseen.
 
 ---
 

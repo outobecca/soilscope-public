@@ -26,6 +26,11 @@ _BiophysicalState _$BiophysicalStateFromJson(Map<String, dynamic> json) =>
       hasCoverCrop: json['hasCoverCrop'] as bool? ?? false,
       isRunning: json['isRunning'] as bool? ?? false,
       isInitializing: json['isInitializing'] as bool? ?? true,
+      mycorrhizaState: json['mycorrhizaState'] == null
+          ? null
+          : MycorrhizaState.fromJson(
+              json['mycorrhizaState'] as Map<String, dynamic>,
+            ),
       score: json['score'] == null
           ? const SustainabilityScore()
           : SustainabilityScore.fromJson(json['score'] as Map<String, dynamic>),
@@ -51,4 +56,5 @@ Map<String, dynamic> _$BiophysicalStateToJson(_BiophysicalState instance) =>
       'isInitializing': instance.isInitializing,
       'score': instance.score,
       'solarRadiationOverride': instance.solarRadiationOverride,
+      'mycorrhizaState': instance.mycorrhizaState,
     };

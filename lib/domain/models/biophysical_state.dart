@@ -34,8 +34,9 @@ abstract class BiophysicalState with _$BiophysicalState {
     @Default(SustainabilityScore()) SustainabilityScore score,
     double? solarRadiationOverride,
 
-    /// Mycorrhizal symbiosis state tracking colonization and nutrient exchange
-    @JsonKey(includeFromJson: false, includeToJson: false)
+    /// Mycorrhizal symbiosis state tracking colonization and nutrient exchange.
+    /// Persisted so a resumed run does not reset colonisation while the carbon
+    /// pools it fed continue from the saved values.
     MycorrhizaState? mycorrhizaState,
   }) = _BiophysicalState;
 
