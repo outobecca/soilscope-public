@@ -28,6 +28,7 @@ class Simulation extends _$Simulation {
   late SimulationIsolateManager _isolateManager;
   late ParticlePhysicsIsolateManager particleIsolate;
   StreamSubscription<BiophysicalState>? _stateSubscription;
+  Timer? _initWatchdog;
   double _particleMinX = -7400;
   double _particleMaxX = 8600;
   double _particleWorldHeight = 1000;
@@ -92,6 +93,8 @@ class Simulation extends _$Simulation {
 
     ref.onDispose(() {
       _disposed = true;
+      _initWatchdog?.cancel();
+      _initWatchdog = null;
       _stateSubscription?.cancel();
       _isolateManager.dispose();
       particleIsolate.dispose();
@@ -272,21 +275,37 @@ class Simulation extends _$Simulation {
     );
   }
 
+  void _handleInitTimeout() {
+    if (_disposed || !ref.mounted || !state.isInitializing) return;
+    _failInitialization();
+  }
+
+  void _failInitialization() {
+    if (_disposed || !ref.mounted) return;
+    // Never leave the app stuck on the splash if the isolate cannot start.
+    state = state.copyWith(isInitializing: false);
+    ref.read(eventLogProvider.notifier).addEvent(
+          'Simulation engine failed to start.',
+          state.timeElapsed,
+        );
+  }
+
   Future<void> _initIsolate() async {
     debugPrint('[SimulationProvider] _initIsolate started');
+    // Watchdog: a hung spawn must not leave the splash forever. A plain
+    // Future.timeout would keep its timer alive after the provider disposes.
+    _initWatchdog?.cancel();
+    _initWatchdog = Timer(const Duration(seconds: 10), _handleInitTimeout);
     try {
       await _isolateManager.init();
     } catch (e, stack) {
       debugPrint('[SimulationProvider] Engine initialization failed: $e');
       debugPrintStack(stackTrace: stack);
-      if (_disposed || !ref.mounted) return;
-      // Never leave the app stuck on the splash if the isolate cannot start.
-      state = state.copyWith(isInitializing: false);
-      ref.read(eventLogProvider.notifier).addEvent(
-            'Simulation engine failed to start.',
-            state.timeElapsed,
-          );
+      _failInitialization();
       return;
+    } finally {
+      _initWatchdog?.cancel();
+      _initWatchdog = null;
     }
     debugPrint('[SimulationProvider] IsolateManager initialized');
     _stateSubscription = _isolateManager.stateStream.listen((newState) {
@@ -830,7 +849,9 @@ class Simulation extends _$Simulation {
     void Function(double progress)? onProgress,
     bool Function()? shouldCancel,
   }) async {
-    final totalDays = days.clamp(1, 365).toInt();
+    // 180 days of hourly ticks is already minutes on a phone; the builder
+    // slider uses the same ceiling.
+    final totalDays = days.clamp(1, 180).toInt();
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
     state = state.copyWith(isRunning: false);
     _isolateManager.stop();

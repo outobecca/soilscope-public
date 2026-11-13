@@ -37,6 +37,20 @@
   <meta name="twitter:card" content="summary">
   <title>SoilScope — Soil Health Simulator</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0F172A; }
+    #splash { position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px; color: #ECFDF5;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; z-index: 10; }
+    .splash-mark { font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+    .splash-sub { font-size: 12px; letter-spacing: 2px; color: #6EE7B7;
+      text-transform: uppercase; }
+    .splash-bar { width: 120px; height: 3px; background: #1E293B;
+      border-radius: 2px; overflow: hidden; margin-top: 12px; }
+    .splash-bar span { display: block; width: 40%; height: 100%;
+      background: #059669; border-radius: 2px; animation: splash 1.2s ease-in-out infinite; }
+    @keyframes splash { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+  </style>
 </head>
 <body>
   <!--
@@ -47,6 +61,17 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+    <div id="splash" aria-label="Loading SoilScope">
+    <div class="splash-mark">SoilScope</div>
+    <div class="splash-sub">Soil &middot; Water &middot; Life</div>
+    <div class="splash-bar"><span></span></div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('splash');
+      if (splash) splash.remove();
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -319,7 +319,9 @@ class _HUDIndices extends ConsumerWidget {
             theme: theme,
           ),
           _buildIndexChip(
-            icon: Icons.science,
+            // Pair the colour with a direction cue: acid ↓, neutral →,
+            // alkaline ↑, so the state is not encoded by hue alone.
+            icon: _getpHIcon(topLayer.ph),
             label: 'pH',
             value: topLayer.ph.toStringAsFixed(1),
             color: _getpHColor(topLayer.ph),
@@ -889,6 +891,12 @@ Widget _buildSmallStat(IconData icon, String value, ThemeData theme) {
       ],
     ),
   );
+}
+
+IconData _getpHIcon(double ph) {
+  if (ph < 5.5) return Icons.arrow_downward_rounded;
+  if (ph > 7.5) return Icons.arrow_upward_rounded;
+  return Icons.horizontal_rule_rounded;
 }
 
 String _formatTime(double seconds) {

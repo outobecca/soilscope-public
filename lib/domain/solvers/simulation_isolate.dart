@@ -131,6 +131,9 @@ void simulationIsolateEntry(SendPort mainSendPort) {
 }
 
 /// Helper class to manage the simulation isolate from the main thread
+/// Owns the simulation engine. On native platforms it runs in a real isolate;
+/// on web there is no isolate, and [init] starts an in-thread loop that must
+/// stay within the frame budget.
 class SimulationIsolateManager {
   Isolate? _isolate;
   ReceivePort? _receivePort;
@@ -206,8 +209,9 @@ class SimulationIsolateManager {
         }
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
-          // On Web, compute() might hang or behave inconsistently. 
+          // On Web, compute() might hang or behave inconsistently.
           // Since it runs on main thread anyway, we'll run directly.
+          final tickWatch = Stopwatch()..start();
           final nextState = SimulationEngine.tick(
             _currentState!,
             dt,
@@ -216,6 +220,11 @@ class SimulationIsolateManager {
           _currentState = _sanitizeState(nextState);
           if (!_stateController.isClosed) {
             _stateController.add(_currentState!);
+          }
+          // A tick slower than a frame budget yields before the next one so the
+          // browser can paint instead of dropping consecutive frames.
+          if (tickWatch.elapsedMilliseconds > 16) {
+            await Future<void>.delayed(Duration.zero);
           }
         } catch (e) {
           debugPrint('Error in web simulation tick: $e');
