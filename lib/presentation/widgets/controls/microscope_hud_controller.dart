@@ -256,7 +256,7 @@ class MicroscopeHudController extends ConsumerWidget {
                                       fontWeight: FontWeight.w600,
                                       color: isTargetActive
                                           ? const Color(0xFF67E8F9)
-                                          : Colors.white38,
+                                          : Colors.white70,
                                     ),
                                   ),
                                 ],

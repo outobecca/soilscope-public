@@ -803,7 +803,7 @@ class XpLevelPanelWidget extends StatelessWidget {
           Text(
             'XP $metObjectives / $totalObjectives',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade500,
+              color: Colors.white70,
               fontSize: 8,
               fontWeight: FontWeight.bold,
             ),

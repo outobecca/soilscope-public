@@ -11,9 +11,13 @@ class AppLocale extends _$AppLocale {
 
   @override
   Locale build() {
-    // Load persisted locale if available, default to system
+    // Prefer the device language when the app ships translations for it.
     _loadPersistedLocale();
-    return const Locale('en');
+    final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    final isSupported = AppLocalizations.supportedLocales.any(
+      (locale) => locale.languageCode == systemLocale.languageCode,
+    );
+    return isSupported ? Locale(systemLocale.languageCode) : const Locale('en');
   }
 
   Future<void> _loadPersistedLocale() async {

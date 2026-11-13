@@ -4005,4 +4005,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get buffSymbiosis => 'SYMBIOSIS';
+
+  @override
+  String get customScenarioDesc => 'A custom scenario built from your own soil and weather settings.';
 }

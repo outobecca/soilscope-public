@@ -1521,5 +1521,6 @@
   "buffDrought": "KUIVUUS",
   "buffRain": "SADE",
   "buffCoverCrop": "PEITEKASVI",
-  "buffSymbiosis": "SYMBIOOSI"
+  "buffSymbiosis": "SYMBIOOSI",
+  "customScenarioDesc": "Oma skenaario, joka rakennetaan valitsemistasi maa- ja sääasetuksista."
 }

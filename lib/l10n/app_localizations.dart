@@ -7966,6 +7966,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SYMBIOSIS'**
   String get buffSymbiosis;
+
+  /// No description provided for @customScenarioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A custom scenario built from your own soil and weather settings.'**
+  String get customScenarioDesc;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

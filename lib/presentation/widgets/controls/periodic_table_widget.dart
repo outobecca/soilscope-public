@@ -118,7 +118,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.showControls) ...[
-              _buildControlBar(theme, l10n, lang),
+              _buildControlBar(theme, l10n),
               const SizedBox(height: 12),
             ],
             if (_viewMode == PeriodicViewMode.grid)
@@ -143,10 +143,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
   Widget _buildControlBar(
     ThemeData theme,
     AppLocalizations? l10n,
-    String lang,
   ) {
-    final isFi = lang.startsWith('fi');
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -161,8 +158,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
                   controller: _searchController,
                   onChanged: (v) => setState(() => _searchQuery = v),
                   decoration: InputDecoration(
-                    hintText: l10n?.searchElement ??
-                        (isFi ? 'Hae alkuainetta...' : 'Search element...'),
+                    hintText: l10n?.searchElement ?? 'Search element...',
                     hintStyle: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant.withValues(
                         alpha: 0.6,
@@ -214,12 +210,12 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
                 ButtonSegment(
                   value: PeriodicViewMode.grid,
                   icon: const Icon(Icons.grid_view_rounded, size: 18),
-                  tooltip: l10n?.gridView ?? (isFi ? 'Taulukko' : 'Table'),
+                  tooltip: l10n?.gridView ?? 'Table View',
                 ),
                 ButtonSegment(
                   value: PeriodicViewMode.cards,
                   icon: const Icon(Icons.view_agenda_rounded, size: 18),
-                  tooltip: l10n?.listView ?? (isFi ? 'Luettelo' : 'List'),
+                  tooltip: l10n?.listView ?? 'Card View',
                 ),
               ],
               selected: {_viewMode},
@@ -242,46 +238,41 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
             children: [
               _buildFilterChip(
                 PeriodicFilterCategory.all,
-                l10n?.allElements ?? (isFi ? 'Kaikki' : 'All'),
+                l10n?.allElements ?? 'All Elements',
                 theme,
               ),
               const SizedBox(width: 6),
               _buildFilterChip(
                 PeriodicFilterCategory.macronutrients,
-                l10n?.macronutrients ??
-                    (isFi ? 'Pääravinteet (N, P, K...)' : 'Macronutrients'),
+                l10n?.macronutrients ?? 'Macronutrients',
                 theme,
                 color: const Color(0xFF2563EB),
               ),
               const SizedBox(width: 6),
               _buildFilterChip(
                 PeriodicFilterCategory.micronutrients,
-                l10n?.micronutrients ??
-                    (isFi ? 'Hivenravinteet (Fe, Zn...)' : 'Micronutrients'),
+                l10n?.micronutrients ?? 'Micronutrients',
                 theme,
                 color: const Color(0xFF0D9488),
               ),
               const SizedBox(width: 6),
               _buildFilterChip(
                 PeriodicFilterCategory.beneficial,
-                l10n?.beneficialElements ??
-                    (isFi ? 'Hyödylliset (Si, Se...)' : 'Beneficial'),
+                l10n?.beneficialElements ?? 'Beneficial',
                 theme,
                 color: const Color(0xFF16A34A),
               ),
               const SizedBox(width: 6),
               _buildFilterChip(
                 PeriodicFilterCategory.toxic,
-                l10n?.toxicElements ??
-                    (isFi ? 'Raskasmetallit & Myrkyt' : 'Toxins & Metals'),
+                l10n?.toxicElements ?? 'Toxins & Metals',
                 theme,
                 color: const Color(0xFFDC2626),
               ),
               const SizedBox(width: 6),
               _buildFilterChip(
                 PeriodicFilterCategory.structural,
-                l10n?.structuralElements ??
-                    (isFi ? 'Rakenne & Kaasut' : 'Structural & Gases'),
+                l10n?.structuralElements ?? 'Structural & Gases',
                 theme,
                 color: const Color(0xFF475569),
               ),

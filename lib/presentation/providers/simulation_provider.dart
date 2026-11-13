@@ -38,6 +38,10 @@ class Simulation extends _$Simulation {
   // Timeline for scrubbing (entries must have `history: []` to avoid nesting).
   final List<BiophysicalState> _history = [];
 
+  /// Simulation time between scrubber snapshots, so the history depth does not
+  /// depend on playback speed.
+  static const double _historyIntervalSeconds = 600.0;
+
   BiophysicalState _stripHistory(BiophysicalState s) =>
       s.copyWith(history: const []);
 
@@ -276,7 +280,9 @@ class Simulation extends _$Simulation {
         for (final event in state.currentScenario!.cultivationPlan) {
           if (processedState.timeElapsed >= event.executionTime && 
               state.timeElapsed < event.executionTime) {
-            debugPrint('[SimulationProvider] Applying event: ${event.type} at ${event.executionTime}');
+            if (kDebugMode) {
+              debugPrint('[SimulationProvider] Applying event: ${event.type} at ${event.executionTime}');
+            }
             processedState = _applyEvent(processedState, event);
             eventApplied = true;
           }
@@ -295,9 +301,15 @@ class Simulation extends _$Simulation {
         score: newScore,
       );
       
-      _history.add(_stripHistory(entry));
-      if (_history.length > 500) {
-        _history.removeAt(0);
+      final lastSnapshotTime = _history.isEmpty
+          ? double.negativeInfinity
+          : _history.last.timeElapsed;
+      if (_history.length <= 1 ||
+          entry.timeElapsed - lastSnapshotTime >= _historyIntervalSeconds) {
+        _history.add(_stripHistory(entry));
+        if (_history.length > 500) {
+          _history.removeAt(0);
+        }
       }
 
       _pendingState = entry;

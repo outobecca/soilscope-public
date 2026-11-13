@@ -55,7 +55,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
     super.didChangeDependencies();
     final l10n = AppLocalizations.of(context)!;
     if (_title.isEmpty) _title = l10n.scenarioTitle;
-    if (_desc.isEmpty) _desc = l10n.resumeLastSessionDesc;
+    if (_desc.isEmpty) _desc = l10n.customScenarioDesc;
     if (_tutTitle.isEmpty) _tutTitle = l10n.tutTargetLeaf;
     if (_tutDesc.isEmpty) _tutDesc = l10n.transpirationDesc;
   }

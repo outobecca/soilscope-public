@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math' as math;
 import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
@@ -21,6 +22,14 @@ class HydrologySolver {
     double airTemperature = 293.15,
     List<Plant> plants = const [],
   }) {
+    if (profile.layers.isEmpty) {
+      return HydrologyResult(
+        profile: profile,
+        averageFluxes: const [],
+        latentHeat: 0.0,
+      );
+    }
+
     // 1. Calculate Adaptive Sub-steps
     double minThickness = profile.layers.fold(
       1.0,
@@ -32,14 +41,29 @@ class HydrologySolver {
     );
 
     // Stability criteria for explicit diffusion: dt < 0.5 * dx^2 / K
-    double safeDt = 0.25 * (minThickness * minThickness) / (maxKsat + 1e-10);
-    double subStep = safeDt.clamp(0.1, 30.0);
+    final double safeDt =
+        0.25 * (minThickness * minThickness) / (maxKsat + 1e-10);
+    // Never round a genuinely stiff step up to a larger, unstable one.
+    double subStep = math.min(safeDt, 30.0);
     if (precipitation > 1e-4) {
       subStep = math.min(subStep, 1.0);
     }
 
-    int steps = (dt / subStep).ceil().clamp(1, 2000);
-    double actualDt = dt / steps;
+    final int requiredSteps = (dt / subStep).ceil();
+    const int maxSteps = 2000;
+    final int steps = requiredSteps.clamp(1, maxSteps);
+    final double actualDt = dt / steps;
+
+    if (requiredSteps > maxSteps) {
+      // The cap protects against pathological inputs; report it rather than
+      // silently integrating above the stability criterion computed above.
+      developer.log(
+        'Stability cap reached: $requiredSteps steps required, using '
+        '$maxSteps (actual dt=${actualDt.toStringAsFixed(3)} s, '
+        'safe dt=${subStep.toStringAsExponential(3)} s).',
+        name: 'HydrologySolver',
+      );
+    }
 
     SoilProfile currentProfile = profile;
     final List<double> totalFluxes = List.filled(

@@ -349,41 +349,47 @@ class _HUDIndices extends ConsumerWidget {
     required Color color,
     required ThemeData theme,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            '$label: ',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-            ),
+    return Semantics(
+      label: label,
+      value: value,
+      child: ExcludeSemantics(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          SizedBox(
-            width: 52,
-            child: Text(
-              value,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'monospace',
-                fontFeatures: const [FontFeature.tabularFigures()],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(
+                '$label: ',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              textAlign: TextAlign.right,
-            ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 40),
+                child: Text(
+                  value,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

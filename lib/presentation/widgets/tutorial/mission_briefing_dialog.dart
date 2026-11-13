@@ -289,7 +289,7 @@ class MissionBriefingDialog extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: isMet ? Colors.greenAccent : Colors.white38,
+                                  color: isMet ? Colors.greenAccent : Colors.white70,
                                 ),
                               ),
                             ],
