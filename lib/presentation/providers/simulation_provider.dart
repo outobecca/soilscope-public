@@ -12,7 +12,6 @@ import '../../domain/models/plant.dart';
 import '../../domain/actions/simulation_actions.dart';
 import '../../domain/models/scenario.dart';
 import '../../domain/solvers/simulation_isolate.dart';
-import '../../domain/solvers/scoring_solver.dart';
 import '../../domain/solvers/simulation_engine.dart';
 import '../../domain/solvers/particle_physics_isolate.dart';
 
@@ -293,13 +292,9 @@ class Simulation extends _$Simulation {
         _isolateManager.updateState(processedState, processedState.precipitation);
       }
 
-      final dt = 600.0 * processedState.timeScale;
-      final newScore = ScoringSolver.solve(processedState, dt);
-
-      // Merge Simulation truth with UI truth to prevent race conditions
-      final entry = _mergeSimulationState(processedState, state).copyWith(
-        score: newScore,
-      );
+      // The engine already computed the score during this tick; recomputing it
+      // here duplicated work with a different dt (the solver ignores dt).
+      final entry = _mergeSimulationState(processedState, state);
       
       final lastSnapshotTime = _history.isEmpty
           ? double.negativeInfinity

@@ -567,25 +567,26 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
     });
   }
 
+  /// The single explicit side effect of the written graph.
+  void _applyOutputsToSimulation() {
+    final outputs = _graph.nodes.where(
+      (n) => n.type == NodeType.output && n.operation == 'set_irrigation',
+    );
+    for (final node in outputs) {
+      ref.read(simulationProvider.notifier).setPrecipitation(node.value);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final simulationState = ref.watch(displayedSimulationStateProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    // Suoritetaan laskenta aina kun simulaatio päivittyy
-    _graph = LogicEvaluator.evaluate(_graph, simulationState);
-
-    // Apply Output Actions to the simulation (Pedagogical Feedback Sandbox)
-    for (final node in _graph.nodes) {
-      if (node.type == NodeType.output && node.operation != null) {
-        if (node.operation == 'set_irrigation') {
-          Future.microtask(() {
-            ref.read(simulationProvider.notifier).setPrecipitation(node.value);
-          });
-        }
-      }
-    }
+    // Evaluate for display only. The authored graph is the source of truth,
+    // and build() must not issue simulation commands: doing so re-applied
+    // irrigation on every unrelated rebuild.
+    final evaluatedGraph = LogicEvaluator.evaluate(_graph, simulationState);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -593,6 +594,14 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
         title: Text(l10n.logicLabTitle),
         elevation: 0,
         actions: [
+          if (_graph.nodes.any(
+            (n) => n.type == NodeType.output && n.operation == 'set_irrigation',
+          ))
+            IconButton(
+              icon: const Icon(Icons.play_circle_outline),
+              tooltip: l10n.applyToSimulation,
+              onPressed: _applyOutputsToSimulation,
+            ),
           // Esimerkkivalitsin
           PopupMenuButton<String>(
             icon: const Icon(Icons.science),
@@ -691,13 +700,13 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
                         CustomPaint(
                           size: Size.infinite,
                           painter: ConnectionPainter(
-                            nodes: _graph.nodes,
-                            connections: _graph.connections,
+                            nodes: evaluatedGraph.nodes,
+                            connections: evaluatedGraph.connections,
                           ),
                         ),
 
                         // Nodet
-                        ..._graph.nodes.map(
+                        ...evaluatedGraph.nodes.map(
                           (node) => NodeWidget(
                             node: node,
                             onDrag: (newPos) {

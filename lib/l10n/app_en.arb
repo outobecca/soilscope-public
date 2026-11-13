@@ -1522,5 +1522,6 @@
   "buffRain": "RAIN",
   "buffCoverCrop": "COVER CROP",
   "buffSymbiosis": "SYMBIOSIS",
-  "customScenarioDesc": "A custom scenario built from your own soil and weather settings."
+  "customScenarioDesc": "A custom scenario built from your own soil and weather settings.",
+  "applyToSimulation": "Apply to simulation"
 }

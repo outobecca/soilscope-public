@@ -276,7 +276,7 @@ class GamificationBar extends ConsumerWidget {
                       Text(
                         l10n?.briefingButton ?? 'BRIEFING',
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFFC084FC),
                         ),
@@ -306,7 +306,7 @@ class GamificationBar extends ConsumerWidget {
             '${value.toStringAsFixed(0)}%',
             style: TextStyle(
               color: color,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -501,9 +501,13 @@ class HealthMeterWidget extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return Expanded(
-      child: Row(
-        children: [
-          // RPG ORB
+      child: Semantics(
+        label: title,
+        value: '${value.toStringAsFixed(0)}%',
+        child: ExcludeSemantics(
+          child: Row(
+            children: [
+              // RPG ORB
           Stack(
             alignment: Alignment.center,
             children: [
@@ -605,7 +609,7 @@ class HealthMeterWidget extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
-                  fontSize: 10,
+                  fontSize: 12,
                   shadows: [
                     const Shadow(color: Colors.black, blurRadius: 4),
                     const Shadow(color: Colors.black, blurRadius: 4),
@@ -672,7 +676,7 @@ class HealthMeterWidget extends StatelessWidget {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: color,
                             fontWeight: FontWeight.w800,
-                            fontSize: 9,
+                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -682,7 +686,9 @@ class HealthMeterWidget extends StatelessWidget {
               ],
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -833,7 +839,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                       l10n?.briefingButton ?? 'BRIEFING',
                       style: TextStyle(
                         color: const Color(0xFFC084FC),
-                        fontSize: 8.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -865,7 +871,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                                   _getLocalizedObjectiveTitle(obj, l10n),
                                   style: TextStyle(
                                     color: color,
-                                    fontSize: 8.5,
+                                    fontSize: 11,
                                     fontWeight: isMet
                                         ? FontWeight.bold
                                         : FontWeight.normal,

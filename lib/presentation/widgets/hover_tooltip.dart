@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'common/blur_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
@@ -55,8 +55,8 @@ class HoverTooltip extends ConsumerWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: BlurSurface(
+            sigma: 16,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +130,7 @@ class HoverTooltip extends ConsumerWidget {
                   badgeText,
                   style: TextStyle(
                     color: accentColor,
-                    fontSize: 8.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
                   ),
@@ -158,7 +158,7 @@ class HoverTooltip extends ConsumerWidget {
                           info.elementSymbol!,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -208,7 +208,7 @@ class HoverTooltip extends ConsumerWidget {
               label.toUpperCase(),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
@@ -265,7 +265,7 @@ class HoverTooltip extends ConsumerWidget {
             color: Colors.white.withValues(alpha: 0.7),
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
-            fontSize: 9,
+            fontSize: 11,
           ),
         ),
         const SizedBox(height: 8),

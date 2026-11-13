@@ -1,4 +1,4 @@
-import 'dart:ui';
+import '../common/blur_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
@@ -67,8 +67,8 @@ class MicroscopeHudController extends ConsumerWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: BlurSurface(
+            sigma: 12,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Column(
@@ -127,7 +127,7 @@ class MicroscopeHudController extends ConsumerWidget {
                                 '$currentTitle ($currentMag)',
                                 style: const TextStyle(
                                   color: Color(0xFF67E8F9),
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'monospace',
                                 ),
@@ -251,7 +251,7 @@ class MicroscopeHudController extends ConsumerWidget {
                                   Text(
                                     targetMag,
                                     style: TextStyle(
-                                      fontSize: 9,
+                                      fontSize: 11,
                                       fontFamily: 'monospace',
                                       fontWeight: FontWeight.w600,
                                       color: isTargetActive

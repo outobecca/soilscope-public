@@ -1522,5 +1522,6 @@
   "buffRain": "SADE",
   "buffCoverCrop": "PEITEKASVI",
   "buffSymbiosis": "SYMBIOOSI",
-  "customScenarioDesc": "Oma skenaario, joka rakennetaan valitsemistasi maa- ja sääasetuksista."
+  "customScenarioDesc": "Oma skenaario, joka rakennetaan valitsemistasi maa- ja sääasetuksista.",
+  "applyToSimulation": "Käytä simulaatioon"
 }

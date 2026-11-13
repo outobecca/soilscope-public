@@ -138,7 +138,7 @@ class _HUDHeader extends ConsumerWidget {
               l10n.historyMode.toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -797,7 +797,7 @@ Widget _buildSimpleDiagnostic(
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -852,7 +852,7 @@ Widget _buildTeaStatus(double eh, AppLocalizations l10n, ThemeData theme) {
       Text(
         status,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           color: color,
           letterSpacing: 1.1,
@@ -880,7 +880,7 @@ Widget _buildSmallStat(IconData icon, String value, ThemeData theme) {
           value,
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurface,
-            fontSize: 9,
+            fontSize: 11,
             fontFamily: 'monospace',
           ),
         ),

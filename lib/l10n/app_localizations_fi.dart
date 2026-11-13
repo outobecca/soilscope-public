@@ -4008,4 +4008,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get customScenarioDesc => 'Oma skenaario, joka rakennetaan valitsemistasi maa- ja sääasetuksista.';
+
+  @override
+  String get applyToSimulation => 'Käytä simulaatioon';
 }

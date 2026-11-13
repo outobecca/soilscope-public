@@ -4008,4 +4008,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customScenarioDesc => 'A custom scenario built from your own soil and weather settings.';
+
+  @override
+  String get applyToSimulation => 'Apply to simulation';
 }

@@ -7972,6 +7972,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A custom scenario built from your own soil and weather settings.'**
   String get customScenarioDesc;
+
+  /// No description provided for @applyToSimulation.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to simulation'**
+  String get applyToSimulation;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
