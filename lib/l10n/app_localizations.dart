@@ -8062,6 +8062,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip'**
   String get introSkip;
+
+  /// No description provided for @dataView.
+  ///
+  /// In en, this message translates to:
+  /// **'Data view'**
+  String get dataView;
+
+  /// No description provided for @columnLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Layer'**
+  String get columnLayer;
+
+  /// No description provided for @columnDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Depth (m)'**
+  String get columnDepth;
+
+  /// No description provided for @columnMoisture.
+  ///
+  /// In en, this message translates to:
+  /// **'θ (%)'**
+  String get columnMoisture;
+
+  /// No description provided for @columnPh.
+  ///
+  /// In en, this message translates to:
+  /// **'pH'**
+  String get columnPh;
+
+  /// No description provided for @columnNitrate.
+  ///
+  /// In en, this message translates to:
+  /// **'NO₃ (mg/kg)'**
+  String get columnNitrate;
+
+  /// No description provided for @columnBiomass.
+  ///
+  /// In en, this message translates to:
+  /// **'Biomass'**
+  String get columnBiomass;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

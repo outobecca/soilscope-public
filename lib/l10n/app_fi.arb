@@ -1537,5 +1537,12 @@
   "introBody3": "Napauta keskusta tai maakerrosta nähdäksesi, mitä siellä tapahtuu ja miksi.",
   "introNext": "Seuraava",
   "introStart": "Aloita",
-  "introSkip": "Ohita"
+  "introSkip": "Ohita",
+  "dataView": "Datanäkymä",
+  "columnLayer": "Kerros",
+  "columnDepth": "Syvyys (m)",
+  "columnMoisture": "θ (%)",
+  "columnPh": "pH",
+  "columnNitrate": "NO₃ (mg/kg)",
+  "columnBiomass": "Biomassa"
 }

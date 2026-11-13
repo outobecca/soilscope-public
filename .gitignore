@@ -51,3 +51,9 @@ android/.gradle/
 android/.kotlin/
 android/build/
 android/app/build/
+
+# Local indexing cache
+.mfckt-index.db
+
+# Local indexing cache
+.mfckt-index.json

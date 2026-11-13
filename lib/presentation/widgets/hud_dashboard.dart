@@ -7,6 +7,7 @@ import '../../domain/models/soil_profile.dart';
 import '../providers/simulation_provider.dart';
 import '../providers/simulation_session_provider.dart';
 import 'analytics/analytics_health_bar.dart';
+import 'analytics/soil_data_table.dart';
 import 'controls/visual_key_widget.dart';
 import 'controls/teaching_key_widget.dart';
 import 'controls/informatics_view.dart';
@@ -58,6 +59,7 @@ class HUDDashboard extends ConsumerWidget {
               const _HUDScrubber(),
               Divider(color: theme.colorScheme.outlineVariant, height: 16),
               const _HUDIndices(),
+              const _HUDDataView(),
               const _HUDSelectedLayerDetails(),
               Divider(color: theme.colorScheme.outlineVariant, height: 16),
               const _HUDPlantVitality(),
@@ -930,4 +932,31 @@ Color _getpHColor(double ph) {
   if (ph < 7.5) return Colors.green;
   if (ph < 8.5) return Colors.blue;
   return Colors.purple;
+}
+
+class _HUDDataView extends ConsumerWidget {
+  const _HUDDataView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final profile = ref.watch(simulationProvider.select((s) => s.profile));
+
+    return ExpansionTile(
+      title: Text(
+        l10n.dataView.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+      dense: true,
+      tilePadding: EdgeInsets.zero,
+      children: [
+        SoilDataTable(profile: profile),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
 }

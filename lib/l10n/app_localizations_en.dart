@@ -4053,4 +4053,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get introSkip => 'Skip';
+
+  @override
+  String get dataView => 'Data view';
+
+  @override
+  String get columnLayer => 'Layer';
+
+  @override
+  String get columnDepth => 'Depth (m)';
+
+  @override
+  String get columnMoisture => 'θ (%)';
+
+  @override
+  String get columnPh => 'pH';
+
+  @override
+  String get columnNitrate => 'NO₃ (mg/kg)';
+
+  @override
+  String get columnBiomass => 'Biomass';
 }

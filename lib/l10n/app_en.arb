@@ -1537,5 +1537,12 @@
   "introBody3": "Tap any hotspot or soil layer to see what is happening and why.",
   "introNext": "Next",
   "introStart": "Start",
-  "introSkip": "Skip"
+  "introSkip": "Skip",
+  "dataView": "Data view",
+  "columnLayer": "Layer",
+  "columnDepth": "Depth (m)",
+  "columnMoisture": "θ (%)",
+  "columnPh": "pH",
+  "columnNitrate": "NO₃ (mg/kg)",
+  "columnBiomass": "Biomass"
 }

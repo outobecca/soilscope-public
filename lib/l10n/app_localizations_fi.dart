@@ -4053,4 +4053,25 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get introSkip => 'Ohita';
+
+  @override
+  String get dataView => 'Datanäkymä';
+
+  @override
+  String get columnLayer => 'Kerros';
+
+  @override
+  String get columnDepth => 'Syvyys (m)';
+
+  @override
+  String get columnMoisture => 'θ (%)';
+
+  @override
+  String get columnPh => 'pH';
+
+  @override
+  String get columnNitrate => 'NO₃ (mg/kg)';
+
+  @override
+  String get columnBiomass => 'Biomassa';
 }
