@@ -4074,4 +4074,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get columnBiomass => 'Biomass';
+
+  @override
+  String get logicLabFunctions => 'Functions & Operations';
+
+  @override
+  String get logicLabSearch => 'Search...';
+
+  @override
+  String get logicLabAvailable => 'Functions available';
 }

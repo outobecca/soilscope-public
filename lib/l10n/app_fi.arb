@@ -1544,5 +1544,8 @@
   "columnMoisture": "θ (%)",
   "columnPh": "pH",
   "columnNitrate": "NO₃ (mg/kg)",
-  "columnBiomass": "Biomassa"
+  "columnBiomass": "Biomassa",
+  "logicLabFunctions": "Funktiot & Operaatiot",
+  "logicLabSearch": "Hae...",
+  "logicLabAvailable": "Toimintoja saatavilla"
 }

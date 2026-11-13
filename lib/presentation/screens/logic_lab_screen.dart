@@ -548,11 +548,12 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
   }
 
   void _addFunctionNode(FunctionDefinition func) {
+    final isFi = Localizations.localeOf(context).languageCode == 'fi';
     setState(() {
       _nodeCounter++;
       final newNode = LogicNode(
         id: 'node_$_nodeCounter',
-        label: func.label,
+        label: func.labelFor(isFi),
         type: func.nodeType,
         operation: func.operation,
         value: func.nodeType == NodeType.constant ? 1.0 : 0.0,

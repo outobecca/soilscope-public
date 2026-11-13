@@ -8104,6 +8104,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Biomass'**
   String get columnBiomass;
+
+  /// No description provided for @logicLabFunctions.
+  ///
+  /// In en, this message translates to:
+  /// **'Functions & Operations'**
+  String get logicLabFunctions;
+
+  /// No description provided for @logicLabSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get logicLabSearch;
+
+  /// No description provided for @logicLabAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Functions available'**
+  String get logicLabAvailable;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

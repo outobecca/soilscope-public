@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/logic_lab/models.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Määrittelee yksittäisen funktion Logic Labiin.
 class FunctionDefinition {
@@ -24,6 +25,93 @@ class FunctionDefinition {
     required this.color,
     this.nodeType = NodeType.function,
   });
+}
+
+class _EnglishCopy {
+  final String label;
+  final String description;
+  final List<String> inputs;
+
+  const _EnglishCopy(this.label, this.description, this.inputs);
+}
+
+const Map<String, _EnglishCopy> _englishCopy = {
+  'Q10': _EnglishCopy(
+    'Q10 (temperature)',
+    'Temperature coefficient for biological activity',
+    ['Temperature (°C)', 'Q10 value'],
+  ),
+  'MM': _EnglishCopy(
+    'Michaelis-Menten',
+    'Enzyme kinetics',
+    ['Substrate [S]', 'Vmax', 'Km'],
+  ),
+  'Chemotaxis': _EnglishCopy(
+    'Chemotaxis (Fick)',
+    'Chemotaxis and diffusion (Fick\'s law)',
+    ['Diffusion D', 'C₁', 'C₂', 'Distance dx'],
+  ),
+  'CostBenefit': _EnglishCopy(
+    'Cost-Benefit (Least Energy)',
+    'Energy efficiency (principle of least energy)',
+    ['Concentration C', 'Distance D', 'Penalty P'],
+  ),
+  'VG': _EnglishCopy(
+    'van Genuchten',
+    'Soil water retention',
+    ['Matric head h (m)', 'θr', 'θs', 'α', 'n'],
+  ),
+  'Farq': _EnglishCopy(
+    'Farquhar C3',
+    'C3 photosynthesis (Rubisco-limited)',
+    ['Ci (µmol/mol)', 'Vcmax', 'Γ*', 'Kc', 'Ko'],
+  ),
+  'Redox': _EnglishCopy(
+    'Nernst/Redox',
+    'Redox potential calculation',
+    ['pe0', 'n (electrons)', '[red]', '[ox]'],
+  ),
+  '+': _EnglishCopy('Addition', 'Sum of two values', ['A', 'B']),
+  '-': _EnglishCopy('Subtraction', 'Difference', ['A', 'B']),
+  '*': _EnglishCopy('Multiplication', 'Product of two values', ['A', 'B']),
+  '/': _EnglishCopy('Division', 'Quotient', ['A', 'B']),
+  'pow': _EnglishCopy('Power', 'A raised to B', ['Base A', 'Exponent B']),
+  'sqrt': _EnglishCopy('Square root', 'Square root', ['A']),
+  'exp': _EnglishCopy('Exponential', 'e raised to A', ['A']),
+  'ln': _EnglishCopy('Natural log', 'Natural logarithm', ['A']),
+  'log10': _EnglishCopy('Log₁₀', 'Base-10 logarithm', ['A']),
+  'min': _EnglishCopy('Minimum', 'Smaller of two values', ['A', 'B']),
+  'max': _EnglishCopy('Maximum', 'Larger of two values', ['A', 'B']),
+  'clamp': _EnglishCopy('Clamp', 'Limit a value to a range', ['Value A', 'Min', 'Max']),
+  'abs': _EnglishCopy('Absolute value', 'Absolute value', ['A']),
+  'output': _EnglishCopy('Result', 'Shows the final result', ['Input']),
+  'const': _EnglishCopy('Constant', 'Fixed numeric value', []),
+  'set_irrigation': _EnglishCopy(
+    'Irrigation rate (Output Action)',
+    'Sets the simulation irrigation rate',
+    ['Precipitation'],
+  ),
+};
+
+const Map<String, String> _englishCategories = {
+  'Biofysiikka': 'Biophysics',
+  'Matematiikka': 'Mathematics',
+  'Erityiset': 'Special',
+  'Toiminnot': 'Actions',
+};
+
+String functionCategoryLabel(String category, bool isFi) =>
+    isFi ? category : (_englishCategories[category] ?? category);
+
+extension FunctionDefinitionL10n on FunctionDefinition {
+  String labelFor(bool isFi) =>
+      isFi ? label : (_englishCopy[operation]?.label ?? label);
+
+  String descriptionFor(bool isFi) =>
+      isFi ? description : (_englishCopy[operation]?.description ?? description);
+
+  List<String> inputsFor(bool isFi) =>
+      isFi ? inputLabels : (_englishCopy[operation]?.inputs ?? inputLabels);
 }
 
 /// Kaikki tuetut funktiot kategorioittain.
@@ -305,6 +393,9 @@ class _FunctionPaletteState extends State<FunctionPalette> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isFi = Localizations.localeOf(context).languageCode == 'fi';
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
@@ -336,9 +427,12 @@ class _FunctionPaletteState extends State<FunctionPalette> {
               children: [
                 const Icon(Icons.functions, color: Colors.purple),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Funktiot & Operaatiot',
+                    l10n?.logicLabFunctions ??
+                        (isFi
+                            ? 'Funktiot & Operaatiot'
+                            : 'Functions & Operations'),
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -360,7 +454,8 @@ class _FunctionPaletteState extends State<FunctionPalette> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Hae...',
+                hintText:
+                    l10n?.logicLabSearch ?? (isFi ? 'Hae...' : 'Search...'),
                 hintStyle: TextStyle(
                   color: Colors.white.withValues(alpha: 0.4),
                 ),
@@ -394,9 +489,17 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                       (func) =>
                           _searchQuery.isEmpty ||
                           func.label.toLowerCase().contains(_searchQuery) ||
+                          func
+                              .labelFor(false)
+                              .toLowerCase()
+                              .contains(_searchQuery) ||
                           func.description.toLowerCase().contains(
                             _searchQuery,
                           ) ||
+                          func
+                              .descriptionFor(false)
+                              .toLowerCase()
+                              .contains(_searchQuery) ||
                           func.formula.toLowerCase().contains(_searchQuery),
                     )
                     .toList();
@@ -431,7 +534,7 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              category.key,
+                              functionCategoryLabel(category.key, isFi),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.bold,
@@ -486,7 +589,10 @@ class _FunctionPaletteState extends State<FunctionPalette> {
               ),
             ),
             child: Text(
-              '${functionCategories.values.expand((e) => e).length} funktiota käytettävissä',
+              l10n?.logicLabAvailable ??
+                  (isFi
+                      ? '${functionCategories.values.expand((e) => e).length} funktiota käytettävissä'
+                      : '${functionCategories.values.expand((e) => e).length} functions available'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 11,
@@ -508,6 +614,8 @@ class _FunctionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFi = Localizations.localeOf(context).languageCode == 'fi';
+
     return Padding(
       padding: const EdgeInsets.only(left: 24, right: 8, bottom: 4),
       child: Material(
@@ -545,7 +653,7 @@ class _FunctionTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            func.label,
+                            func.labelFor(isFi),
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -553,7 +661,7 @@ class _FunctionTile extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            func.description,
+                            func.descriptionFor(isFi),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5),
                               fontSize: 11,
@@ -607,7 +715,7 @@ class _FunctionTile extends StatelessWidget {
                   Wrap(
                     spacing: 4,
                     runSpacing: 2,
-                    children: func.inputLabels
+                    children: func.inputsFor(isFi)
                         .map(
                           (label) => Container(
                             padding: const EdgeInsets.symmetric(

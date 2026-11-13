@@ -391,13 +391,36 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 ## 5. Recommended roadmap
 
-> **Progress.** Week 1 items 1–5 and item 7 (B4) are implemented: scenario
-> reset, resume gating, chunked pre-calculation, the tablet layout tier, safe
-> areas, dialog constraints, the XP bar, the tutorial ticker, the gamification
-> and timeline ARB strings, the CI analyzer step, and Logic Lab pan/zoom.
-> `test/presentation/screens/responsive_layout_test.dart` guards the phone and
-> tablet tiers. D1 and C9 are partially done (health-bar semantics, hot-path
-> logging). Next: B6 action bar, B8 onboarding, B7 type scale.
+> **Progress.** All findings are addressed except the architectural and
+> measurement-dependent items listed at the end of this block.
+>
+> - **Correctness:** A1–A6 (reset, resume gating, awaited and cancellable
+>   pre-calculation, initialization watchdog, builder copy, Logic Lab side
+>   effects moved out of build).
+> - **Mobile:** B1–B8 (three layout tiers, safe areas, viewport dialogs,
+>   pan/zoom Logic Lab, parent-sized XP bar, five-action bar with grouped
+>   sheets, 48 dp targets, 11–12 px minimum labels, remembered three-card
+>   gesture intro).
+> - **Web:** chunked pre-calculation with progress, cancel and a 180-day cap;
+>   frame-budget yield on the in-thread web loop; cheap blur on phones; URL
+>   routing that survives refresh; real PWA and app metadata; branded bootstrap
+>   splash; selected-layer panel rebuilds; guarded hot-path logging.
+> - **Accessibility:** health bars and index chips expose semantics, the HUD
+>   contains a labelled data table, pH pairs colour with a direction icon, and
+>   the faintest secondary text was lifted to AA contrast.
+> - **Localization:** timeline, gamification and periodic-table strings, an
+>   English Logic Lab palette, the device locale on first run, and an English
+>   README summary.
+> - **Code health:** 21 dead files removed, root scratch untracked or moved to
+>   `tool/`, CI runs the analyzer, mycorrhiza persists, duplicate score
+>   recomputation removed, an explicit state-ownership classifier, and
+>   provider, responsive-layout and 200-tick stability tests.
+>
+> **Deliberately deferred:** F2 (splitting the three god files) is an
+> architecture refactor rather than a defect; G2 needs committed measured
+> reference datasets — inventing thresholds would be worse than none; C1's web
+> Worker and C7's wasm/LCP measurement need a profiled browser session; golden
+> tests need reviewed reference images.
 
 ### Week 1 — correctness and the mobile floor (highest value per hour)
 1. A1 scenario reset, A2 resume detection, A3 await/progress/cancel pre-calculation (P0).
