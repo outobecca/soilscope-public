@@ -38,6 +38,8 @@ class SoilLayerComponent extends PositionComponent
 
   late Paint _layerPaint;
   Picture? _noisePicture;
+  SoilLayer? _noiseSourceLayer;
+  SoilLayer? _paintSourceLayer;
   late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
 
   SoilLayerComponent({
@@ -195,31 +197,64 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _handleLayerUpdate(SoilLayer next) {
-    bool needsRepaint =
-        _layer.waterContent != next.waterContent ||
-        _layer.redoxPotential != next.redoxPotential ||
-        _layer.organicCarbon != next.organicCarbon;
-
-    bool needsNoiseUpdate =
-        _layer.sandFraction != next.sandFraction ||
-        _layer.clayFraction != next.clayFraction ||
-        _layer.aggregateStability != next.aggregateStability ||
-        _layer.organicCarbon != next.organicCarbon;
+    final noiseSource = _noiseSourceLayer;
+    final needsNoiseUpdate =
+        noiseSource == null ||
+        noiseSource.sandFraction != next.sandFraction ||
+        noiseSource.clayFraction != next.clayFraction ||
+        noiseSource.aggregateStability != next.aggregateStability ||
+        noiseSource.organicCarbon != next.organicCarbon;
 
     _layer = next;
 
-    // Note: Position and size are still calculated by parent or can be reactive too
-    // For now, let's keep them pushed or calculate them here if we know the total profile
-
-    if (needsRepaint) _updatePaint();
-    if (needsNoiseUpdate) _preRenderNoise();
+    if (needsNoiseUpdate) {
+      _noiseSourceLayer = next;
+      _preRenderNoise();
+    }
     _syncSubComponents();
+  }
+
+  double _visualPaintTimer = 0;
+
+  /// Follow the game's interpolated read model for the smooth properties
+  /// (water, temperature, pH, redox) while the texture/gradient is refreshed
+  /// at a bounded 30 Hz to avoid rebuilding shaders on every display frame.
+  void _syncVisualLayer(double dt) {
+    final visualState = game.displayedState;
+    SoilLayer? visualLayer;
+    for (final layer in visualState.profile.layers) {
+      if (layer.id == layerId) {
+        visualLayer = layer;
+        break;
+      }
+    }
+    if (visualLayer == null) return;
+
+    _layer = visualLayer;
+    _visualPaintTimer += dt;
+    if (_visualPaintTimer < 1 / 30) return;
+    _visualPaintTimer = 0;
+
+    // The gradient only depends on these scalars. Skip rebuilding the shader
+    // when the visual values have already settled at their target.
+    final painted = _paintSourceLayer;
+    if (painted != null &&
+        painted.waterContent == visualLayer.waterContent &&
+        painted.redoxPotential == visualLayer.redoxPotential &&
+        painted.temperature == visualLayer.temperature &&
+        painted.ph == visualLayer.ph &&
+        painted.depth == visualLayer.depth &&
+        painted.thickness == visualLayer.thickness) {
+      return;
+    }
+    _updatePaint();
   }
 
   @override
   Future<void> onLoad() async {
     _updatePaint();
     _preRenderNoise();
+    _noiseSourceLayer = _layer;
   }
 
   void triggerSubComponentSync() {
@@ -227,6 +262,7 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _updatePaint() {
+    _paintSourceLayer = _layer;
     _layerPaint = SoilLayerStyleEngine.calculateLayerPaint(
       _layer,
       size.toSize(),
@@ -452,6 +488,7 @@ class SoilLayerComponent extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
+    _syncVisualLayer(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
 
     final state = game.displayedState;
