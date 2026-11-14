@@ -5,13 +5,14 @@ import '../soil_scope_game.dart';
 import 'soil_component_mixin.dart';
 import 'selection_node_component.dart';
 import 'animation_math.dart';
+import 'visual_seed.dart';
 
 /// Animated weather component handling rain particles, sky colors, and clouds.
 class WeatherComponent extends PositionComponent
     with HasGameReference<SoilScopeGame>, SoilComponentMixin {
   final List<_RainDrop> _rainDrops = [];
   final List<_Cloud> _clouds = [];
-  final math.Random _random = math.Random.secure();
+  final math.Random _random = visualRandom(const ['weather']);
   final bool animated;
   double _visualPrecipitation = 0.0;
 

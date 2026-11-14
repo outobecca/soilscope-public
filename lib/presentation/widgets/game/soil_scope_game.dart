@@ -25,15 +25,13 @@ import 'components/magnifier_group_component.dart';
 import 'components/molecule_particle_pool.dart';
 import 'components/sky_background_component.dart';
 import 'components/soil_symbiosis_network_component.dart';
+import 'components/animation_clock.dart';
+import 'components/visual_state_interpolator.dart';
 
 /// Main Flame game for SoilScope simulation visualization.
 /// Enforces a unified central simulation column for sky and soil.
 class SoilScopeGame extends FlameGame
-    with
-        ScrollDetector,
-        ScaleDetector,
-        HasCollisionDetection {
-  
+    with ScrollDetector, ScaleDetector, HasCollisionDetection {
   final WidgetRef ref;
 
   SoilScopeGame(this.ref) {
@@ -57,11 +55,16 @@ class SoilScopeGame extends FlameGame
   static const double atmosphereFraction = 0.7;
 
   BiophysicalState? _lastState;
+  BiophysicalState? _lastAnimationState;
+  final VisualStateInterpolator _visualState = VisualStateInterpolator(
+    transitionSeconds: 0.2,
+  );
   ScenarioProcessProfile _scenarioProcessProfile = ScenarioProcessProfile.empty;
   List<Vector2> _rootTipWorldPositions = const [];
   List<Vector2> _foliageWorldPositions = const [];
-  double _elapsed = 0;
-  double _uiElapsed = 0;
+  final AnimationClock _animationClock = AnimationClock();
+  BiophysicalState? _pendingSceneState;
+  SimulationSessionState? _pendingSceneSession;
   double _startZoom = 1.0;
   bool _inspectionPaused = false;
 
@@ -86,7 +89,6 @@ class SoilScopeGame extends FlameGame
   late final Component technicalHotspotLayer;
   MoleculeParticlePool? moleculePool;
 
-
   @override
   void update(double dt) {
     // Process sync buffer before simulation update
@@ -98,12 +100,33 @@ class SoilScopeGame extends FlameGame
       }
     }
 
+    // Coalesce scene rebuilds requested by multiple provider listeners into a
+    // single topology update for this frame. This prevents layer/plant nodes
+    // from being removed and recreated more than once per state tick.
+    final pendingSceneState = _pendingSceneState;
+    final pendingSceneSession = _pendingSceneSession;
+    _pendingSceneState = null;
+    _pendingSceneSession = null;
+    if (pendingSceneState != null && pendingSceneSession != null) {
+      _updateScene(pendingSceneState, pendingSceneSession);
+    }
+
     // Selecting an element for its info is an inspection mode: freeze the
     // canvas animation while leaving the simulation isolate and Flutter HUD
     // responsive. The next frame after the card is dismissed resumes normally.
     _inspectionPaused = _readInspectionPaused();
+    final isRunning = simulationState?.isRunning ?? false;
+    _animationClock.tick(
+      dt,
+      isRunning: isRunning,
+      isScrubbing: _readIsScrubbing(),
+      inspectionPaused: _inspectionPaused,
+    );
+    final frameDt = _animationClock.frameDt;
+
     if (!_inspectionPaused) {
-      super.update(dt);
+      _visualState.advance(frameDt);
+      super.update(frameDt);
     } else {
       // Magnifiers live in the viewport, outside the simulation world. Keep
       // their fade/position updates running so selecting a microscope target
@@ -111,16 +134,10 @@ class SoilScopeGame extends FlameGame
       final magnifierGroup = camera.viewport.children
           .query<MagnifierGroupComponent>()
           .firstOrNull;
-      magnifierGroup?.updateForInspectionPause(dt);
+      magnifierGroup?.updateForInspectionPause(frameDt);
     }
-    if (!_inspectionPaused) {
-      _uiElapsed += dt;
-    }
-    if (simulationState?.isRunning ?? false) {
-      if (!_inspectionPaused) {
-        _elapsed += dt;
-        _updateMassFlow(dt);
-      }
+    if (isRunning && !_inspectionPaused) {
+      _updateMassFlow(frameDt);
     }
   }
 
@@ -130,6 +147,14 @@ class SoilScopeGame extends FlameGame
   bool _readInspectionPaused() {
     try {
       return ref.read(inspectionPausedProvider);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _readIsScrubbing() {
+    try {
+      return ref.read(simulationSessionProvider).isScrubbing;
     } catch (_) {
       return false;
     }
@@ -149,8 +174,10 @@ class SoilScopeGame extends FlameGame
 
   void _updateMassFlow(double dt) {
     _massFlowAccumulator += dt;
-    if (_massFlowAccumulator > 2.0) { // Every 2 seconds
-      _massFlowAccumulator = 0;
+    // Subtract the interval instead of resetting to zero so a 2.1 s frame
+    // does not silently stretch the sync period.
+    while (_massFlowAccumulator >= 2.0) {
+      _massFlowAccumulator -= 2.0;
       final layers = world.children.query<SoilLayerComponent>();
       for (final layer in layers) {
         layer.triggerSubComponentSync();
@@ -159,11 +186,16 @@ class SoilScopeGame extends FlameGame
   }
 
   @override
-  double currentTime() => _elapsed;
+  double currentTime() => _animationClock.visualElapsed;
 
-  double uiTime() => _uiElapsed;
+  double uiTime() => _animationClock.uiElapsed;
+
+  AnimationClock get animationClock => _animationClock;
+
+  AnimationMode get animationMode => _animationClock.mode;
 
   BiophysicalState? get simulationState {
+    if (_visualState.value != null) return _visualState.value;
     if (_lastState != null) return _lastState;
     try {
       return ref.read(displayedSimulationStateProvider);
@@ -172,17 +204,19 @@ class SoilScopeGame extends FlameGame
     }
   }
 
-  /// State the canvas and HUD should agree on: the scrubber's snapshot when
-  /// history mode is active, otherwise the live state.
+  /// State the canvas should draw. It is interpolated between engine snapshots
+  /// so the 5 Hz simulation does not visibly step at 60 fps. The HUD keeps
+  /// using the provider's exact snapshot.
   BiophysicalState get displayedState =>
-      _lastState ?? ref.read(displayedSimulationStateProvider);
+      _visualState.value ??
+      _lastState ??
+      ref.read(displayedSimulationStateProvider);
 
   /// Scenario-derived emphasis used by process animations and soil texture.
   ScenarioProcessProfile get scenarioProcessProfile => _scenarioProcessProfile;
 
   List<Vector2> get rootTipWorldPositions => _rootTipWorldPositions;
   List<Vector2> get foliageWorldPositions => _foliageWorldPositions;
-
 
   @override
   Future<void> onLoad() async {
@@ -213,17 +247,17 @@ class SoilScopeGame extends FlameGame
 
     // 1. Viewport HUD (Stays fixed)
     camera.viewport.add(BackgroundNoiseComponent()..priority = -100);
-    
+
     // Large background sky/soil coverage (Vast width to prevent black edges)
     world.add(
       WeatherComponent(
-        size: Vector2(visualColumnWidth, soilSurfaceY), 
+        size: Vector2(visualColumnWidth, soilSurfaceY),
         position: Vector2(-visualColumnWidth / 2 + logicalSize.x / 2, 0),
       )..priority = -100,
     );
 
     world.add(SoilBackgroundLayer()..priority = -200);
-    
+
     // The main simulation layers
     debugLog('[SoilScopeGame] Adding SimulationAnimationLayerComponent');
     world.add(SimulationAnimationLayerComponent()..priority = 200);
@@ -246,7 +280,9 @@ class SoilScopeGame extends FlameGame
     final zoomDelta = -info.scrollDelta.global.y / 500.0;
     final oldZoom = camera.viewfinder.zoom;
     final minZoom = logicalSize.x / size.x;
-    final newZoom = (oldZoom + zoomDelta).clamp(math.min(0.8, minZoom), 10.0).toDouble();
+    final newZoom = (oldZoom + zoomDelta)
+        .clamp(math.min(0.8, minZoom), 10.0)
+        .toDouble();
 
     // Zoom towards cursor
     final cursorPosition = info.eventPosition.global;
@@ -301,7 +337,7 @@ class SoilScopeGame extends FlameGame
     final halfView = (logicalSize / 2) / camera.viewfinder.zoom;
     final minX = halfView.x - 100;
     final maxX = logicalSize.x - halfView.x + 100;
-    
+
     bool hasMicroscope = false;
     try {
       hasMicroscope = ref.read(simulationSessionProvider).isMicroscopeEnabled;
@@ -313,7 +349,9 @@ class SoilScopeGame extends FlameGame
 
     final minY = halfView.y - 100;
     // New maxY formula to prevent soil from being under the panel
-    final maxY = soilBottom - (logicalSize.y / 2 - panelHeight - 20) / camera.viewfinder.zoom;
+    final maxY =
+        soilBottom -
+        (logicalSize.y / 2 - panelHeight - 20) / camera.viewfinder.zoom;
 
     if (minX <= maxX) {
       camera.viewfinder.position.x = camera.viewfinder.position.x.clamp(
@@ -346,14 +384,17 @@ class SoilScopeGame extends FlameGame
 
   void updateSession(BiophysicalState state, SimulationSessionState session) {
     _syncActionBuffer.add(() {
-      _updateScene(state, session);
       _lastState = state;
+      _visualState.setTarget(state);
+      _pendingSceneState = state;
+      _pendingSceneSession = session;
     });
   }
 
   void updateIsRunning(bool isRunning, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
+      _visualState.setTarget(state);
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
@@ -361,38 +402,30 @@ class SoilScopeGame extends FlameGame
   void updateBiophysicalState(BiophysicalState next) {
     _syncActionBuffer.add(() {
       _lastState = next;
+      _visualState.setTarget(next);
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
-      // While inspection is paused the canvas is intentionally frozen. Do
-      // not rebuild animation state here either, or a selected indicator can
-      // be removed and recreated behind its still-open info card.
-      if (!_inspectionPaused) {
-        final animLayer = world.children
-            .query<SimulationAnimationLayerComponent>()
-            .firstOrNull;
-        if (animLayer != null) {
-          animLayer.updateState(next);
-        }
-      }
+      _applyAnimationState(next);
     });
   }
 
   void updateTimeScale(double timeScale, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
+      _visualState.setTarget(state);
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
-
 
   @override
   void onMount() {
     debugLog('[SoilScopeGame] onMount started');
     super.onMount();
-    
+
     try {
       final initialState = ref.read(displayedSimulationStateProvider);
       final session = ref.read(simulationSessionProvider);
       debugLog('[SoilScopeGame] onMount: performing initial _updateScene');
+      _visualState.reset(initialState);
       _updateScene(initialState, session);
       _lastState = initialState;
     } catch (e) {
@@ -405,6 +438,7 @@ class SoilScopeGame extends FlameGame
   @override
   void onRemove() {
     debugLog('[SoilScopeGame] onRemove');
+    _animationClock.reset();
     super.onRemove();
   }
 
@@ -412,14 +446,14 @@ class SoilScopeGame extends FlameGame
   void onGameResize(Vector2 size) {
     debugLog('[SoilScopeGame] onGameResize: ${size.x}x${size.y}');
     super.onGameResize(size);
-    
+
     // Ensure we always fill the width with the central column at minimum
     final fitZoom = size.x > 0 ? (size.x / logicalSize.x) : 1.35;
     if (camera.viewfinder.zoom < fitZoom) {
-       camera.viewfinder.zoom = fitZoom;
+      camera.viewfinder.zoom = fitZoom;
     }
     if (camera.viewfinder.zoom <= 0.05) {
-       camera.viewfinder.zoom = 1.35;
+      camera.viewfinder.zoom = 1.35;
     }
 
     // Centering the simulation and clamping
@@ -430,6 +464,22 @@ class SoilScopeGame extends FlameGame
       final session = ref.read(simulationSessionProvider);
       _updateScene(_lastState!, session);
     }
+  }
+
+  /// Applies the animation-layer part of a state update once per distinct
+  /// snapshot. The scene update and the displayed-state listener can both
+  /// arrive for the same tick; without this guard every state would rebuild
+  /// flux indicators and inspection targets twice.
+  void _applyAnimationState(BiophysicalState state) {
+    // Do not consume the dedupe slot while the canvas is frozen. The state
+    // will be applied on the first resumed frame instead of being lost.
+    if (_inspectionPaused) return;
+    if (identical(_lastAnimationState, state)) return;
+    _lastAnimationState = state;
+    final animLayer = world.children
+        .query<SimulationAnimationLayerComponent>()
+        .firstOrNull;
+    animLayer?.updateState(state);
   }
 
   void _updateScene(BiophysicalState state, SimulationSessionState session) {
@@ -485,7 +535,7 @@ class SoilScopeGame extends FlameGame
         );
         world.add(layerComp);
       }
-      
+
       layerComp.position = Vector2(layerRect.left, layerRect.top);
       layerComp.size = Vector2(layerRect.width, layerRect.height);
 
@@ -493,10 +543,7 @@ class SoilScopeGame extends FlameGame
     }
 
     // 2. Update Animations
-    final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
-    if (animLayer != null) {
-      animLayer.updateState(state);
-    }
+    _applyAnimationState(state);
 
     // 3. Update Magnifiers (Handled by component update, no explicit call needed here)
 
@@ -506,17 +553,30 @@ class SoilScopeGame extends FlameGame
     for (final plant in state.plants) {
       for (final n in plant.rootSystem) {
         if (n.isTip) {
-          tips.add(Vector2(
-            SceneCoordinateMapper.mapRootX(n.x, simulationWidth, baseX: plant.baseX) + soilX,
-            SceneCoordinateMapper.mapRootY(n.z, soilSurfaceY, soilAreaHeight),
-          ));
+          tips.add(
+            Vector2(
+              SceneCoordinateMapper.mapRootX(
+                    n.x,
+                    simulationWidth,
+                    baseX: plant.baseX,
+                  ) +
+                  soilX,
+              SceneCoordinateMapper.mapRootY(n.z, soilSurfaceY, soilAreaHeight),
+            ),
+          );
         }
       }
 
       // Foliage points (approximate canopy centers)
-      final shootPos = SceneCoordinateMapper.mapShootPosition(plant.baseX, simulationWidth, soilSurfaceY);
+      final shootPos = SceneCoordinateMapper.mapShootPosition(
+        plant.baseX,
+        simulationWidth,
+        soilSurfaceY,
+      );
       final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
-      foliage.add(Vector2(shootPos.x + soilX, soilSurfaceY - visualHeight * 0.6));
+      foliage.add(
+        Vector2(shootPos.x + soilX, soilSurfaceY - visualHeight * 0.6),
+      );
     }
 
     _rootTipWorldPositions = tips;
@@ -554,7 +614,8 @@ class SoilScopeGame extends FlameGame
 /// A full-screen component that handles background taps to deselect layers.
 /// By having a low priority and only handling taps not caught by others,
 /// it prevents the flickering issue where a layer is selected and immediately deselected.
-class BackgroundTapComponent extends Component with HasGameReference<SoilScopeGame>, TapCallbacks {
+class BackgroundTapComponent extends Component
+    with HasGameReference<SoilScopeGame>, TapCallbacks {
   @override
   void onTapUp(TapUpEvent event) {
     // This component is the fallback for taps not caught by an interactive

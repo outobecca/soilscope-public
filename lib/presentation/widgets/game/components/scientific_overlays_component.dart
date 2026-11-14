@@ -12,6 +12,8 @@ class ScientificOverlaysComponent extends Component
     with HasGameReference<SoilScopeGame>, SoilComponentMixin {
   ScientificOverlaysComponent() : super(priority: 1700);
 
+  final Map<String, TextPainter> _textPainters = {};
+
   @override
   void render(Canvas canvas) {
     final double zoom = game.camera.viewfinder.zoom;
@@ -29,7 +31,8 @@ class ScientificOverlaysComponent extends Component
     _drawSurfaceGrass(canvas, surfaceY, soilX, soilWidth);
 
     // Draw depth markers that follow the camera horizontally but stay near the soil column
-    final markerX = (game.camera.viewfinder.position.x - (game.size.x / 2) + 20).clamp(soilX - 100, soilX + 20);
+    final markerX = (game.camera.viewfinder.position.x - (game.size.x / 2) + 20)
+        .clamp(soilX - 100, soilX + 20);
     _drawDepthMarkers(
       canvas,
       zoom,
@@ -156,26 +159,62 @@ class ScientificOverlaysComponent extends Component
   ) {
     final markerLeft = soilX + 5;
     canvas.drawLine(Offset(markerLeft, y), Offset(markerLeft + 15, y), paint);
-    final tp = TextPainter(
+    final tp = _textPainter(
+      label,
+      color: const Color(0xFF455A64),
+      fontSize: 11 / zoom,
+      bold: true,
+    );
+    tp.paint(canvas, Offset(markerLeft + 17, y - tp.height / 2));
+  }
+
+  TextPainter _textPainter(
+    String text, {
+    required Color color,
+    required double fontSize,
+    bool bold = false,
+  }) {
+    final key =
+        '$text|${color.toARGB32()}|${fontSize.toStringAsFixed(2)}|$bold';
+    final cached = _textPainters[key];
+    if (cached != null) return cached;
+
+    final painter = TextPainter(
       text: TextSpan(
-        text: label,
+        text: text,
         style: TextStyle(
-          color: const Color(0xFF455A64),
-          fontSize: 11 / zoom,
+          color: color,
+          fontSize: fontSize,
+          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
           fontFamily: 'monospace',
-          fontWeight: FontWeight.bold,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, Offset(markerLeft + 17, y - tp.height / 2));
+    _textPainters[key] = painter;
+
+    // Zoom changes the key; keep the cache bounded instead of retaining one
+    // painter per pixel of every label ever drawn.
+    if (_textPainters.length > 64) {
+      final stale = _textPainters.keys.first;
+      _textPainters.remove(stale)?.dispose();
+    }
+    return painter;
   }
 
-  void _drawSurfaceGrass(Canvas canvas, double surfaceY, double soilX, double soilWidth) {
+  void _drawSurfaceGrass(
+    Canvas canvas,
+    double surfaceY,
+    double soilX,
+    double soilWidth,
+  ) {
     // Subtle green grass strip at soil surface, constrained to soil column
     final grassPaint = Paint()
       ..color = const Color(0xFF4CAF50).withValues(alpha: 0.7);
-    canvas.drawRect(Rect.fromLTWH(soilX, surfaceY - 2, soilWidth, 3), grassPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(soilX, surfaceY - 2, soilWidth, 3),
+      grassPaint,
+    );
 
     // Individual grass blades
     final rand = math.Random(42);
@@ -235,7 +274,12 @@ class ScientificOverlaysComponent extends Component
     final waterPaint = Paint()
       ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.06);
     canvas.drawRect(
-      Rect.fromLTWH(backgroundX, waterTableY, backgroundWidth, soilHeight * 0.15),
+      Rect.fromLTWH(
+        backgroundX,
+        waterTableY,
+        backgroundWidth,
+        soilHeight * 0.15,
+      ),
       waterPaint,
     );
     final linePaint = Paint()
@@ -249,24 +293,25 @@ class ScientificOverlaysComponent extends Component
     );
     // Saturated zone label - Centered in logical viewport
     final textX = (SoilScopeGame.logicalSize.x / 2) + 500;
-    _drawTableLabel(canvas, textX, waterTableY + 10, l.saturatedZone.toUpperCase());
+    _drawTableLabel(
+      canvas,
+      textX,
+      waterTableY + 10,
+      l.saturatedZone.toUpperCase(),
+    );
   }
 
   void _drawSurfaceLabel(Canvas canvas, double surfaceY, double soilX) {
-    final boundaryTp = TextPainter(
-      text: const TextSpan(
-        text: 'SURFACE (Z=0)',
-        style: TextStyle(
-          color: Color(0xFF8B5CF6),
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1,
-          fontFamily: 'monospace',
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    boundaryTp.paint(canvas, Offset(soilX + 10, surfaceY - boundaryTp.height - 2));
+    final boundaryTp = _textPainter(
+      'SURFACE (Z=0)',
+      color: const Color(0xFF8B5CF6),
+      fontSize: 12,
+      bold: true,
+    );
+    boundaryTp.paint(
+      canvas,
+      Offset(soilX + 10, surfaceY - boundaryTp.height - 2),
+    );
   }
 
   void _drawTableLabel(Canvas canvas, double x, double y, String text) {
@@ -290,18 +335,16 @@ class ScientificOverlaysComponent extends Component
     double fontSize = 10,
     bool bold = false,
   }) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-          fontFamily: 'monospace',
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+    final tp = _textPainter(text, color: color, fontSize: fontSize, bold: bold);
     tp.paint(canvas, Offset(x, y));
+  }
+
+  @override
+  void onRemove() {
+    for (final painter in _textPainters.values) {
+      painter.dispose();
+    }
+    _textPainters.clear();
+    super.onRemove();
   }
 }

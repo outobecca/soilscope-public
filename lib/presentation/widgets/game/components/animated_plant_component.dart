@@ -16,6 +16,7 @@ import 'scene_coordinate_mapper.dart';
 import 'molecule_renderer.dart';
 import 'riverpod_lifecycle_mixin.dart';
 import 'animation_math.dart';
+import 'visual_seed.dart';
 
 part 'animated_plant_component_painting.dart';
 
@@ -28,7 +29,7 @@ class AnimatedPlantComponent extends PositionComponent
         HoverCallbacks,
         RiverpodLifecycleMixin {
   final String plantId;
-  final math.Random _random = math.Random();
+  late final math.Random _random = visualRandom(['plant', plantId]);
 
   // Physiological Smoothing State
   double _smoothTurgor = 1.0;
@@ -192,9 +193,9 @@ class AnimatedPlantComponent extends PositionComponent
     // Fine-grained listener for THIS plant's data
     listenProvider<Plant?>(
       displayedSimulationStateProvider.select(
-        (s) => s.plants.firstWhere(
-          (p) => p.id == plantId,
-          orElse: () => s.plants.first,
+        (s) => s.plants.cast<Plant?>().firstWhere(
+          (p) => p?.id == plantId,
+          orElse: () => null,
         ),
       ),
       (prev, next) {

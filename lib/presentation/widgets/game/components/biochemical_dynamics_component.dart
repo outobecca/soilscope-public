@@ -19,12 +19,13 @@ import '../../../providers/ui_state_provider.dart';
 import '../../../../core/biophysics_utils.dart';
 import '../../../../core/cpk_standards.dart';
 import 'process_label_component.dart';
+import 'visual_seed.dart';
 
 /// Orchestrates small-scale biochemical animations like root exudates,
 /// enzymatic hotspots, and gas bubbles for all plants.
 class BiochemicalDynamicsComponent extends Component
     with HasGameReference<SoilScopeGame>, RiverpodLifecycleMixin {
-  final math.Random _random = math.Random.secure();
+  final math.Random _random = visualRandom(const ['biochemical-dynamics']);
   double _lastSync = 0;
 
   bool _isRunning = false;
@@ -73,7 +74,7 @@ class BiochemicalDynamicsComponent extends Component
 
     final pool = game.moleculePool;
     if (pool == null) return;
-    
+
     final existingCount = pool.activeCount;
     if (existingCount > 25) return;
 
@@ -170,7 +171,7 @@ class BiochemicalDynamicsComponent extends Component
     final process = game.scenarioProcessProfile;
     final pool = game.moleculePool;
     if (pool == null) return;
-    
+
     final existingCount = pool.activeCount;
     // A leaching or immobilization scenario should look busy even before the
     // user turns on the generic "flow mode" toggle.
@@ -185,7 +186,9 @@ class BiochemicalDynamicsComponent extends Component
 
     // We only need hotspots for root uptake flows, not for the general cycle
     // RHIZOSPHERE CENTRIC: Collect biological hotspots as primary sources for nutrient flows
-    final List<RhizosphereHotspotComponent> biologicalSources = game.world.children
+    final List<RhizosphereHotspotComponent> biologicalSources = game
+        .world
+        .children
         .whereType<SoilLayerComponent>()
         .expand((l) => l.children.whereType<RhizosphereHotspotComponent>())
         .toList();
@@ -200,22 +203,24 @@ class BiochemicalDynamicsComponent extends Component
       // still animate, then scale by the scenario's process emphasis.
       final nitrificationSignal =
           layer.ammoniumContent * layer.nitrificationRate;
-      final nitrificationChance = (nitrificationSignal *
-              1e5 *
-              dt *
-              (0.5 + 2.0 * process.nitrification))
-          .clamp(0.0, 0.2);
+      final nitrificationChance =
+          (nitrificationSignal * 1e5 * dt * (0.5 + 2.0 * process.nitrification))
+              .clamp(0.0, 0.2);
       if (nitrificationSignal > 1e-10 &&
           _random.nextDouble() < nitrificationChance) {
         double rx;
         double ry;
-        
+
         if (biologicalSources.isNotEmpty && _random.nextDouble() < 0.7) {
-          final h = biologicalSources[_random.nextInt(biologicalSources.length)];
+          final h =
+              biologicalSources[_random.nextInt(biologicalSources.length)];
           rx = h.absolutePosition.x + (_random.nextDouble() - 0.5) * 40.0;
           ry = h.absolutePosition.y + (_random.nextDouble() - 0.5) * 40.0;
         } else {
-          rx = _nextGaussian(game.soilLeftX + worldWidth / 2, 120.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
+          rx = _nextGaussian(
+            game.soilLeftX + worldWidth / 2,
+            120.0,
+          ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
           ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
         }
 
@@ -223,19 +228,24 @@ class BiochemicalDynamicsComponent extends Component
           type: MoleculeType.ammonium,
           transformTarget: MoleculeType.nitrate,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 4, 2), // Downward/lateral drift (ammonium is heavy/sticky)
+          velocity: Vector2(
+            (_random.nextDouble() - 0.5) * 4,
+            2,
+          ), // Downward/lateral drift (ammonium is heavy/sticky)
           seed: _random.nextInt(100),
           lifeTime: 4.0,
         );
 
         // Notify process
         if (_random.nextDouble() < 0.01 + 0.04 * process.nitrification) {
-          game.world.add(ProcessLabel(
-            type: ProcessMarkerType.nitrification,
-            color: CPKStandards.colorN,
-            position: Vector2(rx, ry),
-            showTitle: true,
-          ));
+          game.world.add(
+            ProcessLabel(
+              type: ProcessMarkerType.nitrification,
+              color: CPKStandards.colorN,
+              position: Vector2(rx, ry),
+              showTitle: true,
+            ),
+          );
         }
       }
 
@@ -243,18 +253,30 @@ class BiochemicalDynamicsComponent extends Component
       // Focused on rhizosphere where anaerobic microsites occur
       final denitrificationSignal =
           layer.nitrateContent * layer.denitrificationRate;
-      final denitrificationChance = (denitrificationSignal *
-              2e5 *
-              dt *
-              (0.5 + 2.0 * process.denitrification))
-          .clamp(0.0, 0.2);
+      final denitrificationChance =
+          (denitrificationSignal *
+                  2e5 *
+                  dt *
+                  (0.5 + 2.0 * process.denitrification))
+              .clamp(0.0, 0.2);
       if (denitrificationSignal > 1e-10 &&
           _random.nextDouble() < denitrificationChance) {
         final plant = state.plants.firstOrNull;
-        final centerX = plant != null ? SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY).x + game.soilLeftX : game.soilLeftX + worldWidth / 2;
-        
-        final rx = _nextGaussian(centerX, 150.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
-        final ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+        final centerX = plant != null
+            ? SceneCoordinateMapper.mapShootPosition(
+                    plant.baseX,
+                    worldWidth,
+                    surfaceY,
+                  ).x +
+                  game.soilLeftX
+            : game.soilLeftX + worldWidth / 2;
+
+        final rx = _nextGaussian(
+          centerX,
+          150.0,
+        ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
+        final ry =
+            layerY + _random.nextDouble() * (layer.thickness * soilHeight);
 
         game.moleculePool?.spawn(
           type: MoleculeType.nitrate,
@@ -270,42 +292,62 @@ class BiochemicalDynamicsComponent extends Component
 
         // Notify process
         if (_random.nextDouble() < 0.01 + 0.04 * process.denitrification) {
-          game.world.add(ProcessLabel(
-            type: ProcessMarkerType.denitrification,
-            color: CPKStandards.colorN,
-            position: Vector2(rx, ry),
-            showTitle: true,
-          ));
+          game.world.add(
+            ProcessLabel(
+              type: ProcessMarkerType.denitrification,
+              color: CPKStandards.colorN,
+              position: Vector2(rx, ry),
+              showTitle: true,
+            ),
+          );
         }
       }
 
       // --- 3. MINERALIZATION TRANSFORMATION (Org-N -> NH4) ---
       // Occurs primarily in topsoil with high microbial activity
       final double microbialActivity = layer.microbialBiomass / 500.0;
-      if (layer.organicNitrogen > 5.0 && microbialActivity > 0.2 && _random.nextDouble() < 0.03 * dt) {
+      if (layer.organicNitrogen > 5.0 &&
+          microbialActivity > 0.2 &&
+          _random.nextDouble() < 0.03 * dt) {
         final plant = state.plants.firstOrNull;
-        final centerX = plant != null ? SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY).x + game.soilLeftX : game.soilLeftX + worldWidth / 2;
+        final centerX = plant != null
+            ? SceneCoordinateMapper.mapShootPosition(
+                    plant.baseX,
+                    worldWidth,
+                    surfaceY,
+                  ).x +
+                  game.soilLeftX
+            : game.soilLeftX + worldWidth / 2;
 
-        final rx = _nextGaussian(centerX, 180.0).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
-        final ry = layerY + _random.nextDouble() * (layer.thickness * soilHeight);
+        final rx = _nextGaussian(
+          centerX,
+          180.0,
+        ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
+        final ry =
+            layerY + _random.nextDouble() * (layer.thickness * soilHeight);
 
         game.moleculePool?.spawn(
           type: MoleculeType.organicNitrogen,
           transformTarget: MoleculeType.ammonium,
           position: Vector2(rx, ry),
-          velocity: Vector2((_random.nextDouble() - 0.5) * 2, 1), // Sinking Org-N
+          velocity: Vector2(
+            (_random.nextDouble() - 0.5) * 2,
+            1,
+          ), // Sinking Org-N
           seed: _random.nextInt(100),
           lifeTime: 6.0,
         );
 
         // Notify process
         if (_random.nextDouble() < 0.002) {
-          game.world.add(ProcessLabel(
-            type: ProcessMarkerType.mineralization,
-            color: CPKStandards.colorN,
-            position: Vector2(rx, ry),
-            showTitle: true,
-          ));
+          game.world.add(
+            ProcessLabel(
+              type: ProcessMarkerType.mineralization,
+              color: CPKStandards.colorN,
+              position: Vector2(rx, ry),
+              showTitle: true,
+            ),
+          );
         }
       }
 
@@ -313,10 +355,10 @@ class BiochemicalDynamicsComponent extends Component
       // Nitrate is mobile even at small downward fluxes. The threshold used
       // to hide the animation until flux was already large, which made the
       // nitrate-leaching scenario look static at the start of a rain event.
-      final leachingChance = (0.08 *
-              dt *
-              (0.5 + 2.5 * process.leaching))
-          .clamp(0.0, 0.2);
+      final leachingChance = (0.08 * dt * (0.5 + 2.5 * process.leaching)).clamp(
+        0.0,
+        0.2,
+      );
       if (layer.verticalFlux > 1e-9 &&
           layer.nitrateContent > 0.5 &&
           _random.nextDouble() < leachingChance) {
@@ -332,12 +374,14 @@ class BiochemicalDynamicsComponent extends Component
         );
 
         if (_random.nextDouble() < 0.01 + 0.05 * process.leaching) {
-          game.world.add(ProcessLabel(
-            type: ProcessMarkerType.leaching,
-            color: CPKStandards.colorN,
-            position: Vector2(rx, ry),
-            showTitle: true,
-          ));
+          game.world.add(
+            ProcessLabel(
+              type: ProcessMarkerType.leaching,
+              color: CPKStandards.colorN,
+              position: Vector2(rx, ry),
+              showTitle: true,
+            ),
+          );
         }
       }
     }
@@ -471,31 +515,45 @@ class BiochemicalDynamicsComponent extends Component
       if (_random.nextDouble() < 0.02 * dt) {
         final tipNode = tips[_random.nextInt(tips.length)];
         final tipPos = Vector2(
-          SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth, baseX: plant.baseX) + game.soilLeftX,
+          SceneCoordinateMapper.mapRootX(
+                tipNode.x,
+                worldWidth,
+                baseX: plant.baseX,
+              ) +
+              game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
         );
 
         // Spawn a Nitrate particle that morphs into Ammonium near the root
-        final startPos = tipPos + Vector2((_random.nextDouble() - 0.5) * 40, (_random.nextDouble() - 0.5) * 40);
-        
+        final startPos =
+            tipPos +
+            Vector2(
+              (_random.nextDouble() - 0.5) * 40,
+              (_random.nextDouble() - 0.5) * 40,
+            );
+
         game.moleculePool?.spawn(
           type: MoleculeType.nitrate,
           transformTarget: MoleculeType.ammonium,
           position: startPos,
           targetPosition: tipPos,
-          velocity: (tipPos - startPos).normalized() * 15.0, // Very slow movement
+          velocity:
+              (tipPos - startPos).normalized() * 15.0, // Very slow movement
           seed: _random.nextInt(100),
           lifeTime: 8.0,
         );
 
         // Visual process label occasionally
         if (_random.nextDouble() < 0.005) {
-          game.world.add(ProcessLabel(
-            type: ProcessMarkerType.mineralization, // Using mineralization as proxy for N-reduction for now
-            color: CPKStandards.colorN,
-            position: tipPos,
-            showTitle: false,
-          ));
+          game.world.add(
+            ProcessLabel(
+              type: ProcessMarkerType
+                  .mineralization, // Using mineralization as proxy for N-reduction for now
+              color: CPKStandards.colorN,
+              position: tipPos,
+              showTitle: false,
+            ),
+          );
         }
       }
     }

@@ -7,6 +7,7 @@ import '../../../../domain/models/plant.dart';
 import 'animated_plant_component.dart';
 import 'animated_microbe_component.dart';
 import 'animated_earthworm_component.dart';
+import 'visual_seed.dart';
 import 'scene_coordinate_mapper.dart';
 
 class PlantDataComponent extends ecs.Component<Plant> {
@@ -43,7 +44,7 @@ class MicrobeDataComponent extends ecs.Component<Map<String, dynamic>> {
 /// Enforces strict population limits for simulation stability.
 class BiologicalEntitiesComponent extends Component
     with HasGameReference<SoilScopeGame> {
-  final math.Random _random = math.Random.secure();
+  final math.Random _random = visualRandom(const ['biological-entities']);
   late ecs.World _ecsWorld;
 
   // STRICT LIMITS: Reduced density for clarity (Task: Combine/Reduce)

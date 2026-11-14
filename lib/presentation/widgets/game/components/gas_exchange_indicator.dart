@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show PathMetric;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
@@ -7,20 +8,35 @@ import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../../core/cpk_standards.dart';
 import 'molecule_renderer.dart';
+import 'animation_math.dart';
+import 'visual_seed.dart';
 
-enum FluxType { co2Uptake, h2oTranspiration, co2Emission, o2Diffusion, n2oEmission }
+enum FluxType {
+  co2Uptake,
+  h2oTranspiration,
+  co2Emission,
+  o2Diffusion,
+  n2oEmission,
+}
 
 /// Interactive indicator for atmospheric gas and water fluxes.
 class AtmosphericFluxIndicator extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
   final FluxType type;
-  final Offset? startOffset;
-  final Offset? endOffset;
+  Offset? startOffset;
+  Offset? endOffset;
   final bool isCurved;
-  final double fluxValue;
-  
+  double _fluxValue;
+  double _targetFluxValue;
+
   bool _isPinned = false;
   double _emissionTimer = 0.0;
+  PathMetric? _cachedMetric;
+  Offset? _cachedStart;
+  Offset? _cachedEnd;
+  late final math.Random _random = visualRandom(['gas-flux', type.name]);
+
+  double get fluxValue => _fluxValue;
 
   AtmosphericFluxIndicator({
     required Vector2 position,
@@ -28,32 +44,68 @@ class AtmosphericFluxIndicator extends PositionComponent
     this.startOffset,
     this.endOffset,
     this.isCurved = false,
-    this.fluxValue = 0.5,
+    double fluxValue = 0.5,
     required Vector2 size,
-  }) : super(position: position, size: size, anchor: Anchor.center, priority: 300);
+  }) : _fluxValue = fluxValue,
+       _targetFluxValue = fluxValue,
+       super(
+         position: position,
+         size: size,
+         anchor: Anchor.center,
+         priority: 300,
+       );
+
+  /// Reuses an existing indicator when the state refreshes.
+  ///
+  /// Recreating these components on every 5 Hz tick used to reset the emission
+  /// timer, path phase, hover ring and pinned info card. Updating the visual
+  /// target in place preserves all of that while still following the science.
+  void updateFlux({
+    required Vector2 position,
+    required double fluxValue,
+    Offset? startOffset,
+    Offset? endOffset,
+  }) {
+    this.position.setFrom(position);
+    _targetFluxValue = fluxValue;
+    if (startOffset != null) this.startOffset = startOffset;
+    if (endOffset != null) this.endOffset = endOffset;
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
-    if (!(game.simulationState?.isRunning ?? false)) return;
-    if (fluxValue <= 0.01) return;
+    if (!(game.simulationState?.isRunning ?? false)) {
+      // A scrubbed or paused frame should show the target value immediately;
+      // there is no live particle stream to smooth while frozen.
+      _fluxValue = _targetFluxValue;
+      return;
+    }
 
-    // Emit particles along the curve or arrow
+    _fluxValue = dampTowards(
+      current: _fluxValue,
+      target: _targetFluxValue,
+      rate: 4.0,
+      dt: dt,
+    );
+    if (_fluxValue <= 0.01) return;
+
+    // Emit particles along the curve or arrow. Keep fractional time so the
+    // cadence does not drift when a frame is long.
     _emissionTimer += dt;
-    final double interval = (0.8 / fluxValue).clamp(0.2, 5.0); // Frequency based on flux
-    
-    if (_emissionTimer > interval) {
-       _emissionTimer = 0;
-       _spawnFluxParticle();
+    final double interval = (0.8 / _fluxValue).clamp(0.2, 5.0);
+    if (_emissionTimer >= interval) {
+      _emissionTimer %= interval;
+      _spawnFluxParticle();
     }
   }
 
   void _spawnFluxParticle() {
     if (!isCurved || startOffset == null || endOffset == null) return;
-    
+
     final worldStart = position.toOffset() + startOffset!;
     final worldEnd = position.toOffset() + endOffset!;
-    
+
     final molType = _getMoleculeType();
     if (molType == null) return;
 
@@ -62,29 +114,49 @@ class AtmosphericFluxIndicator extends PositionComponent
     final unitDir = Vector2(direction.dx, direction.dy).normalized();
     // Atmospheric dynamics: Gases should float upwards with breezy wispiness
     final isRising = type != FluxType.co2Uptake && type != FluxType.o2Diffusion;
-    
+
     // Generate an organic "wisp" path
     final List<Vector2> wispPath = [];
-    final normal = Vector2(-(worldEnd.dy - worldStart.dy), worldEnd.dx - worldStart.dx).normalized();
-    final drift = (math.Random().nextDouble() - 0.5) * 120.0;
-    
-    final speed = (40.0 + fluxValue * 50.0).clamp(30.0, 150.0);
-    final cp1 = Vector2(worldStart.dx, worldStart.dy) + unitDir * (direction.distance * 0.3) + normal * drift;
-    final cp2 = Vector2(worldStart.dx, worldStart.dy) + unitDir * (direction.distance * 0.7) - normal * drift;
-    
+    final normal = Vector2(
+      -(worldEnd.dy - worldStart.dy),
+      worldEnd.dx - worldStart.dx,
+    ).normalized();
+    final drift = (_random.nextDouble() - 0.5) * 120.0;
+
+    final speed = (40.0 + _fluxValue * 50.0).clamp(30.0, 150.0);
+    final cp1 =
+        Vector2(worldStart.dx, worldStart.dy) +
+        unitDir * (direction.distance * 0.3) +
+        normal * drift;
+    final cp2 =
+        Vector2(worldStart.dx, worldStart.dy) +
+        unitDir * (direction.distance * 0.7) -
+        normal * drift;
+
     // Discrete cubic bezier for the particle to follow
     for (double t = 0.1; t <= 1.0; t += 0.2) {
       final invT = 1.0 - t;
       final pos = Vector2(
-        invT * invT * invT * worldStart.dx + 3 * invT * invT * t * cp1.x + 3 * invT * t * t * cp2.x + t * t * t * worldEnd.dx,
-        invT * invT * invT * worldStart.dy + 3 * invT * invT * t * cp1.y + 3 * invT * t * t * cp2.y + t * t * t * worldEnd.dy,
+        invT * invT * invT * worldStart.dx +
+            3 * invT * invT * t * cp1.x +
+            3 * invT * t * t * cp2.x +
+            t * t * t * worldEnd.dx,
+        invT * invT * invT * worldStart.dy +
+            3 * invT * invT * t * cp1.y +
+            3 * invT * t * t * cp2.y +
+            t * t * t * worldEnd.dy,
       );
       wispPath.add(pos);
     }
-    
+
     // Extra vertical drift for emissions
     if (isRising) {
-       wispPath.add(Vector2(worldEnd.dx + (math.Random().nextDouble() - 0.5) * 100, worldEnd.dy - 200));
+      wispPath.add(
+        Vector2(
+          worldEnd.dx + (_random.nextDouble() - 0.5) * 100,
+          worldEnd.dy - 200,
+        ),
+      );
     }
 
     game.moleculePool?.spawn(
@@ -92,21 +164,26 @@ class AtmosphericFluxIndicator extends PositionComponent
       type: molType,
       velocity: unitDir * speed,
       path: wispPath,
-      opacity: (0.3 + fluxValue * 0.5).clamp(0.2, 0.8),
-      lifeTime: isRising ? 10.0 : 6.0, 
+      opacity: (0.3 + _fluxValue * 0.5).clamp(0.2, 0.8),
+      lifeTime: isRising ? 10.0 : 6.0,
       isInteractionEnabled: false,
-      seed: math.Random().nextInt(1000),
+      seed: _random.nextInt(1000),
     );
   }
 
   MoleculeType? _getMoleculeType() {
-     switch (type) {
-       case FluxType.co2Uptake: return MoleculeType.co2;
-       case FluxType.co2Emission: return MoleculeType.co2;
-       case FluxType.h2oTranspiration: return MoleculeType.waterVapor;
-       case FluxType.o2Diffusion: return MoleculeType.oxygen;
-       case FluxType.n2oEmission: return MoleculeType.nitrousOxide;
-     }
+    switch (type) {
+      case FluxType.co2Uptake:
+        return MoleculeType.co2;
+      case FluxType.co2Emission:
+        return MoleculeType.co2;
+      case FluxType.h2oTranspiration:
+        return MoleculeType.waterVapor;
+      case FluxType.o2Diffusion:
+        return MoleculeType.oxygen;
+      case FluxType.n2oEmission:
+        return MoleculeType.nitrousOxide;
+    }
   }
 
   @override
@@ -121,7 +198,8 @@ class AtmosphericFluxIndicator extends PositionComponent
     bool isElementHighlighted = false;
     if (highlightedSymbol != null && highlightedSymbol.isNotEmpty) {
       if (highlightedSymbol == 'C') {
-        isElementHighlighted = type == FluxType.co2Uptake || type == FluxType.co2Emission;
+        isElementHighlighted =
+            type == FluxType.co2Uptake || type == FluxType.co2Emission;
       } else if (highlightedSymbol == 'H') {
         isElementHighlighted = type == FluxType.h2oTranspiration;
       } else if (highlightedSymbol == 'O') {
@@ -138,7 +216,7 @@ class AtmosphericFluxIndicator extends PositionComponent
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.0 / zoom
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-        
+
         if (!isCurved) {
           canvas.drawCircle(Offset.zero, 30 / zoom, highlightPaint);
         }
@@ -192,22 +270,26 @@ class AtmosphericFluxIndicator extends PositionComponent
     final controlPoint = Offset(midX + perpX, midY + perpY);
 
     // Fade the path itself if flux is low
-    final double pathOpacity = (0.2 + fluxValue).clamp(0.1, 0.6);
+    final double pathOpacity = (0.2 + _fluxValue).clamp(0.1, 0.6);
     final paint = Paint()
       ..color = color.withValues(alpha: pathOpacity)
       ..strokeWidth = 1.5 / zoom
       ..style = PaintingStyle.stroke;
 
     final dashOffset = time * 35;
-    final path = Path()
-      ..moveTo(start.dx, start.dy)
-      ..quadraticBezierTo(controlPoint.dx, controlPoint.dy, end.dx, end.dy);
+    if (_cachedMetric == null || _cachedStart != start || _cachedEnd != end) {
+      final path = Path()
+        ..moveTo(start.dx, start.dy)
+        ..quadraticBezierTo(controlPoint.dx, controlPoint.dy, end.dx, end.dy);
+      final metrics = path.computeMetrics().toList(growable: false);
+      _cachedMetric = metrics.isEmpty ? null : metrics.first;
+      _cachedStart = start;
+      _cachedEnd = end;
+    }
 
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isEmpty) return;
-
-    final pathMetrics = metrics.first;
-    final pathLength = pathMetrics.length;
+    final pathMetric = _cachedMetric;
+    if (pathMetric == null) return;
+    final pathLength = pathMetric.length;
     if (pathLength <= 0) return;
 
     const dashWidth = 10.0;
@@ -221,14 +303,14 @@ class AtmosphericFluxIndicator extends PositionComponent
         // Comet effect: vary opacity along the path
         final double distFactor = (currentDist / pathLength).clamp(0.2, 1.0);
         paint.color = color.withValues(alpha: pathOpacity * distFactor);
-        canvas.drawPath(pathMetrics.extractPath(startDist, endDist), paint);
+        canvas.drawPath(pathMetric.extractPath(startDist, endDist), paint);
       }
       currentDist += dashWidth + dashSpace;
     }
 
     // Arrow head
     if (pathLength > 1) {
-      final tangent = pathMetrics.getTangentForOffset(pathLength - 1);
+      final tangent = pathMetric.getTangentForOffset(pathLength - 1);
       if (tangent != null) {
         final angle = math.atan2(tangent.vector.dy, tangent.vector.dx);
         canvas.save();
@@ -322,7 +404,9 @@ class AtmosphericFluxIndicator extends PositionComponent
 
   @override
   void onHoverExit() {
-    if (!_isPinned) game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
+    if (!_isPinned) {
+      game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
+    }
   }
 
   void _showInfo({bool pinned = false}) {
@@ -358,14 +442,20 @@ class AtmosphericFluxIndicator extends PositionComponent
       case FluxType.o2Diffusion:
         title = l.o2DiffusionTitle;
         desc = l.oxygenDiffusionDesc;
-        stats = {l.directionLabel: l.fluxAtmosphereToSoil, l.importance: l.aerobicState};
+        stats = {
+          l.directionLabel: l.fluxAtmosphereToSoil,
+          l.importance: l.aerobicState,
+        };
         symbol = 'O';
         accent = CPKStandards.colorO;
         break;
       case FluxType.n2oEmission:
         title = l.n2oEmissionTitle;
         desc = l.nitrogenLossDenit;
-        stats = {l.source: l.fluxSoilToAtmosphere, l.riskLabel: l.greenhouseGas};
+        stats = {
+          l.source: l.fluxSoilToAtmosphere,
+          l.riskLabel: l.greenhouseGas,
+        };
         symbol = 'N';
         accent = CPKStandards.colorN;
         break;

@@ -23,15 +23,22 @@ import 'soil_component_mixin.dart';
 import 'layer_tech_node_mixin.dart';
 import 'riverpod_lifecycle_mixin.dart';
 import 'rhizosphere_hotspot_component.dart';
+import 'visual_seed.dart';
 
 class SoilLayerComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, SoilComponentMixin, LayerTechNodeMixin, RiverpodLifecycleMixin, TapCallbacks {
+    with
+        HasGameReference<SoilScopeGame>,
+        SoilComponentMixin,
+        LayerTechNodeMixin,
+        RiverpodLifecycleMixin,
+        TapCallbacks {
   final String layerId;
   SoilLayer _layer;
   bool _isSelected;
 
   late Paint _layerPaint;
   Picture? _noisePicture;
+  late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
 
   SoilLayerComponent({
     required this.layerId,
@@ -49,10 +56,15 @@ class SoilLayerComponent extends PositionComponent
   @override
   void onMount() {
     super.onMount();
-    
+
     // Fine-grained listener for THIS layer's data
     listenProvider<SoilLayer?>(
-      displayedSimulationStateProvider.select((s) => s.profile.layers.cast<SoilLayer?>().firstWhere((l) => l?.id == layerId, orElse: () => null)),
+      displayedSimulationStateProvider.select(
+        (s) => s.profile.layers.cast<SoilLayer?>().firstWhere(
+          (l) => l?.id == layerId,
+          orElse: () => null,
+        ),
+      ),
       (prev, next) {
         if (next != null) {
           _handleLayerUpdate(next);
@@ -80,18 +92,26 @@ class SoilLayerComponent extends PositionComponent
       SelectionNodeComponent(
         nodeType: SelectionNodeType.soilLayer,
         layerId: layerId,
-        title: _layer.name.isNotEmpty ? _layer.name.toUpperCase() : 'LAYER ${layerId.toUpperCase()}',
-        description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
+        title: _layer.name.isNotEmpty
+            ? _layer.name.toUpperCase()
+            : 'LAYER ${layerId.toUpperCase()}',
+        description: _layer.description.isNotEmpty
+            ? _layer.description
+            : game.l10n.layerAnalysisDesc,
         accentColor: Color(_layer.colorValue),
         icon: Icons.layers_rounded,
         position: Vector2(60, size.y / 2), // Aligned with diagnostic gutter
         statsProvider: () {
           final state = game.displayedState;
           try {
-            final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
+            final layer = state.profile.layers.firstWhere(
+              (l) => l.id == layerId,
+            );
             return {
-              game.l10n.waterContentLabel: '${(layer.waterContent * 100).toStringAsFixed(1)}%',
-              game.l10n.temperatureLabel: '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
+              game.l10n.waterContentLabel:
+                  '${(layer.waterContent * 100).toStringAsFixed(1)}%',
+              game.l10n.temperatureLabel:
+                  '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
               'pH': layer.ph.toStringAsFixed(1),
               'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
               game.l10n.bulkDensity:
@@ -110,7 +130,8 @@ class SoilLayerComponent extends PositionComponent
   @override
   void onTapUp(TapUpEvent event) {
     final current = game.ref.read(uIStateProvider);
-    final isThisLayerPinned = current != null &&
+    final isThisLayerPinned =
+        current != null &&
         current.isPinned &&
         current.sourceId == 'soil-layer-$layerId';
 
@@ -130,31 +151,46 @@ class SoilLayerComponent extends PositionComponent
     try {
       final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
       final stats = {
-        game.l10n.waterContentLabel: '${(layer.waterContent * 100).toStringAsFixed(1)}%',
-        game.l10n.temperatureLabel: '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
+        game.l10n.waterContentLabel:
+            '${(layer.waterContent * 100).toStringAsFixed(1)}%',
+        game.l10n.temperatureLabel:
+            '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
         'pH': layer.ph.toStringAsFixed(1),
         'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
-        game.l10n.organicCarbonLabel: '${(layer.organicCarbon * 100).toStringAsFixed(2)}%',
+        game.l10n.organicCarbonLabel:
+            '${(layer.organicCarbon * 100).toStringAsFixed(2)}%',
         game.l10n.bulkDensity: '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
         game.l10n.porosity: '${(layer.porosity * 100).toStringAsFixed(0)}%',
       };
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(
-        HoverInfo(
-          title: _layer.name.isNotEmpty ? _layer.name.toUpperCase() : 'KERROS ${layerId.toUpperCase()}',
-          description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
-          stats: stats,
-          isPinned: pinned,
-          sourceId: 'soil-layer-$layerId',
-          onDismiss: () {
-            final session = game.ref.read(simulationSessionProvider);
-            if (session.selectedLayerId == layerId) {
-              game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
-            }
-          },
-          accentColor: Color(_layer.colorValue),
-          screenPosition: game.worldToScreen(absolutePosition + Vector2(size.x / 2, size.y / 2)).toOffset(),
-        ),
-      );
+      game.ref
+          .read(uIStateProvider.notifier)
+          .setHoverInfo(
+            HoverInfo(
+              title: _layer.name.isNotEmpty
+                  ? _layer.name.toUpperCase()
+                  : 'KERROS ${layerId.toUpperCase()}',
+              description: _layer.description.isNotEmpty
+                  ? _layer.description
+                  : game.l10n.layerAnalysisDesc,
+              stats: stats,
+              isPinned: pinned,
+              sourceId: 'soil-layer-$layerId',
+              onDismiss: () {
+                final session = game.ref.read(simulationSessionProvider);
+                if (session.selectedLayerId == layerId) {
+                  game.ref
+                      .read(simulationSessionProvider.notifier)
+                      .selectLayer(null);
+                }
+              },
+              accentColor: Color(_layer.colorValue),
+              screenPosition: game
+                  .worldToScreen(
+                    absolutePosition + Vector2(size.x / 2, size.y / 2),
+                  )
+                  .toOffset(),
+            ),
+          );
     } catch (_) {}
   }
 
@@ -171,10 +207,10 @@ class SoilLayerComponent extends PositionComponent
         _layer.organicCarbon != next.organicCarbon;
 
     _layer = next;
-    
+
     // Note: Position and size are still calculated by parent or can be reactive too
     // For now, let's keep them pushed or calculate them here if we know the total profile
-    
+
     if (needsRepaint) _updatePaint();
     if (needsNoiseUpdate) _preRenderNoise();
     _syncSubComponents();
@@ -185,7 +221,6 @@ class SoilLayerComponent extends PositionComponent
     _updatePaint();
     _preRenderNoise();
   }
-
 
   void triggerSubComponentSync() {
     _syncSubComponents();
@@ -207,7 +242,9 @@ class SoilLayerComponent extends PositionComponent
     final double zoom = game.camera.viewfinder.zoom;
 
     // 1. Draw base soil rectangle
-    final isBottomLayer = (position.y + size.y) >= (game.soilSurfaceY + game.soilColumnHeight - 5);
+    final isBottomLayer =
+        (position.y + size.y) >=
+        (game.soilSurfaceY + game.soilColumnHeight - 5);
     final wideRect = Rect.fromLTWH(
       backgroundX - simulationX,
       0,
@@ -219,9 +256,12 @@ class SoilLayerComponent extends PositionComponent
     // 2. Draw biological activity pulse
     final double bioFactor = (_layer.microbialBiomass / 500.0).clamp(0.0, 1.0);
     if (bioFactor > 0.1) {
-      final double pulse = 0.5 + 0.5 * math.sin(game.currentTime() * (1.0 + bioFactor * 4.0));
+      final double pulse =
+          0.5 + 0.5 * math.sin(game.currentTime() * (1.0 + bioFactor * 4.0));
       final bioPaint = Paint()
-        ..color = const Color(0xFF689F38).withValues(alpha: 0.03 * bioFactor * pulse)
+        ..color = const Color(
+          0xFF689F38,
+        ).withValues(alpha: 0.03 * bioFactor * pulse)
         ..style = PaintingStyle.fill;
       canvas.drawRect(wideRect, bioPaint);
     }
@@ -236,7 +276,12 @@ class SoilLayerComponent extends PositionComponent
 
     // Depth Shadows (Vignette)
     if (position.y > game.soilSurfaceY + 1.0) {
-      final topShadowRect = Rect.fromLTWH(wideRect.left, 0, wideRect.width, 25.0);
+      final topShadowRect = Rect.fromLTWH(
+        wideRect.left,
+        0,
+        wideRect.width,
+        25.0,
+      );
       final topShadowPaint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
@@ -248,7 +293,12 @@ class SoilLayerComponent extends PositionComponent
     }
 
     if (!isBottomLayer) {
-      final bottomShadowRect = Rect.fromLTWH(wideRect.left, size.y - 25.0, wideRect.width, 25.0);
+      final bottomShadowRect = Rect.fromLTWH(
+        wideRect.left,
+        size.y - 25.0,
+        wideRect.width,
+        25.0,
+      );
       final bottomShadowPaint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.bottomCenter,
@@ -304,17 +354,27 @@ class SoilLayerComponent extends PositionComponent
     final symbol = session.selectedElementSymbol;
     final existingIons = children.query<IonComponent>();
 
-    if (zoom > SimulationConstants.detailZoomThreshold && symbol != null && state.plants.isNotEmpty) {
+    if (zoom > SimulationConstants.detailZoomThreshold &&
+        symbol != null &&
+        state.plants.isNotEmpty) {
       if (existingIons.length < 20) {
         final plant = state.plants.first;
-        final centerX = SceneCoordinateMapper.mapShootPosition(plant.baseX, size.x, 0).x;
+        final centerX = SceneCoordinateMapper.mapShootPosition(
+          plant.baseX,
+          size.x,
+          0,
+        ).x;
 
         final rand = math.Random(
           layerId.hashCode + symbol.hashCode + existingIons.length,
         );
 
         // RHIZOSPHERE FOCUS: Gaussian bias for ions in the layer
-        final ix = _nextGaussian(rand, centerX, 180.0).clamp(20.0, size.x - 20.0);
+        final ix = _nextGaussian(
+          rand,
+          centerX,
+          180.0,
+        ).clamp(20.0, size.x - 20.0);
         final iy = rand.nextDouble() * size.y;
 
         add(
@@ -338,10 +398,7 @@ class SoilLayerComponent extends PositionComponent
         .where((h) => h.layerId == layerId);
 
     if (existingHotspots.isEmpty) {
-      spawnLayerHUDNodes(
-        layerId: layerId,
-        state: state,
-      );
+      spawnLayerHUDNodes(layerId: layerId, state: state);
     }
 
     // --- RHIZOSPHERE HOTSPOTS SYNC ---
@@ -354,24 +411,23 @@ class SoilLayerComponent extends PositionComponent
     for (final h in _layer.hotspots) {
       activeHotspotIds.add(h.id);
       final existing = dynamicMap[h.id];
-      
-      final Vector2 hotspotPos = Vector2(
-        h.x * size.x,
-        h.z * size.y,
-      );
+
+      final Vector2 hotspotPos = Vector2(h.x * size.x, h.z * size.y);
 
       if (existing != null) {
         existing.position = hotspotPos;
         existing.updateIntensity(h.intensity);
       } else {
-        add(RhizosphereHotspotComponent(
-          hotspotId: h.id,
-          layerId: layerId,
-          intensity: h.intensity,
-          type: h.type,
-          position: hotspotPos,
-          radius: h.radius,
-        ));
+        add(
+          RhizosphereHotspotComponent(
+            hotspotId: h.id,
+            layerId: layerId,
+            intensity: h.intensity,
+            type: h.type,
+            position: hotspotPos,
+            radius: h.radius,
+          ),
+        );
       }
     }
 
@@ -390,7 +446,6 @@ class SoilLayerComponent extends PositionComponent
     final z0 = math.sqrt(-2.0 * math.log(u1)) * math.cos(2.0 * math.pi * u2);
     return z0 * stdDev + mean;
   }
-
 
   double _nitrificationAccumulator = 0;
 
@@ -413,13 +468,14 @@ class SoilLayerComponent extends PositionComponent
       // compacted or anaerobic layer stays visually quiet.
       final double scenarioBoost = 0.8 + 0.8 * process.nitrification;
 
-      _nitrificationAccumulator += nNitrified *
+      _nitrificationAccumulator +=
+          nNitrified *
           SimulationConstants.nitrificationVisualDensity *
           dt *
           scenarioBoost;
       if (_nitrificationAccumulator >= 1.0) {
         _nitrificationAccumulator -= 1.0;
-        
+
         // Throttling: Only emit if pool has capacity and not too many this frame
         final pool = game.moleculePool;
         if (pool != null) {
@@ -429,18 +485,29 @@ class SoilLayerComponent extends PositionComponent
             type: MoleculeType.ammonium,
             targetType: MoleculeType.nitrate,
             opacity: redoxOpacity,
-            speed: SimulationConstants.particleBaseSpeed + (nitRate * SimulationConstants.fluxToSpeedScale).clamp(5.0, 50.0),
+            speed:
+                SimulationConstants.particleBaseSpeed +
+                (nitRate * SimulationConstants.fluxToSpeedScale).clamp(
+                  5.0,
+                  50.0,
+                ),
           );
 
           // Occasional process notification; the scenario's nitrogen signal
           // makes the label appear often enough to read before it fades.
-          if (math.Random().nextDouble() < 0.003 + 0.01 * process.nitrification) {
-             game.world.add(ProcessLabel(
-               type: ProcessMarkerType.nitrification,
-               color: CPKStandards.colorN,
-               position: Vector2(position.x + math.Random().nextDouble() * size.x, position.y + math.Random().nextDouble() * size.y),
-               showTitle: true,
-             ));
+          if (_eventRandom.nextDouble() <
+              0.003 + 0.01 * process.nitrification) {
+            game.world.add(
+              ProcessLabel(
+                type: ProcessMarkerType.nitrification,
+                color: CPKStandards.colorN,
+                position: Vector2(
+                  position.x + _eventRandom.nextDouble() * size.x,
+                  position.y + _eventRandom.nextDouble() * size.y,
+                ),
+                showTitle: true,
+              ),
+            );
           }
         }
       }
@@ -465,7 +532,7 @@ class SoilLayerComponent extends PositionComponent
     if (hotspots.isEmpty) return;
     final hotspot = hotspots.first;
 
-    final rand = math.Random();
+    final rand = _eventRandom;
     // Start at a random position within the soil layer's interactive zone
     final startPos = Vector2(
       position.x + rand.nextDouble() * size.x,

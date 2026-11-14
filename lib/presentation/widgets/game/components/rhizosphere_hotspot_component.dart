@@ -7,6 +7,7 @@ import '../../../../domain/models/soil_layer.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../soil_scope_game.dart';
 import 'canvas_hit_testing.dart';
+import 'visual_seed.dart';
 
 /// A dynamic visual representation of a rhizosphere hotspot.
 /// Shows metabolic activity (acidification and exudation) around root tips.
@@ -26,11 +27,11 @@ class RhizosphereHotspotComponent extends PositionComponent
     required Vector2 position,
     required double radius,
   }) : super(
-          position: position,
-          size: Vector2.all(radius * 200), // Scale to world units
-          anchor: Anchor.center,
-          priority: 950, // Below plant roots, above soil base
-        );
+         position: position,
+         size: Vector2.all(radius * 200), // Scale to world units
+         anchor: Anchor.center,
+         priority: 950, // Below plant roots, above soil base
+       );
 
   late final CircleComponent _glow;
   late final List<CircleComponent> _particles = [];
@@ -69,16 +70,17 @@ class RhizosphereHotspotComponent extends PositionComponent
       );
       add(p);
       _particles.add(p);
-      
+
       final angle = (i / 5) * 2 * math.pi;
-      final dist = (size.x / 4) * (0.5 + 0.5 * math.Random().nextDouble());
-      
+      final random = visualRandom(['rhizosphere', hotspotId]);
+      final dist = (size.x / 4) * (0.5 + 0.5 * random.nextDouble());
+
       p.add(
         MoveByEffect(
           Vector2(math.cos(angle) * dist, math.sin(angle) * dist),
           EffectController(
-            duration: 1.0 + math.Random().nextDouble(), 
-            reverseDuration: 1.0 + math.Random().nextDouble(), 
+            duration: 1.0 + random.nextDouble(),
+            reverseDuration: 1.0 + random.nextDouble(),
             infinite: true,
             curve: Curves.easeInOutSine,
           ),
@@ -106,22 +108,22 @@ class RhizosphereHotspotComponent extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    
+
     // Draw a small core
     final paint = Paint()
       ..color = _getColor().withValues(alpha: 0.4 * intensity)
       ..style = PaintingStyle.fill;
-    
+
     canvas.drawCircle(Offset(size.x / 2, size.y / 2), 4, paint);
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: size.x / 2,
-        minWorld: 6,
-        maxWorld: 36,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: size.x / 2,
+    minWorld: 6,
+    maxWorld: 36,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -182,7 +184,8 @@ class RhizosphereHotspotComponent extends PositionComponent
         break;
       case HotspotType.fungalHub:
         title = "MYCORRHIZAL HUB";
-        desc = "Dense hyphal contact zone facilitating nutrient exchange with root cells.";
+        desc =
+            "Dense hyphal contact zone facilitating nutrient exchange with root cells.";
         stats = {
           "Symbiont": "Glomeromycota",
           "Exchange": "C ↔ P",
@@ -191,25 +194,33 @@ class RhizosphereHotspotComponent extends PositionComponent
         break;
     }
 
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: title,
-        description: desc,
-        stats: stats,
-        isPinned: pinned,
-        sourceId: 'rhizosphere-$hotspotId',
-        onDismiss: () => _isPinned = false,
-        accentColor: _getColor(),
-        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: title,
+            description: desc,
+            stats: stats,
+            isPinned: pinned,
+            sourceId: 'rhizosphere-$hotspotId',
+            onDismiss: () => _isPinned = false,
+            accentColor: _getColor(),
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+          ),
+        );
   }
 
   void triggerPulse() {
     _glow.add(
       SequenceEffect([
-        ScaleEffect.by(Vector2.all(1.4), EffectController(duration: 0.1, reverseDuration: 0.1)),
-        OpacityEffect.to(0.5, EffectController(duration: 0.1, reverseDuration: 0.2)),
+        ScaleEffect.by(
+          Vector2.all(1.4),
+          EffectController(duration: 0.1, reverseDuration: 0.1),
+        ),
+        OpacityEffect.to(
+          0.5,
+          EffectController(duration: 0.1, reverseDuration: 0.2),
+        ),
       ]),
     );
   }

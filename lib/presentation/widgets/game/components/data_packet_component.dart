@@ -32,6 +32,8 @@ class DataPacket extends PositionComponent
   bool _isSelected = false;
   bool _isPinned = false;
   double _selectionPulse = 0;
+  double _cachedPathLength = 0;
+  List<Vector2>? _cachedPath;
 
   DataPacket({
     required this.type,
@@ -77,7 +79,13 @@ class DataPacket extends PositionComponent
         ..close();
       canvas.drawPath(diamond, Paint()..color = color);
       // Shine highlight for energy
-      canvas.drawLine(Offset(center.dx - 2, center.dy - 2), Offset(center.dx + 2, center.dy + 2), Paint()..color = Colors.white.withValues(alpha: 0.5)..strokeWidth = 2);
+      canvas.drawLine(
+        Offset(center.dx - 2, center.dy - 2),
+        Offset(center.dx + 2, center.dy + 2),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.5)
+          ..strokeWidth = 2,
+      );
     } else if (type == FluxType.leaching) {
       // Leaching is a downward arrow
       final arrow = Path()
@@ -90,12 +98,20 @@ class DataPacket extends PositionComponent
       // Default: Shaded Circle
       final radius = drawSize * 0.7;
       // Shadow
-      canvas.drawCircle(center + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.2));
+      canvas.drawCircle(
+        center + const Offset(1, 1),
+        radius,
+        Paint()..color = Colors.black.withValues(alpha: 0.2),
+      );
       // Main Body
       canvas.drawCircle(center, radius, Paint()..color = color);
       // Shading highlight
-      canvas.drawCircle(center - Offset(radius * 0.3, radius * 0.3), radius * 0.3, Paint()..color = Colors.white.withValues(alpha: 0.4));
-      
+      canvas.drawCircle(
+        center - Offset(radius * 0.3, radius * 0.3),
+        radius * 0.3,
+        Paint()..color = Colors.white.withValues(alpha: 0.4),
+      );
+
       canvas.drawCircle(
         center,
         radius,
@@ -146,11 +162,14 @@ class DataPacket extends PositionComponent
   }
 
   double _pathLength() {
+    if (_cachedPath == path) return _cachedPathLength;
     double length = 0;
     for (int i = 0; i < path.length - 1; i++) {
       length += path[i].distanceTo(path[i + 1]);
     }
-    return length.clamp(1.0, double.infinity);
+    _cachedPath = path;
+    _cachedPathLength = length.clamp(1.0, double.infinity);
+    return _cachedPathLength;
   }
 
   Vector2 _getPositionAt(double t) {
@@ -171,12 +190,12 @@ class DataPacket extends PositionComponent
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 8,
-        minWorld: 8,
-        maxWorld: 32,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 8,
+    minWorld: 8,
+    maxWorld: 32,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {

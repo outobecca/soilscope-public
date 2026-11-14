@@ -6,14 +6,16 @@ import '../../../../domain/models/biophysical_state.dart';
 import 'animated_microbe_component.dart';
 import 'scene_coordinate_mapper.dart';
 import 'selection_node_component.dart';
+import 'animation_math.dart';
+import 'visual_seed.dart';
 
 /// Visualizes enzyme activity (ripples) emanating from microbes and root tips.
 /// Anchored to biological hotspots for causal realism.
 class EnzymeActivityComponent extends PositionComponent
     with HasGameReference<SoilScopeGame> {
   final List<_EnzymeWave> _waves = [];
-  final math.Random _random = math.Random.secure();
-  double _spawnTimer = 0;
+  final math.Random _random = visualRandom(const ['enzyme-activity']);
+  final RateAccumulator _spawnAccumulator = RateAccumulator();
 
   EnzymeActivityComponent() : super(priority: 6);
 
@@ -39,9 +41,7 @@ class EnzymeActivityComponent extends PositionComponent
     // Higher biomass and EPS -> more frequent ripples
     final spawnInterval = (1.5 / (totalBiomass * 0.5 + 0.2)).clamp(0.4, 3.0);
 
-    _spawnTimer += dt;
-    if (_spawnTimer > spawnInterval) {
-      _spawnTimer = 0;
+    if (_spawnAccumulator.consume(dt, 1.0 / spawnInterval) > 0) {
       _spawnEnzymeAtHotspot(state, avgEps);
     }
 
@@ -57,7 +57,11 @@ class EnzymeActivityComponent extends PositionComponent
     final microbes = game.world.children
         .query<AnimatedMicrobeComponent>()
         .toList();
-    final rootTips = state.plant.rootSystem.where((n) => n.isTip).toList();
+    final rootTips = [
+      for (final plant in state.plants)
+        for (final node in plant.rootSystem.where((n) => n.isTip))
+          (plant: plant, node: node),
+    ];
 
     if (microbes.isNotEmpty && _random.nextDouble() < 0.7) {
       final m = microbes[_random.nextInt(microbes.length)];
@@ -69,7 +73,8 @@ class EnzymeActivityComponent extends PositionComponent
         ),
       );
     } else if (rootTips.isNotEmpty) {
-      final tip = rootTips[_random.nextInt(rootTips.length)];
+      final picked = rootTips[_random.nextInt(rootTips.length)];
+      final tip = picked.node;
       final soilWidth = SoilScopeGame.soilColumnWidth;
       final soilX = game.soilLeftX;
 
@@ -77,7 +82,7 @@ class EnzymeActivityComponent extends PositionComponent
           SceneCoordinateMapper.mapRootX(
             tip.x,
             soilWidth,
-            baseX: state.plant.baseX,
+            baseX: picked.plant.baseX,
           ) +
           soilX;
       final tipY =

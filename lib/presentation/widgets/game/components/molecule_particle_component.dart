@@ -12,13 +12,19 @@ import 'cycle_highlight_mixin.dart';
 import 'canvas_hit_testing.dart';
 import 'animated_plant_component.dart';
 import 'molecule_renderer.dart';
-
+import 'visual_seed.dart';
 
 /// Optimized Molecular Particle component with reduced pixel footprint.
 /// Represents a cluster of molecules (edustusmalli).
 class MoleculeParticleComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, BiologicalEntityMixin, VisualTimeMixin, CycleHighlightMixin, CollisionCallbacks {
-  
+    with
+        HasGameReference<SoilScopeGame>,
+        TapCallbacks,
+        HoverCallbacks,
+        BiologicalEntityMixin,
+        VisualTimeMixin,
+        CycleHighlightMixin,
+        CollisionCallbacks {
   @override
   Set<ObservationCycle> get memberOfCycles {
     switch (type) {
@@ -46,11 +52,12 @@ class MoleculeParticleComponent extends PositionComponent
         return {};
     }
   }
+
   MoleculeType type;
-  MoleculeType? transformTarget; 
+  MoleculeType? transformTarget;
   int seed;
   final Vector2 velocity;
-  Vector2? targetPosition; 
+  Vector2? targetPosition;
   List<Vector2>? path;
   int _pathIndex = 0;
   double lifeTime;
@@ -76,7 +83,12 @@ class MoleculeParticleComponent extends PositionComponent
     this.opacity = 1.0,
     this.isInteractionEnabled = true,
   }) : velocity = velocity ?? Vector2(0, 40),
-       super(position: position, size: Vector2.all(6), anchor: Anchor.center, priority: 60) {
+       super(
+         position: position,
+         size: Vector2.all(6),
+         anchor: Anchor.center,
+         priority: 60,
+       ) {
     _time = seed.toDouble();
     add(CircleHitbox(radius: 4.0, collisionType: CollisionType.active));
   }
@@ -100,39 +112,55 @@ class MoleculeParticleComponent extends PositionComponent
     this.targetPosition = targetPosition;
     this.path = path;
     _pathIndex = 0;
-    this.seed = seed ?? math.Random().nextInt(1000);
+    this.seed =
+        seed ?? visualSeed(['molecule', type.name, position.x, position.y]);
     this.velocity.setFrom(velocity ?? Vector2(0, 40));
     this.lifeTime = lifeTime ?? 8.0;
     this.opacity = opacity ?? 1.0;
     this.isInteractionEnabled = isInteractionEnabled ?? true;
-    
+
     _time = this.seed.toDouble();
     _isAbsorbed = false;
+    _isFadingOut = false;
+    _fadeTime = 0.0;
     _selectionPulse = 0.0;
+    _transformProgress = 0.0;
+    isHovered = false;
 
-    // Refresh hitbox
-    children.query<CircleHitbox>().firstOrNull?.collisionType = CollisionType.active;
+    // Refresh hitbox. A particle returned to the pool after absorption must
+    // become collidable again before it is spawned into the scene.
+    children.query<CircleHitbox>().firstOrNull?.collisionType =
+        CollisionType.active;
   }
 
   @override
   String get entityTitle => MoleculeRenderer.getMoleculeFormula(type);
 
   @override
-  void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
     super.onCollisionStart(intersectionPoints, other);
-    if (isInteractionEnabled && other is AnimatedPlantComponent && !_isAbsorbed) {
+    if (isInteractionEnabled &&
+        other is AnimatedPlantComponent &&
+        !_isAbsorbed) {
       final plantId = other.plantId;
-      final symbol = MoleculeRenderer.getMoleculeFormula(type).replaceAll(RegExp(r'[^a-zA-Z]'), '');
-      game.ref.read(simulationProvider.notifier).absorbNutrient(plantId, symbol, 0.1);
+      final symbol = MoleculeRenderer.getMoleculeFormula(
+        type,
+      ).replaceAll(RegExp(r'[^a-zA-Z]'), '');
+      game.ref
+          .read(simulationProvider.notifier)
+          .absorbNutrient(plantId, symbol, 0.1);
       game.triggerPlantGrowth();
       _isAbsorbed = true;
-      children.query<CircleHitbox>().firstOrNull?.collisionType = CollisionType.inactive;
+      children.query<CircleHitbox>().firstOrNull?.collisionType =
+          CollisionType.inactive;
       removeFromParent();
     }
   }
 
   Color get moleculeColor => MoleculeRenderer.getMoleculeColor(type);
-
 
   static final Vector2 _tmpVec = Vector2.zero();
 
@@ -160,7 +188,7 @@ class MoleculeParticleComponent extends PositionComponent
       final driftScale = (type == MoleculeType.ammonium) ? 2.5 : 4.0;
       final driftX = math.sin(_time * 2.0 + seed) * driftScale;
       final driftY = math.cos(_time * 2.5 + seed) * driftScale;
-      
+
       // If we are close to the current waypoint, advance
       // Using a slightly larger radius for faster particles to prevent skipping
       final threshold = (velocity.length * vdt * 1.5).clamp(15.0, 40.0);
@@ -175,7 +203,7 @@ class MoleculeParticleComponent extends PositionComponent
           return;
         }
       }
-      
+
       currentTarget = currentTarget + Vector2(driftX, driftY);
     }
 
@@ -188,16 +216,21 @@ class MoleculeParticleComponent extends PositionComponent
         final isAmmonium = type == MoleculeType.ammonium;
         final seekStrength = isAmmonium ? 0.02 : 0.08;
         final baseSpeed = isAmmonium ? 15.0 : 35.0;
-        
+
         // Add brownian jitter for ammonium to represent restricted diffusion
         if (isAmmonium) {
-          _tmpVec.add(Vector2(
-            math.sin(_time * 5.0 + seed) * 0.5,
-            math.cos(_time * 4.0 + seed) * 0.5
-          ));
+          _tmpVec.add(
+            Vector2(
+              math.sin(_time * 5.0 + seed) * 0.5,
+              math.cos(_time * 4.0 + seed) * 0.5,
+            ),
+          );
         }
 
-        velocity.lerp(_tmpVec * (baseSpeed + math.sin(_time + seed) * 15.0), seekStrength);
+        velocity.lerp(
+          _tmpVec * (baseSpeed + math.sin(_time + seed) * 15.0),
+          seekStrength,
+        );
       }
     }
 
@@ -218,10 +251,10 @@ class MoleculeParticleComponent extends PositionComponent
 
     // Bounding Box Clamping: Keep particles within visible world boundaries
     final visibleRect = game.camera.visibleWorldRect;
-    
+
     // Remove if life ends or it's way outside the visible area
-    if (_time - seed > lifeTime || 
-        position.x < visibleRect.left - 50 || 
+    if (_time - seed > lifeTime ||
+        position.x < visibleRect.left - 50 ||
         position.x > visibleRect.right + 50 ||
         position.y < visibleRect.top - 50 ||
         position.y > visibleRect.bottom + 50) {
@@ -229,7 +262,10 @@ class MoleculeParticleComponent extends PositionComponent
     }
 
     // Absorption logic
-    if (!_isAbsorbed && !_isFadingOut && targetPosition != null && position.distanceTo(targetPosition!) < 15.0) {
+    if (!_isAbsorbed &&
+        !_isFadingOut &&
+        targetPosition != null &&
+        position.distanceTo(targetPosition!) < 15.0) {
       game.triggerPlantGrowth();
       _isAbsorbed = true;
       _isFadingOut = true;
@@ -239,18 +275,23 @@ class MoleculeParticleComponent extends PositionComponent
       if (state != null && state.plants.isNotEmpty) {
         String? targetPlantId;
         for (final plant in state.plants) {
-           for (final pos in game.rootTipWorldPositions) {
-             if (pos.distanceToSquared(targetPosition!) < 900) { // 30px radius
-               targetPlantId = plant.id;
-               break;
-             }
-           }
-           if (targetPlantId != null) break;
+          for (final pos in game.rootTipWorldPositions) {
+            if (pos.distanceToSquared(targetPosition!) < 900) {
+              // 30px radius
+              targetPlantId = plant.id;
+              break;
+            }
+          }
+          if (targetPlantId != null) break;
         }
 
         if (targetPlantId != null) {
-           final symbol = MoleculeRenderer.getMoleculeFormula(type).replaceAll(RegExp(r'[^a-zA-Z]'), '');
-           game.ref.read(simulationProvider.notifier).absorbNutrient(targetPlantId, symbol, 0.1);
+          final symbol = MoleculeRenderer.getMoleculeFormula(
+            type,
+          ).replaceAll(RegExp(r'[^a-zA-Z]'), '');
+          game.ref
+              .read(simulationProvider.notifier)
+              .absorbNutrient(targetPlantId, symbol, 0.1);
         }
       }
     }
@@ -269,7 +310,7 @@ class MoleculeParticleComponent extends PositionComponent
     final zoom = game.camera.viewfinder.zoom;
     final double elapsed = _time - seed;
     double currentOpacity = opacity;
-    
+
     // Smooth fade in/out
     if (elapsed < 1.0) {
       currentOpacity *= elapsed;
@@ -313,18 +354,19 @@ class MoleculeParticleComponent extends PositionComponent
   }
 
   @override
-  void onHoverEnter() => handleHoverEnter(() => _showMoleculeInfo(pinned: false));
+  void onHoverEnter() =>
+      handleHoverEnter(() => _showMoleculeInfo(pinned: false));
 
   @override
   void onHoverExit() => handleHoverExit();
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 8,
-        minWorld: 6,
-        maxWorld: 36,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 8,
+    minWorld: 6,
+    maxWorld: 36,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -341,23 +383,38 @@ class MoleculeParticleComponent extends PositionComponent
 
   void _showMoleculeInfo({bool pinned = false}) {
     final info = _getMoleculeInfo();
-    
+
     // Determine the dominant element symbol for CPK coloring
     String? symbol;
     switch (type) {
-      case MoleculeType.ammonium || MoleculeType.nitrate || MoleculeType.organicNitrogen || MoleculeType.nitrousOxide:
+      case MoleculeType.ammonium ||
+          MoleculeType.nitrate ||
+          MoleculeType.organicNitrogen ||
+          MoleculeType.nitrousOxide:
         symbol = 'N';
         break;
-      case MoleculeType.carbon || MoleculeType.labileCarbon || MoleculeType.stableCarbon || MoleculeType.methane || MoleculeType.co2:
+      case MoleculeType.carbon ||
+          MoleculeType.labileCarbon ||
+          MoleculeType.stableCarbon ||
+          MoleculeType.methane ||
+          MoleculeType.co2:
         symbol = 'C';
         break;
       case MoleculeType.oxygen || MoleculeType.water || MoleculeType.waterVapor:
         symbol = 'O';
         break;
-      case MoleculeType.phosphate: symbol = 'P'; break;
-      case MoleculeType.potassium: symbol = 'K'; break;
-      case MoleculeType.calcium: symbol = 'Ca'; break;
-      case MoleculeType.magnesium: symbol = 'Mg'; break;
+      case MoleculeType.phosphate:
+        symbol = 'P';
+        break;
+      case MoleculeType.potassium:
+        symbol = 'K';
+        break;
+      case MoleculeType.calcium:
+        symbol = 'Ca';
+        break;
+      case MoleculeType.magnesium:
+        symbol = 'Mg';
+        break;
     }
 
     game.ref
@@ -531,10 +588,7 @@ class MoleculeParticleComponent extends PositionComponent
         return {
           'title': l.moleculeWaterVaporTitle,
           'description': l.moleculeWaterVaporDesc,
-          'stats': {
-            l.type: l.gasLabel,
-            l.source: l.transpirationLabel,
-          },
+          'stats': {l.type: l.gasLabel, l.source: l.transpirationLabel},
         };
     }
   }

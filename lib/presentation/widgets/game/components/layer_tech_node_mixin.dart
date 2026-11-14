@@ -4,10 +4,11 @@ import '../../../../domain/models/biophysical_state.dart';
 import '../soil_scope_game.dart';
 import 'expandable_hotspot_node.dart';
 import 'scene_coordinate_mapper.dart';
+import 'visual_seed.dart';
 
 /// Mixin to handle technical node (nutrients, sensors) placement in world space.
 mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
-  final math.Random _random = math.Random();
+  final math.Random _random = visualRandom(const ['layer-tech-nodes']);
 
   /// Box-Muller transform for Gaussian distribution
   double _nextGaussian(double mean, double stdDev) {
@@ -31,13 +32,16 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     // entire root zone rather than biased toward the first plant only.
     final List<double> plantCenterXs = state.plants.isNotEmpty
         ? state.plants
-            .map((p) => SceneCoordinateMapper.mapShootPosition(
-                  p.baseX,
-                  worldWidth,
-                  0,
-                ).x +
-                game.soilLeftX)
-            .toList()
+              .map(
+                (p) =>
+                    SceneCoordinateMapper.mapShootPosition(
+                      p.baseX,
+                      worldWidth,
+                      0,
+                    ).x +
+                    game.soilLeftX,
+              )
+              .toList()
         : [game.soilLeftX + worldWidth / 2];
 
     final int numNodesToSpawn = 2 + _random.nextInt(3); // Spawn 2 to 4 nodes
@@ -45,10 +49,14 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     const double expansionRadius = 60.0;
     // Minimum gap must accommodate two fully-expanded nodes (radius + expansion
     // on each side) so they never overlap when both are opened simultaneously.
-    final double minCenterToCenterDistance = (hotspotRadius + expansionRadius) * 2;
-    final double minDistanceSq = minCenterToCenterDistance * minCenterToCenterDistance;
+    final double minCenterToCenterDistance =
+        (hotspotRadius + expansionRadius) * 2;
+    final double minDistanceSq =
+        minCenterToCenterDistance * minCenterToCenterDistance;
 
-    final existingNodes = game.technicalHotspotLayer.children.whereType<ExpandableHotspotNode>().toList();
+    final existingNodes = game.technicalHotspotLayer.children
+        .whereType<ExpandableHotspotNode>()
+        .toList();
 
     // Build a node-type plan: the first slot is always nutrient (biological) and
     // the second is always sensor, guaranteeing that every layer has at least one
@@ -57,12 +65,14 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     // one nutrient + one sensor is the correct minimal coverage.
     // Remaining slots (3rd, 4th) follow the layer-depth probability.
     final List<bool> isBiologicalPlan = [
-      true,  // slot 0 → nutrient node (required for flux-particle target lookup)
+      true, // slot 0 → nutrient node (required for flux-particle target lookup)
       false, // slot 1 → sensor node   (required for pH/W/T/O₂/CEC inspection)
     ];
     for (int i = 2; i < numNodesToSpawn; i++) {
       isBiologicalPlan.add(
-        (layerIndex == 0) ? _random.nextDouble() < 0.8 : _random.nextDouble() < 0.3,
+        (layerIndex == 0)
+            ? _random.nextDouble() < 0.8
+            : _random.nextDouble() < 0.3,
       );
     }
 
@@ -75,8 +85,12 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
       Vector2? validPosition;
 
       while (attempts < 20) {
-        final px = _nextGaussian(centerX, 250.0).clamp(game.soilLeftX + 50.0, game.soilLeftX + worldWidth - 50.0);
-        final py = position.y + 20.0 + _random.nextDouble() * (layerHeight - 40.0);
+        final px = _nextGaussian(
+          centerX,
+          250.0,
+        ).clamp(game.soilLeftX + 50.0, game.soilLeftX + worldWidth - 50.0);
+        final py =
+            position.y + 20.0 + _random.nextDouble() * (layerHeight - 40.0);
         final candidatePos = Vector2(px, py);
 
         bool isValid = true;

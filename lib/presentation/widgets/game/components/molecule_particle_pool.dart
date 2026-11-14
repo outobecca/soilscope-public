@@ -51,7 +51,7 @@ class MoleculeParticlePool extends Component {
       opacity: opacity,
       isInteractionEnabled: isInteractionEnabled,
     );
-    
+
     _active.add(p);
     add(p);
     return p;
@@ -59,10 +59,14 @@ class MoleculeParticlePool extends Component {
 
   int get activeCount => _active.length;
 
+  /// Live particles, in spawn order. Consumers such as microbes use this
+  /// instead of scanning the entire Flame world tree on every update.
+  Iterable<MoleculeParticleComponent> get activeParticles => _active;
+
   @override
   void update(double dt) {
     super.update(dt);
-    
+
     // Check for removed components to return them to the pool
     _active.removeWhere((p) {
       if (!p.isMounted && !p.isRemoving) {

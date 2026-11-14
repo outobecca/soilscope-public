@@ -8,6 +8,7 @@ import '../../../../core/cpk_standards.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'canvas_hit_testing.dart';
 import 'molecule_renderer.dart';
+import 'visual_seed.dart';
 
 /// Gas types representing different biogeochemical processes
 enum BubbleType {
@@ -33,6 +34,7 @@ class BubbleComponent extends CircleComponent
   final double speed;
   bool _isPinned = false;
   bool _isHovered = false;
+  late final math.Random _random = visualRandom(['bubble', type.name, seed]);
 
   BubbleComponent({
     required this.type,
@@ -73,12 +75,12 @@ class BubbleComponent extends CircleComponent
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 4,
-        minWorld: 5,
-        maxWorld: 32,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 4,
+    minWorld: 5,
+    maxWorld: 32,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -90,7 +92,7 @@ class BubbleComponent extends CircleComponent
   void update(double dt) {
     super.update(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
-    
+
     final flowMode = game.ref.read(particleFlowModeProvider);
     final boost = flowMode ? 2.5 : 1.0;
     final damp = (_isHovered || _isPinned) ? 0.15 : 1.0;
@@ -116,7 +118,7 @@ class BubbleComponent extends CircleComponent
 
     // Enhanced Wobble: sine wave drift simulates fluid dynamics in soil pores
     position.x += math.sin(time * 3.5 * boost + seed) * 0.3 * boost * damp;
-    
+
     // Subtle size pulse representing gas expansion
     final double pulse = 0.95 + 0.1 * math.sin(time * 5.0 * boost + seed);
     radius = _getRadiusForType(type) * pulse;
@@ -126,7 +128,7 @@ class BubbleComponent extends CircleComponent
   void render(Canvas canvas) {
     final alphaScale = paint.color.a;
     final center = Offset.zero;
-    
+
     // 1. Shadow for depth
     canvas.drawCircle(
       center + const Offset(0.8, 0.8),
@@ -137,12 +139,15 @@ class BubbleComponent extends CircleComponent
     // 2. Main Bubble Body
     final bodyPaint = Paint()..color = paint.color;
     canvas.drawCircle(center, radius, bodyPaint);
-    
+
     // Contrast halo
     canvas.drawCircle(
-      center, 
-      radius * 1.1, 
-      Paint()..color = Colors.white.withValues(alpha: 0.15 * alphaScale)..style = PaintingStyle.stroke..strokeWidth = 0.5
+      center,
+      radius * 1.1,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.15 * alphaScale)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.5,
     );
 
     // 3. Shading Highlight (Gas bubble shine)
@@ -196,18 +201,29 @@ class BubbleComponent extends CircleComponent
   void _releaseGas() {
     final MoleculeType mType;
     switch (type) {
-      case BubbleType.co2: mType = MoleculeType.co2; break;
-      case BubbleType.n2o: mType = MoleculeType.nitrousOxide; break;
-      case BubbleType.ch4: mType = MoleculeType.methane; break;
-      case BubbleType.o2: mType = MoleculeType.oxygen; break;
+      case BubbleType.co2:
+        mType = MoleculeType.co2;
+        break;
+      case BubbleType.n2o:
+        mType = MoleculeType.nitrousOxide;
+        break;
+      case BubbleType.ch4:
+        mType = MoleculeType.methane;
+        break;
+      case BubbleType.o2:
+        mType = MoleculeType.oxygen;
+        break;
     }
-    
+
     // Spawn a small cluster of molecules drifting up
     for (int i = 0; i < 4; i++) {
       game.moleculePool?.spawn(
         position: position.clone(),
         type: mType,
-        velocity: Vector2((math.Random().nextDouble() - 0.5) * 40, -60 - math.Random().nextDouble() * 60),
+        velocity: Vector2(
+          (_random.nextDouble() - 0.5) * 40,
+          -60 - _random.nextDouble() * 60,
+        ),
         lifeTime: 8.0,
         opacity: 0.8,
         isInteractionEnabled: false,
@@ -220,14 +236,26 @@ class BubbleComponent extends CircleComponent
     if (state == null) return;
 
     final info = _getGasInfo(state);
-    
+
     String? symbol;
     Color? accent;
     switch (type) {
-      case BubbleType.co2: symbol = 'C'; accent = CPKStandards.colorC; break;
-      case BubbleType.n2o: symbol = 'N'; accent = CPKStandards.colorN; break;
-      case BubbleType.ch4: symbol = 'C'; accent = CPKStandards.colorC; break;
-      case BubbleType.o2:  symbol = 'O'; accent = CPKStandards.colorO; break;
+      case BubbleType.co2:
+        symbol = 'C';
+        accent = CPKStandards.colorC;
+        break;
+      case BubbleType.n2o:
+        symbol = 'N';
+        accent = CPKStandards.colorN;
+        break;
+      case BubbleType.ch4:
+        symbol = 'C';
+        accent = CPKStandards.colorC;
+        break;
+      case BubbleType.o2:
+        symbol = 'O';
+        accent = CPKStandards.colorO;
+        break;
     }
 
     game.ref

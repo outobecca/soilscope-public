@@ -16,6 +16,7 @@ import 'soil_layer_component.dart';
 import 'particle_system_component.dart';
 import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
+import 'visual_seed.dart';
 import 'canvas_hit_testing.dart';
 import 'cycle_highlight_mixin.dart';
 import 'molecule_particle_component.dart';
@@ -25,22 +26,30 @@ import 'molecule_renderer.dart';
 /// Decouples visual representation from mathematical simulation units (1:500 ratio).
 /// High performance, low-pixel footprint representation.
 class AnimatedMicrobeComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, BiologicalEntityMixin, VisualTimeMixin, CycleHighlightMixin {
-  
+    with
+        HasGameReference<SoilScopeGame>,
+        TapCallbacks,
+        HoverCallbacks,
+        BiologicalEntityMixin,
+        VisualTimeMixin,
+        CycleHighlightMixin {
   @override
-  Set<ObservationCycle> get memberOfCycles => {ObservationCycle.nitrogen, ObservationCycle.carbon};
+  Set<ObservationCycle> get memberOfCycles => {
+    ObservationCycle.nitrogen,
+    ObservationCycle.carbon,
+  };
   final int seed;
 
   @override
   String get entityTitle => game.l10n.microbialCell;
 
   double _time = 0;
-  double _activationBoost = 0.0; 
+  double _activationBoost = 0.0;
   int? _anchorIndex;
   final Vector2 _velocity = Vector2.zero();
   double _retargetTimer = 0.0;
   Vector2? _chemotacticTarget;
-  final math.Random _random = math.Random();
+  late final math.Random _random = visualRandom(['microbe', seed]);
 
   // Visual Immobilization State
   final List<Color> _absorbedNutrients = [];
@@ -53,7 +62,8 @@ class AnimatedMicrobeComponent extends PositionComponent
   // Performance Guard: Max clusters per world
   static const int maxClusters = 50;
 
-  final Paint _coreGlowPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+  final Paint _coreGlowPaint = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
   final Paint _coreShadowPaint = Paint();
   final Paint _coreBodyPaint = Paint();
   final Paint _coreHighlightPaint = Paint();
@@ -67,18 +77,23 @@ class AnimatedMicrobeComponent extends PositionComponent
     required this.microbeId,
     required Vector2 position,
     this.seed = 0,
-  }) : super(position: position, size: Vector2.all(120), anchor: Anchor.center, priority: 80) {
+  }) : super(
+         position: position,
+         size: Vector2.all(120),
+         anchor: Anchor.center,
+         priority: 80,
+       ) {
     _time = seed.toDouble();
     _anchorIndex = seed;
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 24,
-        minWorld: 10,
-        maxWorld: 40,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 24,
+    minWorld: 10,
+    maxWorld: 40,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -91,7 +106,9 @@ class AnimatedMicrobeComponent extends PositionComponent
     super.update(dt);
 
     final state = game.simulationState;
-    if (state == null || !state.isRunning || state.profile.layers.isEmpty) return;
+    if (state == null || !state.isRunning || state.profile.layers.isEmpty) {
+      return;
+    }
 
     final vdt = getPerceptualDt(dt);
     if (_activationBoost > 0) {
@@ -99,7 +116,9 @@ class AnimatedMicrobeComponent extends PositionComponent
     }
 
     final layer = state.profile.layers.first;
-    final activityFactor = BiophysicsUtils.q10Factor(layer.temperature).clamp(0.1, 4.0);
+    final activityFactor = BiophysicsUtils.q10Factor(
+      layer.temperature,
+    ).clamp(0.1, 4.0);
     final totalActivity = activityFactor * (1.0 + _activationBoost * 2.5);
     _time += vdt * totalActivity;
 
@@ -117,38 +136,54 @@ class AnimatedMicrobeComponent extends PositionComponent
         if (position.distanceTo(targetPos) < 20) {
           isFeeding = true;
           _activationBoost = (_activationBoost + vdt * 1.5).clamp(0.0, 1.0);
-          
+
           // MASS CONSERVATION: Visual feeding updates biophysical state
           if (_random.nextDouble() < 0.05 * vdt * 10) {
             final layerId = _getCurrentLayerId(state);
             if (layerId != null) {
-              game.ref.read(simulationProvider.notifier).consumeResource(layerId, 'labileCarbon', 0.005);
+              game.ref
+                  .read(simulationProvider.notifier)
+                  .consumeResource(layerId, 'labileCarbon', 0.005);
             }
           }
         }
       } else {
         // Default wandering around roots if no high-fitness hotspot is found
         final plant = state.plants[seed % state.plants.length];
-        if (_anchorIndex == null || _anchorIndex! >= plant.rootSystem.length || _retargetTimer <= 0) {
+        if (_anchorIndex == null ||
+            _anchorIndex! >= plant.rootSystem.length ||
+            _retargetTimer <= 0) {
           _anchorIndex = _random.nextInt(plant.rootSystem.length);
           _retargetTimer = 4.0 + _random.nextDouble() * 6.0;
         }
 
         final node = plant.rootSystem[_anchorIndex!];
-        final anchorX = SceneCoordinateMapper.mapRootX(node.x, SoilScopeGame.soilColumnWidth, baseX: plant.baseX) + game.soilLeftX;
-        final anchorY = SceneCoordinateMapper.mapRootY(node.z, game.soilSurfaceY, game.soilColumnHeight);
+        final anchorX =
+            SceneCoordinateMapper.mapRootX(
+              node.x,
+              SoilScopeGame.soilColumnWidth,
+              baseX: plant.baseX,
+            ) +
+            game.soilLeftX;
+        final anchorY = SceneCoordinateMapper.mapRootY(
+          node.z,
+          game.soilSurfaceY,
+          game.soilColumnHeight,
+        );
         _tmpVec.setValues(anchorX, anchorY);
         targetPos = _tmpVec;
 
         if (position.distanceTo(targetPos) < 30) {
           isFeeding = true;
           _activationBoost = (_activationBoost + vdt * 0.5).clamp(0.0, 1.0);
-          
+
           // Roots provide energy -> consume exudates (labile carbon)
           if (_random.nextDouble() < 0.02 * vdt * 10) {
             final layerId = _getCurrentLayerId(state);
             if (layerId != null) {
-              game.ref.read(simulationProvider.notifier).consumeResource(layerId, 'labileCarbon', 0.002);
+              game.ref
+                  .read(simulationProvider.notifier)
+                  .consumeResource(layerId, 'labileCarbon', 0.002);
             }
           }
         }
@@ -157,28 +192,34 @@ class AnimatedMicrobeComponent extends PositionComponent
       final orbitRadius = (isFeeding ? 6.0 : 30.0) + (seed % 4) * 6;
       final orbitSpeed = isFeeding ? 0.08 : 0.4;
       final orbitAngle = _time * orbitSpeed + seed;
-      
-      _tmpVec2.setValues(math.cos(orbitAngle) * orbitRadius, math.sin(orbitAngle) * orbitRadius * 0.6);
+
+      _tmpVec2.setValues(
+        math.cos(orbitAngle) * orbitRadius,
+        math.sin(orbitAngle) * orbitRadius * 0.6,
+      );
       final orbitOffset = _tmpVec2;
       final desiredPos = targetPos + orbitOffset;
-      
+
       _tmpVec2.setFrom(desiredPos);
       _tmpVec2.sub(position);
       final targetVelocity = _tmpVec2..scale(isFeeding ? 0.5 : 1.0);
       _applyMicrobeRepulsion(vdt);
 
       _velocity.lerp(targetVelocity, vdt * 2.5);
-      
+
       final maxSpeed = (isFeeding ? 18.0 : 55.0) * (1.0 + activityFactor * 0.2);
       if (_velocity.length > maxSpeed) _velocity.scaleTo(maxSpeed);
 
       final moveMultiplier = (isHovered || isPinned) ? 0.15 : 1.0;
       position.add(_velocity * vdt * moveMultiplier);
-      
+
       final soilX = game.soilLeftX;
       final soilWidth = SoilScopeGame.soilColumnWidth;
       position.x = position.x.clamp(soilX + 15, soilX + soilWidth - 15);
-      position.y = position.y.clamp(game.soilSurfaceY + 15, game.soilSurfaceY + game.soilColumnHeight - 15);
+      position.y = position.y.clamp(
+        game.soilSurfaceY + 15,
+        game.soilSurfaceY + game.soilColumnHeight - 15,
+      );
     }
 
     // Recover pulse
@@ -191,9 +232,13 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   /// Detects nearby molecule particles and triggers biochemical transformations (e.g. Nitrification)
   void _checkForMolecularTransformations(double vdt) {
-    if (_random.nextDouble() > 0.1 * vdt) return; // Optimization: check only occasionally
+    if (_random.nextDouble() > 0.1 * vdt) {
+      return; // Optimization: check only occasionally
+    }
 
-    final molecules = game.world.children.whereType<MoleculeParticleComponent>();
+    final molecules =
+        game.moleculePool?.activeParticles ??
+        const <MoleculeParticleComponent>[];
     for (final mol in molecules) {
       if (mol.transformTarget != null) continue; // Already transforming
 
@@ -221,7 +266,9 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   /// Pulls nearby immobilized particles towards the microbe center and "absorbs" them.
   void _handleImmobilizationAnchoring(double vdt) {
-    final particleField = game.world.children.whereType<MolecularParticleFieldComponent>().firstOrNull;
+    final particleField = game.world.children
+        .whereType<MolecularParticleFieldComponent>()
+        .firstOrNull;
     if (particleField == null) return;
 
     final Float32List data = particleField.particleData;
@@ -246,26 +293,26 @@ class AnimatedMicrobeComponent extends PositionComponent
           // CAPTURE ANIMATION
           final pTypeIdx = data[i + 5].toInt();
           final type = ParticleType.values[pTypeIdx];
-          
+
           // Add to visual cluster
           _absorbedNutrients.add(_getColorForParticleType(type));
           if (_absorbedNutrients.length > _maxAbsorbed) {
             _absorbedNutrients.removeAt(0);
           }
-          
+
           _pulseScale = 1.25; // Trigger pulse
           _activationBoost = (_activationBoost + 0.1).clamp(0.0, 1.0);
 
           // "Hide" the particle visually by moving it out of view or setting state to 0
-          data[i + 6] = 0; 
+          data[i + 6] = 0;
         } else {
           // DYNAMIC ABSORPTION: Lerp velocity towards center
           final toCenter = (center - pPos).normalized();
-          
+
           // Update velocity in the shared buffer so MPFC.update moves it
           data[i + 3] = toCenter.x * pullStrength;
           data[i + 4] = toCenter.y * pullStrength;
-          
+
           // Slight position nudge to overcome physics isolate overrides
           data[i + 1] += toCenter.x * pullStrength * 0.2 * vdt;
           data[i + 2] += toCenter.y * pullStrength * 0.2 * vdt;
@@ -311,13 +358,15 @@ class AnimatedMicrobeComponent extends PositionComponent
     if (state == null) return;
 
     final double cnRatio = state.profile.layers.first.cnRatio;
-    final bool isNitrogenLimited = cnRatio > 24.0; // Microbes seek N if ratio is high
+    final bool isNitrogenLimited =
+        cnRatio > 24.0; // Microbes seek N if ratio is high
 
     double maxFitness = -1.0;
     Vector2? bestTarget;
 
     // 1. Evaluate Hotspots (Opportunistic centers)
-    final hotspots = game.world.children.whereType<SoilLayerComponent>()
+    final hotspots = game.world.children
+        .whereType<SoilLayerComponent>()
         .expand((l) => l.children.whereType<DataHotspotComponent>())
         .toList();
 
@@ -330,8 +379,11 @@ class AnimatedMicrobeComponent extends PositionComponent
       if (h.type == HotspotType.nutrient) {
         benefit = 2.0;
         // Priority bonus for Nitrogen if soil is C-rich (Nitrogen limitation)
-        if (isNitrogenLimited && (h.label.contains('N') || h.label.contains('NH') || h.label.contains('NO'))) {
-          benefit *= 2.5; 
+        if (isNitrogenLimited &&
+            (h.label.contains('N') ||
+                h.label.contains('NH') ||
+                h.label.contains('NO'))) {
+          benefit *= 2.5;
         }
       } else if (h.label == 'T' || h.label == 'W') {
         benefit = 1.5; // Seek optimal temperature/water
@@ -345,15 +397,17 @@ class AnimatedMicrobeComponent extends PositionComponent
     }
 
     // 2. Evaluate Molecule Particles (Dynamic chemotaxis)
-    final molecules = game.world.children.whereType<MoleculeParticleComponent>();
+    final molecules =
+        game.moleculePool?.activeParticles ??
+        const <MoleculeParticleComponent>[];
     for (final mol in molecules) {
       if (mol.type != MoleculeType.labileCarbon) continue;
-      
+
       final dist = position.distanceTo(mol.position);
       if (dist > 300) continue;
 
       // Labile carbon is high energy
-      double benefit = 3.0; 
+      double benefit = 3.0;
       if (isNitrogenLimited) benefit *= 0.7;
 
       final fitness = benefit / (dist / 80.0).clamp(1.0, 10.0);
@@ -395,11 +449,15 @@ class AnimatedMicrobeComponent extends PositionComponent
     if (zoomLOD <= 0) return;
 
     final layer = state.profile.layers.first;
-    
+
     // Clustering: The cluster represents a dense biomass zone
     final biomassIntensity = (layer.microbialBiomass / 0.5).clamp(0.5, 3.0);
     final center = Offset(size.x / 2, size.y / 2);
-    final baseColor = Color.lerp(CPKStandards.colorMicrobeZone, Colors.white, _activationBoost * 0.3)!;
+    final baseColor = Color.lerp(
+      CPKStandards.colorMicrobeZone,
+      Colors.white,
+      _activationBoost * 0.3,
+    )!;
 
     // CRITICAL: Removed massive yellow circles/rays and cycle glows (Task 1/2)
     final currentOpacity = zoomLOD * cycleOpacity;
@@ -415,7 +473,9 @@ class AnimatedMicrobeComponent extends PositionComponent
         center,
         28.0,
         Paint()
-          ..color = const Color(0xFFFACC15).withValues(alpha: isPinned ? 0.6 : 0.4)
+          ..color = const Color(
+            0xFFFACC15,
+          ).withValues(alpha: isPinned ? 0.6 : 0.4)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5 / zoom,
       );
@@ -432,39 +492,45 @@ class AnimatedMicrobeComponent extends PositionComponent
     final coreRadius = 4.0;
     // Glow
     canvas.drawCircle(
-      center, 
-      coreRadius * 2.5, 
-      (_coreGlowPaint..color = baseColor.withValues(alpha: 0.15 * currentOpacity))
+      center,
+      coreRadius * 2.5,
+      (_coreGlowPaint
+        ..color = baseColor.withValues(alpha: 0.15 * currentOpacity)),
     );
     // Shadow
     canvas.drawCircle(
       center + const Offset(0.5, 0.5),
       coreRadius,
-      (_coreShadowPaint..color = Colors.black.withValues(alpha: 0.3 * currentOpacity))
+      (_coreShadowPaint
+        ..color = Colors.black.withValues(alpha: 0.3 * currentOpacity)),
     );
     // Core body
     canvas.drawCircle(
-      center, 
-      coreRadius, 
-      (_coreBodyPaint..color = baseColor.withValues(alpha: 0.9 * currentOpacity))
+      center,
+      coreRadius,
+      (_coreBodyPaint
+        ..color = baseColor.withValues(alpha: 0.9 * currentOpacity)),
     );
     // Shading highlight
     canvas.drawCircle(
       center - const Offset(1.0, 1.0),
       coreRadius * 0.4,
-      (_coreHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
+      (_coreHighlightPaint
+        ..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)),
     );
 
     // 2. Swarm Effect: Multiple tiny dots representing individuals
     final dotCount = (6 * biomassIntensity).toInt().clamp(3, 12);
     final dotRadius = 1.0 / zoom;
-    
-    final swarmPaint = _swarmPaint..color = baseColor.withValues(alpha: 0.5 * currentOpacity);
+
+    final swarmPaint = _swarmPaint
+      ..color = baseColor.withValues(alpha: 0.5 * currentOpacity);
 
     for (int i = 0; i < dotCount; i++) {
       final angle = (_time * 1.5) + (i * math.pi * 2 / dotCount) + (seed * i);
       final dist = (10.0 + 4.0 * math.sin(_time * 0.5 + i)) * biomassIntensity;
-      final dotCenter = center + Offset(math.cos(angle) * dist, math.sin(angle) * dist * 0.8);
+      final dotCenter =
+          center + Offset(math.cos(angle) * dist, math.sin(angle) * dist * 0.8);
       canvas.drawCircle(dotCenter, dotRadius, swarmPaint);
     }
 
@@ -473,18 +539,20 @@ class AnimatedMicrobeComponent extends PositionComponent
       final color = _absorbedNutrients[i];
       final angle = (i * math.pi * 2 / _maxAbsorbed) + _time * 0.5;
       final dist = 14.0 * biomassIntensity;
-      final nutrientPos = center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
-      
+      final nutrientPos =
+          center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
+
       // Shaded nutrient dot
       canvas.drawCircle(
-        nutrientPos, 
-        1.5 / zoom, 
-        (_nutrientPaint..color = color.withValues(alpha: 0.8 * currentOpacity))
+        nutrientPos,
+        1.5 / zoom,
+        (_nutrientPaint..color = color.withValues(alpha: 0.8 * currentOpacity)),
       );
       canvas.drawCircle(
         nutrientPos - const Offset(0.3, 0.3),
         0.5 / zoom,
-        (_nutrientHighlightPaint..color = Colors.white.withValues(alpha: 0.5 * currentOpacity))
+        (_nutrientHighlightPaint
+          ..color = Colors.white.withValues(alpha: 0.5 * currentOpacity)),
       );
     }
 
@@ -496,21 +564,25 @@ class AnimatedMicrobeComponent extends PositionComponent
     final state = game.simulationState;
     if (state == null || state.profile.layers.isEmpty) return;
     final layer = state.profile.layers.first;
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: l.microbialClusterTitle,
-        description: l.microbialClusterDesc,
-        stats: {
-          l.simulatedUnits: '500+',
-          l.metabolicActivity: '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
-          l.biomassDensity: '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
-          l.immobilizedNutrients: '${_absorbedNutrients.length} units',
-        },
-        isPinned: pinned,
-        accentColor: const Color(0xFFFACC15), // Golden Yellow
-        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: l.microbialClusterTitle,
+            description: l.microbialClusterDesc,
+            stats: {
+              l.simulatedUnits: '500+',
+              l.metabolicActivity:
+                  '${(BiophysicsUtils.q10Factor(layer.temperature) * 100).toStringAsFixed(0)}%',
+              l.biomassDensity:
+                  '${layer.microbialBiomass.toStringAsFixed(2)} kg/m³',
+              l.immobilizedNutrients: '${_absorbedNutrients.length} units',
+            },
+            isPinned: pinned,
+            accentColor: const Color(0xFFFACC15), // Golden Yellow
+            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+          ),
+        );
   }
 
   @override
@@ -520,7 +592,8 @@ class AnimatedMicrobeComponent extends PositionComponent
   }
 
   @override
-  void onHoverEnter() => handleHoverEnter(() => _showMicrobeInfo(pinned: false));
+  void onHoverEnter() =>
+      handleHoverEnter(() => _showMicrobeInfo(pinned: false));
 
   @override
   void onHoverExit() => handleHoverExit();

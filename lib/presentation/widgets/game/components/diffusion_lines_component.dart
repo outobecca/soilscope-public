@@ -6,6 +6,8 @@ import '../soil_scope_game.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../core/cpk_standards.dart';
+import 'animation_math.dart';
+import 'visual_seed.dart';
 
 class _DiffusionLine {
   final Vector2 start;
@@ -64,9 +66,13 @@ class _DiffusionLine {
     final endOpacity = 0.4 * opacity;
     final pos = end.toOffset();
     final radius = 2.5 / zoom;
-    
+
     // Shadow
-    canvas.drawCircle(pos + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.1 * opacity));
+    canvas.drawCircle(
+      pos + const Offset(1, 1),
+      radius,
+      Paint()..color = Colors.black.withValues(alpha: 0.1 * opacity),
+    );
     // Body
     canvas.drawCircle(
       pos,
@@ -85,7 +91,8 @@ class _DiffusionLine {
 class DiffusionLinesComponent extends Component
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
   final List<_DiffusionLine> _lines = [];
-  final math.Random _rand = math.Random();
+  final math.Random _rand = visualRandom(const ['diffusion-lines']);
+  final RateAccumulator _spawnAccumulator = RateAccumulator();
   bool _isPinned = false;
 
   DiffusionLinesComponent() : super(priority: 5);
@@ -102,7 +109,9 @@ class DiffusionLinesComponent extends Component
     final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
-    if (_lines.length < 15 && _rand.nextDouble() < 0.05 * boost) {
+    final spawnRatePerSecond = 3.0 * boost;
+    final canSpawn = _lines.length < 15;
+    if (canSpawn && _spawnAccumulator.consume(dt, spawnRatePerSecond) > 0) {
       final layerIndex = _rand.nextInt(state.profile.layers.length);
       final layer = state.profile.layers[layerIndex];
       final soilHeight = game.soilColumnHeight;
@@ -129,7 +138,9 @@ class DiffusionLinesComponent extends Component
         _DiffusionLine(
           start: start,
           end: end,
-          color: _getNutrientColor(game.ref.read(simulationSessionProvider).selectedElementSymbol),
+          color: _getNutrientColor(
+            game.ref.read(simulationSessionProvider).selectedElementSymbol,
+          ),
         ),
       );
     }
