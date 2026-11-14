@@ -88,8 +88,8 @@ SoilScope on tieteellisesti tarkka maaperä-kasvi-ilmakehä-jatkumon (SPAC) simu
 ### 🔬 Validointi & Diagnostiikka
 - **Tilastolliset metriikat**: RMSE, NSE, R², MAE.
 - **Kytkentämatriisi** järjestelmädiagnostiikkaan.
-- **Science Validation Tab**: Reaaliaikainen tilastollisten mittareiden (RMSE, NSE, R²) seuranta käyttöliittymässä.
-- **102 automatisoitua yksikkö- ja widget-testiä** biofysiikan solvereiden, mikroskooppiohjainten ja käyttöliittymän varmistamiseen.
+- **Reference Check -välilehti**: havainnollistavan kuvion vertailu (RMSE, NSE, R²). Nykyinen referenssi on mallin tuottama synteettinen kuvio, ei mitattua kenttädataa; mitatun datan pudotusohje on tiedostossa [docs/validation/README.md](docs/validation/README.md).
+- **Automatisoitu referenssikynnys** `test/validation/`-hakemistossa: NSE/RMSE-assertiot pysäyttävät solverin regressiot. Täysi testisarja kattaa biofysiikan solverit, mikroskooppiohjaimet ja käyttöliittymän.
 
 ---
 

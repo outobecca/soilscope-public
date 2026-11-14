@@ -43,6 +43,7 @@ flutter:
   assets:
     - assets/scenarios/
     - assets/images/
+    - assets/validation/
 
 flutter_launcher_icons:
   android: true

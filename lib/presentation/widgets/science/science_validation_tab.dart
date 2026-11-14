@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../../data/reference_dataset_repository.dart';
 import '../../../domain/models/biophysical_state.dart';
+import '../../../domain/models/reference_dataset.dart';
 import '../../../domain/solvers/validation_framework.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -20,17 +23,23 @@ class ScienceValidationTab extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.hourglass_empty, size: 48, color: theme.colorScheme.primary),
+              Icon(
+                Icons.hourglass_empty,
+                size: 48,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(
                 l10n.gatheringData,
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 l10n.minStepsForValidation,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -38,23 +47,52 @@ class ScienceValidationTab extends StatelessWidget {
       );
     }
 
-    // Run validation against temperate grassland scenario
-    final referenceData = ValidationScenarios.temperateGrassland();
-    // Map reference data points (1-8) to simulation time elapsed
-    final referenceTimes = List.generate(8, (i) => (i + 1) * (state.timeElapsed / 8.0));
+    return FutureBuilder<ReferenceDataset>(
+      future: ReferenceDatasetRepository.loadDefault(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                l10n.validationReferenceUnavailable,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+        final reference = snapshot.data;
+        if (reference == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return _buildContent(context, reference, theme, l10n);
+      },
+    );
+  }
 
-    final comparison = ValidationFramework.compareToReference(
+  Widget _buildContent(
+    BuildContext context,
+    ReferenceDataset reference,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    // Compare the live run at the same relative sample fractions as the
+    // reference. This is a pattern check, not a field-data validation.
+    final referenceTimes = reference.timesFor(state.timeElapsed);
+    final comparison = ValidationFramework.compareToReferenceSeries(
       state.history,
-      referenceData,
+      reference.series,
       referenceTimes,
     );
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildHeader(theme, l10n),
-        const SizedBox(height: 16),
-        _buildOverallScore(comparison, theme, l10n),
+        _buildHeader(theme, l10n, reference),
+        const SizedBox(height: 12),
+        _buildProvenanceCard(theme, l10n, reference),
+        const SizedBox(height: 12),
+        _buildOverallScore(comparison, theme, l10n, reference),
         const SizedBox(height: 24),
         Text(
           l10n.variableSpecificResults,
@@ -65,36 +103,94 @@ class ScienceValidationTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        ...comparison.variableResults.entries.map((entry) => _buildVariableCard(entry.key, entry.value, theme, l10n)),
+        for (final profile in reference.series)
+          if (comparison.variableResults[profile.key] case final result?)
+            _buildVariableCard(
+              profile,
+              result,
+              theme,
+              l10n,
+            ),
       ],
     );
   }
 
-  Widget _buildHeader(ThemeData theme, AppLocalizations l10n) {
+  Widget _buildHeader(
+    ThemeData theme,
+    AppLocalizations l10n,
+    ReferenceDataset reference,
+  ) {
+    final isIllustrative = reference.isIllustrative;
+    final badge = isIllustrative
+        ? l10n.validationIllustrativeBadge
+        : l10n.validationMeasuredBadge;
+    final badgeColor =
+        isIllustrative ? theme.colorScheme.tertiary : theme.colorScheme.primary;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.verified, color: theme.colorScheme.primary, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.scientificValidation,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Icon(
+                isIllustrative ? Icons.science_outlined : Icons.fact_check,
+                color: theme.colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isIllustrative
+                      ? l10n.illustrativePatternCheck
+                      : l10n.scientificValidation,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  l10n.validationModelRef,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
+                child: Text(
+                  badge,
+                  style: TextStyle(
+                    color: badgeColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            reference.source,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isIllustrative
+                ? l10n.validationPatternDisclaimer
+                : l10n.validationMeasuredDisclaimer,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isIllustrative
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onSurfaceVariant,
+              fontWeight: isIllustrative ? FontWeight.w600 : null,
             ),
           ),
         ],
@@ -102,10 +198,95 @@ class ScienceValidationTab extends StatelessWidget {
     );
   }
 
-  Widget _buildOverallScore(ValidationComparison comparison, ThemeData theme, AppLocalizations l10n) {
+  Widget _buildProvenanceCard(
+    ThemeData theme,
+    AppLocalizations l10n,
+    ReferenceDataset reference,
+  ) {
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.validationReferenceProvenance,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _provenanceRow(
+              theme,
+              l10n.validationReferenceSampling,
+              reference.sampling,
+            ),
+            _provenanceRow(
+              theme,
+              l10n.validationReferenceGenerated,
+              reference.generatedBy,
+            ),
+            _provenanceRow(
+              theme,
+              l10n.validationProvenanceNotes,
+              reference.provenanceNotes,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${l10n.validationGateLabel}: '
+              '${reference.series.map((profile) => '${_translateVariable(profile.variable, l10n)} ${profile.layerLabel} NSE ≥ ${profile.threshold.nse} / RMSE ≤ ${profile.threshold.rmse}').join('; ')}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _provenanceRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodySmall,
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverallScore(
+    ValidationComparison comparison,
+    ThemeData theme,
+    AppLocalizations l10n,
+    ReferenceDataset reference,
+  ) {
     final nse = comparison.overallNSE;
     final assessment = _getOverallAssessment(nse, l10n);
-    final color = _getAssessmentColor(comparison.overallNSE);
+    final color = _getAssessmentColor(nse);
 
     return Card(
       elevation: 0,
@@ -119,18 +300,27 @@ class ScienceValidationTab extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              l10n.overallScore,
-              style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurfaceVariant),
+              reference.isIllustrative
+                  ? l10n.patternAgreement
+                  : l10n.overallScore,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               assessment.toUpperCase(),
-              style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               'Nash-Sutcliffe Efficiency (NSE): ${nse.isNaN ? "N/A" : nse.toStringAsFixed(3)}',
-              style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(fontFamily: 'monospace'),
             ),
           ],
         ),
@@ -138,9 +328,17 @@ class ScienceValidationTab extends StatelessWidget {
     );
   }
 
-  Widget _buildVariableCard(String variable, ValidationResult result, ThemeData theme, AppLocalizations l10n) {
+  Widget _buildVariableCard(
+    ReferenceSeries profile,
+    ValidationResult result,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
     final color = _getAssessmentColorForResult(result.qualitativeAssessment);
-    final localizedAssessment = _localizeAssessment(result.qualitativeAssessment, l10n);
+    final localizedAssessment = _localizeAssessment(
+      result.qualitativeAssessment,
+      l10n,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -151,8 +349,15 @@ class ScienceValidationTab extends StatelessWidget {
       ),
       child: ExpansionTile(
         title: Text(
-          _translateVariable(variable, l10n),
+          '${_translateVariable(profile.variable, l10n)} · ${profile.layerLabel}',
           style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          '${profile.unit} · gate NSE ≥ ${profile.threshold.nse}',
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontFamily: 'monospace',
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -162,7 +367,11 @@ class ScienceValidationTab extends StatelessWidget {
           ),
           child: Text(
             localizedAssessment,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
           ),
         ),
         children: [
@@ -174,11 +383,18 @@ class ScienceValidationTab extends StatelessWidget {
                 1: FlexColumnWidth(1),
               },
               children: [
+                _buildMetricRow(
+                  'NSE (Nash–Sutcliffe Efficiency)',
+                  result.nse.toStringAsFixed(4),
+                ),
                 _buildMetricRow(l10n.rmseLabel, result.rmse.toStringAsFixed(4)),
                 _buildMetricRow(l10n.maeLabel, result.mae.toStringAsFixed(4)),
                 _buildMetricRow(l10n.r2Label, result.r2.toStringAsFixed(4)),
                 _buildMetricRow(l10n.biasLabel, result.bias.toStringAsFixed(4)),
-                _buildMetricRow(l10n.ioaLabel, result.indexOfAgreement.toStringAsFixed(4)),
+                _buildMetricRow(
+                  l10n.ioaLabel,
+                  result.indexOfAgreement.toStringAsFixed(4),
+                ),
               ],
             ),
           ),
@@ -196,7 +412,11 @@ class ScienceValidationTab extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Text(value, style: const TextStyle(fontSize: 12, fontFamily: 'monospace'), textAlign: TextAlign.right),
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+            textAlign: TextAlign.right,
+          ),
         ),
       ],
     );

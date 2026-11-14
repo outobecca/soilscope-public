@@ -3100,7 +3100,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get evaporation => 'Haihdunta';
 
   @override
-  String get validation => 'Validointi';
+  String get validation => 'Referenssitarkistus';
 
   @override
   String get inspectionBadge => 'TARKASTELU';
@@ -3160,22 +3160,55 @@ class AppLocalizationsFi extends AppLocalizations {
   String get openScienceReference => 'Avaa tiedeviite';
 
   @override
-  String get scienceReferenceDesc => 'Tutki jaksollista järjestelmää, maaperäfysiikkaa, ilmakehää ja validointituloksia.';
+  String get scienceReferenceDesc => 'Tutki jaksollista järjestelmää, maaperäfysiikkaa, ilmakehää ja referenssitarkistuksia.';
 
   @override
   String get gatheringData => 'Kerätään tietoja...';
 
   @override
-  String get minStepsForValidation => 'Anna simulaation pyöriä vähintään 5 askelta nähdäksesi tieteellisen validoinnin.';
+  String get minStepsForValidation => 'Anna simulaation pyöriä vähintään 5 askelta nähdäksesi referenssitarkistuksen.';
 
   @override
-  String get variableSpecificResults => 'MUUTTUJAKOHTAISET TULOKSET';
+  String get variableSpecificResults => 'MUUTTUJAKOHTAISET MITTARIT';
 
   @override
   String get scientificValidation => 'Tieteellinen validointi';
 
   @override
-  String get validationModelRef => 'Malli verrattuna FLUXNET/LUCAS -referenssidataan.';
+  String get illustrativePatternCheck => 'Havainnollistava kuviovertailu';
+
+  @override
+  String get validationIllustrativeBadge => 'HAVAINNOLLISTAVA KUVIO';
+
+  @override
+  String get validationMeasuredBadge => 'MITATTU REFERENSSI';
+
+  @override
+  String get validationPatternDisclaimer => 'Tämä referenssi on SoilScopen oman mallin tuottama synteettinen kuvio, ei mitattua kenttädataa. NSE ja RMSE mittaavat kuvion yhteensopivuutta, eivät kenttätarkkuutta.';
+
+  @override
+  String get validationMeasuredDisclaimer => 'Tämä referenssi sisältää mitattua dataa. Lue lähde- ja näytteenottotiedot ennen yhteensopivuuden tulkintaa.';
+
+  @override
+  String get validationReferenceProvenance => 'REFERENSSIN ALKUPERÄ';
+
+  @override
+  String get validationReferenceSampling => 'Näytteenotto';
+
+  @override
+  String get validationReferenceGenerated => 'Tuottanut';
+
+  @override
+  String get validationProvenanceNotes => 'Huomiot';
+
+  @override
+  String get validationGateLabel => 'CI-regressiokynnys';
+
+  @override
+  String get validationReferenceUnavailable => 'Referenssiaineistoa ei voitu ladata.';
+
+  @override
+  String get patternAgreement => 'KUVION YHTEENSOPIVUUS (NSE)';
 
   @override
   String get overallScore => 'YLEISARVOSANA';

@@ -60,7 +60,7 @@ class ScienceReferenceScreen extends ConsumerWidget {
               ),
               Tab(icon: const Icon(Icons.thermostat), text: l10n.atmosphere),
               Tab(icon: const Icon(Icons.bar_chart), text: l10n.depthProfiles),
-              Tab(icon: const Icon(Icons.verified), text: l10n.validation),
+              Tab(icon: const Icon(Icons.rule), text: l10n.validation),
             ],
           ),
         ),

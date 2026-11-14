@@ -1,0 +1,19 @@
+{
+  "id": "measured_site_variable_replace_me",
+  "kind": "measured",
+  "source": "REPLACE: authors (year), site, DOI or URL.",
+  "provenanceNotes": "REPLACE: instrument/method, calibration, detection limit, missing-data handling, license, contact, and why these thresholds are appropriate.",
+  "sampling": "REPLACE: depths, ISO dates and timezone, sampling interval, and what each point represents.",
+  "generatedBy": "REPLACE: measurement programme and the script/person that converted it to this file.",
+  "timesSeconds": [0.0, 86400.0],
+  "series": [
+    {
+      "variable": "waterContent",
+      "layerIndex": 0,
+      "layerId": "A",
+      "unit": "m3/m3",
+      "values": [],
+      "threshold": { "nse": 0.5, "rmse": 0.02 }
+    }
+  ]
+}

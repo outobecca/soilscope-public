@@ -367,9 +367,9 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 #### G2 — Validation exists but is not a gate · P2
 `ValidationFramework` (RMSE, MAE, NSE, R², bias, index of agreement) is solid, and `ScienceValidationTab` compares against a reference. But it is a UI feature, not a regression gate — nothing fails if a solver change doubles RMSE. For a project whose stated goal is scientific debate, the validation set should be versioned and asserted in CI.
 
-**Fix:** commit 1–3 reference datasets (measured θ(z,t) and NO₃⁻ profiles), add `test/validation/` that runs the engine and asserts NSE/RMSE thresholds. Print a model-version + parameter-set hash in the validation tab.
+**Fixed:** `assets/validation/reference.json` is a versioned, provenance-stamped fixture. It declares its `kind` (`illustrative` today), source, provenance notes, sampling, units, sample times and per-series NSE/RMSE thresholds. The Reference Check tab reads those fields; for the current fixture it displays **ILLUSTRATIVE PATTERN** and states that the series is synthetic model output, not measured field data. `test/validation/` runs a fixed 168-hour soil column and asserts every declared threshold. A deliberate solver perturbation was shown to fail the gate, then reverted. `docs/validation/README.md` defines the measured-data drop-in format, including absolute `timesSeconds`, per-depth `layerIndex`, provenance, units and thresholds.
 
-**Deferred because the data does not exist in the repo:** the exact missing inputs are layer-resolved measured volumetric water content θ(z,t) and nitrate NO₃⁻ concentration series at matching depths and times, plus units, site/soil metadata and provenance. Unblocked by committing those CSVs under `test/validation/fixtures/` and adding NSE/RMSE assertions with thresholds agreed from the source data.
+**No measured data is committed.** The gate is a regression guard over an illustrative pattern, not evidence of field accuracy. Replacing `assets/validation/reference.json` with a `kind: "measured"` file is a data change; see the drop-in guide. No field-accuracy claim is made until such a file exists.
 
 #### G3 — Timeline history is thin at high speed · P3
 `_history` keeps 500 snapshots, one per 200 ms tick, each advancing `2.0 × timeScale` seconds. At 1× that is ~17 min of sim time; at 10× it is ~2.8 h. The scrubber therefore shows a different depth of history depending on playback speed, with no indication. Store snapshots at fixed sim-time intervals (e.g. every 600 s) instead of fixed tick counts.
@@ -407,9 +407,9 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 ## 5. Recommended roadmap (historical; status lives in the close-out table)
 
-> **Close-out status (2026-11-13).** Reconciled item by item against
+> **Close-out status (2026-11-14).** Reconciled item by item against
 > `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
-> clean, `flutter test --no-pub` passes 102 tests, and
+> clean, `flutter test --no-pub` passes 107 tests, and
 > `flutter build web --release --wasm` succeeds. "Done" means the change is in
 > the tree and, where the behaviour is testable, asserted by the named test.
 >
@@ -445,7 +445,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | D5 | Done | Faintest labels lifted to AA contrast. |
 > | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 102. |
+> | E3 | Done | English README intro; test count updated to 107. |
 > | F1 | Done | 21 unreferenced modules and their dead tests removed. |
 > | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |
@@ -454,17 +454,16 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | F6 | Done | CI runs `flutter analyze --fatal-infos` and the Finnish guard; index files untracked; scratch in `tool/`. |
 > | F7 | Done | SoilScope labels, real description and manifest metadata. |
 > | G1 | Done | Stable hydrology sub-step with a 200-tick stability test. |
-> | G2 | Deferred | Needs measured θ(z,t) and NO₃⁻ reference profiles; see remaining scope. |
+> | G2 | Done (illustrative gate; measured data is an external drop-in) | Provenance-stamped `assets/validation/reference.json`; UI labels it **ILLUSTRATIVE PATTERN** and disclaims field accuracy; `test/validation/` asserts per-series NSE/RMSE and was shown to fail under a solver perturbation; measured θ(z,t)/NO₃⁻ drop-in documented in `docs/validation/README.md`. No measured dataset is fabricated. |
 > | G3 | Done | History snapshots at fixed 600 s simulation intervals. |
 > | G4 | Done | Mycorrhiza state persisted; JSON round-trip test. |
 >
-> **Remaining scope.**
-> - **G2 — deferred, external data.** The gate needs layer-resolved measured
->   volumetric water content θ(z,t) and nitrate NO₃⁻ concentration profiles at
->   matching depths and times, with units, site/soil metadata and provenance.
->   Inventing those numbers would be worse than no gate. Unblocked by adding the
->   reference CSVs under `test/validation/fixtures/` and asserting agreed
->   NSE/RMSE thresholds in `test/validation/`.
+> **No in-scope deferrals remain.**
+> - **G2 — measured data is an external data task, not an unfinished gate.**
+>   The honest illustrative gate and the drop-in path are complete. A
+>   `kind: "measured"` θ(z,t)/NO₃⁻ dataset with matching depths and times would
+>   make the accuracy claim stronger, but inventing one is not acceptable and
+>   its absence does not leave the audit's validation credibility issue open.
 > - **C1 — closed at the audit's stated minimum; the Worker is optional.** The
 >   audit offered two fixes: (a) a Worker or (b) an in-thread loop with a budget
 >   check. Option (b) is implemented. A Worker is future web work, not an
@@ -496,7 +495,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 ### Later — architecture
 14. F3 split engine-owned vs UI-owned state.
 15. F1 delete dead code, F2 split the three god files.
-16. F5 provider tests + goldens; G2 validation gate in CI.
+16. F5 provider tests + goldens; G2 reference gate in CI (complete).
 
 ---
 

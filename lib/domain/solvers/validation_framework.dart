@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import '../models/biophysical_state.dart';
+import '../models/reference_dataset.dart';
 
 /// Validation Framework for SoilScope Simulation
 ///
@@ -230,37 +231,33 @@ class ValidationFramework {
     }).toList();
   }
 
-  /// Compares simulation output to reference data
-  static ValidationComparison compareToReference(
+  /// Compares simulation output to each layer-aware reference series.
+  ///
+  /// Results are keyed by [ReferenceSeries.key] (`variable@layerIndex`) so a
+  /// measured dataset can carry water and nitrate profiles at several depths.
+  static ValidationComparison compareToReferenceSeries(
     List<BiophysicalState> simulationHistory,
-    Map<String, List<double>> referenceData,
-    List<double> referenceTimes, {
-    int layerIndex = 0,
-  }) {
+    List<ReferenceSeries> referenceSeries,
+    List<double> referenceTimes,
+  ) {
     final results = <String, ValidationResult>{};
 
-    for (final entry in referenceData.entries) {
-      final variable = entry.key;
-      final observed = entry.value;
-
+    for (final profile in referenceSeries) {
       // Extract simulated values at reference times
       // (requires interpolation or nearest-neighbor matching)
       final predicted = _extractAtTimes(
         simulationHistory,
-        variable,
+        profile.variable,
         referenceTimes,
-        layerIndex: layerIndex,
+        layerIndex: profile.layerIndex,
       );
 
-      if (predicted.length == observed.length) {
-        results[variable] = calculateAll(predicted, observed);
+      if (predicted.length == profile.values.length) {
+        results[profile.key] = calculateAll(predicted, profile.values);
       }
     }
 
-    return ValidationComparison(
-      variableResults: results,
-      layerIndex: layerIndex,
-    );
+    return ValidationComparison(variableResults: results);
   }
 
   /// Extracts simulated values at specific times (nearest neighbor)
@@ -346,11 +343,11 @@ class ValidationResult {
 /// Container for multi-variable validation comparison
 class ValidationComparison {
   final Map<String, ValidationResult> variableResults;
-  final int layerIndex;
+  final int? layerIndex;
 
   const ValidationComparison({
     required this.variableResults,
-    required this.layerIndex,
+    this.layerIndex,
   });
 
   /// Overall model performance (average NSE across variables)
@@ -365,7 +362,8 @@ class ValidationComparison {
 
   @override
   String toString() {
-    final buffer = StringBuffer('ValidationComparison (Layer $layerIndex):\n');
+    final layerLabel = layerIndex == null ? 'layered' : 'Layer $layerIndex';
+    final buffer = StringBuffer('ValidationComparison ($layerLabel):\n');
     buffer.writeln('Overall NSE: ${overallNSE.toStringAsFixed(4)}\n');
 
     for (final entry in variableResults.entries) {
@@ -375,37 +373,5 @@ class ValidationComparison {
     }
 
     return buffer.toString();
-  }
-}
-
-/// Predefined validation scenarios based on real-world experiments
-class ValidationScenarios {
-  /// Creates a validation dataset for typical temperate grassland
-  /// Based on FLUXNET site data patterns
-  static Map<String, List<double>> temperateGrassland() {
-    return {
-      'waterContent': [0.35, 0.32, 0.28, 0.25, 0.30, 0.38, 0.36, 0.33],
-      'temperature': [288.0, 292.0, 298.0, 302.0, 300.0, 295.0, 290.0, 286.0],
-      'lai': [1.5, 2.5, 4.0, 5.0, 4.5, 3.5, 2.0, 1.0],
-    };
-  }
-
-  /// Creates a validation dataset for typical clay soil nitrogen dynamics
-  /// Based on LUCAS soil survey patterns
-  static Map<String, List<double>> claySoilNitrogen() {
-    return {
-      'nitrateContent': [25.0, 30.0, 45.0, 35.0, 20.0, 15.0, 18.0, 22.0],
-      'ammoniumContent': [8.0, 10.0, 6.0, 4.0, 5.0, 7.0, 9.0, 8.0],
-      'microbialBiomass': [
-        150.0,
-        180.0,
-        220.0,
-        200.0,
-        170.0,
-        140.0,
-        130.0,
-        145.0,
-      ],
-    };
   }
 }
