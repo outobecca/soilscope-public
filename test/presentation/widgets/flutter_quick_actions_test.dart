@@ -128,6 +128,78 @@ void main() {
     expect(find.byIcon(Icons.water_drop_rounded), findsNothing);
   });
 
+  testWidgets('timeline is a permanent primary action with availability state',
+      (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    const initial = BiophysicalState(
+      profile: SoilProfile(
+        id: 'toolbar',
+        name: 'Toolbar',
+        layers: [],
+        surfaceAlbedo: 0.2,
+        slope: 0.0,
+      ),
+      plants: [],
+      timeElapsed: 0,
+    );
+    final timeline = initial.copyWith(
+      timeElapsed: 86400,
+      history: [
+        initial,
+        initial.copyWith(timeElapsed: 3600),
+      ],
+    );
+
+    Future<void> pumpToolbar(BiophysicalState state) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [simulationProvider.overrideWithValue(state)],
+          child: const MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: Locale('en'),
+            home: Scaffold(body: FlutterQuickActions()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    InkWell timelineButton() => tester.widget<InkWell>(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.linear_scale_rounded),
+            matching: find.byType(InkWell),
+          )
+          .first,
+    );
+
+    await pumpToolbar(initial);
+
+    // All five primary actions are visible even before a timeline exists.
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.speed_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.linear_scale_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.biotech_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
+    expect(
+      timelineButton().onTap,
+      isNull,
+      reason: 'the timeline cannot scrub without recorded history',
+    );
+
+    await pumpToolbar(timeline);
+
+    expect(
+      timelineButton().onTap,
+      isNotNull,
+      reason: 'one hour of history enables the timeline action',
+    );
+  });
+
   testWidgets('Hovering button in FlutterQuickActions triggers tooltip', (tester) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;

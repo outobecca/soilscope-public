@@ -78,19 +78,20 @@ class FlutterQuickActions extends ConsumerWidget {
               ref.read(simulationProvider.notifier).setSpeed(speeds[next]);
             },
           ),
-          if (hasTimeline || session.isScrubbing)
-            _buildActionButton(
-              context: context,
-              icon: Icons.linear_scale_rounded,
-              label: l10n.timeline,
-              isActive: session.isScrubbing,
-              onTap: () {
-                final notifier = ref.read(simulationProvider.notifier);
-                session.isScrubbing
-                    ? notifier.stopScrubbing()
-                    : notifier.startScrubbing();
-              },
-            ),
+          _buildActionButton(
+            context: context,
+            icon: Icons.linear_scale_rounded,
+            label: l10n.timeline,
+            isActive: session.isScrubbing,
+            onTap: hasTimeline || session.isScrubbing
+                ? () {
+                    final notifier = ref.read(simulationProvider.notifier);
+                    session.isScrubbing
+                        ? notifier.stopScrubbing()
+                        : notifier.startScrubbing();
+                  }
+                : null,
+          ),
           _buildActionButton(
             context: context,
             icon: session.isMicroscopeEnabled
@@ -144,32 +145,42 @@ class FlutterQuickActions extends ConsumerWidget {
     required IconData icon,
     required String label,
     required bool isActive,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
+    final isEnabled = onTap != null;
 
-    return Tooltip(
-      message: label,
-      preferBelow: false,
-      verticalOffset: 24,
-      child: Material(
-        color: isActive
-            ? theme.colorScheme.primary
-            : theme.colorScheme.surfaceContainerHighest,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          // 48 dp minimum touch target.
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(
-              icon,
-              color: isActive
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurfaceVariant,
-              size: 22,
+    return Semantics(
+      button: true,
+      enabled: isEnabled,
+      label: label,
+      child: Tooltip(
+        message: label,
+        preferBelow: false,
+        verticalOffset: 24,
+        child: Material(
+          color: isActive
+              ? theme.colorScheme.primary
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: isEnabled ? 1.0 : 0.55,
+                ),
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            // 48 dp minimum touch target.
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Icon(
+                icon,
+                color: isActive
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: isEnabled ? 1.0 : 0.45,
+                      ),
+                size: 22,
+              ),
             ),
           ),
         ),
