@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../core/cpk_standards.dart';
@@ -100,7 +99,7 @@ class DiffusionLinesComponent extends Component
     final flowMode = game.ref.read(particleFlowModeProvider);
     final boost = flowMode ? 2.5 : 1.0;
 
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
     if (_lines.length < 15 && _rand.nextDouble() < 0.05 * boost) {

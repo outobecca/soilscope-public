@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 
 /// Visualizes nitrous oxide (N2O) escaping the soil surface under anaerobic conditions.
@@ -17,7 +16,7 @@ class NitrousOxideBubbleComponent extends Component
 
   @override
   void render(Canvas canvas) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double time = game.currentTime();
     final surfaceY = game.soilSurfaceY;
     final soilX = game.soilLeftX;
@@ -68,7 +67,7 @@ class NitrousOxideBubbleComponent extends Component
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.profile.layers.isEmpty) return false;
     final topLayer = state.profile.layers.first;
     final double airFilledPorosity = (topLayer.porosity - topLayer.waterContent).clamp(0.0, 1.0);

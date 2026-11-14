@@ -4,7 +4,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide Image;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../domain/models/plant.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -28,7 +27,7 @@ class WaterFlowPathsComponent extends Component
     final double zoom = game.camera.viewfinder.zoom;
     final double time = game.currentTime();
 
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.plants.isEmpty) return;
 
     final worldWidth = SoilScopeGame.logicalSize.x;

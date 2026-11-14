@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 
 /// Visualizes water vapor escaping the soil surface.
 /// Adjusted for narrowed soil column.
@@ -13,7 +12,7 @@ class SoilEvaporationComponent extends Component
 
   @override
   void render(Canvas canvas) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double time = game.currentTime();
     final surfaceY = game.soilSurfaceY;
     final soilX = game.soilLeftX;

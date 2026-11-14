@@ -167,11 +167,16 @@ class BiochemicalDynamicsComponent extends Component
     if (state == null) return;
 
     final flowMode = game.ref.read(particleFlowModeProvider);
+    final process = game.scenarioProcessProfile;
     final pool = game.moleculePool;
     if (pool == null) return;
     
     final existingCount = pool.activeCount;
-    final maxParticles = flowMode ? 60 : 15;
+    // A leaching or immobilization scenario should look busy even before the
+    // user turns on the generic "flow mode" toggle.
+    final scenarioParticleBudget =
+        (process.leaching * 18 + process.immobilization * 10).round();
+    final maxParticles = flowMode ? 60 : 15 + scenarioParticleBudget;
     if (existingCount > maxParticles) return;
 
     final worldWidth = SoilScopeGame.soilColumnWidth;
@@ -190,8 +195,18 @@ class BiochemicalDynamicsComponent extends Component
       final layerY = surfaceY + (layer.depth / 1.0) * soilHeight;
 
       // --- 1. NITRIFICATION TRANSFORMATION (NH4 -> NO3) ---
-      // Localized to microbial hotspots and rhizosphere
-      if (layer.nitrificationRate > 1e-7 && _random.nextDouble() < 0.05 * dt) {
+      // Localized to microbial hotspots and rhizosphere. Use the actual
+      // substrate flux instead of a fixed threshold so low-rate layers can
+      // still animate, then scale by the scenario's process emphasis.
+      final nitrificationSignal =
+          layer.ammoniumContent * layer.nitrificationRate;
+      final nitrificationChance = (nitrificationSignal *
+              1e5 *
+              dt *
+              (0.5 + 2.0 * process.nitrification))
+          .clamp(0.0, 0.2);
+      if (nitrificationSignal > 1e-10 &&
+          _random.nextDouble() < nitrificationChance) {
         double rx;
         double ry;
         
@@ -214,7 +229,7 @@ class BiochemicalDynamicsComponent extends Component
         );
 
         // Notify process
-        if (_random.nextDouble() < 0.003) {
+        if (_random.nextDouble() < 0.01 + 0.04 * process.nitrification) {
           game.world.add(ProcessLabel(
             type: ProcessMarkerType.nitrification,
             color: CPKStandards.colorN,
@@ -226,8 +241,15 @@ class BiochemicalDynamicsComponent extends Component
 
       // --- 2. DENITRIFICATION TRANSFORMATION (NO3 -> N2O) ---
       // Focused on rhizosphere where anaerobic microsites occur
-      if (layer.denitrificationRate > 1e-7 &&
-          _random.nextDouble() < 0.05 * dt) {
+      final denitrificationSignal =
+          layer.nitrateContent * layer.denitrificationRate;
+      final denitrificationChance = (denitrificationSignal *
+              2e5 *
+              dt *
+              (0.5 + 2.0 * process.denitrification))
+          .clamp(0.0, 0.2);
+      if (denitrificationSignal > 1e-10 &&
+          _random.nextDouble() < denitrificationChance) {
         final plant = state.plants.firstOrNull;
         final centerX = plant != null ? SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY).x + game.soilLeftX : game.soilLeftX + worldWidth / 2;
         
@@ -247,7 +269,7 @@ class BiochemicalDynamicsComponent extends Component
         );
 
         // Notify process
-        if (_random.nextDouble() < 0.003) {
+        if (_random.nextDouble() < 0.01 + 0.04 * process.denitrification) {
           game.world.add(ProcessLabel(
             type: ProcessMarkerType.denitrification,
             color: CPKStandards.colorN,
@@ -288,9 +310,16 @@ class BiochemicalDynamicsComponent extends Component
       }
 
       // --- 4. LEACHING FLOW (Downwards NO3- movement) ---
-      if (layer.verticalFlux > 1e-7 &&
-          layer.nitrateContent > 5.0 &&
-          _random.nextDouble() < 0.1 * dt) {
+      // Nitrate is mobile even at small downward fluxes. The threshold used
+      // to hide the animation until flux was already large, which made the
+      // nitrate-leaching scenario look static at the start of a rain event.
+      final leachingChance = (0.08 *
+              dt *
+              (0.5 + 2.5 * process.leaching))
+          .clamp(0.0, 0.2);
+      if (layer.verticalFlux > 1e-9 &&
+          layer.nitrateContent > 0.5 &&
+          _random.nextDouble() < leachingChance) {
         final rx = game.soilLeftX + _random.nextDouble() * worldWidth;
         final ry = layerY + 10;
 
@@ -301,6 +330,15 @@ class BiochemicalDynamicsComponent extends Component
           seed: _random.nextInt(100),
           lifeTime: 3.0,
         );
+
+        if (_random.nextDouble() < 0.01 + 0.05 * process.leaching) {
+          game.world.add(ProcessLabel(
+            type: ProcessMarkerType.leaching,
+            color: CPKStandards.colorN,
+            position: Vector2(rx, ry),
+            showTitle: true,
+          ));
+        }
       }
     }
 

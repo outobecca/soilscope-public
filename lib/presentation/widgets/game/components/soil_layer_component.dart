@@ -86,7 +86,7 @@ class SoilLayerComponent extends PositionComponent
         icon: Icons.layers_rounded,
         position: Vector2(60, size.y / 2), // Aligned with diagnostic gutter
         statsProvider: () {
-          final state = game.ref.read(simulationProvider);
+          final state = game.displayedState;
           try {
             final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
             return {
@@ -94,6 +94,10 @@ class SoilLayerComponent extends PositionComponent
               game.l10n.temperatureLabel: '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
               'pH': layer.ph.toStringAsFixed(1),
               'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
+              game.l10n.bulkDensity:
+                  '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
+              game.l10n.porosity:
+                  '${(layer.porosity * 100).toStringAsFixed(0)}%',
             };
           } catch (_) {
             return null;
@@ -111,7 +115,7 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _showLayerInfo({bool pinned = false}) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     try {
       final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
       final stats = {
@@ -120,6 +124,8 @@ class SoilLayerComponent extends PositionComponent
         'pH': layer.ph.toStringAsFixed(1),
         'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
         game.l10n.organicCarbonLabel: '${(layer.organicCarbon * 100).toStringAsFixed(2)}%',
+        game.l10n.bulkDensity: '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
+        game.l10n.porosity: '${(layer.porosity * 100).toStringAsFixed(0)}%',
       };
       game.ref.read(uIStateProvider.notifier).setHoverInfo(
         HoverInfo(
@@ -275,7 +281,7 @@ class SoilLayerComponent extends PositionComponent
 
   void _syncSubComponents() {
     final double zoom = game.camera.viewfinder.zoom;
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final session = game.ref.read(simulationSessionProvider);
     final symbol = session.selectedElementSymbol;
     final existingIons = children.query<IonComponent>();
@@ -375,7 +381,8 @@ class SoilLayerComponent extends PositionComponent
     super.update(dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
 
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
+    final process = game.scenarioProcessProfile;
     try {
       final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
 
@@ -384,8 +391,14 @@ class SoilLayerComponent extends PositionComponent
       final double nNitrified = layer.ammoniumContent * nitRate; // mg/kg/s
 
       final double redoxOpacity = layer.redoxPotential < 200 ? 0.1 : 1.0;
+      // Aerobic nitrogen scenarios get a denser visual signal, while a
+      // compacted or anaerobic layer stays visually quiet.
+      final double scenarioBoost = 0.8 + 0.8 * process.nitrification;
 
-      _nitrificationAccumulator += nNitrified * SimulationConstants.nitrificationVisualDensity * dt;
+      _nitrificationAccumulator += nNitrified *
+          SimulationConstants.nitrificationVisualDensity *
+          dt *
+          scenarioBoost;
       if (_nitrificationAccumulator >= 1.0) {
         _nitrificationAccumulator -= 1.0;
         
@@ -401,8 +414,9 @@ class SoilLayerComponent extends PositionComponent
             speed: SimulationConstants.particleBaseSpeed + (nitRate * SimulationConstants.fluxToSpeedScale).clamp(5.0, 50.0),
           );
 
-          // Occasional process notification
-          if (math.Random().nextDouble() < 0.001) {
+          // Occasional process notification; the scenario's nitrogen signal
+          // makes the label appear often enough to read before it fades.
+          if (math.Random().nextDouble() < 0.003 + 0.01 * process.nitrification) {
              game.world.add(ProcessLabel(
                type: ProcessMarkerType.nitrification,
                color: CPKStandards.colorN,

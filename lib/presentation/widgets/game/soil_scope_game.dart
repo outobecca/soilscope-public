@@ -9,6 +9,7 @@ import '../../../core/debug_log.dart';
 import '../../providers/simulation_provider.dart';
 import '../../providers/simulation_session_provider.dart';
 import '../../../domain/models/biophysical_state.dart';
+import '../../../domain/models/scenario_process_profile.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/ui_state_provider.dart';
 import '../../providers/theme_provider.dart';
@@ -56,6 +57,7 @@ class SoilScopeGame extends FlameGame
   static const double atmosphereFraction = 0.7;
 
   BiophysicalState? _lastState;
+  ScenarioProcessProfile _scenarioProcessProfile = ScenarioProcessProfile.empty;
   List<Vector2> _rootTipWorldPositions = const [];
   List<Vector2> _foliageWorldPositions = const [];
   double _elapsed = 0;
@@ -139,6 +141,14 @@ class SoilScopeGame extends FlameGame
       return null;
     }
   }
+
+  /// State the canvas and HUD should agree on: the scrubber's snapshot when
+  /// history mode is active, otherwise the live state.
+  BiophysicalState get displayedState =>
+      _lastState ?? ref.read(displayedSimulationStateProvider);
+
+  /// Scenario-derived emphasis used by process animations and soil texture.
+  ScenarioProcessProfile get scenarioProcessProfile => _scenarioProcessProfile;
 
   List<Vector2> get rootTipWorldPositions => _rootTipWorldPositions;
   List<Vector2> get foliageWorldPositions => _foliageWorldPositions;
@@ -314,12 +324,14 @@ class SoilScopeGame extends FlameGame
   void updateIsRunning(bool isRunning, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
+      _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
 
   void updateBiophysicalState(BiophysicalState next) {
     _syncActionBuffer.add(() {
       _lastState = next;
+      _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
       final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
       if (animLayer != null) {
         animLayer.updateState(next);
@@ -330,6 +342,7 @@ class SoilScopeGame extends FlameGame
   void updateTimeScale(double timeScale, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
+      _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
 
@@ -383,6 +396,7 @@ class SoilScopeGame extends FlameGame
   }
 
   void _updateScene(BiophysicalState state, SimulationSessionState session) {
+    _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     final currentLayers = world.children.query<SoilLayerComponent>();
     final Map<String, SoilLayerComponent> layerMap = {
       for (var l in currentLayers) l.layerId: l,

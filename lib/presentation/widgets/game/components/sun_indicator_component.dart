@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 
 /// Interactive sun indicator that displays real-time solar radiation data.
@@ -34,7 +33,7 @@ class SunIndicatorComponent extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double rad = state.solarRadiation;
     final energyLevel = (rad / solarConstant).clamp(0.0, 1.0);
     final time = game.currentTime();
@@ -187,7 +186,7 @@ class SunIndicatorComponent extends PositionComponent
 
   void _showSunInfo({bool pinned = false}) {
     final l = game.l10n;
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double rad = state.solarRadiation;
 
     game.ref

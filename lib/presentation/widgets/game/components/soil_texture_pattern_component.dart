@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import 'soil_component_mixin.dart';
@@ -25,7 +24,9 @@ class SoilTexturePatternComponent extends Component
   @override
   void render(Canvas canvas) {
     final double zoom = game.camera.viewfinder.zoom;
-    final state = game.ref.read(simulationProvider);
+    // Use the displayed state so texture changes follow the history scrubber,
+    // not the live engine behind it.
+    final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
     final double scaleY = calculateVerticalScale(
@@ -39,6 +40,10 @@ class SoilTexturePatternComponent extends Component
       final layerHeight = layer.thickness * scaleY;
       final endY = currentY + layerHeight;
       final saturation = (layer.waterContent / layer.porosity).clamp(0.0, 1.0);
+      final layerCompaction = (
+        ((layer.bulkDensity - 1350.0) / 400.0).clamp(0.0, 1.0) * 0.6 +
+        ((0.45 - layer.porosity) / 0.17).clamp(0.0, 1.0) * 0.4
+      ).clamp(0.0, 1.0);
       final session = game.ref.read(simulationSessionProvider);
       
       // Highlight Overlay
@@ -54,7 +59,28 @@ class SoilTexturePatternComponent extends Component
       if (layer.sandFraction > 0.5) {
         _drawSandTexture(canvas, currentY, endY, backgroundX, backgroundWidth, zoom, rand, saturation);
       } else if (layer.clayFraction > 0.35) {
-        _drawClayTexture(canvas, currentY, endY, backgroundX, backgroundWidth, zoom, rand, saturation);
+        _drawClayTexture(
+          canvas,
+          currentY,
+          endY,
+          backgroundX,
+          backgroundWidth,
+          zoom,
+          rand,
+          saturation,
+          layerCompaction,
+        );
+        if (layerCompaction > 0.5) {
+          _drawCompactionBand(
+            canvas,
+            currentY,
+            endY,
+            backgroundX,
+            backgroundWidth,
+            zoom,
+            layerCompaction,
+          );
+        }
       } else {
         _drawSiltTexture(canvas, currentY, endY, backgroundX, backgroundWidth, zoom, rand, saturation);
       }
@@ -94,14 +120,29 @@ class SoilTexturePatternComponent extends Component
     }
   }
 
-  void _drawClayTexture(Canvas canvas, double startY, double endY, double xStart, double width, double zoom, math.Random rand, double saturation) {
-    final pedCount = ((endY - startY) * width / 250).toInt().clamp(100, 20000);
+  void _drawClayTexture(
+    Canvas canvas,
+    double startY,
+    double endY,
+    double xStart,
+    double width,
+    double zoom,
+    math.Random rand,
+    double saturation,
+    double compaction,
+  ) {
+    // Compacted clay has more, smaller, tightly packed peds and a darker
+    // matrix. Keep the cap so the desktop and web renderers stay bounded.
+    final pedCount = ((endY - startY) * width / 250)
+        .toInt()
+        .clamp(100, 20000);
+    final visiblePeds = (pedCount * (1.0 + compaction * 1.4)).toInt().clamp(100, 24000);
     final paint = _clayPaint..strokeWidth = 1.2 / zoom;
-    for (int i = 0; i < pedCount; i++) {
+    for (int i = 0; i < visiblePeds; i++) {
       final cx = xStart + rand.nextDouble() * width;
       final cy = startY + rand.nextDouble() * (endY - startY);
-      final size = (20 + rand.nextDouble() * 40) / zoom;
-      paint.color = Colors.black.withValues(alpha: 0.12);
+      final size = (20 + rand.nextDouble() * 40) / zoom * (1.0 - compaction * 0.25);
+      paint.color = Colors.black.withValues(alpha: 0.12 + compaction * 0.10);
       final path = Path();
       path.moveTo(cx - size/2, cy - size/3);
       path.lineTo(cx + size/3, cy - size/2);
@@ -117,6 +158,41 @@ class SoilTexturePatternComponent extends Component
           ..strokeWidth = 1.2 / zoom
           ..color = Colors.white.withValues(alpha: 0.04),
       );
+    }
+  }
+
+  void _drawCompactionBand(
+    Canvas canvas,
+    double startY,
+    double endY,
+    double xStart,
+    double width,
+    double zoom,
+    double compaction,
+  ) {
+    final bandHeight =
+        ((endY - startY) * 0.18).clamp(4.0 / zoom, 22.0 / zoom);
+    final bandTop = startY + 2.0 / zoom;
+    final bandRect = Rect.fromLTWH(xStart, bandTop, width, bandHeight);
+    final bandPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.black.withValues(alpha: 0.26 * compaction),
+          Colors.black.withValues(alpha: 0.04 * compaction),
+        ],
+      ).createShader(bandRect);
+    canvas.drawRect(bandRect, bandPaint);
+
+    // Dense, nearly horizontal plates are the visual signature of a plough
+    // pan: less continuous pore space and fewer vertical cracks.
+    final platePaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.28 * compaction)
+      ..strokeWidth = 1.2 / zoom;
+    for (int i = 0; i < 3; i++) {
+      final y = bandTop + bandHeight * (i + 1) / 4;
+      canvas.drawLine(Offset(xStart, y), Offset(xStart + width, y), platePaint);
     }
   }
 
@@ -141,7 +217,7 @@ class SoilTexturePatternComponent extends Component
 
   @override
   void onTapUp(TapUpEvent event) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double scaleY = calculateVerticalScale(
       state.profile.layers.fold(0.0, (sum, l) => sum + l.thickness),
     );
@@ -172,6 +248,8 @@ class SoilTexturePatternComponent extends Component
           l.sand: '${(layer.sandFraction * 100).toStringAsFixed(0)}%',
           l.silt: '${(layer.siltFraction * 100).toStringAsFixed(0)}%',
           l.clay: '${(layer.clayFraction * 100).toStringAsFixed(0)}%',
+          l.bulkDensity: '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
+          l.porosity: '${(layer.porosity * 100).toStringAsFixed(0)}%',
         },
         isPinned: pinned,
         accentColor: const Color(0xFFA1887F),

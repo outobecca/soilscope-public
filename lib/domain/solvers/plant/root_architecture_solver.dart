@@ -86,14 +86,19 @@ class RootArchitectureSolver {
         // 1. HIERARCHICAL PROFILE: Calculate factors based on depth (z: 0.0 to 1.0)
         final depthFactor = tip.z.clamp(0.0, 1.0);
         final layerIdx = profile.layers.indexWhere((l) => tip.z >= l.depth && tip.z <= l.depth + l.thickness);
+        final penetrationFactor = layerIdx == -1
+            ? 1.0
+            : profile.layers[layerIdx].rootGrowthFactor;
         
         // APICAL DOMINANCE: Branching probability decreases exponentially with depth
         final baseBranchProb = 0.35 * math.exp(-depthFactor * 3.5); 
         final isPrimary = (tip.x - 0.5).abs() < 0.12 && (tip.parentIndex == null || tip.parentIndex! < 80);
         
-        // Growth extension probability also tapers for lateral roots
-        final extensionProb = isPrimary ? 0.95 : (0.85 * math.exp(-depthFactor * 1.8));
-        final shouldBranch = _rand.nextDouble() < baseBranchProb;
+        // Growth extension probability also tapers for lateral roots. Compacted
+        // layers reduce both extension and branching, so roots stay shallower
+        // and the hardpan does not behave like loose loam.
+        final extensionProb = (isPrimary ? 0.95 : (0.85 * math.exp(-depthFactor * 1.8))) * penetrationFactor;
+        final shouldBranch = _rand.nextDouble() < baseBranchProb * penetrationFactor;
         final shouldExtend = _rand.nextDouble() < extensionProb;
 
         if (shouldExtend || shouldBranch) {
@@ -180,7 +185,9 @@ class RootArchitectureSolver {
           }
 
           // 4. GROWTH EXECUTION
-          const double growthStep = SimulationConstants.rootGrowthStep;
+          final double growthStep =
+              SimulationConstants.rootGrowthStep *
+              (0.45 + 0.55 * penetrationFactor);
           
           double dx = steeringForceX * growthStep;
           double dz = steeringForceZ * growthStep;

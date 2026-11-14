@@ -4,7 +4,6 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../domain/models/plant.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'scene_coordinate_mapper.dart';
 import 'data_packet_component.dart';
@@ -20,7 +19,7 @@ class PhotosynthesisIndicatorComponent extends Component
   @override
   void update(double dt) {
     super.update(dt);
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (!state.isRunning) return;
 
     final double radiation = state.solarRadiation;
@@ -40,7 +39,7 @@ class PhotosynthesisIndicatorComponent extends Component
   void render(Canvas canvas) {
     final double zoom = game.camera.viewfinder.zoom;
     final double time = game.currentTime();
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
 
     const double solarConstant = 800.0;
     final double radiation = state.solarRadiation;
@@ -138,7 +137,7 @@ class PhotosynthesisIndicatorComponent extends Component
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.solarRadiation < 100) return false;
     for (final plant in state.plants) {
       final pg = _getPlantGeometry(plant);
@@ -175,7 +174,7 @@ class PhotosynthesisIndicatorComponent extends Component
 
   void _showPhotoInfo({bool pinned = false}) {
     final l = game.l10n;
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     Offset? anchorScreen;
     if (state.plants.isNotEmpty) {
       final pg = _getPlantGeometry(state.plants.first);

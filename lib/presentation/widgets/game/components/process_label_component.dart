@@ -10,6 +10,7 @@ enum ProcessMarkerType {
   mineralization,
   adsorption,
   denitrification,
+  leaching,
 }
 
 class ProcessLabel extends PositionComponent
@@ -62,6 +63,9 @@ class ProcessLabel extends PositionComponent
         break;
       case ProcessMarkerType.denitrification:
         text = l.denitrification.toUpperCase();
+        break;
+      case ProcessMarkerType.leaching:
+        text = l.leachingTitle.toUpperCase();
         break;
     }
 
@@ -220,6 +224,10 @@ class ProcessLabel extends PositionComponent
         title = l.denitrification.toUpperCase();
         description = l.denitrificationDesc;
         break;
+      case ProcessMarkerType.leaching:
+        title = l.leachingTitle.toUpperCase();
+        description = l.leachingDesc;
+        break;
     }
 
     String? symbol;
@@ -319,6 +327,27 @@ class ProcessLabel extends PositionComponent
           Paint()
             ..color = color.withValues(alpha: 0.9 * opacity)
             ..style = PaintingStyle.fill,
+        );
+        break;
+      case ProcessMarkerType.leaching:
+        final arrowPaint = Paint()
+          ..color = color.withValues(alpha: 0.9 * opacity)
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke;
+        canvas.drawLine(
+          center + const Offset(0, -5),
+          center + const Offset(0, 5),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          center + const Offset(0, 5),
+          center + const Offset(-3.5, 1.5),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          center + const Offset(0, 5),
+          center + const Offset(3.5, 1.5),
+          arrowPaint,
         );
         break;
     }

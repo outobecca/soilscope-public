@@ -151,6 +151,23 @@ abstract class SoilLayer with _$SoilLayer {
     final activity = (oxygenContent * phScale) - (aluminumLevel * 0.5);
     return activity.clamp(0.0, double.infinity);
   }
+
+  /// Physical resistance a root tip experiences when extending through this
+  /// layer, normalized to 0..1.
+  ///
+  /// Bulk density is the dominant term; loss of pore space adds resistance
+  /// because roots cannot follow the same continuous pore network. This is a
+  /// visual/growth impedance, not a replacement for the hydraulic conductivity
+  /// already used by the water solver.
+  double get rootPenetrationResistance {
+    final densityTerm = ((bulkDensity - 1300.0) / 450.0).clamp(0.0, 1.0);
+    final poreTerm = ((0.45 - porosity) / 0.17).clamp(0.0, 1.0);
+    return (densityTerm * 0.60 + poreTerm * 0.40).clamp(0.0, 1.0);
+  }
+
+  /// Multiplier applied to root extension/branching in this layer.
+  double get rootGrowthFactor =>
+      (1.0 - rootPenetrationResistance * 0.65).clamp(0.25, 1.0);
 }
 
 @Freezed(fromJson: true, toJson: true)

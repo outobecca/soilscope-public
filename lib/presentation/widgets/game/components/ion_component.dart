@@ -194,7 +194,7 @@ class IonComponent extends PositionComponent
   void onHoverExit() => handleHoverExit();
 
   void _showIonInfo({bool pinned = false}) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
     final info = _getIonInfo(layer);
 

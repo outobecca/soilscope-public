@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'cycle_highlight_mixin.dart';
 
@@ -23,7 +22,7 @@ class CapillaryRiseComponent extends Component
 
   @override
   void render(Canvas canvas) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final double zoom = game.camera.viewfinder.zoom;
     final double time = game.currentTime();
     final surfaceY = game.soilSurfaceY;

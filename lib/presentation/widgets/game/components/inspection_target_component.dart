@@ -3,7 +3,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'process_magnifier_component.dart';
@@ -128,7 +127,7 @@ class InspectionTargetComponent extends PositionComponent
 
   void _showInspectionInfo({bool pinned = false}) {
     final l = game.l10n;
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     final topLayer = state.profile.layers.first;
 
     String title = "";

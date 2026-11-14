@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import 'soil_component_mixin.dart';
 
 /// Draws scientific overlays including depth markers, horizon labels,
@@ -20,7 +19,7 @@ class ScientificOverlaysComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final soilHeight = game.soilColumnHeight;
 
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
     final soilX = game.soilLeftX;

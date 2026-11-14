@@ -2,7 +2,6 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
-import '../../../providers/simulation_provider.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'soil_component_mixin.dart';
 
@@ -21,7 +20,7 @@ class PHGradientComponent extends Component
 
   @override
   void render(Canvas canvas) {
-    final state = game.ref.read(simulationProvider);
+    final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
     final double scaleY = calculateVerticalScale(
