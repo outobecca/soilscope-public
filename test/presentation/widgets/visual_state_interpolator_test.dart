@@ -76,6 +76,19 @@ void main() {
     expect(interpolator.isTransitioning, isFalse);
   });
 
+  test('immediate targets follow timeline scrubbing without a transition', () {
+    final interpolator = VisualStateInterpolator(transitionSeconds: 0.2);
+    final first = _state(water: 0.2, rain: 0);
+    final second = _state(water: 0.4, rain: 10);
+
+    interpolator.setTarget(first);
+    interpolator.setTarget(second, immediate: true);
+
+    expect(interpolator.value, same(second));
+    expect(interpolator.isTransitioning, isFalse);
+    expect(interpolator.advance(0.1), isFalse);
+  });
+
   test('a new snapshot starts from the currently displayed value', () {
     final interpolator = VisualStateInterpolator(transitionSeconds: 0.2);
     interpolator.setTarget(_state(water: 0.2, rain: 0));

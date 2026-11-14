@@ -51,7 +51,6 @@ class AnimatedPlantComponent extends PositionComponent
     minWorld: 6,
     maxWorld: 36,
   );
-  Plant? _plant;
   bool _isRunning = false;
 
   final List<_RootTipGlow> _tipGlows = [];
@@ -107,7 +106,7 @@ class AnimatedPlantComponent extends PositionComponent
     Vector2 startWorld, {
     bool stopAtCollar = false,
   }) {
-    final plant = _plant;
+    final plant = _plantData;
     if (plant == null) return null;
 
     // 1. Find nearest root node
@@ -199,15 +198,24 @@ class AnimatedPlantComponent extends PositionComponent
         ),
       ),
       (prev, next) {
-        _plant = next;
-        if (next != null && next.rootSystem.length > _previousRootCount) {
+        final rootCount = next?.rootSystem.length ?? 0;
+        if (rootCount > _previousRootCount && next != null) {
           final time = game.currentTime();
-          for (int i = _previousRootCount; i < next.rootSystem.length; i++) {
+          for (int i = _previousRootCount; i < rootCount; i++) {
             _nodeBirthTimes[i] = time;
           }
           _onNewRootGrowth(next);
-          _previousRootCount = next.rootSystem.length;
+        } else if (rootCount < _previousRootCount) {
+          // Scrubbing history can take the plant back before some roots grew.
+          // Drop their birth times so the same indices animate as new growth
+          // when the run advances again.
+          _nodeBirthTimes.removeWhere((index, _) => index >= rootCount);
         }
+        if (next == null) {
+          _tipGlows.clear();
+          _schematicRootPositions.clear();
+        }
+        _previousRootCount = rootCount;
       },
       fireImmediately: true,
     );
@@ -233,7 +241,7 @@ class AnimatedPlantComponent extends PositionComponent
     ) {
       _layoutMode = next;
       if (next == VisualLayoutMode.schematic) {
-        final plant = _plant;
+        final plant = _plantData;
         if (plant != null) _calculateSchematicLayout(plant);
       }
     }, fireImmediately: true);
@@ -286,8 +294,15 @@ class AnimatedPlantComponent extends PositionComponent
     }
   }
 
-  /// Fetches the specific plant data from the simulation state.
-  Plant? get _plantData => _plant;
+  /// Fetch this plant from the interpolated visual state, not the raw
+  /// provider snapshot. The latter updates at the engine tick rate and would
+  /// make turgor, biomass and senescence step between frames.
+  Plant? get _plantData {
+    for (final plant in game.displayedState.plants) {
+      if (plant.id == plantId) return plant;
+    }
+    return null;
+  }
 
   void _cleanupExpiredParticles() {
     // Enforce max counts
@@ -355,6 +370,45 @@ class AnimatedPlantComponent extends PositionComponent
     // 1b. Synchronize Hitboxes with Root Nodes
     _syncRootHitboxes(plant);
 
+    // Physiological smoothing must keep running while history is displayed or
+    // the simulation is paused. Otherwise a historical snapshot's turgor and
+    // biomass are rendered using the live values that happened to be on
+    // screen when scrubbing started.
+    final targetTurgor = plant.turgorPressure;
+    final state = game.simulationState;
+    final nContent = (state != null && state.profile.layers.isNotEmpty)
+        ? (state.profile.layers.first.nitrateContent +
+              state.profile.layers.first.ammoniumContent)
+        : 30.0;
+    final targetVitality = (nContent / 40.0).clamp(0.2, 1.0);
+
+    // Exponential smoothing keeps wilting and growth visually consistent at
+    // any refresh rate, including frame drops on low-end devices.
+    _smoothTurgor = dampTowards(
+      current: _smoothTurgor,
+      target: targetTurgor,
+      rate: 0.8,
+      dt: dt,
+    );
+    _smoothVitality = dampTowards(
+      current: _smoothVitality,
+      target: targetVitality,
+      rate: 0.4,
+      dt: dt,
+    );
+    _smoothBiomass = dampTowards(
+      current: _smoothBiomass,
+      target: plant.totalBiomass,
+      rate: 0.16,
+      dt: dt,
+    );
+    _smoothAge = dampTowards(
+      current: _smoothAge,
+      target: plant.age,
+      rate: 0.1,
+      dt: dt,
+    );
+
     if (!_isRunning) return;
 
     if (_growthBoost > 0) {
@@ -395,43 +449,6 @@ class AnimatedPlantComponent extends PositionComponent
     _tipGlows.removeWhere((g) => g.isDone);
 
     _spawnExudates(plant, dt);
-
-    // Physiological Smoothing & Interpolation
-    // We use a damping factor to make transitions (like wilting) feel organic
-    final targetTurgor = plant.turgorPressure;
-    final state = game.simulationState;
-    final nContent = (state != null && state.profile.layers.isNotEmpty)
-        ? (state.profile.layers.first.nitrateContent +
-              state.profile.layers.first.ammoniumContent)
-        : 30.0;
-    final targetVitality = (nContent / 40.0).clamp(0.2, 1.0);
-
-    // Exponential smoothing keeps wilting and growth visually consistent at
-    // any refresh rate, including frame drops on low-end devices.
-    _smoothTurgor = dampTowards(
-      current: _smoothTurgor,
-      target: targetTurgor,
-      rate: 0.8,
-      dt: dt,
-    );
-    _smoothVitality = dampTowards(
-      current: _smoothVitality,
-      target: targetVitality,
-      rate: 0.4,
-      dt: dt,
-    );
-    _smoothBiomass = dampTowards(
-      current: _smoothBiomass,
-      target: plant.totalBiomass,
-      rate: 0.16,
-      dt: dt,
-    );
-    _smoothAge = dampTowards(
-      current: _smoothAge,
-      target: plant.age,
-      rate: 0.1,
-      dt: dt,
-    );
 
     // Senescence accumulates if vitality is low for too long or plant is old
     if (_smoothVitality < 0.4 || _smoothAge > 60) {

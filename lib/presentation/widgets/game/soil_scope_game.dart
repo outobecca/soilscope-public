@@ -65,6 +65,7 @@ class SoilScopeGame extends FlameGame
   final AnimationClock _animationClock = AnimationClock();
   BiophysicalState? _pendingSceneState;
   SimulationSessionState? _pendingSceneSession;
+  BiophysicalState? _pendingAnimationState;
   double _startZoom = 1.0;
   bool _inspectionPaused = false;
 
@@ -114,7 +115,13 @@ class SoilScopeGame extends FlameGame
     // Selecting an element for its info is an inspection mode: freeze the
     // canvas animation while leaving the simulation isolate and Flutter HUD
     // responsive. The next frame after the card is dismissed resumes normally.
+    final wasInspectionPaused = _inspectionPaused;
     _inspectionPaused = _readInspectionPaused();
+    if (wasInspectionPaused && !_inspectionPaused) {
+      final pending = _pendingAnimationState;
+      _pendingAnimationState = null;
+      if (pending != null) _applyAnimationState(pending);
+    }
     final isRunning = simulationState?.isRunning ?? false;
     _animationClock.tick(
       dt,
@@ -385,7 +392,9 @@ class SoilScopeGame extends FlameGame
   void updateSession(BiophysicalState state, SimulationSessionState session) {
     _syncActionBuffer.add(() {
       _lastState = state;
-      _visualState.setTarget(state);
+      // Scrubbing is direct manipulation: the soil should follow the thumb
+      // immediately instead of lagging one transition behind it.
+      _visualState.setTarget(state, immediate: _readIsScrubbing());
       _pendingSceneState = state;
       _pendingSceneSession = session;
     });
@@ -394,7 +403,7 @@ class SoilScopeGame extends FlameGame
   void updateIsRunning(bool isRunning, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
-      _visualState.setTarget(state);
+      _visualState.setTarget(state, immediate: _readIsScrubbing());
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
@@ -402,7 +411,7 @@ class SoilScopeGame extends FlameGame
   void updateBiophysicalState(BiophysicalState next) {
     _syncActionBuffer.add(() {
       _lastState = next;
-      _visualState.setTarget(next);
+      _visualState.setTarget(next, immediate: _readIsScrubbing());
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
       _applyAnimationState(next);
     });
@@ -411,7 +420,7 @@ class SoilScopeGame extends FlameGame
   void updateTimeScale(double timeScale, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
-      _visualState.setTarget(state);
+      _visualState.setTarget(state, immediate: _readIsScrubbing());
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
@@ -471,9 +480,14 @@ class SoilScopeGame extends FlameGame
   /// arrive for the same tick; without this guard every state would rebuild
   /// flux indicators and inspection targets twice.
   void _applyAnimationState(BiophysicalState state) {
-    // Do not consume the dedupe slot while the canvas is frozen. The state
-    // will be applied on the first resumed frame instead of being lost.
-    if (_inspectionPaused) return;
+    // Do not consume the dedupe slot while the canvas is frozen. Keep only
+    // the latest snapshot and apply it on the first resumed frame; otherwise a
+    // state update that arrives while an inspection card is open is lost.
+    if (_inspectionPaused) {
+      _pendingAnimationState = state;
+      return;
+    }
+    _pendingAnimationState = null;
     if (identical(_lastAnimationState, state)) return;
     _lastAnimationState = state;
     final animLayer = world.children
