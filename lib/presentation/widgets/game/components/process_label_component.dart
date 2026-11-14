@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 
 enum ProcessMarkerType {
   nitrification,
@@ -165,10 +166,18 @@ class ProcessLabel extends PositionComponent
     }
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 11,
+        minWorld: 7,
+        maxWorld: 36,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    return point.distanceTo(center) <= 25.0;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

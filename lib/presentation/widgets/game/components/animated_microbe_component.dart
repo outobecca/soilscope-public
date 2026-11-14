@@ -16,6 +16,7 @@ import 'soil_layer_component.dart';
 import 'particle_system_component.dart';
 import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
+import 'canvas_hit_testing.dart';
 import 'cycle_highlight_mixin.dart';
 import 'molecule_particle_component.dart';
 import 'molecule_renderer.dart';
@@ -71,11 +72,18 @@ class AnimatedMicrobeComponent extends PositionComponent
     _anchorIndex = seed;
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 24,
+        minWorld: 10,
+        maxWorld: 40,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous selection radius for comfortable hovering
     final center = size / 2;
-    return point.distanceTo(center) < 48.0; 
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

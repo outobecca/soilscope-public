@@ -11,6 +11,7 @@ import '../../../../domain/solvers/particle_physics_solver.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 import 'riverpod_lifecycle_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'lod_render_mixin.dart';
@@ -30,8 +31,7 @@ class MolecularParticleFieldComponent extends Component
         LODRenderMixin {
   @override
   bool containsLocalPoint(Vector2 point) {
-    const double threshold = 28.0;
-    const double thresholdSq = threshold * threshold;
+    final thresholdSq = _hitRadius * _hitRadius;
     const int stride = 10;
 
     for (int i = 1; i < _particleData.length; i += stride) {
@@ -39,7 +39,7 @@ class MolecularParticleFieldComponent extends Component
       final dy = point.y - _particleData[i + 1];
       final distSq = dx * dx + dy * dy;
 
-      if (distSq < thresholdSq) return true;
+      if (distSq <= thresholdSq) return true;
     }
     return false;
   }
@@ -48,6 +48,16 @@ class MolecularParticleFieldComponent extends Component
   Float32List get particleData => _particleData;
   int? _pinnedParticleId;
   int? _hoveredParticleId;
+
+  /// Keep the mouse target roughly 24 logical pixels across regardless of
+  /// camera zoom, while still covering the drawn molecule itself.
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 7,
+        minWorld: 5,
+        maxWorld: 40,
+      );
 
 
   @override
@@ -320,21 +330,16 @@ class MolecularParticleFieldComponent extends Component
 
   @override
   void onPointerMove(PointerMoveEvent event) {
-    final worldPos = game.camera.globalToLocal(event.canvasPosition);
-
-    if (game.camera.viewfinder.zoom < 0.8) return;
-
-    double minHoverDist = 24.0;
-    int? nearestHoverIndex;
-    for (int i = 0; i < _particleData.length; i += 10) {
-      final px = _particleData[i + 1];
-      final py = _particleData[i + 2];
-      final dist = (worldPos - Vector2(px, py)).length;
-      if (dist < minHoverDist) {
-        minHoverDist = dist;
-        nearestHoverIndex = i;
-      }
-    }
+    // The event's local position is already transformed through the camera.
+    // Using it avoids mixing canvas and world coordinates during pan/zoom.
+    final worldPos = event.localPosition;
+    final hitRadius = _hitRadius;
+    final nearestHoverIndex = CanvasHitTesting.nearestPackedIndex(
+      data: _particleData,
+      x: worldPos.x,
+      y: worldPos.y,
+      radius: hitRadius,
+    );
 
     if (nearestHoverIndex != null) {
       final pId = _particleData[nearestHoverIndex].toInt();
@@ -349,10 +354,7 @@ class MolecularParticleFieldComponent extends Component
       if (_hoveredParticleId != null) {
         _hoveredParticleId = null;
         if (_pinnedParticleId == null) {
-          final current = game.ref.read(uIStateProvider);
-          if (current != null && !current.isPinned) {
-            game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
-          }
+          game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
         }
       }
     }
@@ -371,19 +373,13 @@ class MolecularParticleFieldComponent extends Component
 
   @override
   void onTapUp(TapUpEvent event) {
-    final worldPos = game.camera.globalToLocal(event.canvasPosition);
-    int? nearestIndex;
-    double minTapDist = 20.0;
-
-    for (int i = 0; i < _particleData.length; i += 10) {
-      final px = _particleData[i + 1];
-      final py = _particleData[i + 2];
-      final dist = (worldPos - Vector2(px, py)).length;
-      if (dist < minTapDist) {
-        minTapDist = dist;
-        nearestIndex = i;
-      }
-    }
+    final worldPos = event.localPosition;
+    final nearestIndex = CanvasHitTesting.nearestPackedIndex(
+      data: _particleData,
+      x: worldPos.x,
+      y: worldPos.y,
+      radius: _hitRadius,
+    );
 
     if (nearestIndex != null) {
       final pId = _particleData[nearestIndex].toInt();

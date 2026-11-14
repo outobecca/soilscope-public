@@ -9,6 +9,7 @@ import '../../../providers/simulation_provider.dart';
 import 'biological_entity_mixin.dart';
 import 'visual_time_mixin.dart';
 import 'cycle_highlight_mixin.dart';
+import 'canvas_hit_testing.dart';
 import 'animated_plant_component.dart';
 import 'molecule_renderer.dart';
 
@@ -317,11 +318,18 @@ class MoleculeParticleComponent extends PositionComponent
   @override
   void onHoverExit() => handleHoverExit();
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 8,
+        minWorld: 6,
+        maxWorld: 36,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch & hover target (60px diameter) around the 6px molecule particle
     final center = size / 2;
-    return point.distanceTo(center) <= 30.0;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

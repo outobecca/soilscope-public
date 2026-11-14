@@ -12,6 +12,7 @@ import '../../../../core/cpk_standards.dart';
 import 'animated_plant_component.dart';
 import 'molecule_renderer.dart';
 import 'biological_entity_mixin.dart';
+import 'canvas_hit_testing.dart';
 
 /// Interactive ion component representing dissolved nutrients in soil solution.
 /// Tap to pin detailed information about the nutrient's chemistry and plant availability.
@@ -166,11 +167,18 @@ class IonComponent extends PositionComponent
     );
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 8,
+        minWorld: 6,
+        maxWorld: 36,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch and hover target (64px diameter) around the 12px ion
     final center = size / 2;
-    return point.distanceTo(center) <= 32.0;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

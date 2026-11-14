@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 import 'process_magnifier_component.dart';
 
 
@@ -80,10 +81,18 @@ class InspectionTargetComponent extends PositionComponent
     }
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 10,
+        minWorld: 6,
+        maxWorld: 40,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    return point.distanceTo(center) <= 28.0;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

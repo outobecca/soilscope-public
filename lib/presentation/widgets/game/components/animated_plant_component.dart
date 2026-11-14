@@ -9,6 +9,7 @@ import '../../../../domain/models/plant.dart';
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_provider.dart';
+import 'canvas_hit_testing.dart';
 import '../../../providers/simulation_session_provider.dart';
 import 'soil_symbiosis_network_component.dart';
 import 'scene_coordinate_mapper.dart';
@@ -37,6 +38,17 @@ class AnimatedPlantComponent extends PositionComponent
   double _solarRadiation = 800; // Average solar radiation in W/m^2
   double _growthBoost = 0.0;
   bool _isPinned = false;
+
+  /// Root nodes are small on screen; keep their mouse target zoom-aware so
+  /// they neither become impossible to hit zoomed out nor swallow the whole
+  /// root zone when zoomed in.
+  double get _rootHitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 6,
+        minWorld: 6,
+        maxWorld: 36,
+      );
   Plant? _plant;
   bool _isRunning = false;
 
@@ -877,7 +889,7 @@ class AnimatedPlantComponent extends PositionComponent
     );
     if (shootRect.contains(point.toOffset())) return true;
 
-    // Check against root nodes (increased radius to 32.0 for effortless targeting)
+    // Check against root nodes with a screen-space-stable target radius.
     final nodes = plant.rootSystem;
     for (int i = 0; i < nodes.length; i++) {
       final pos = _mapRootToLocal(
@@ -887,7 +899,7 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (point.distanceTo(pos) < 32.0) return true;
+      if (point.distanceTo(pos) <= _rootHitRadius) return true;
     }
     return false;
   }
@@ -899,10 +911,12 @@ class AnimatedPlantComponent extends PositionComponent
 
     final localPos = event.localPosition;
 
-    // Check root hovering with accurate root info and coordinate targeting
+    // Check root hovering with nearest-node targeting. Choosing the nearest
+    // node matters where several fine roots overlap on screen.
     int? foundRootIndex;
     Vector2? foundRootPos;
     RootNode? foundRootNode;
+    double nearestRootDistance = _rootHitRadius;
 
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
@@ -913,11 +927,12 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (localPos.distanceTo(pos) < 32.0) {
+      final distance = localPos.distanceTo(pos);
+      if (distance <= nearestRootDistance) {
+        nearestRootDistance = distance;
         foundRootIndex = i;
         foundRootPos = pos;
         foundRootNode = node;
-        break;
       }
     }
 
@@ -966,7 +981,11 @@ class AnimatedPlantComponent extends PositionComponent
 
     final localPos = event.localPosition;
 
-    // Check for root node selection (generous 32px radius)
+    // Check for the nearest root node within the current screen-space target.
+    int? nearestRootIndex;
+    Vector2? nearestRootPos;
+    RootNode? nearestRootNode;
+    double nearestRootDistance = _rootHitRadius;
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
       final pos = _mapRootToLocal(
@@ -976,36 +995,47 @@ class AnimatedPlantComponent extends PositionComponent
         SoilScopeGame.soilColumnWidth,
         game.soilColumnHeight,
       );
-      if (localPos.distanceTo(pos) < 32.0) {
-        final sourceId = 'plant-root-$plantId-$i';
-        final current = game.ref.read(uIStateProvider);
-        if (current?.isPinned == true && current?.sourceId == sourceId) {
-          // Tapping the same root again releases the inspection, matching the
-          // other canvas entities on touch devices.
-          _pinnedRootIndex = null;
-          game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
-          event.handled = true;
-          return;
-        }
+      final distance = localPos.distanceTo(pos);
+      if (distance <= nearestRootDistance) {
+        nearestRootDistance = distance;
+        nearestRootIndex = i;
+        nearestRootPos = pos;
+        nearestRootNode = node;
+      }
+    }
 
-        // A root selection replaces any shoot-level selection. Keep the two
-        // local states mutually exclusive so closing the root card cannot
-        // leave the plant's hover/dismiss logic stuck in its old state.
-        _pinnedRootIndex = i;
-        _isPinned = false;
-        final info = _getRootInfo(node, plant);
-        info['screenPosition'] = game
-            .worldToScreen(absolutePositionOf(pos))
-            .toOffset();
-        info['isPinned'] = true;
-        game.ref.read(uIStateProvider.notifier).showInfo(
-          info,
-          sourceId: sourceId,
-          onDismiss: () => _pinnedRootIndex = null,
-        );
+    if (nearestRootIndex != null && nearestRootPos != null && nearestRootNode != null) {
+      final i = nearestRootIndex;
+      final pos = nearestRootPos;
+      final node = nearestRootNode;
+      final sourceId = 'plant-root-$plantId-$i';
+      final current = game.ref.read(uIStateProvider);
+      if (current?.isPinned == true && current?.sourceId == sourceId) {
+        // Tapping the same root again releases the inspection, matching the
+        // other canvas entities on touch devices.
+        _pinnedRootIndex = null;
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
         event.handled = true;
         return;
       }
+
+      // A root selection replaces any shoot-level selection. Keep the two
+      // local states mutually exclusive so closing the root card cannot
+      // leave the plant's hover/dismiss logic stuck in its old state.
+      _pinnedRootIndex = i;
+      _isPinned = false;
+      final info = _getRootInfo(node, plant);
+      info['screenPosition'] = game
+          .worldToScreen(absolutePositionOf(pos))
+          .toOffset();
+      info['isPinned'] = true;
+      game.ref.read(uIStateProvider.notifier).showInfo(
+        info,
+        sourceId: sourceId,
+        onDismiss: () => _pinnedRootIndex = null,
+      );
+      event.handled = true;
+      return;
     }
 
     _pinnedRootIndex = null;

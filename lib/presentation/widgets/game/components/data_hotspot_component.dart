@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 import 'riverpod_lifecycle_mixin.dart';
 
 enum HotspotType {
@@ -49,6 +50,20 @@ class DataHotspotComponent extends CircleComponent
     _labelTp = TextPainter(
       textDirection: TextDirection.ltr,
     );
+  }
+
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 14,
+        minWorld: 6,
+        maxWorld: 32,
+      );
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    final center = size / 2;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

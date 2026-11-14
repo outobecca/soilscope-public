@@ -6,6 +6,7 @@ import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 import 'molecule_renderer.dart';
 
 /// Gas types representing different biogeochemical processes
@@ -71,11 +72,18 @@ class BubbleComponent extends CircleComponent
     }
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 4,
+        minWorld: 5,
+        maxWorld: 32,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous hit area (56px diameter) for effortless hover and tap
     final center = size / 2;
-    return (point - center).length < 28.0;
+    return (point - center).length <= _hitRadius;
   }
 
   @override

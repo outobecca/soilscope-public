@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../domain/models/soil_layer.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../soil_scope_game.dart';
+import 'canvas_hit_testing.dart';
 
 /// A dynamic visual representation of a rhizosphere hotspot.
 /// Shows metabolic activity (acidification and exudation) around root tips.
@@ -114,12 +115,18 @@ class RhizosphereHotspotComponent extends PositionComponent
     canvas.drawCircle(Offset(size.x / 2, size.y / 2), 4, paint);
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: size.x / 2,
+        minWorld: 6,
+        maxWorld: 36,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch & hover target (at least 35px radius)
     final center = size / 2;
-    final r = math.max(size.x / 2, 35.0);
-    return point.distanceTo(center) <= r;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

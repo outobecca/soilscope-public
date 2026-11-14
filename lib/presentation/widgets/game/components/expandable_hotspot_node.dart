@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import 'data_hotspot_component.dart';
+import 'canvas_hit_testing.dart';
 import '../../../../core/cpk_standards.dart';
 
 /// A consolidated, expandable hotspot node that anchors multiple soil metrics.
@@ -57,12 +58,21 @@ class ExpandableHotspotNode extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
+    final center = size / 2;
     if (_isExpanded) {
-      // Expanded state: capture taps within the cluster radius
-      return (point - size / 2).length < 85.0;
+      // Expanded state: capture taps within the cluster radius.
+      return (point - center).length <= 85.0;
     }
-    // Collapsed state: strictly centered on the indicator (30px radius for finger-friendly targets)
-    return (point - size / 2).length < 30.0;
+    // Collapsed state: keep the target stable on screen instead of letting
+    // the world-space radius balloon at high zoom.
+    final hitRadius = CanvasHitTesting.worldRadius(
+      zoom: game.camera.viewfinder.zoom,
+      screenRadius: 26,
+      visualWorldRadius: 12,
+      minWorld: 10,
+      maxWorld: 36,
+    );
+    return (point - center).length <= hitRadius;
   }
 
   @override

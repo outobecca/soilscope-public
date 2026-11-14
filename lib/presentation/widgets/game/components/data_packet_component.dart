@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
+import 'canvas_hit_testing.dart';
 
 enum FluxType {
   water,
@@ -169,11 +170,18 @@ class DataPacket extends PositionComponent
     return path.last;
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 8,
+        minWorld: 8,
+        maxWorld: 32,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch and hover target (52px diameter) around the 16px packet
     final center = size / 2;
-    return point.distanceTo(center) <= 26.0;
+    return point.distanceTo(center) <= _hitRadius;
   }
 
   @override

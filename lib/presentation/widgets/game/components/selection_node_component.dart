@@ -5,6 +5,7 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
+import 'canvas_hit_testing.dart';
 
 enum SelectionNodeType {
   atmosphere,
@@ -228,10 +229,17 @@ class SelectionNodeComponent extends PositionComponent
     );
   }
 
+  double get _hitRadius => CanvasHitTesting.worldRadius(
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 24,
+        minWorld: 8,
+        maxWorld: 40,
+      );
+
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous circular hit detection for touch and mouse precision (56px diameter)
     final center = size / 2;
-    return point.distanceToSquared(center) <= 28 * 28;
+    return point.distanceToSquared(center) <= _hitRadius * _hitRadius;
   }
 }
