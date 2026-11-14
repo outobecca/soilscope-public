@@ -204,7 +204,7 @@ class ControlPanelSection extends ConsumerWidget {
               l10n.soilTexture.toUpperCase(),
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 11,
+                fontSize: 12,
                 color: Colors.grey,
               ),
             ),

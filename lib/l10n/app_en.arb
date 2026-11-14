@@ -1185,6 +1185,7 @@
   "rateLabel": "Rate",
   "turgorLabel": "Turgor",
   "roleLabel": "Role",
+  "categoryLabel": "Category",
   "locationLabel": "Location",
   "microbialBiomassLabel": "Microbial Biomass",
   "bioActivityLabel": "Bio-Activity",

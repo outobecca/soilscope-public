@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/debug_log.dart';
 import '../actions/simulation_actions.dart';
 import '../models/biophysical_state.dart';
 import '../models/scenario.dart';
@@ -52,7 +53,7 @@ class SimulationTickProcessor {
         if (processedState.timeElapsed >= event.executionTime &&
             uiState.timeElapsed < event.executionTime) {
           if (kDebugMode) {
-            debugPrint(
+            debugLog(
               '[SimulationTickProcessor] Applying event: '
               '${event.type} at ${event.executionTime}',
             );

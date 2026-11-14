@@ -168,7 +168,7 @@ class SustainabilityPanel extends ConsumerWidget {
                 l10n.index.toUpperCase(),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -202,7 +202,7 @@ class SustainabilityPanel extends ConsumerWidget {
               '${(value * 100).toStringAsFixed(0)}%',
               style: TextStyle(
                 color: color,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
               ),

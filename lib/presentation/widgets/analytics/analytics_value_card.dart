@@ -96,7 +96,7 @@ class _AnalyticsValueCardState extends State<AnalyticsValueCard> {
           widget.label.toUpperCase(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -117,7 +117,7 @@ class _AnalyticsValueCardState extends State<AnalyticsValueCard> {
             Text(
               widget.unit,
               style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 7,
+                fontSize: 12,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),

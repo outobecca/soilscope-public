@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import '../core/debug_log.dart';
 import '../domain/models/scenario.dart';
 
 class ScenarioRepository {
@@ -20,13 +21,13 @@ class ScenarioRepository {
         final Map<String, dynamic> jsonMap = jsonDecode(jsonStr);
         return Scenario.fromJson(jsonMap);
       } on FlutterError catch (e, stack) {
-        debugPrint('ScenarioRepository: missing or unreadable asset $path. $e');
+        debugLog('ScenarioRepository: missing or unreadable asset $path. $e');
         debugPrintStack(stackTrace: stack);
       } on FormatException catch (e, stack) {
-        debugPrint('ScenarioRepository: invalid JSON in $path. $e');
+        debugLog('ScenarioRepository: invalid JSON in $path. $e');
         debugPrintStack(stackTrace: stack);
       } catch (e, stack) {
-        debugPrint('ScenarioRepository: unexpected error for $path. $e');
+        debugLog('ScenarioRepository: unexpected error for $path. $e');
         debugPrintStack(stackTrace: stack);
       }
       return null;

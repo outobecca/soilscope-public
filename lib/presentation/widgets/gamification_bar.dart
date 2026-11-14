@@ -276,7 +276,7 @@ class GamificationBar extends ConsumerWidget {
                       Text(
                         l10n?.briefingButton ?? 'BRIEFING',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFFC084FC),
                         ),
@@ -676,7 +676,7 @@ class HealthMeterWidget extends StatelessWidget {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: color,
                             fontWeight: FontWeight.w800,
-                            fontSize: 11,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -810,7 +810,7 @@ class XpLevelPanelWidget extends StatelessWidget {
             'XP $metObjectives / $totalObjectives',
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white70,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -839,7 +839,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                       l10n?.briefingButton ?? 'BRIEFING',
                       style: TextStyle(
                         color: const Color(0xFFC084FC),
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -871,7 +871,7 @@ class XpLevelPanelWidget extends StatelessWidget {
                                   _getLocalizedObjectiveTitle(obj, l10n),
                                   style: TextStyle(
                                     color: color,
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: isMet
                                         ? FontWeight.bold
                                         : FontWeight.normal,

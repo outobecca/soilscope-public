@@ -3043,6 +3043,9 @@ class AppLocalizationsFi extends AppLocalizations {
   String get roleLabel => 'Rooli';
 
   @override
+  String get categoryLabel => 'Luokka';
+
+  @override
   String get locationLabel => 'Sijainti';
 
   @override

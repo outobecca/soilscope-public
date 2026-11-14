@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import '../../core/debug_log.dart';
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
 import '../models/plant.dart';
@@ -125,7 +126,7 @@ void simulationIsolateEntry(SendPort mainSendPort) {
         precipitation = message.precipitation;
       }
     } catch (e) {
-      debugPrint('SimulationIsolate Error: $e');
+      debugLog('SimulationIsolate Error: $e');
     }
   });
 }
@@ -153,7 +154,7 @@ class SimulationIsolateManager {
 
   Future<void> init() async {
     if (kIsWeb || _initialized) {
-      if (kIsWeb) debugPrint('SimulationIsolateManager: Running in Web Mode (Main Thread)');
+      if (kIsWeb) debugLog('SimulationIsolateManager: Running in Web Mode (Main Thread)');
       return;
     }
     _initialized = true;
@@ -201,11 +202,11 @@ class SimulationIsolateManager {
   }
 
   void _runWebLoop() async {
-    debugPrint('[SimulationIsolateManager] _runWebLoop: starting loop');
+    debugLog('[SimulationIsolateManager] _runWebLoop: starting loop');
     while (_isWebRunning) {
       if (_currentState != null) {
         if (kDebugMode) {
-          debugPrint('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
+          debugLog('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
         }
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
@@ -227,28 +228,28 @@ class SimulationIsolateManager {
             await Future<void>.delayed(Duration.zero);
           }
         } catch (e) {
-          debugPrint('Error in web simulation tick: $e');
+          debugLog('Error in web simulation tick: $e');
         }
       } else {
-        debugPrint('[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...');
+        debugLog('[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...');
       }
       await Future.delayed(const Duration(milliseconds: 200));
     }
-    debugPrint('[SimulationIsolateManager] _runWebLoop: loop EXITED');
+    debugLog('[SimulationIsolateManager] _runWebLoop: loop EXITED');
   }
 
   void _processWebCommand(SimulationCommand cmd) {
     if (cmd is StartCommand) {
-      debugPrint('[SimulationIsolateManager] processWebCommand: StartCommand, isWebRunning=$_isWebRunning');
+      debugLog('[SimulationIsolateManager] processWebCommand: StartCommand, isWebRunning=$_isWebRunning');
       if (!_isWebRunning) {
         _isWebRunning = true;
         _runWebLoop();
       }
     } else if (cmd is StopCommand) {
-      debugPrint('[SimulationIsolateManager] processWebCommand: StopCommand');
+      debugLog('[SimulationIsolateManager] processWebCommand: StopCommand');
       _isWebRunning = false;
     } else if (cmd is UpdateStateCommand) {
-      debugPrint('[SimulationIsolateManager] processWebCommand: UpdateStateCommand');
+      debugLog('[SimulationIsolateManager] processWebCommand: UpdateStateCommand');
       _currentState = cmd.state;
       _precipitation = cmd.precipitation;
     }

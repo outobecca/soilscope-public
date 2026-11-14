@@ -31,6 +31,39 @@ void main() {
       expect(result.averageFluxes[1], greaterThan(0.0));
     });
 
+    test('high conductivity at one hour conserves water against drainage', () {
+      final initialWater = 0.40;
+      final thickness = 0.1;
+      final profile = SoilProfile(
+        id: 'high-k',
+        name: 'High conductivity',
+        layers: [
+          _createLayer('L1', 0.0, thickness, 1e-4, 0.45, initialWater),
+        ],
+        surfaceAlbedo: 0.2,
+        slope: 0.0,
+      );
+
+      final result = HydrologySolver.solve(
+        profile,
+        3600.0,
+        airTemperature: 273.15,
+      );
+      final updated = result.profile.layers.first;
+      final deltaStorage =
+          (updated.waterContent - initialWater) * thickness;
+      final drained = result.averageFluxes.last * 3600.0;
+
+      expect(updated.waterContent.isFinite, isTrue);
+      expect(updated.waterContent, inInclusiveRange(updated.thetaR, updated.porosity));
+      expect(result.averageFluxes.every((flux) => flux.isFinite), isTrue);
+      expect(
+        deltaStorage,
+        closeTo(-drained, 1e-9),
+        reason: 'water lost must equal the flux leaving the bottom',
+      );
+    });
+
     test('Infiltration should increase top layer water content', () {
       final initialLayers = [
         _createLayer('L1', 0.0, 0.1, 1e-4, 0.45, 0.10), // Dry

@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/debug_log.dart';
 import 'game/soil_scope_game.dart';
 import '../providers/game_provider.dart';
 import '../providers/simulation_provider.dart';
@@ -25,21 +26,21 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   @override
   void initState() {
     super.initState();
-    debugPrint('[FlameSimulationView] initState: Creating SoilScopeGame');
+    debugLog('[FlameSimulationView] initState: Creating SoilScopeGame');
     _game = SoilScopeGame(ref);
     
     // Auto-register the game instance when it's created
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugPrint('[FlameSimulationView] PostFrameCallback: Registering game in provider');
+      debugLog('[FlameSimulationView] PostFrameCallback: Registering game in provider');
       ref.read(soilScopeGameProviderProvider.notifier).setGame(_game);
-      debugPrint('[FlameSimulationView] PostFrameCallback: Calling onGameReady');
+      debugLog('[FlameSimulationView] PostFrameCallback: Calling onGameReady');
       widget.onGameReady?.call(_game);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[FlameSimulationView] build: Registering listeners');
+    debugLog('[FlameSimulationView] build: Registering listeners');
 
     // Reactively update the game from Riverpod
     ref.listen(appLocalizationsProvider, (previous, next) {
@@ -90,18 +91,18 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
       },
     );
 
-    debugPrint('[FlameSimulationView] build: Returning GameWidget');
+    debugLog('[FlameSimulationView] build: Returning GameWidget');
 
     return Container(
       color: const Color(0xFF1A1A1A), 
       child: LayoutBuilder(
         builder: (context, constraints) {
-          debugPrint('[FlameSimulationView] Layout constraints: ${constraints.maxWidth}x${constraints.maxHeight}');
+          debugLog('[FlameSimulationView] Layout constraints: ${constraints.maxWidth}x${constraints.maxHeight}');
           return GameWidget(
             key: const ValueKey('soil_scope_game_main'),
             game: _game,
             loadingBuilder: (context) {
-              debugPrint('[FlameSimulationView] GameWidget is LOADING...');
+              debugLog('[FlameSimulationView] GameWidget is LOADING...');
               final l10n = AppLocalizations.of(context);
               return Center(
                 child: Column(

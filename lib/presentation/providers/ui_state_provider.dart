@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' hide Ref;
 import 'package:flutter/foundation.dart';
 import '../../domain/models/scenario.dart';
 import '../../core/periodic_table.dart';
+import '../../l10n/app_localizations.dart';
 
 part 'ui_state_provider.g.dart';
 
@@ -231,10 +232,10 @@ class VisualLayoutModeState extends _$VisualLayoutModeState {
 extension ElementInfoHoverExtension on ElementInfo {
   HoverInfo toHoverInfo(
     String langCode, {
+    required AppLocalizations l10n,
     bool isPinned = true,
     Offset? screenPosition,
   }) {
-    final isFi = langCode.toLowerCase().startsWith('fi');
     String formulaDisplay;
     if (typicalCharge > 0) {
       formulaDisplay = typicalCharge == 1 ? '$symbol⁺' : '$symbol⁺$typicalCharge';
@@ -254,11 +255,11 @@ extension ElementInfoHoverExtension on ElementInfo {
       type: TooltipType.inspector,
       formula: formulaDisplay,
       stats: {
-        isFi ? 'Rooli' : 'Agronomic Role': localizedAgronomicRole(langCode),
-        isFi ? 'Luokka' : 'Category': localizedCategory(langCode),
-        isFi ? 'Järjestysluku' : 'Atomic Number': '$atomicNumber',
-        isFi ? 'Atomimassa' : 'Atomic Mass': '$atomicMass u',
-        isFi ? 'Ryhmä / Jakso' : 'Group / Period': '$group / $period',
+        l10n.roleLabel: localizedAgronomicRole(langCode),
+        l10n.categoryLabel: localizedCategory(langCode),
+        l10n.atomicNumber: '$atomicNumber',
+        l10n.atomicMass: '$atomicMass u',
+        l10n.groupPeriod: '$group / $period',
       },
     );
   }

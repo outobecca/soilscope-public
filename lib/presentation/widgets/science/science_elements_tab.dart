@@ -231,7 +231,7 @@ class _ScienceElementsTabState extends State<ScienceElementsTab> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           color: textColor,
         ),

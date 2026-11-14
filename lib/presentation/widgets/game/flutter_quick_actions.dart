@@ -480,7 +480,11 @@ class FlutterQuickActions extends ConsumerWidget {
               sessionNotifier.selectElement(symbol);
               if (element != null) {
                 uiNotifier.setHoverInfo(
-                  element.toHoverInfo(lang, isPinned: true),
+                  element.toHoverInfo(
+                    lang,
+                    l10n: AppLocalizations.of(context)!,
+                    isPinned: true,
+                  ),
                 );
               }
             }

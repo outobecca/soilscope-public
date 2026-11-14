@@ -295,7 +295,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
       label: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
           color: isSelected
               ? (color ?? theme.colorScheme.primary)
@@ -515,7 +515,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
                                 child: Text(
                                   el.localizedAgronomicRole(lang),
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.onSurface,
                                   ),
@@ -529,7 +529,7 @@ class _PeriodicTableWidgetState extends State<PeriodicTableWidget> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 11,
+                              fontSize: 12,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),

@@ -2,6 +2,9 @@ name: soilscope
 description: "Interactive soil biophysics simulator for teaching and research."
 publish_to: 'none'
 version: 0.1.0+1
+homepage: https://github.com/outobecca/soilscope-public
+repository: https://github.com/outobecca/soilscope-public
+issue_tracker: https://github.com/outobecca/soilscope-public/issues
 
 environment:
   sdk: ^3.11.0

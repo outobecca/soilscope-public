@@ -82,7 +82,7 @@ class _HUDIndices extends ConsumerWidget {
                 '$label: ',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),

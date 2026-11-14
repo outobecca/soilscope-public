@@ -1,3 +1,4 @@
+import '../../core/debug_log.dart';
 import '../../core/simulation_constants.dart';
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
@@ -27,7 +28,7 @@ class SimulationEngine {
         layer.oxygenContent,
         layer.co2Content,
       ].any((v) => v.isNaN || v.isInfinite)) {
-        debugPrint('[SimulationEngine] Layer validation failed: $layer');
+        debugLog('[SimulationEngine] Layer validation failed: $layer');
         return false;
       }
     }
@@ -41,7 +42,7 @@ class SimulationEngine {
         plant.nitrogenUptake,
         plant.waterUptake,
       ].any((v) => v.isNaN || v.isInfinite)) {
-        debugPrint('[SimulationEngine] Plant validation failed: $plant');
+        debugLog('[SimulationEngine] Plant validation failed: $plant');
         return false;
       }
     }
@@ -51,7 +52,7 @@ class SimulationEngine {
       final ms = state.mycorrhizaState!;
       if ([ms.rootColonization, ms.totalHyphalLength, ms.fungalBiomass]
           .any((v) => v.isNaN || v.isInfinite)) {
-        debugPrint('[SimulationEngine] Mycorrhiza state validation failed');
+        debugLog('[SimulationEngine] Mycorrhiza state validation failed');
         return false;
       }
     }
@@ -119,7 +120,7 @@ class SimulationEngine {
       // Validation is a debug invariant: keep it in development, not in the
       // release tick where it walks every layer and plant per sub-step.
       if (kDebugMode && !_validateBiophysicalState(currentState)) {
-        debugPrint('[SimulationEngine] WARNING: Invalid state at step $step, sanitizing...');
+        debugLog('[SimulationEngine] WARNING: Invalid state at step $step, sanitizing...');
         currentState = _sanitizeState(currentState);
       }
     }
@@ -128,7 +129,7 @@ class SimulationEngine {
 
     final result = currentState.copyWith(score: newScore);
     if (kDebugMode && !_validateBiophysicalState(result)) {
-      debugPrint('[SimulationEngine] ERROR: Final state invalid, returning previous state');
+      debugLog('[SimulationEngine] ERROR: Final state invalid, returning previous state');
       return state;
     }
 

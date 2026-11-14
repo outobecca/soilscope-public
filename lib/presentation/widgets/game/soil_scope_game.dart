@@ -5,6 +5,7 @@ import 'package:flame/input.dart';
 import 'package:flame/events.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
+import '../../../core/debug_log.dart';
 import '../../providers/simulation_provider.dart';
 import '../../providers/simulation_session_provider.dart';
 import '../../../domain/models/biophysical_state.dart';
@@ -35,7 +36,7 @@ class SoilScopeGame extends FlameGame
   final WidgetRef ref;
 
   SoilScopeGame(this.ref) {
-    debugPrint('[SoilScopeGame] Constructor called');
+    debugLog('[SoilScopeGame] Constructor called');
     technicalHotspotLayer = Component()..priority = 2500;
   }
 
@@ -145,18 +146,18 @@ class SoilScopeGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    debugPrint('[SoilScopeGame] onLoad started');
+    debugLog('[SoilScopeGame] onLoad started');
     await super.onLoad();
     try {
-      debugPrint('[SoilScopeGame] onLoad: attempting to read l10n');
+      debugLog('[SoilScopeGame] onLoad: attempting to read l10n');
       l10n = ref.read(appLocalizationsProvider);
-      debugPrint('[SoilScopeGame] l10n loaded successfully');
+      debugLog('[SoilScopeGame] l10n loaded successfully');
     } catch (e) {
-      debugPrint('[SoilScopeGame] l10n loading failed: $e, using fallback');
+      debugLog('[SoilScopeGame] l10n loading failed: $e, using fallback');
       try {
         l10n = lookupAppLocalizations(const Locale('en'));
       } catch (e2) {
-        debugPrint('L10n fallback failed: $e2');
+        debugLog('L10n fallback failed: $e2');
       }
     }
 
@@ -166,7 +167,7 @@ class SoilScopeGame extends FlameGame
     camera.viewfinder.zoom = 1.0;
 
     // 0. Absolute Backgrounds (Screen Space, pinned to game.size)
-    debugPrint('[SoilScopeGame] Adding static backgrounds');
+    debugLog('[SoilScopeGame] Adding static backgrounds');
     add(SkyBackgroundComponent());
     add(SoilBasementComponent());
 
@@ -184,7 +185,7 @@ class SoilScopeGame extends FlameGame
     world.add(SoilBackgroundLayer()..priority = -200);
     
     // The main simulation layers
-    debugPrint('[SoilScopeGame] Adding SimulationAnimationLayerComponent');
+    debugLog('[SoilScopeGame] Adding SimulationAnimationLayerComponent');
     world.add(SimulationAnimationLayerComponent()..priority = 200);
 
     // Soil Symbiosis Network (Between passive hotspots/layers and active particles/roots)
@@ -197,7 +198,7 @@ class SoilScopeGame extends FlameGame
     world.add(BackgroundTapComponent()..priority = -50);
 
     camera.viewport.add(MagnifierGroupComponent());
-    debugPrint('[SoilScopeGame] onLoad finished');
+    debugLog('[SoilScopeGame] onLoad finished');
   }
 
   @override
@@ -335,31 +336,31 @@ class SoilScopeGame extends FlameGame
 
   @override
   void onMount() {
-    debugPrint('[SoilScopeGame] onMount started');
+    debugLog('[SoilScopeGame] onMount started');
     super.onMount();
     
     try {
       final initialState = ref.read(displayedSimulationStateProvider);
       final session = ref.read(simulationSessionProvider);
-      debugPrint('[SoilScopeGame] onMount: performing initial _updateScene');
+      debugLog('[SoilScopeGame] onMount: performing initial _updateScene');
       _updateScene(initialState, session);
       _lastState = initialState;
     } catch (e) {
-      debugPrint('Error reading initial state in onMount: $e');
+      debugLog('Error reading initial state in onMount: $e');
     }
     _clampCamera();
-    debugPrint('[SoilScopeGame] onMount finished');
+    debugLog('[SoilScopeGame] onMount finished');
   }
 
   @override
   void onRemove() {
-    debugPrint('[SoilScopeGame] onRemove');
+    debugLog('[SoilScopeGame] onRemove');
     super.onRemove();
   }
 
   @override
   void onGameResize(Vector2 size) {
-    debugPrint('[SoilScopeGame] onGameResize: ${size.x}x${size.y}');
+    debugLog('[SoilScopeGame] onGameResize: ${size.x}x${size.y}');
     super.onGameResize(size);
     
     // Ensure we always fill the width with the central column at minimum

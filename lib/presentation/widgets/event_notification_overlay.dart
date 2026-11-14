@@ -27,7 +27,7 @@ class _EventNotificationOverlayState
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
+    );
   }
 
   @override
@@ -44,8 +44,13 @@ class _EventNotificationOverlayState
         setState(() {
           _currentEvent = next.first;
         });
+        if (!_floatController.isAnimating) {
+          _floatController.repeat(reverse: true);
+        }
         _timer?.cancel();
         _timer = Timer(const Duration(seconds: 5), () {
+          _floatController.stop();
+          _floatController.reset();
           if (mounted) {
             setState(() {
               _currentEvent = null;
@@ -122,8 +127,10 @@ class _EventNotificationOverlayState
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    setState(() => _currentEvent = null);
                     _timer?.cancel();
+                    _floatController.stop();
+                    _floatController.reset();
+                    setState(() => _currentEvent = null);
                   },
                 ),
               ],

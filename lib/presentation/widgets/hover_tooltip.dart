@@ -130,7 +130,7 @@ class HoverTooltip extends ConsumerWidget {
                   badgeText,
                   style: TextStyle(
                     color: accentColor,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
                   ),
@@ -243,7 +243,7 @@ class HoverTooltip extends ConsumerWidget {
         formula,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: 12,
           fontStyle: FontStyle.italic,
           fontFamily: 'serif',
         ),
@@ -265,7 +265,7 @@ class HoverTooltip extends ConsumerWidget {
             color: Colors.white.withValues(alpha: 0.7),
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
-            fontSize: 11,
+            fontSize: 12,
           ),
         ),
         const SizedBox(height: 8),
@@ -283,7 +283,7 @@ class HoverTooltip extends ConsumerWidget {
                       item.label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 12,
                       ),
                     ),
                   ],

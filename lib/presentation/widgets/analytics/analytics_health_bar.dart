@@ -55,7 +55,7 @@ class AnalyticsHealthBar extends StatelessWidget {
                   customValueLabel ?? '${(value * 100).toStringAsFixed(0)}%',
                   style: TextStyle(
                     color: barColor,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'monospace',
                   ),

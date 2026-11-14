@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../core/debug_log.dart';
 import '../../core/simulation_constants.dart';
 import 'particle_physics_solver.dart';
 
@@ -214,7 +215,7 @@ class ParticlePhysicsIsolateManager {
 
   Future<void> init() async {
     if (kIsWeb) {
-      debugPrint(
+      debugLog(
         'ParticlePhysicsIsolateManager: Running in Web Mode (Main Thread)',
       );
       return;

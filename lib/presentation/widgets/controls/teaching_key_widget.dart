@@ -66,7 +66,7 @@ class TeachingKeyWidget extends ConsumerWidget {
               text,
               style: const TextStyle(
                 color: Color(0xFFE2E8F0),
-                fontSize: 11,
+                fontSize: 12,
                 fontFamily: 'monospace',
               ),
             ),
@@ -92,7 +92,7 @@ class TeachingKeyWidget extends ConsumerWidget {
               text,
               style: const TextStyle(
                 color: Color(0xFFE2E8F0),
-                fontSize: 11,
+                fontSize: 12,
                 fontFamily: 'monospace',
               ),
             ),

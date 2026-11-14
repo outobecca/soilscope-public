@@ -267,7 +267,7 @@ class _HUDSelectedLayerDetails extends ConsumerWidget {
                   '${(layer.verticalFlux.abs() * 1000).toStringAsFixed(3)} mm/s',
                   style: TextStyle(
                     color: fluxColor,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'monospace',
                   ),
@@ -378,7 +378,7 @@ Widget _buildSimpleDiagnostic(
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.onSurfaceVariant,
         ),
@@ -461,7 +461,7 @@ Widget _buildSmallStat(IconData icon, String value, ThemeData theme) {
           value,
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onSurface,
-            fontSize: 11,
+            fontSize: 12,
             fontFamily: 'monospace',
           ),
         ),

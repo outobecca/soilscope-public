@@ -557,7 +557,7 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                                 '${filteredFuncs.length}',
                                 style: const TextStyle(
                                   color: Colors.purple,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -597,7 +597,7 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                       : '${functionCategories.values.expand((e) => e).length} functions available'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 11,
+                fontSize: 12,
               ),
               textAlign: TextAlign.center,
             ),
@@ -666,7 +666,7 @@ class _FunctionTile extends StatelessWidget {
                             func.descriptionFor(isFi),
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5),
-                              fontSize: 11,
+                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -704,7 +704,7 @@ class _FunctionTile extends StatelessWidget {
                         style: TextStyle(
                           color: func.color,
                           fontFamily: 'monospace',
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -732,7 +732,7 @@ class _FunctionTile extends StatelessWidget {
                               '→ $label',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 11,
+                                fontSize: 12,
                               ),
                             ),
                           ),

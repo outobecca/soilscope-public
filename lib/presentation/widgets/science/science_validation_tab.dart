@@ -173,7 +173,7 @@ class ScienceValidationTab extends StatelessWidget {
                   style: TextStyle(
                     color: badgeColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 10,
+                    fontSize: 12,
                     letterSpacing: 0.5,
                   ),
                 ),

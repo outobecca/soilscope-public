@@ -6047,6 +6047,12 @@ abstract class AppLocalizations {
   /// **'Role'**
   String get roleLabel;
 
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryLabel;
+
   /// No description provided for @locationLabel.
   ///
   /// In en, this message translates to:

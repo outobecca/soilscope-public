@@ -259,7 +259,7 @@ class ScientificOverlaysComponent extends Component
         text: 'SURFACE (Z=0)',
         style: TextStyle(
           color: Color(0xFF8B5CF6),
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1,
           fontFamily: 'monospace',
@@ -277,7 +277,7 @@ class ScientificOverlaysComponent extends Component
       x,
       y,
       color: const Color(0xFF0EA5E9),
-      fontSize: 11,
+      fontSize: 12,
       bold: true,
     );
   }

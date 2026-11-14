@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../core/debug_log.dart';
 import '../../domain/models/biophysical_state.dart';
 import '../../domain/models/soil_profile.dart';
 import '../../domain/models/soil_layer.dart';
@@ -78,7 +79,7 @@ class Simulation extends _$Simulation {
 
   @override
   BiophysicalState build() {
-    debugPrint('[SimulationProvider] build called');
+    debugLog('[SimulationProvider] build called');
     // Reset lifecycle flags on rebuild — critical for correctness.
     // Without this, a provider rebuild creates new isolate managers
     // but skips their init (because _isInitialized was still true)
@@ -304,7 +305,7 @@ class Simulation extends _$Simulation {
     if (_disposed || !ref.mounted) return;
     ref.read(engineFailureProvider.notifier).setFailed(false);
     state = state.copyWith(isInitializing: false);
-    debugPrint('[SimulationProvider] runtime ready');
+    debugLog('[SimulationProvider] runtime ready');
   }
 
   void _handleEngineTick(BiophysicalState engineState) {
@@ -338,20 +339,20 @@ class Simulation extends _$Simulation {
   void _syncIsolate() => _runtime.sync(state);
 
   void start() {
-    debugPrint('[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}');
+    debugLog('[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}');
     if (state.isRunning || state.isInitializing) {
-      debugPrint('[SimulationProvider] start() ABORTED: already running or initializing');
+      debugLog('[SimulationProvider] start() ABORTED: already running or initializing');
       return;
     }
     
     state = state.copyWith(isRunning: true);
-    debugPrint('[SimulationProvider] start() state updated: isRunning=true');
+    debugLog('[SimulationProvider] start() state updated: isRunning=true');
     
     _syncIsolate(); // Ensure isolate has the latest state before starting
-    debugPrint('[SimulationProvider] start() isolate synced');
+    debugLog('[SimulationProvider] start() isolate synced');
     
     _runtime.start();
-    debugPrint('[SimulationProvider] start() SUCCESS: all isolate managers started');
+    debugLog('[SimulationProvider] start() SUCCESS: all isolate managers started');
   }
 
   void stop() {
@@ -787,6 +788,7 @@ class Simulation extends _$Simulation {
     ref
         .read(simulationSessionProvider.notifier)
         .setViewTime(computedHistory.first.timeElapsed);
+    ref.read(simulationSessionProvider.notifier).setScrubbing(false);
 
     return true;
   }

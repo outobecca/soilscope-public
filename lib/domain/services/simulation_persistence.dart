@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/debug_log.dart';
 import '../models/biophysical_state.dart';
 
 /// Reads and writes the resumable session, including the one-way migration
@@ -28,7 +28,7 @@ class SimulationPersistence {
     try {
       await _storage.write(key: stateKey, value: jsonEncode(state.toJson()));
     } catch (error) {
-      debugPrint('Error saving state: $error');
+      debugLog('Error saving state: $error');
     }
   }
 
@@ -36,14 +36,14 @@ class SimulationPersistence {
     try {
       if (await _storage.containsKey(key: stateKey)) return true;
     } catch (error) {
-      debugPrint('Error checking secure storage for saved state: $error');
+      debugLog('Error checking secure storage for saved state: $error');
     }
 
     try {
       final prefs = await _preferences();
       if (prefs.containsKey(stateKey)) return true;
     } catch (error) {
-      debugPrint('Error checking saved state in preferences: $error');
+      debugLog('Error checking saved state in preferences: $error');
     }
 
     return hasLiveRun;
@@ -54,7 +54,7 @@ class SimulationPersistence {
     try {
       jsonStr = await _storage.read(key: stateKey);
     } catch (error) {
-      debugPrint('Error reading secure storage for saved state: $error');
+      debugLog('Error reading secure storage for saved state: $error');
     }
 
     if (jsonStr == null) {
@@ -66,11 +66,11 @@ class SimulationPersistence {
             await _storage.write(key: stateKey, value: jsonStr);
             await prefs.remove(stateKey);
           } catch (error) {
-            debugPrint('Error migrating saved state: $error');
+            debugLog('Error migrating saved state: $error');
           }
         }
       } catch (error) {
-        debugPrint('Error reading saved state from preferences: $error');
+        debugLog('Error reading saved state from preferences: $error');
       }
     }
 
@@ -80,7 +80,7 @@ class SimulationPersistence {
         jsonDecode(jsonStr) as Map<String, dynamic>,
       );
     } catch (error) {
-      debugPrint('Error loading saved state: $error');
+      debugLog('Error loading saved state: $error');
       return null;
     }
   }

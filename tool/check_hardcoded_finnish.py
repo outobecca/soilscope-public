@@ -3,8 +3,8 @@
 
 The Logic Lab palettes keep Finnish as their source copy with English lookups
 (guarded by palette_l10n_test.dart). The tutorial matcher accepts legacy
-Finnish step titles, and the periodic-table labels branch on the locale. Every
-other widget must use AppLocalizations instead of a literal.
+Finnish step titles. Every other widget must use AppLocalizations instead of a
+literal.
 """
 
 from pathlib import Path
@@ -16,7 +16,6 @@ ALLOWED_FILES = {
     "function_palette.dart",
     "input_palette.dart",
     "tutorial_overlay_widget.dart",
-    "ui_state_provider.dart",
 }
 
 

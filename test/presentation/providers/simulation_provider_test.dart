@@ -200,6 +200,11 @@ void main() {
       final completed = await notifier.preCalculateTimeline(3);
 
       expect(completed, isTrue);
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isFalse,
+        reason: 'a completed pre-calculation must leave history mode',
+      );
       final history = container.read(simulationProvider).history;
       expect(history, hasLength(13));
       expect(history.first.timeElapsed, 0);

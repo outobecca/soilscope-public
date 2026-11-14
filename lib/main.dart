@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'core/debug_log.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/widgets/flame_simulation_view.dart';
@@ -8,6 +9,7 @@ import 'presentation/widgets/sustainability_panel.dart';
 import 'presentation/widgets/event_notification_overlay.dart';
 import 'presentation/widgets/hover_tooltip.dart';
 import 'presentation/providers/simulation_provider.dart';
+import 'presentation/providers/scenarios_provider.dart';
 import 'presentation/widgets/control_panel_section.dart';
 import 'presentation/widgets/science_reference_section.dart';
 import 'presentation/screens/scenario_selection_screen.dart';
@@ -50,6 +52,14 @@ class SoilScopeApp extends ConsumerWidget {
       themeMode: themeMode,
       // No explicit initialRoute: on web this lets defaultRouteName honour
       // the URL (e.g. /#/simulation survives a refresh).
+      onGenerateRoute: (settings) {
+        final scenarioId = scenarioIdFromRouteName(settings.name);
+        if (scenarioId == null) return null;
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => MainSimulationScreen(scenarioId: scenarioId),
+        );
+      },
       onUnknownRoute: (settings) => MaterialPageRoute(
         builder: (_) => const ScenarioSelectionScreen(),
       ),
@@ -64,8 +74,19 @@ class SoilScopeApp extends ConsumerWidget {
   }
 }
 
+/// Extracts a scenario id from `/simulation/<id>` deep links.
+String? scenarioIdFromRouteName(String? routeName) {
+  const prefix = '/simulation/';
+  if (routeName == null || !routeName.startsWith(prefix)) return null;
+  final encoded = routeName.substring(prefix.length);
+  if (encoded.isEmpty) return null;
+  return Uri.decodeComponent(encoded);
+}
+
 class MainSimulationScreen extends ConsumerStatefulWidget {
-  const MainSimulationScreen({super.key});
+  final String? scenarioId;
+
+  const MainSimulationScreen({super.key, this.scenarioId});
 
   @override
   ConsumerState<MainSimulationScreen> createState() =>
@@ -74,6 +95,7 @@ class MainSimulationScreen extends ConsumerStatefulWidget {
 
 class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   bool _initialized = false;
+  bool _initializing = false;
 
   @override
   void initState() {
@@ -89,28 +111,49 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
   }
 
   void _initSimulation() {
-    if (!mounted || _initialized) return;
-    
-    debugPrint('[MainSimulationScreen] _initSimulation START: _initialized=$_initialized');
-    
-    Future.microtask(() {
+    if (!mounted || _initialized || _initializing) return;
+    _initializing = true;
+
+    debugLog('[MainSimulationScreen] _initSimulation START: _initialized=$_initialized');
+
+    Future.microtask(() async {
       try {
-        debugPrint('[MainSimulationScreen] _initSimulation (microtask): reading session');
+        final requestedScenarioId = widget.scenarioId;
+        if (requestedScenarioId != null) {
+          final scenarios = await ref.read(scenariosProvider.future);
+          final scenario = scenarios
+              .where((candidate) => candidate.id == requestedScenarioId)
+              .firstOrNull;
+          if (!mounted) return;
+          if (scenario == null) {
+            debugLog(
+              '[MainSimulationScreen] Unknown scenario id: '
+              '$requestedScenarioId',
+            );
+            Navigator.of(context).pushReplacementNamed('/');
+            return;
+          }
+          ref.read(simulationProvider.notifier).loadScenario(scenario);
+        }
+
+        debugLog('[MainSimulationScreen] _initSimulation (microtask): reading session');
         final session = ref.read(simulationSessionProvider);
-        
-        debugPrint('[MainSimulationScreen] _initSimulation (microtask): isScrubbing=${session.isScrubbing}');
+
+        debugLog('[MainSimulationScreen] _initSimulation (microtask): isScrubbing=${session.isScrubbing}');
         if (!session.isScrubbing) {
-          debugPrint('[MainSimulationScreen] _initSimulation (microtask): reading provider notifier');
+          debugLog('[MainSimulationScreen] _initSimulation (microtask): reading provider notifier');
           final notifier = ref.read(simulationProvider.notifier);
-          
-          debugPrint('[MainSimulationScreen] _initSimulation (microtask): calling start()');
+
+          debugLog('[MainSimulationScreen] _initSimulation (microtask): calling start()');
           notifier.start();
         }
-        
+
         _initialized = true;
-        debugPrint('[MainSimulationScreen] _initSimulation SUCCESS: _initialized set to true');
+        debugLog('[MainSimulationScreen] _initSimulation SUCCESS: _initialized set to true');
       } catch (e) {
-        debugPrint('[MainSimulationScreen] Error during _initSimulation: $e');
+        debugLog('[MainSimulationScreen] Error during _initSimulation: $e');
+      } finally {
+        _initializing = false;
       }
     });
   }
@@ -305,21 +348,23 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final isInitializing = ref.watch(simulationProvider.select((s) => s.isInitializing));
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     if (kDebugMode) {
-      debugPrint('[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized');
+      debugLog('[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized');
     }
 
     // 1. Listen for the initialization to complete
     ref.listen(simulationProvider.select((s) => s.isInitializing), (previous, next) {
-      debugPrint('[MainSimulationScreen] listener: isInitializing changed from $previous to $next');
+      debugLog('[MainSimulationScreen] listener: isInitializing changed from $previous to $next');
       if (previous == true && next == false) {
-        debugPrint('[MainSimulationScreen] listener: triggering _initSimulation');
+        debugLog('[MainSimulationScreen] listener: triggering _initSimulation');
         _initSimulation();
       }
     });
 
-    // 2. If we've already finished initializing but haven't triggered start() yet (e.g. on mount)
-    if (!isInitializing && !_initialized) {
-       debugPrint('[MainSimulationScreen] build: scheduling _initSimulation via PostFrameCallback');
+    // 2. Kick off scenario loading immediately on a deep link, even while the
+    // runtime is still initializing; loading the scenario also clears the
+    // provider's initialization flag. Generic launches wait for the runtime.
+    if (!_initialized && (!isInitializing || widget.scenarioId != null)) {
+       debugLog('[MainSimulationScreen] build: scheduling _initSimulation via PostFrameCallback');
        WidgetsBinding.instance.addPostFrameCallback((_) => _initSimulation());
     }
 
@@ -366,11 +411,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final isRightSidebarOpen = sidebarState.isRightOpen;
 
     if (l10n == null) {
-      debugPrint('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
+      debugLog('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    debugPrint('[MainSimulationScreen] build: Rendering MAIN UI (Scaffold)');
+    debugLog('[MainSimulationScreen] build: Rendering MAIN UI (Scaffold)');
     return Scaffold(
       body: MouseRegion(
         onHover: (event) {

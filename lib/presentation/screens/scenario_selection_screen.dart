@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/debug_log.dart';
 import '../../l10n/app_localizations.dart';
 import '../../domain/models/scenario.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -86,7 +87,11 @@ class _ScenarioSelectionScreenState
     await _refreshSavedStateStatus();
   }
 
-  Future<void> _openSimulation() => _openRoute('/simulation');
+  Future<void> _openSimulation({String? scenarioId}) => _openRoute(
+        scenarioId == null
+            ? '/simulation'
+            : '/simulation/${Uri.encodeComponent(scenarioId)}',
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -361,7 +366,7 @@ class _ScenarioSelectionScreenState
                 } catch (e, stack) {
                   if (!context.mounted) return;
                   _showSnack(context, 'Error resuming simulation: $e', background: Colors.red);
-                  debugPrint('Error resuming simulation: $e');
+                  debugLog('Error resuming simulation: $e');
                   debugPrintStack(stackTrace: stack);
                 }
               },
@@ -568,11 +573,11 @@ class _ScenarioSelectionScreenState
         onTap: () async {
           try {
             ref.read(simulationProvider.notifier).loadScenario(scenario);
-            await _openSimulation();
+            await _openSimulation(scenarioId: scenario.id);
           } catch (e, stack) {
             if (!context.mounted) return;
             _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
-            debugPrint('Error starting simulation: $e');
+            debugLog('Error starting simulation: $e');
             debugPrintStack(stackTrace: stack);
           }
         },
@@ -656,11 +661,11 @@ class _ScenarioSelectionScreenState
                         ref
                             .read(simulationProvider.notifier)
                             .loadScenario(scenario);
-                        await _openSimulation();
+                        await _openSimulation(scenarioId: scenario.id);
                       } catch (e, stack) {
                         if (!context.mounted) return;
                         _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
-                        debugPrint('Error starting simulation: $e');
+                        debugLog('Error starting simulation: $e');
                         debugPrintStack(stackTrace: stack);
                       }
                     },

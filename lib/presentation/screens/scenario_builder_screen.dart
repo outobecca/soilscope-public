@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/debug_log.dart';
 import '../../l10n/app_localizations.dart';
 import '../../domain/models/scenario.dart';
 import '../../domain/models/soil_profile.dart';
@@ -254,7 +255,7 @@ class _ScenarioBuilderScreenState extends ConsumerState<ScenarioBuilderScreen> w
       if (!mounted || !completed) return;
       Navigator.of(context).pushNamed('/simulation');
     } catch (error, stack) {
-      debugPrint('Timeline pre-calculation failed: $error');
+      debugLog('Timeline pre-calculation failed: $error');
       debugPrintStack(stackTrace: stack);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

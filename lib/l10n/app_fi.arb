@@ -1174,6 +1174,7 @@
   "rateLabel": "Nopeus",
   "turgorLabel": "Turgor",
   "roleLabel": "Rooli",
+  "categoryLabel": "Luokka",
   "locationLabel": "Sijainti",
   "microbialBiomassLabel": "Mikrobimassa",
   "bioActivityLabel": "Bio-aktiivisuus",

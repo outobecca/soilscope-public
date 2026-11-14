@@ -238,7 +238,7 @@ class MicroscopeHudController extends ConsumerWidget {
                                   Text(
                                     targetTitle,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: isTargetActive
                                           ? FontWeight.bold
                                           : FontWeight.w500,
@@ -251,7 +251,7 @@ class MicroscopeHudController extends ConsumerWidget {
                                   Text(
                                     targetMag,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontFamily: 'monospace',
                                       fontWeight: FontWeight.w600,
                                       color: isTargetActive

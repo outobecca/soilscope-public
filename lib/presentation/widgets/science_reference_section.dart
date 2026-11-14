@@ -79,7 +79,7 @@ class ScienceReferenceSection extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 11,
+                            fontSize: 12,
                           ),
                         ),
                       ],

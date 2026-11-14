@@ -91,9 +91,8 @@ class SimulationSession extends _$SimulationSession {
   }
 
   void setScrubbing(bool isScrubbing) {
-    Future.microtask(() {
-      state = state.copyWith(isScrubbing: isScrubbing);
-    });
+    if (state.isScrubbing == isScrubbing) return;
+    state = state.copyWith(isScrubbing: isScrubbing);
   }
 
   void setViewTime(double time) {

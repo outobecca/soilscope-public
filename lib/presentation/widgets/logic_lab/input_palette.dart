@@ -728,7 +728,7 @@ class _InputPaletteState extends State<InputPalette> {
                                 '${filteredInputs.length}',
                                 style: const TextStyle(
                                   color: Colors.cyan,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -766,7 +766,7 @@ class _InputPaletteState extends State<InputPalette> {
               '${inputCategories.values.expand((e) => e).length} ${isFi ? 'inputtia käytettävissä' : 'inputs available'}',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 11,
+                fontSize: 12,
               ),
               textAlign: TextAlign.center,
             ),
@@ -836,7 +836,7 @@ class _InputTile extends StatelessWidget {
                         input.descriptionFor(isFi),
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 11,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -847,7 +847,7 @@ class _InputTile extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.4),
                     fontFamily: 'monospace',
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
                 const SizedBox(width: 4),

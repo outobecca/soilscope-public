@@ -124,7 +124,7 @@ class VisualKeyWidget extends ConsumerWidget {
                 label.toUpperCase(),
                 style: TextStyle(
                   color: isSelected ? Colors.white : const Color(0xFF94A3B8),
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'monospace',
                 ),

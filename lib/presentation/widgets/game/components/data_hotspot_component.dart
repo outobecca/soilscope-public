@@ -363,7 +363,7 @@ class DataHotspotComponent extends CircleComponent
         text: label,
         style: TextStyle(
           color: color.withValues(alpha: 0.8 * currentOpacity),
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           fontFamily: 'monospace',
           shadows: [Shadow(color: Colors.black.withValues(alpha: 0.5 * currentOpacity), blurRadius: 2)],

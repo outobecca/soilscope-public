@@ -337,7 +337,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                                 child: Text(
                                   l10n.tutorialTryAction,
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: theme.colorScheme.primary,
                                   ),
@@ -357,7 +357,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                                 child: Text(
                                   currentStep.actionLabel!(l10n),
                                   style: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

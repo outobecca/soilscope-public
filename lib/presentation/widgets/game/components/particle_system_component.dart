@@ -6,6 +6,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/debug_log.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
@@ -312,7 +313,7 @@ class MolecularParticleFieldComponent extends Component
         }
       }
     } catch (e) {
-      debugPrint('[ParticleSystemComponent] Render error: $e');
+      debugLog('[ParticleSystemComponent] Render error: $e');
     }
     canvas.restore();
   }

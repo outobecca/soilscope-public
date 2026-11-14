@@ -70,7 +70,7 @@ class ProcessLabel extends PositionComponent
         text: text,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),
@@ -360,7 +360,7 @@ class ProcessLabel extends PositionComponent
       text: _textPainter!.text!.toPlainText(),
       style: TextStyle(
         color: Colors.white.withValues(alpha: opacity),
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),

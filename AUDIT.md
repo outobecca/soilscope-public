@@ -409,7 +409,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 > **Close-out status (2026-11-14).** Reconciled item by item against
 > `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
-> clean, `flutter test --no-pub` passes 110 tests, and
+> clean, `flutter test --no-pub` passes 114 tests, and
 > `flutter build web --release --wasm` succeeds. "Done" means the change is in
 > the tree and, where the behaviour is testable, asserted by the named test.
 >
@@ -417,7 +417,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > |----|--------|----------|
 > | A1 | Done | `loadScenario` stops both isolates and clears history; reset asserted in `simulation_provider_test`. |
 > | A2 | Done | `SimulationPersistence.hasSavedState` requires a stored key or a live run; resume cases in `simulation_provider_test`. |
-> | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token; snapshot-count and cancel tests in `simulation_provider_test`. |
+> | A3 | Done | `preCalculateTimeline` is awaited, chunked with progress and a cancel token, and clears scrub mode on success; snapshot-count, cancel and post-success scrub-state tests in `simulation_provider_test`. |
 > | A4 | Done | `SimulationRuntime` has a 10 s initialization timeout; failure state, banner with retry (`engineFailureProvider`); timeout cancelled on dispose. |
 > | A5 | Done | Builder uses `customScenarioDesc` from the ARB files. |
 > | A6 | Done | Logic Lab evaluates for display only; `_applyOutputsToSimulation` is the sole mutation path. |
@@ -427,38 +427,46 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | B4 | Done | Logic Lab is wrapped in `InteractiveViewer`; the chrome test does not mount Logic Lab. |
 > | B5 | Done | XP bar sized by its parent `LayoutBuilder`, not the screen. |
 > | B6 | Done | Five primary 48 dp actions plus Manage/View/Elements/Navigate sheets; `element_selection_test`. |
-> | B7 | Done | 11–12 px label floor and a 200% text pass in `responsive_layout_test`. |
+> | B7 | Done | All 7/10/11/11.5 px labels raised to a 12 px floor; the 200% text pass in `responsive_layout_test` still passes. |
 > | B8 | Done | Remembered three-card gesture intro before the first run. |
 > | C1 | Done (audit minimum; Worker optional) | The audit allowed a Worker (a) **or** an in-thread budgeted loop (b); (b) is implemented with a >16 ms yield. A Worker is optional future scope, not unfinished audit work. Wasm runs single-threaded without COOP/COEP. |
 > | C2 | Done | Chunked pre-calculation with progress, cancel and a 180-day cap. |
-> | C3 | Done | `_syncSpotlightTicker` starts and stops the controller with tutorial visibility. |
+> | C3 | Done (always-mounted controllers; game note) | `_syncSpotlightTicker` starts and stops the tutorial controller with visibility; `EventNotificationOverlay` now starts its float controller only when an event is visible and stops/resets it on dismissal or timeout. The Flame `GameWidget` is left ticker-driven while its simulation route is mounted so paused/scrubbed state changes can repaint; it is not mounted on the selection or other menu routes. |
 > | C4 | Done | `BlurSurface` falls back to a solid panel on compact screens. |
-> | C5 | Done | `initialRoute` removed; `onUnknownRoute` plus `defaultRouteName` keep refresh and deep links. |
+> | C5 | Done | `onGenerateRoute` parses `/#/simulation/<id>` and `MainSimulationScreen` loads the scenario before starting; parser tests in `scenario_route_test` and a direct-URL widget test in `scenario_navigation_test`. Generic `/simulation` still refreshes; imported custom scenarios remain on the generic route because they are not asset-backed. |
 > | C6 | Done | PWA manifest, title, theme colour, OG metadata and Android label. |
 > | C7 | Done | `--wasm` build succeeds; lab: first frame 137 ms warm, LCP 238 ms cold, 3.6 MB wasm; splash marks `soilscope-first-frame`. |
 > | C8 | Done | Control panel selects `profile.layers`; `updateLayer` applies synchronously. |
-> | C9 | Done | The per-tick web log and the per-rebuild UI trace sit behind `kDebugMode`. |
+> | C9 | Done | All `debugPrint` calls in `lib` now go through `core/debug_log.dart`, which checks `kDebugMode`; this covers the per-tick web loop, per-rebuild UI traces, isolate manager and error paths. |
 > | D1 | Done | Health bars and index chips expose semantics; the HUD data table is the accessible equivalent. |
 > | D2 | Done | pH badges pair colour with an acid/neutral/alkaline icon. |
 > | D3 | Done | Type floor raised; 200% text layout verified. |
 > | D4 | Done | `_HUDDataView` ExpansionTile exposes the layer table. |
 > | D5 | Done | Faintest labels lifted to AA contrast. |
-> | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
+> | E1 | Done | Timeline/gamification/periodic-table ARBs now include element role/category/number/mass/group labels; `ui_state_provider` no longer branches on Finnish and was removed from the hardcoded-Finnish allowlist; English function/input palettes covered by `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 110. |
+> | E3 | Done | English README intro; test count updated to 114. |
 > | F1 | Done | 21 unreferenced modules and their dead tests removed. |
 > | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |
 > | F4 | Done | Score computed once; cached `_historyView`; `_lowerBound` scrub search; validation only under `kDebugMode`. |
 > | F5 | Done | Provider, responsive, stability, palette and two screen-golden tests (`test/presentation/screens/goldens/`). |
 > | F6 | Done | CI runs `flutter analyze --fatal-infos` and the Finnish guard; index files untracked; scratch in `tool/`. |
-> | F7 | Done | SoilScope labels, real description and manifest metadata. |
-> | G1 | Done | Stable hydrology sub-step with a 200-tick stability test. |
-> | G2 | Done (illustrative gate; measured data is an external drop-in) | Provenance-stamped `assets/validation/reference.json`; UI labels it **ILLUSTRATIVE PATTERN** and disclaims field accuracy; `test/validation/` asserts per-series NSE/RMSE and was shown to fail under a solver perturbation; measured θ(z,t)/NO₃⁻ drop-in documented in `docs/validation/README.md`. No measured dataset is fabricated. |
+> | F7 | Done | SoilScope labels, real description and manifest metadata; `homepage`, `repository` and `issue_tracker` now point at the GitHub project. |
+> | G1 | Done | Stable hydrology sub-step with the 200-tick stability test plus a high-conductivity (kSat 1e-4) one-hour test asserting finite bounded water and storage loss equal to bottom flux; the 2000-step cap is logged when hit. |
+> | G2 | Done (illustrative gate; measured data remains an external drop-in) | Provenance-stamped `assets/validation/reference.json`; UI labels it **ILLUSTRATIVE PATTERN** and disclaims field accuracy; `test/validation/` asserts per-series NSE/RMSE and was shown to fail under a solver perturbation; measured schema support accepts 0 s absolute times and reports out-of-run samples uncovered rather than clamping (`measured_reference_test`); measured θ(z,t)/NO₃⁻ drop-in documented in `docs/validation/README.md`. No measured dataset is fabricated. |
 > | G3 | Done | History snapshots at fixed 600 s simulation intervals. |
 > | G4 | Done | Mycorrhiza state persisted; JSON round-trip test. |
 >
-> **No in-scope deferrals remain.**
+> **All in-scope code findings are closed; the notes below record deliberate
+> scope boundaries rather than hidden failures.**
+> - **C3 — the game loop remains active on the simulation route.** The two
+>   always-mounted controllers (tutorial and event notification) are
+>   visibility-gated. The Flame `GameWidget` is intentionally not engine-paused:
+>   the app must still render paused/scrubbed states, and the widget exists only
+>   while the simulation screen is mounted. Menu routes do not carry a game
+>   ticker. A pause-on-hidden experiment is future optimisation, not an open
+>   correctness fix.
 > - **G2 — measured data is an external data task, not an unfinished gate.**
 >   The honest illustrative gate and the drop-in path are complete. A
 >   `kind: "measured"` θ(z,t)/NO₃⁻ dataset with matching depths and times would

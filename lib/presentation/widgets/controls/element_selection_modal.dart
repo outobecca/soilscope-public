@@ -47,7 +47,13 @@ class _ElementSelectionModalState extends ConsumerState<ElementSelectionModal> {
     } else {
       setState(() => _selectedElement = element);
       sessionNotifier.selectElement(element.symbol);
-      uiNotifier.setHoverInfo(element.toHoverInfo(lang, isPinned: true));
+      uiNotifier.setHoverInfo(
+        element.toHoverInfo(
+          lang,
+          l10n: AppLocalizations.of(context)!,
+          isPinned: true,
+        ),
+      );
     }
   }
 
@@ -131,7 +137,7 @@ class _ElementSelectionModalState extends ConsumerState<ElementSelectionModal> {
                               l10n.selectElementRole,
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 11.5,
+                                fontSize: 12,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -207,7 +213,7 @@ class _ElementSelectionModalState extends ConsumerState<ElementSelectionModal> {
                                 _selectedElement!.localizedSoilRole(lang),
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.75),
-                                  fontSize: 11,
+                                  fontSize: 12,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

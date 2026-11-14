@@ -349,7 +349,7 @@ class SPACConnectionLinesComponent extends Component
           text: label,
           style: TextStyle(
             color: color.withValues(alpha: alpha * 1.5),
-            fontSize: 7,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             fontFamily: 'monospace',
             letterSpacing: 1.2,

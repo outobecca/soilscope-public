@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/debug_log.dart';
 import '../models/biophysical_state.dart';
 import '../solvers/particle_physics_isolate.dart';
 import '../solvers/simulation_isolate.dart';
@@ -61,7 +62,7 @@ class SimulationRuntime {
     } catch (error, stack) {
       _watchdog?.cancel();
       _watchdog = null;
-      debugPrint('[SimulationRuntime] Engine initialization failed: $error');
+      debugLog('[SimulationRuntime] Engine initialization failed: $error');
       debugPrintStack(stackTrace: stack);
       if (!_disposed) onFailure();
       return;

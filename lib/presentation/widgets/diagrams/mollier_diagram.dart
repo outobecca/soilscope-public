@@ -333,7 +333,7 @@ class _MollierPainter extends CustomPainter {
         text: text,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
       ),

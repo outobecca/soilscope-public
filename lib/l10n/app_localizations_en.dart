@@ -3043,6 +3043,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roleLabel => 'Role';
 
   @override
+  String get categoryLabel => 'Category';
+
+  @override
   String get locationLabel => 'Location';
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import '../soil_scope_game.dart';
+import '../../../../core/debug_log.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'biological_entities_component.dart';
 import 'scientific_overlays_component.dart';
@@ -72,7 +72,7 @@ class SimulationAnimationLayerComponent extends Component
       // These components have internal priorities set to 1000+
       add(ScientificOverlaysComponent());
     } catch (e) {
-      debugPrint("Error loading SimulationAnimationLayer: $e");
+      debugLog("Error loading SimulationAnimationLayer: $e");
     }
   }
 
