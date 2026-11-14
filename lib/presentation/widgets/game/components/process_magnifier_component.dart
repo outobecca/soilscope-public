@@ -822,8 +822,15 @@ class ProcessMagnifierComponent extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
+
+    // The microscope may still fade in/out while the simulation is paused,
+    // but its internal scanning motion is driven by simulation time. The one
+    // exception is an inspection freeze: that path explicitly updates the
+    // viewport so the selected tool can keep revealing itself.
+    final opticalTimeAdvances =
+        game.animationClock.isLive || game.isInspectionPaused;
     if (isVisible) {
-      _microscopeTime += dt;
+      if (opticalTimeAdvances) _microscopeTime += dt;
       _opacity = (_opacity + dt * 4).clamp(0.0, 1.0);
       _scale = (_scale + dt * 3).clamp(0.0, 1.0);
     } else {
@@ -832,7 +839,7 @@ class ProcessMagnifierComponent extends PositionComponent
     }
 
     // High-tech scanning flicker
-    if (_opacity > 0) {
+    if (_opacity > 0 && opticalTimeAdvances) {
       _scanlineOffset = (_scanlineOffset + dt * 150) % 240;
     }
 

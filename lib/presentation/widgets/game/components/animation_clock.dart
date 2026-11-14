@@ -35,9 +35,9 @@ class AnimationClock {
   /// Monotonic clock for ambient/cosmetic animation.
   double get visualElapsed => _visualElapsed;
 
-  /// Clock used by viewport HUD/selection animations. It follows pause and
-  /// history playback (so cards can still animate), but freezes during the
-  /// inspection freeze and while the widget is hidden.
+  /// Clock used by viewport HUD/selection animations. Like the visual clock,
+  /// it advances only during live playback so canvas overlays do not keep
+  /// moving while the simulation is paused, scrubbed, inspected or hidden.
   double get uiElapsed => _uiElapsed;
 
   AnimationMode get mode => _mode;
@@ -61,8 +61,6 @@ class AnimationClock {
 
     if (_mode == AnimationMode.live) {
       _visualElapsed += _frameDt;
-    }
-    if (_mode != AnimationMode.inspection && _mode != AnimationMode.hidden) {
       _uiElapsed += _frameDt;
     }
   }

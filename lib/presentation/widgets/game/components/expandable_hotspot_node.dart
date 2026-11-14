@@ -46,14 +46,19 @@ class ExpandableHotspotNode extends PositionComponent
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
     );
     add(_baseIndicator);
-    
-    // Pulse effect for the base
-    _baseIndicator.add(
-      OpacityEffect.to(
-        0.3,
-        EffectController(duration: 1.5, reverseDuration: 1.5, infinite: true),
-      ),
-    );
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_isExpanded) return;
+
+    // Drive the breathing highlight from the visual clock instead of an
+    // infinite Flame effect. The effect kept pulsing while the simulation was
+    // paused; a clock-based alpha is fixed whenever visual time is frozen.
+    final time = game.currentTime();
+    final alpha = 0.575 + 0.275 * math.cos(time * 2 * math.pi / 3);
+    _baseIndicator.paint.color = Colors.white.withValues(alpha: alpha);
   }
 
   @override

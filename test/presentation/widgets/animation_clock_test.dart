@@ -25,6 +25,7 @@ void main() {
       expect(clock.mode, AnimationMode.paused);
       expect(clock.visualDt, 0);
       expect(clock.visualElapsed, closeTo(0.05, 1e-9));
+      expect(clock.uiElapsed, closeTo(0.05, 1e-9));
 
       clock.tick(
         1 / 60,
@@ -33,6 +34,8 @@ void main() {
         inspectionPaused: false,
       );
       expect(clock.mode, AnimationMode.history);
+      expect(clock.visualDt, 0);
+      expect(clock.uiElapsed, closeTo(0.05, 1e-9));
 
       clock.tick(
         1 / 60,
@@ -42,7 +45,7 @@ void main() {
       );
       expect(clock.mode, AnimationMode.inspection);
       expect(clock.visualDt, 0);
-      expect(clock.uiElapsed, closeTo(0.05 + 1 / 60 + 1 / 60, 1e-9));
+      expect(clock.uiElapsed, closeTo(0.05, 1e-9));
 
       clock.tick(
         1 / 60,

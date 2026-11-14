@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../soil_scope_game.dart';
+import 'animation_clock.dart';
 import 'animation_math.dart';
 
 /// Visualizes the surface greenery of a cover crop (e.g. clover, rye).
@@ -17,11 +18,22 @@ class CoverCropComponent extends Component
   void update(double dt) {
     super.update(dt);
     final state = game.displayedState;
+    final target = state.hasCoverCrop ? 1.0 : 0.0;
+    final mode = game.animationClock.mode;
+
+    // Historical snapshots should show their exact cover-crop state. Paused,
+    // inspected and hidden frames keep the current growth frozen.
+    if (mode == AnimationMode.history) {
+      _growth = target;
+      return;
+    }
+    if (mode != AnimationMode.live) return;
+
     _growth = dampTowards(
       current: _growth,
-      target: state.hasCoverCrop ? 1.0 : 0.0,
+      target: target,
       rate: 4.0,
-      dt: dt,
+      dt: game.animationClock.visualDt,
     );
   }
 

@@ -89,6 +89,17 @@ class RhizosphereHotspotComponent extends PositionComponent
     }
   }
 
+  @override
+  void updateTree(double dt) {
+    // The glow pulse and the five orbiting particles are infinite Flame
+    // effects. Freeze the whole subtree whenever the simulation is not live
+    // so they do not breathe or orbit while paused or scrubbed. Guarding
+    // updateTree (not update) is required because Flame recurses into children
+    // separately from the parent's own update.
+    if (!game.animationClock.isLive) return;
+    super.updateTree(dt);
+  }
+
   void updateIntensity(double newIntensity) {
     intensity = newIntensity;
     _glow.paint.color = _getColor().withValues(alpha: 0.15 * intensity);

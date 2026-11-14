@@ -74,10 +74,17 @@ class IonComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
     if (_isAbsorbed) return;
+
+    // Ions are simulation-driven, so they must follow the visual clock rather
+    // than the raw frame delta. Otherwise Brownian drift continues while the
+    // simulation is paused or a historical snapshot is being scrubbed.
+    final visualDt = game.animationClock.visualDt;
+    if (visualDt <= 0) return;
+
     if (_selectionPulse > 0) {
-      _selectionPulse -= dt * 2.0;
+      _selectionPulse -= visualDt * 2.0;
     }
-    _age += dt;
+    _age += visualDt;
     final state = game.simulationState;
     if (state == null) return;
     final time = game.currentTime();
@@ -86,7 +93,8 @@ class IonComponent extends PositionComponent
     final damp = (isHovered || isPinned) ? 0.15 : 1.0;
     double dx = math.sin(time * (3 + seed % 3) + seed) * 0.5 * damp;
     double dy = math.cos(time * (2 + seed % 2) + seed) * 0.5 * damp;
-    position.add(Vector2(dx, dy));
+    // Keep the same 60 Hz speed while making the drift frame-rate independent.
+    position.add(Vector2(dx, dy) * (visualDt * 60.0));
 
     // 2. Attraction to roots (Uptake)
     final plant = state.plants.isNotEmpty ? state.plants.first : null;
@@ -114,7 +122,7 @@ class IonComponent extends PositionComponent
       if (nearestRootPos != null) {
         final direction = (nearestRootPos - position).normalized();
         final speed = (1.0 - math.sqrt(minDistSq) / 100.0).clamp(0.0, 1.0) * 15.0 * damp;
-        position.add(direction * speed * dt);
+        position.add(direction * speed * visualDt);
       }
     }
   }

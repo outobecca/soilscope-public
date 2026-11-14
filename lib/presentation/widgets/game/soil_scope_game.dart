@@ -132,7 +132,10 @@ class SoilScopeGame extends FlameGame
     final frameDt = _animationClock.frameDt;
 
     if (!_inspectionPaused) {
-      _visualState.advance(frameDt);
+      // Transitions are part of the simulation's visual motion. Only live
+      // playback may advance them; paused, historical and hidden frames keep
+      // the displayed value fixed.
+      _visualState.advance(_animationClock.visualDt);
       super.update(frameDt);
     } else {
       // Magnifiers live in the viewport, outside the simulation world. Keep
@@ -394,7 +397,10 @@ class SoilScopeGame extends FlameGame
       _lastState = state;
       // Scrubbing is direct manipulation: the soil should follow the thumb
       // immediately instead of lagging one transition behind it.
-      _visualState.setTarget(state, immediate: _readIsScrubbing());
+      _visualState.setTarget(
+        state,
+        immediate: _readIsScrubbing() || !state.isRunning,
+      );
       _pendingSceneState = state;
       _pendingSceneSession = session;
     });
@@ -403,7 +409,10 @@ class SoilScopeGame extends FlameGame
   void updateIsRunning(bool isRunning, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
-      _visualState.setTarget(state, immediate: _readIsScrubbing());
+      _visualState.setTarget(
+        state,
+        immediate: _readIsScrubbing() || !isRunning,
+      );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }
@@ -411,7 +420,10 @@ class SoilScopeGame extends FlameGame
   void updateBiophysicalState(BiophysicalState next) {
     _syncActionBuffer.add(() {
       _lastState = next;
-      _visualState.setTarget(next, immediate: _readIsScrubbing());
+      _visualState.setTarget(
+        next,
+        immediate: _readIsScrubbing() || !next.isRunning,
+      );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
       _applyAnimationState(next);
     });
@@ -420,7 +432,10 @@ class SoilScopeGame extends FlameGame
   void updateTimeScale(double timeScale, BiophysicalState state) {
     _syncActionBuffer.add(() {
       _lastState = state;
-      _visualState.setTarget(state, immediate: _readIsScrubbing());
+      _visualState.setTarget(
+        state,
+        immediate: _readIsScrubbing() || !state.isRunning,
+      );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
   }

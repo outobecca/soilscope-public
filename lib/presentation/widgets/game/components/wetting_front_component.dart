@@ -6,6 +6,7 @@ import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'soil_component_mixin.dart';
 import 'cycle_highlight_mixin.dart';
+import 'animation_clock.dart';
 import 'animation_math.dart';
 
 /// Visualizes the moving water front during infiltration events.
@@ -51,13 +52,21 @@ class WettingFrontComponent extends Component
 
     _frontVisible = found;
     if (_lastFrontY == 0) _lastFrontY = frontY;
+
+    final mode = game.animationClock.mode;
+    if (mode == AnimationMode.history) {
+      _lastFrontY = frontY;
+      return;
+    }
+    if (mode != AnimationMode.live) return;
+
     // Advance in update rather than render so the front moves at one speed
     // regardless of how often the canvas repaints.
     _lastFrontY = dampTowards(
       current: _lastFrontY,
       target: frontY,
       rate: 6.0,
-      dt: dt,
+      dt: game.animationClock.visualDt,
     );
   }
 

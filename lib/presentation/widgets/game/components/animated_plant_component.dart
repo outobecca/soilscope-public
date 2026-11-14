@@ -15,6 +15,7 @@ import 'soil_symbiosis_network_component.dart';
 import 'scene_coordinate_mapper.dart';
 import 'molecule_renderer.dart';
 import 'riverpod_lifecycle_mixin.dart';
+import 'animation_clock.dart';
 import 'animation_math.dart';
 import 'visual_seed.dart';
 
@@ -370,10 +371,9 @@ class AnimatedPlantComponent extends PositionComponent
     // 1b. Synchronize Hitboxes with Root Nodes
     _syncRootHitboxes(plant);
 
-    // Physiological smoothing must keep running while history is displayed or
-    // the simulation is paused. Otherwise a historical snapshot's turgor and
-    // biomass are rendered using the live values that happened to be on
-    // screen when scrubbing started.
+    // Physiological smoothing is visual motion, not simulation state. A
+    // historical snapshot snaps to its exact values; live playback smooths
+    // them; a paused, inspected or hidden frame must not keep drifting.
     final targetTurgor = plant.turgorPressure;
     final state = game.simulationState;
     final nContent = (state != null && state.profile.layers.isNotEmpty)
@@ -381,33 +381,42 @@ class AnimatedPlantComponent extends PositionComponent
               state.profile.layers.first.ammoniumContent)
         : 30.0;
     final targetVitality = (nContent / 40.0).clamp(0.2, 1.0);
+    final animationMode = game.animationClock.mode;
 
-    // Exponential smoothing keeps wilting and growth visually consistent at
-    // any refresh rate, including frame drops on low-end devices.
-    _smoothTurgor = dampTowards(
-      current: _smoothTurgor,
-      target: targetTurgor,
-      rate: 0.8,
-      dt: dt,
-    );
-    _smoothVitality = dampTowards(
-      current: _smoothVitality,
-      target: targetVitality,
-      rate: 0.4,
-      dt: dt,
-    );
-    _smoothBiomass = dampTowards(
-      current: _smoothBiomass,
-      target: plant.totalBiomass,
-      rate: 0.16,
-      dt: dt,
-    );
-    _smoothAge = dampTowards(
-      current: _smoothAge,
-      target: plant.age,
-      rate: 0.1,
-      dt: dt,
-    );
+    if (animationMode == AnimationMode.history) {
+      _smoothTurgor = targetTurgor;
+      _smoothVitality = targetVitality;
+      _smoothBiomass = plant.totalBiomass;
+      _smoothAge = plant.age;
+    } else if (animationMode == AnimationMode.live) {
+      // Exponential smoothing keeps wilting and growth visually consistent at
+      // any refresh rate, including frame drops on low-end devices.
+      final visualDt = game.animationClock.visualDt;
+      _smoothTurgor = dampTowards(
+        current: _smoothTurgor,
+        target: targetTurgor,
+        rate: 0.8,
+        dt: visualDt,
+      );
+      _smoothVitality = dampTowards(
+        current: _smoothVitality,
+        target: targetVitality,
+        rate: 0.4,
+        dt: visualDt,
+      );
+      _smoothBiomass = dampTowards(
+        current: _smoothBiomass,
+        target: plant.totalBiomass,
+        rate: 0.16,
+        dt: visualDt,
+      );
+      _smoothAge = dampTowards(
+        current: _smoothAge,
+        target: plant.age,
+        rate: 0.1,
+        dt: visualDt,
+      );
+    }
 
     if (!_isRunning) return;
 
