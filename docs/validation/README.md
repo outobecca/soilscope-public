@@ -81,12 +81,17 @@ observations.
 Use **exactly one** of:
 
 - `timesSeconds`: absolute times in seconds from simulation start. Use this for
-  measured campaigns. Put the ISO dates and timezone in `sampling`.
+  measured campaigns. Zero is allowed (the template starts at 0), but times
+  must increase. Put the ISO dates and timezone in `sampling`.
 - `relativeTimes`: fractions in `(0, 1]` of the current run. Use this only for
-  synthetic patterns that are intended to scale with run length.
+  synthetic patterns that are intended to scale with run length; zero is not
+  valid here.
 
-Times must be positive and strictly increasing. The number of `values` in every
-series must equal the number of times.
+The number of `values` in every series must equal the number of times. Sampling
+points outside the available run history are reported as a **coverage gap** in
+the Reference Check tab and produce no metric; they are never clamped to the
+first or last simulated state. The CI gate fails if any series is uncovered.
+Run long enough to cover the reference, or adjust the reference times.
 
 ### Series
 
@@ -134,15 +139,18 @@ than a failed load.
    the model is meant to support. Explain the choice in `provenanceNotes`.
 4. Replace `assets/validation/reference.json` with your file. Keep the same
    filename. No Dart change is required; the repository points at that path.
-5. Run `flutter test --no-pub test/validation/`. If metrics are outside the
-   declared thresholds, do not relabel the data as illustrative or loosen the
-   gate silently: either fix the model or document why the reference or
-   threshold is wrong.
+5. Run `flutter test --no-pub test/validation/`. The test fails if any series
+   is outside the run's simulated interval or outside the declared thresholds.
+   If metrics are outside the thresholds, do not relabel the data as
+   illustrative or loosen the gate silently: either fix the model or document
+   why the reference or threshold is wrong.
 6. Open the Reference Check tab and confirm it shows **MEASURED REFERENCE**, the
    citation, the sampling notes, and the declared gate.
 
 `reference.template.json` has empty `values` on purpose, so it cannot be loaded
-as if it were real data. Fill it before use.
+as if it were real data. It deliberately starts at 0 s to show that zero is a
+valid absolute sample time; fill the values before use. The loader will reject
+it until every series has one value per time.
 
 ## Regenerating the illustrative fixture
 

@@ -3208,6 +3208,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationReferenceUnavailable => 'Reference dataset could not be loaded.';
 
   @override
+  String get validationCoverageTitle => 'REFERENCE COVERAGE GAP';
+
+  @override
+  String get validationCoverageGap => 'No metrics for these reference series:';
+
+  @override
+  String get validationCoverageHint => 'Their sample times fall outside the simulated interval. Run longer or use reference times inside the run; uncovered points are never clamped.';
+
+  @override
   String get patternAgreement => 'PATTERN AGREEMENT (NSE)';
 
   @override

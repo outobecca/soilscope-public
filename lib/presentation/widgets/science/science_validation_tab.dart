@@ -76,8 +76,9 @@ class ScienceValidationTab extends StatelessWidget {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    // Compare the live run at the same relative sample fractions as the
-    // reference. This is a pattern check, not a field-data validation.
+    // Compare the live run at the reference sample times. Absolute measured
+    // times are used as-is; synthetic patterns scale with the run. This is a
+    // reference check, not a field-data validation.
     final referenceTimes = reference.timesFor(state.timeElapsed);
     final comparison = ValidationFramework.compareToReferenceSeries(
       state.history,
@@ -91,6 +92,10 @@ class ScienceValidationTab extends StatelessWidget {
         _buildHeader(theme, l10n, reference),
         const SizedBox(height: 12),
         _buildProvenanceCard(theme, l10n, reference),
+        if (comparison.uncoveredSeries.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildCoverageWarning(comparison, theme, l10n),
+        ],
         const SizedBox(height: 12),
         _buildOverallScore(comparison, theme, l10n, reference),
         const SizedBox(height: 24),
@@ -274,6 +279,58 @@ class ScienceValidationTab extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCoverageWarning(
+    ValidationComparison comparison,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.error.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber, color: theme.colorScheme.error),
+              const SizedBox(width: 8),
+              Text(
+                l10n.validationCoverageTitle,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${l10n.validationCoverageGap} '
+            '${comparison.uncoveredSeries.keys.join(', ')}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onErrorContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.validationCoverageHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onErrorContainer,
+            ),
+          ),
+        ],
       ),
     );
   }

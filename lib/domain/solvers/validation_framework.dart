@@ -241,6 +241,7 @@ class ValidationFramework {
     List<double> referenceTimes,
   ) {
     final results = <String, ValidationResult>{};
+    final uncovered = <String, String>{};
 
     for (final profile in referenceSeries) {
       // Extract simulated values at reference times
@@ -252,24 +253,53 @@ class ValidationFramework {
         layerIndex: profile.layerIndex,
       );
 
-      if (predicted.length == profile.values.length) {
-        results[profile.key] = calculateAll(predicted, profile.values);
+      if (predicted == null) {
+        uncovered[profile.key] =
+            'reference times outside the simulated interval';
+        continue;
       }
+      if (predicted.length != profile.values.length) {
+        uncovered[profile.key] = 'reference sample count mismatch';
+        continue;
+      }
+      results[profile.key] = calculateAll(predicted, profile.values);
     }
 
-    return ValidationComparison(variableResults: results);
+    return ValidationComparison(
+      variableResults: results,
+      uncoveredSeries: uncovered,
+    );
   }
 
-  /// Extracts simulated values at specific times (nearest neighbor)
-  static List<double> _extractAtTimes(
+  /// Extracts simulated values at specific times (nearest neighbor).
+  ///
+  /// Returns null instead of clamping when any requested time is outside the
+  /// available history, so an absolute measured sample beyond the run cannot
+  /// silently compare against the final state.
+  static List<double>? _extractAtTimes(
     List<BiophysicalState> history,
     String variable,
     List<double> times, {
     int layerIndex = 0,
   }) {
+    if (history.isEmpty) return null;
+
+    var start = history.first.timeElapsed;
+    var end = start;
+    for (final state in history) {
+      if (state.timeElapsed < start) start = state.timeElapsed;
+      if (state.timeElapsed > end) end = state.timeElapsed;
+    }
+    const coverageEpsilon = 1e-6;
+
     final result = <double>[];
 
     for (final targetTime in times) {
+      if (targetTime < start - coverageEpsilon ||
+          targetTime > end + coverageEpsilon) {
+        return null;
+      }
+
       // Find nearest state
       BiophysicalState? nearest;
       double minDiff = double.infinity;
@@ -282,14 +312,13 @@ class ValidationFramework {
         }
       }
 
-      if (nearest != null) {
-        final timeSeries = extractTimeSeries(
-          [nearest],
-          variable,
-          layerIndex: layerIndex,
-        );
-        result.add(timeSeries.first);
-      }
+      if (nearest == null) return null;
+      final timeSeries = extractTimeSeries(
+        [nearest],
+        variable,
+        layerIndex: layerIndex,
+      );
+      result.add(timeSeries.first);
     }
 
     return result;
@@ -343,10 +372,12 @@ class ValidationResult {
 /// Container for multi-variable validation comparison
 class ValidationComparison {
   final Map<String, ValidationResult> variableResults;
+  final Map<String, String> uncoveredSeries;
   final int? layerIndex;
 
   const ValidationComparison({
     required this.variableResults,
+    this.uncoveredSeries = const {},
     this.layerIndex,
   });
 
@@ -370,6 +401,9 @@ class ValidationComparison {
       buffer.writeln('--- ${entry.key} ---');
       buffer.writeln(entry.value.toString());
       buffer.writeln();
+    }
+    for (final entry in uncoveredSeries.entries) {
+      buffer.writeln('--- ${entry.key}: ${entry.value} ---');
     }
 
     return buffer.toString();

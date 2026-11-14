@@ -409,7 +409,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 
 > **Close-out status (2026-11-14).** Reconciled item by item against
 > `fix/issues-from-audit-report`. `flutter analyze --no-pub --fatal-infos` is
-> clean, `flutter test --no-pub` passes 107 tests, and
+> clean, `flutter test --no-pub` passes 110 tests, and
 > `flutter build web --release --wasm` succeeds. "Done" means the change is in
 > the tree and, where the behaviour is testable, asserted by the named test.
 >
@@ -445,7 +445,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | D5 | Done | Faintest labels lifted to AA contrast. |
 > | E1 | Done | Timeline/gamification/periodic-table ARBs; English function and input palettes; `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 107. |
+> | E3 | Done | English README intro; test count updated to 110. |
 > | F1 | Done | 21 unreferenced modules and their dead tests removed. |
 > | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |

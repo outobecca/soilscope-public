@@ -6377,6 +6377,24 @@ abstract class AppLocalizations {
   /// **'Reference dataset could not be loaded.'**
   String get validationReferenceUnavailable;
 
+  /// No description provided for @validationCoverageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'REFERENCE COVERAGE GAP'**
+  String get validationCoverageTitle;
+
+  /// No description provided for @validationCoverageGap.
+  ///
+  /// In en, this message translates to:
+  /// **'No metrics for these reference series:'**
+  String get validationCoverageGap;
+
+  /// No description provided for @validationCoverageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Their sample times fall outside the simulated interval. Run longer or use reference times inside the run; uncovered points are never clamped.'**
+  String get validationCoverageHint;
+
   /// No description provided for @patternAgreement.
   ///
   /// In en, this message translates to:

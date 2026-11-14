@@ -27,6 +27,12 @@ void main() {
       referenceTimes,
     );
 
+    expect(
+      comparison.uncoveredSeries,
+      isEmpty,
+      reason: 'reference points must be covered by the fixed run',
+    );
+
     for (final profile in dataset.series) {
       final result = comparison.variableResults[profile.key]!;
       final threshold = profile.threshold;

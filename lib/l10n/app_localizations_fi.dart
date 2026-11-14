@@ -3208,6 +3208,15 @@ class AppLocalizationsFi extends AppLocalizations {
   String get validationReferenceUnavailable => 'Referenssiaineistoa ei voitu ladata.';
 
   @override
+  String get validationCoverageTitle => 'REFERENSSIN KATTAVUUSPUUTE';
+
+  @override
+  String get validationCoverageGap => 'Ei mittareita näille referenssisarjoille:';
+
+  @override
+  String get validationCoverageHint => 'Niiden näyteajat ovat simuloidun aikavälin ulkopuolella. Aja pidempään tai käytä aikavälin sisäisiä referenssiaikoja; kattamattomia pisteitä ei koskaan rajata viimeiseen tilaan.';
+
+  @override
   String get patternAgreement => 'KUVION YHTEENSOPIVUUS (NSE)';
 
   @override

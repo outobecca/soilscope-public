@@ -38,16 +38,19 @@ class ReferenceDataset {
     if (times.isEmpty) {
       throw const FormatException('Reference dataset needs sample times');
     }
-    if (times.any((time) => time <= 0)) {
-      throw const FormatException('Sample times must be positive');
+    if (timesSeconds != null) {
+      if (timesSeconds!.any((time) => time < 0)) {
+        throw const FormatException('Absolute sample times cannot be negative');
+      }
+    } else if (relativeTimes!.any((fraction) => fraction <= 0 || fraction > 1)) {
+      throw const FormatException(
+        'Relative sample times must be in (0, 1]',
+      );
     }
     for (var i = 1; i < times.length; i++) {
       if (times[i] <= times[i - 1]) {
         throw const FormatException('Sample times must increase');
       }
-    }
-    if (relativeTimes != null && relativeTimes!.any((f) => f > 1)) {
-      throw const FormatException('Relative sample times must be ≤ 1');
     }
     if (series.isEmpty) {
       throw const FormatException('Reference dataset needs at least one series');
@@ -81,7 +84,9 @@ class ReferenceDataset {
   int get sampleCount => timesSeconds?.length ?? relativeTimes!.length;
 
   /// Resolves sample times against a run of [elapsedSeconds].
-  /// Absolute times are used as-is; relative fractions are scaled.
+  ///
+  /// Absolute times may start at 0 and are used as-is; relative fractions are
+  /// scaled by the run length.
   List<double> timesFor(double elapsedSeconds) {
     final absolute = timesSeconds;
     if (absolute != null) return absolute;
