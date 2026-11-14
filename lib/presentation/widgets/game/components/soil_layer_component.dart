@@ -40,6 +40,7 @@ class SoilLayerComponent extends PositionComponent
   Picture? _noisePicture;
   SoilLayer? _noiseSourceLayer;
   SoilLayer? _paintSourceLayer;
+  Size _paintedSize = Size.zero;
   late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
 
   SoilLayerComponent({
@@ -239,6 +240,7 @@ class SoilLayerComponent extends PositionComponent
     // when the visual values have already settled at their target.
     final painted = _paintSourceLayer;
     if (painted != null &&
+        _paintedSize == size.toSize() &&
         painted.waterContent == visualLayer.waterContent &&
         painted.redoxPotential == visualLayer.redoxPotential &&
         painted.temperature == visualLayer.temperature &&
@@ -263,6 +265,7 @@ class SoilLayerComponent extends PositionComponent
 
   void _updatePaint() {
     _paintSourceLayer = _layer;
+    _paintedSize = size.toSize();
     _layerPaint = SoilLayerStyleEngine.calculateLayerPaint(
       _layer,
       size.toSize(),
