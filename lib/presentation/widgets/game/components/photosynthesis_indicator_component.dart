@@ -7,6 +7,7 @@ import '../../../../domain/models/plant.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'scene_coordinate_mapper.dart';
 import 'data_packet_component.dart';
+import 'animation_math.dart';
 
 /// Draws photosynthesis light absorption indicators at leaves for all plants.
 /// Anchors rays to the actual sun position in the atmosphere.
@@ -15,6 +16,7 @@ class PhotosynthesisIndicatorComponent extends Component
   PhotosynthesisIndicatorComponent() : super(priority: 44);
 
   bool _isPinned = false;
+  final RateAccumulator _carbonPacketAccumulator = RateAccumulator();
 
   @override
   void update(double dt) {
@@ -25,9 +27,8 @@ class PhotosynthesisIndicatorComponent extends Component
     final double radiation = state.solarRadiation;
     const double solarConstant = 800.0;
     final intensity = (radiation / solarConstant).clamp(0.0, 1.0);
-    final time = game.currentTime();
 
-    if (intensity > 0.6 && time % 2.5 < dt * 2) {
+    if (intensity > 0.6 && _carbonPacketAccumulator.consume(dt, 1 / 2.5) > 0) {
       for (final plant in state.plants) {
         final pg = _getPlantGeometry(plant);
         _spawnCarbonPacket(plant, pg);
@@ -46,14 +47,21 @@ class PhotosynthesisIndicatorComponent extends Component
     if (radiation < 100) return;
 
     final intensity = (radiation / solarConstant).clamp(0.0, 1.0);
-    
+
     // SUN position is synchronized with SunIndicatorComponent placement in world space
     final soilRight = game.soilLeftX + SoilScopeGame.soilColumnWidth;
     final sunWorldPos = Offset(soilRight - 80, 80);
 
     for (final plant in state.plants) {
       final pg = _getPlantGeometry(plant);
-      _drawLightRays(canvas, zoom, time, intensity, pg.leafPositions, sunWorldPos);
+      _drawLightRays(
+        canvas,
+        zoom,
+        time,
+        intensity,
+        pg.leafPositions,
+        sunWorldPos,
+      );
     }
   }
 
@@ -61,7 +69,7 @@ class PhotosynthesisIndicatorComponent extends Component
     // Path from top leaf to root collar (node 0)
     final shootTop = pg.leafPositions.last;
     final collar = Vector2(pg.plantCenterX, pg.surfaceY);
-    
+
     game.world.add(
       DataPacket(
         type: FluxType.carbon,
@@ -90,17 +98,21 @@ class PhotosynthesisIndicatorComponent extends Component
       final phase = time * 2 + i * 0.5;
       final flicker = 0.7 + 0.3 * math.sin(phase);
 
-      rayPaint.color = const Color(0xFFFCD34D).withValues(alpha: 0.12 * intensity * flicker);
+      rayPaint.color = const Color(
+        0xFFFCD34D,
+      ).withValues(alpha: 0.12 * intensity * flicker);
 
       final dir = leaf - sunPos;
       final dist = dir.distance;
       if (dist < 5) continue;
 
-      final rayStart = sunPos + (dir / dist) * 80; 
+      final rayStart = sunPos + (dir / dist) * 80;
       canvas.drawLine(rayStart, leaf, rayPaint);
 
       final glowPaint = Paint()
-        ..color = const Color(0xFF22C55E).withValues(alpha: 0.25 * intensity * flicker)
+        ..color = const Color(
+          0xFF22C55E,
+        ).withValues(alpha: 0.25 * intensity * flicker)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
       canvas.drawCircle(leaf, 10 / zoom, glowPaint);
 
@@ -125,13 +137,28 @@ class PhotosynthesisIndicatorComponent extends Component
       final particleAlpha = 1.0 - particlePhase;
       final pos = Offset(particleX, particleY);
       final radius = 2.0 / zoom;
-      
+
       // Shadow
-      canvas.drawCircle(pos + const Offset(0.5, 0.5), radius, Paint()..color = Colors.black.withValues(alpha: 0.1 * particleAlpha));
+      canvas.drawCircle(
+        pos + const Offset(0.5, 0.5),
+        radius,
+        Paint()..color = Colors.black.withValues(alpha: 0.1 * particleAlpha),
+      );
       // Body
-      canvas.drawCircle(pos, radius, co2Paint..color = const Color(0xFFEC4899).withValues(alpha: 0.5 * particleAlpha));
+      canvas.drawCircle(
+        pos,
+        radius,
+        co2Paint
+          ..color = const Color(
+            0xFFEC4899,
+          ).withValues(alpha: 0.5 * particleAlpha),
+      );
       // Highlight
-      canvas.drawCircle(pos - Offset(radius * 0.3, radius * 0.3), radius * 0.35, Paint()..color = Colors.white.withValues(alpha: 0.4 * particleAlpha));
+      canvas.drawCircle(
+        pos - Offset(radius * 0.3, radius * 0.3),
+        radius * 0.35,
+        Paint()..color = Colors.white.withValues(alpha: 0.4 * particleAlpha),
+      );
     }
   }
 
@@ -141,7 +168,8 @@ class PhotosynthesisIndicatorComponent extends Component
     if (state.solarRadiation < 100) return false;
     for (final plant in state.plants) {
       final pg = _getPlantGeometry(plant);
-      if ((point.y - (pg.surfaceY - pg.plantHeight / 2)).abs() < pg.plantHeight / 2 &&
+      if ((point.y - (pg.surfaceY - pg.plantHeight / 2)).abs() <
+              pg.plantHeight / 2 &&
           (point.x - pg.plantCenterX).abs() < 60) {
         return true;
       }
@@ -178,31 +206,40 @@ class PhotosynthesisIndicatorComponent extends Component
     Offset? anchorScreen;
     if (state.plants.isNotEmpty) {
       final pg = _getPlantGeometry(state.plants.first);
-      final anchorWorld = Vector2(pg.plantCenterX, pg.surfaceY - pg.plantHeight * 0.6);
+      final anchorWorld = Vector2(
+        pg.plantCenterX,
+        pg.surfaceY - pg.plantHeight * 0.6,
+      );
       anchorScreen = game.worldToScreen(anchorWorld).toOffset();
     }
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: l.photosynthesis.toUpperCase(),
-        description: l.photosynthesisDesc,
-        stats: {
-          l.processLabel: l.c3Pathway,
-          l.efficiencyLabel: l.rubiscoLimited,
-          l.productLabel: l.sugarCompound,
-        },
-        isPinned: pinned,
-        sourceId: 'photosynthesis-indicator',
-        onDismiss: () => _isPinned = false,
-        accentColor: const Color(0xFF10B981),
-        screenPosition: anchorScreen,
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: l.photosynthesis.toUpperCase(),
+            description: l.photosynthesisDesc,
+            stats: {
+              l.processLabel: l.c3Pathway,
+              l.efficiencyLabel: l.rubiscoLimited,
+              l.productLabel: l.sugarCompound,
+            },
+            isPinned: pinned,
+            sourceId: 'photosynthesis-indicator',
+            onDismiss: () => _isPinned = false,
+            accentColor: const Color(0xFF10B981),
+            screenPosition: anchorScreen,
+          ),
+        );
   }
 
   _PlantGeometry _getPlantGeometry(Plant plant) {
     final surfaceY = game.soilSurfaceY;
     final soilWidth = SoilScopeGame.soilColumnWidth;
-    final plantPos = SceneCoordinateMapper.mapShootPosition(plant.baseX, soilWidth, surfaceY);
+    final plantPos = SceneCoordinateMapper.mapShootPosition(
+      plant.baseX,
+      soilWidth,
+      surfaceY,
+    );
     plantPos.x += game.soilLeftX; // Shift by soil column offset
     final plantCenterX = plantPos.x;
 
@@ -216,15 +253,14 @@ class PhotosynthesisIndicatorComponent extends Component
     final double windSway = math.sin(game.currentTime() * 1.5) * 0.03;
 
     final leafTs = [0.40, 0.55, 0.70, 0.85, 0.95];
-    final leafPositions =
-        leafTs.map((t) {
-          return Offset(
-            plantCenterX +
-                math.sin(wiltSway + windSway) * plantHeight * t +
-                (t < 0.6 ? -25 : 25) * hFactor,
-            surfaceY - math.cos(wiltSway + windSway) * plantHeight * t,
-          );
-        }).toList();
+    final leafPositions = leafTs.map((t) {
+      return Offset(
+        plantCenterX +
+            math.sin(wiltSway + windSway) * plantHeight * t +
+            (t < 0.6 ? -25 : 25) * hFactor,
+        surfaceY - math.cos(wiltSway + windSway) * plantHeight * t,
+      );
+    }).toList();
 
     return _PlantGeometry(
       plantCenterX: plantCenterX,

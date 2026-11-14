@@ -15,6 +15,7 @@ import 'soil_symbiosis_network_component.dart';
 import 'scene_coordinate_mapper.dart';
 import 'molecule_renderer.dart';
 import 'riverpod_lifecycle_mixin.dart';
+import 'animation_math.dart';
 
 part 'animated_plant_component_painting.dart';
 
@@ -43,17 +44,18 @@ class AnimatedPlantComponent extends PositionComponent
   /// they neither become impossible to hit zoomed out nor swallow the whole
   /// root zone when zoomed in.
   double get _rootHitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 6,
-        minWorld: 6,
-        maxWorld: 36,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 6,
+    minWorld: 6,
+    maxWorld: 36,
+  );
   Plant? _plant;
   bool _isRunning = false;
 
   final List<_RootTipGlow> _tipGlows = [];
   final Map<int, double> _nodeBirthTimes = {};
+  final RateAccumulator _exudateAccumulator = RateAccumulator();
   double _vaporTimer = 0;
   int _previousRootCount = 0;
 
@@ -403,13 +405,32 @@ class AnimatedPlantComponent extends PositionComponent
         : 30.0;
     final targetVitality = (nContent / 40.0).clamp(0.2, 1.0);
 
-    const double lerpFactor = 0.8; // Speed of visual adaptation
-    _smoothTurgor += (targetTurgor - _smoothTurgor) * dt * lerpFactor;
-    _smoothVitality +=
-        (targetVitality - _smoothVitality) * dt * (lerpFactor * 0.5);
-    _smoothBiomass +=
-        (plant.totalBiomass - _smoothBiomass) * dt * (lerpFactor * 0.2);
-    _smoothAge += (plant.age - _smoothAge) * dt * 0.1;
+    // Exponential smoothing keeps wilting and growth visually consistent at
+    // any refresh rate, including frame drops on low-end devices.
+    _smoothTurgor = dampTowards(
+      current: _smoothTurgor,
+      target: targetTurgor,
+      rate: 0.8,
+      dt: dt,
+    );
+    _smoothVitality = dampTowards(
+      current: _smoothVitality,
+      target: targetVitality,
+      rate: 0.4,
+      dt: dt,
+    );
+    _smoothBiomass = dampTowards(
+      current: _smoothBiomass,
+      target: plant.totalBiomass,
+      rate: 0.16,
+      dt: dt,
+    );
+    _smoothAge = dampTowards(
+      current: _smoothAge,
+      target: plant.age,
+      rate: 0.1,
+      dt: dt,
+    );
 
     // Senescence accumulates if vitality is low for too long or plant is old
     if (_smoothVitality < 0.4 || _smoothAge > 60) {
@@ -461,10 +482,11 @@ class AnimatedPlantComponent extends PositionComponent
         (1.0 - plant.waterStressIndex).clamp(0.1, 1.0) *
         solarFactor;
 
-    // Release rate threshold based on carbon availability
-    final spawnThreshold = 0.05 + carbonAvailability * 0.15;
+    // Release rate in events per second. The accumulator keeps the visual
+    // density independent of frame rate and avoids a burst after a slow frame.
+    final spawnRatePerSecond = (0.05 + carbonAvailability * 0.15) * 60.0;
 
-    if (_random.nextDouble() < spawnThreshold) {
+    if (_exudateAccumulator.consume(dt, spawnRatePerSecond) > 0) {
       final nodes = plant.rootSystem;
       if (nodes.isEmpty) return;
 
@@ -1004,7 +1026,9 @@ class AnimatedPlantComponent extends PositionComponent
       }
     }
 
-    if (nearestRootIndex != null && nearestRootPos != null && nearestRootNode != null) {
+    if (nearestRootIndex != null &&
+        nearestRootPos != null &&
+        nearestRootNode != null) {
       final i = nearestRootIndex;
       final pos = nearestRootPos;
       final node = nearestRootNode;
@@ -1029,11 +1053,13 @@ class AnimatedPlantComponent extends PositionComponent
           .worldToScreen(absolutePositionOf(pos))
           .toOffset();
       info['isPinned'] = true;
-      game.ref.read(uIStateProvider.notifier).showInfo(
-        info,
-        sourceId: sourceId,
-        onDismiss: () => _pinnedRootIndex = null,
-      );
+      game.ref
+          .read(uIStateProvider.notifier)
+          .showInfo(
+            info,
+            sourceId: sourceId,
+            onDismiss: () => _pinnedRootIndex = null,
+          );
       event.handled = true;
       return;
     }

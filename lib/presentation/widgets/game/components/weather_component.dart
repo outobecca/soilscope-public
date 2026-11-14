@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import 'soil_component_mixin.dart';
 import 'selection_node_component.dart';
+import 'animation_math.dart';
 
 /// Animated weather component handling rain particles, sky colors, and clouds.
 class WeatherComponent extends PositionComponent
@@ -12,6 +13,7 @@ class WeatherComponent extends PositionComponent
   final List<_Cloud> _clouds = [];
   final math.Random _random = math.Random.secure();
   final bool animated;
+  double _visualPrecipitation = 0.0;
 
   WeatherComponent({
     required Vector2 size,
@@ -40,7 +42,10 @@ class WeatherComponent extends PositionComponent
         description: game.l10n.atmosphereDesc,
         accentColor: Colors.cyanAccent,
         icon: Icons.cloud_rounded,
-        position: Vector2(game.soilLeftX + 60 - position.x, 100), // Gutter position
+        position: Vector2(
+          game.soilLeftX + 60 - position.x,
+          100,
+        ), // Gutter position
         statsProvider: () {
           final state = game.simulationState;
           if (state == null) return null;
@@ -89,7 +94,16 @@ class WeatherComponent extends PositionComponent
     // Reposition to follow camera horizontally
     position.x = game.camera.viewfinder.position.x - size.x / 2;
 
-    final precip = state.precipitation;
+    // Rain density follows the user's precipitation input through a short
+    // visual fade instead of snapping every drop count on the next frame.
+    _visualPrecipitation = dampTowards(
+      current: _visualPrecipitation,
+      target: state.precipitation.clamp(0.0, 50.0),
+      rate: 2.5,
+      dt: dt,
+    );
+
+    final precip = _visualPrecipitation;
     final width = size.x;
     final startX = 0.0; // Local to component
 
@@ -107,6 +121,9 @@ class WeatherComponent extends PositionComponent
             length: 6 + _random.nextDouble() * 8,
           ),
         );
+      }
+      if (_rainDrops.length > desiredCount) {
+        _rainDrops.removeRange(0, _rainDrops.length - desiredCount);
       }
     } else {
       _rainDrops.clear();
@@ -138,7 +155,7 @@ class WeatherComponent extends PositionComponent
     // This component only handles atmospheric entities (rain, clouds).
 
     // 2. Clouds
-    final cloudAlpha = (state.precipitation > 0 ? 0.2 : 0.1);
+    final cloudAlpha = 0.1 + 0.1 * _visualPrecipitation.clamp(0.0, 1.0);
     final cloudPaint = Paint()
       ..color = Colors.white.withValues(alpha: cloudAlpha)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
@@ -174,7 +191,6 @@ class WeatherComponent extends PositionComponent
       canvas.drawCircle(center + Offset(offX, offY), baseRadius * 0.6, paint);
     }
   }
-
 }
 
 class _RainDrop {

@@ -6,15 +6,22 @@ import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'soil_component_mixin.dart';
 import 'cycle_highlight_mixin.dart';
+import 'animation_math.dart';
 
 /// Visualizes the moving water front during infiltration events.
 class WettingFrontComponent extends Component
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks, SoilComponentMixin, CycleHighlightMixin {
-  
+    with
+        HasGameReference<SoilScopeGame>,
+        TapCallbacks,
+        HoverCallbacks,
+        SoilComponentMixin,
+        CycleHighlightMixin {
   @override
   Set<ObservationCycle> get memberOfCycles => {ObservationCycle.water};
   final Paint _wetZonePaint = Paint();
-  final Paint _glowPaint = Paint()..style = PaintingStyle.stroke..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+  final Paint _glowPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
   final Paint _sharpPaint = Paint()..style = PaintingStyle.stroke;
   final Paint _dropPaint = Paint();
 
@@ -22,17 +29,16 @@ class WettingFrontComponent extends Component
 
   bool _isPinned = false;
   double _lastFrontY = 0;
+  bool _frontVisible = false;
 
   @override
-  void render(Canvas canvas) {
+  void update(double dt) {
+    super.update(dt);
     final state = game.displayedState;
-    final double zoom = game.camera.viewfinder.zoom;
-    final double time = game.currentTime();
-
     if (state.profile.layers.isEmpty) return;
 
-    double frontY = surfaceY;
-    bool found = false;
+    var frontY = surfaceY;
+    var found = false;
     for (int i = 0; i < state.profile.layers.length; i++) {
       final layer = state.profile.layers[i];
       final saturation = layer.waterContent / layer.porosity;
@@ -42,21 +48,63 @@ class WettingFrontComponent extends Component
         break;
       }
     }
-    
-    if (_lastFrontY == 0) _lastFrontY = frontY;
-    _lastFrontY += (frontY - _lastFrontY) * 0.1;
 
-    if (!found && state.precipitation <= 0) return;
+    _frontVisible = found;
+    if (_lastFrontY == 0) _lastFrontY = frontY;
+    // Advance in update rather than render so the front moves at one speed
+    // regardless of how often the canvas repaints.
+    _lastFrontY = dampTowards(
+      current: _lastFrontY,
+      target: frontY,
+      rate: 6.0,
+      dt: dt,
+    );
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final state = game.displayedState;
+    final double zoom = game.camera.viewfinder.zoom;
+    final double time = game.currentTime();
+
+    if (state.profile.layers.isEmpty) return;
+    if (!_frontVisible && state.precipitation <= 0) return;
 
     final currentOpacity = cycleOpacity;
-    _drawWetZone(canvas, surfaceY, _lastFrontY, backgroundX, backgroundWidth, zoom, currentOpacity);
-    _drawFractalFrontLine(canvas, _lastFrontY, backgroundX, backgroundWidth, zoom, time, currentOpacity);
-    _drawDropletIndicators(canvas, _lastFrontY, backgroundX, backgroundWidth, zoom, time, currentOpacity);
+    _drawWetZone(
+      canvas,
+      surfaceY,
+      _lastFrontY,
+      backgroundX,
+      backgroundWidth,
+      zoom,
+      currentOpacity,
+    );
+    _drawFractalFrontLine(
+      canvas,
+      _lastFrontY,
+      backgroundX,
+      backgroundWidth,
+      zoom,
+      time,
+      currentOpacity,
+    );
+    _drawDropletIndicators(
+      canvas,
+      _lastFrontY,
+      backgroundX,
+      backgroundWidth,
+      zoom,
+      time,
+      currentOpacity,
+    );
   }
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    if (point.x < simulationX || point.x > simulationX + simulationWidth) return false;
+    if (point.x < simulationX || point.x > simulationX + simulationWidth) {
+      return false;
+    }
     return (point.y - _lastFrontY).abs() < 28;
   }
 
@@ -86,25 +134,35 @@ class WettingFrontComponent extends Component
   void _showFrontInfo({bool pinned = false}) {
     final l = game.l10n;
     final anchorWorld = Vector2(simulationX + simulationWidth / 2, _lastFrontY);
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: l.wettingFrontTitle.toUpperCase(),
-        description: l.moleculeWaterDesc,
-        stats: {
-          l.processLabel: l.infiltration,
-          l.dynamicsLabel: l.fractalFingering,
-          l.stateLabel: l.saturationLabel,
-        },
-        isPinned: pinned,
-        sourceId: 'wetting-front',
-        onDismiss: () => _isPinned = false,
-        accentColor: const Color(0xFF38BDF8),
-        screenPosition: game.worldToScreen(anchorWorld).toOffset(),
-      ),
-    );
+    game.ref
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: l.wettingFrontTitle.toUpperCase(),
+            description: l.moleculeWaterDesc,
+            stats: {
+              l.processLabel: l.infiltration,
+              l.dynamicsLabel: l.fractalFingering,
+              l.stateLabel: l.saturationLabel,
+            },
+            isPinned: pinned,
+            sourceId: 'wetting-front',
+            onDismiss: () => _isPinned = false,
+            accentColor: const Color(0xFF38BDF8),
+            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
+          ),
+        );
   }
 
-  void _drawWetZone(Canvas canvas, double surfaceY, double frontY, double soilX, double soilWidth, double zoom, double cycleOpacity) {
+  void _drawWetZone(
+    Canvas canvas,
+    double surfaceY,
+    double frontY,
+    double soilX,
+    double soilWidth,
+    double zoom,
+    double cycleOpacity,
+  ) {
     if (frontY <= surfaceY) return;
     final rect = Rect.fromLTWH(soilX, surfaceY, soilWidth, frontY - surfaceY);
     final paint = _wetZonePaint
@@ -119,7 +177,15 @@ class WettingFrontComponent extends Component
     canvas.drawRect(rect, paint);
   }
 
-  void _drawFractalFrontLine(Canvas canvas, double frontY, double soilX, double soilWidth, double zoom, double time, double cycleOpacity) {
+  void _drawFractalFrontLine(
+    Canvas canvas,
+    double frontY,
+    double soilX,
+    double soilWidth,
+    double zoom,
+    double time,
+    double cycleOpacity,
+  ) {
     final frontPath = Path();
     frontPath.moveTo(soilX, frontY);
     for (double x = soilX; x <= soilX + soilWidth; x += 5) {
@@ -138,17 +204,33 @@ class WettingFrontComponent extends Component
     canvas.drawPath(frontPath, sharpPaint);
   }
 
-  void _drawDropletIndicators(Canvas canvas, double frontY, double soilX, double soilWidth, double zoom, double time, double cycleOpacity) {
-    final dropPaint = _dropPaint..color = const Color(0xFFE0F2FE).withValues(alpha: 0.7 * cycleOpacity);
+  void _drawDropletIndicators(
+    Canvas canvas,
+    double frontY,
+    double soilX,
+    double soilWidth,
+    double zoom,
+    double time,
+    double cycleOpacity,
+  ) {
+    final dropPaint = _dropPaint
+      ..color = const Color(0xFFE0F2FE).withValues(alpha: 0.7 * cycleOpacity);
     for (double x = soilX + 25; x < soilX + soilWidth; x += 65) {
       final seed = x.toInt();
       final progress = ((time * 0.8 + seed * 0.13) % 2.0) / 2.0;
-      final waveYOffset = (math.sin(x * 0.02 + time * 0.5) * 12 + math.sin(x * 0.08 - time * 1.2) * 5) / zoom;
-      if (waveYOffset < 0) continue; 
+      final waveYOffset =
+          (math.sin(x * 0.02 + time * 0.5) * 12 +
+              math.sin(x * 0.08 - time * 1.2) * 5) /
+          zoom;
+      if (waveYOffset < 0) continue;
       final dropY = frontY + waveYOffset + (progress * progress) * 40.0;
       final alpha = (1.0 - progress).clamp(0.0, 1.0) * 0.8 * cycleOpacity;
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(x + math.sin(time * 2 + seed) * 2, dropY), width: 3.0 / zoom, height: (5.0 + progress * 8.0) / zoom),
+        Rect.fromCenter(
+          center: Offset(x + math.sin(time * 2 + seed) * 2, dropY),
+          width: 3.0 / zoom,
+          height: (5.0 + progress * 8.0) / zoom,
+        ),
         dropPaint..color = const Color(0xFFE0F2FE).withValues(alpha: alpha),
       );
     }
