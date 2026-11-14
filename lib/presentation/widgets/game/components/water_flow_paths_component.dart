@@ -255,7 +255,7 @@ class WaterFlowPathsComponent extends Component
   void onHoverExit() {
     _isHovered = false;
     if (!_isPinned) {
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
     }
   }
 

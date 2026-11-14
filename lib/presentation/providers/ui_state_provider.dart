@@ -186,6 +186,29 @@ class UIState extends _$UIState {
     });
   }
 
+  /// Drop the inspection card when the simulation itself is replaced.
+  /// Owners are deliberately not notified here: their canvas components are
+  /// torn down with the old scenario, so invoking stale refs would be unsafe.
+  void resetInspection() {
+    _pendingHoverInfo = null;
+    state = null;
+  }
+
+  /// Clear only transient hover content. Canvas components call this on
+  /// pointer exit; a hover-exit must never dismiss a pinned card owned by a
+  /// different component.
+  void clearUnpinnedHover() {
+    // A hover may still be waiting in the microtask queue. Check that value
+    // too, otherwise a fast pointer exit can let the stale hover appear after
+    // the pointer has already left the element.
+    final current = _pendingHoverInfo ?? state;
+    if (current == null || current.isPinned) return;
+    _pendingHoverInfo = null;
+    if (!_isUpdateScheduled) {
+      state = null;
+    }
+  }
+
   /// Convenience method for showing pinned info from map
   void showInfo(
     Map<String, dynamic> infoMap, {

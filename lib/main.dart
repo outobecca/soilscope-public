@@ -426,10 +426,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
         onExit: (_) {
           // A hover tooltip must not survive after the pointer leaves the
           // window. Pinned inspection cards are intentionally persistent.
-          final info = ref.read(uIStateProvider);
-          if (info != null && !info.isPinned) {
-            ref.read(uIStateProvider.notifier).setHoverInfo(null);
-          }
+          ref.read(uIStateProvider.notifier).clearUnpinnedHover();
         },
         child: SizedBox.expand(
           child: Stack(

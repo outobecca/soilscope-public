@@ -103,7 +103,7 @@ class NitrousOxideBubbleComponent extends Component
   @override
   void onHoverExit() {
     if (!_isPinned) {
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
     }
   }
 

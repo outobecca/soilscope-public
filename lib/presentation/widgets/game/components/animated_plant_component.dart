@@ -977,7 +977,22 @@ class AnimatedPlantComponent extends PositionComponent
         game.soilColumnHeight,
       );
       if (localPos.distanceTo(pos) < 32.0) {
+        final sourceId = 'plant-root-$plantId-$i';
+        final current = game.ref.read(uIStateProvider);
+        if (current?.isPinned == true && current?.sourceId == sourceId) {
+          // Tapping the same root again releases the inspection, matching the
+          // other canvas entities on touch devices.
+          _pinnedRootIndex = null;
+          game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+          event.handled = true;
+          return;
+        }
+
+        // A root selection replaces any shoot-level selection. Keep the two
+        // local states mutually exclusive so closing the root card cannot
+        // leave the plant's hover/dismiss logic stuck in its old state.
         _pinnedRootIndex = i;
+        _isPinned = false;
         final info = _getRootInfo(node, plant);
         info['screenPosition'] = game
             .worldToScreen(absolutePositionOf(pos))
@@ -985,7 +1000,7 @@ class AnimatedPlantComponent extends PositionComponent
         info['isPinned'] = true;
         game.ref.read(uIStateProvider.notifier).showInfo(
           info,
-          sourceId: 'plant-root-$plantId-$i',
+          sourceId: sourceId,
           onDismiss: () => _pinnedRootIndex = null,
         );
         event.handled = true;
@@ -1024,7 +1039,10 @@ class AnimatedPlantComponent extends PositionComponent
   @override
   void onHoverExit() {
     _hoveredRootIndex = null;
-    if (!_isPinned) game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    // A pinned root card is independent of the plant-level pin flag.
+    if (!_isPinned && _pinnedRootIndex == null) {
+      game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
+    }
   }
 
   Map<String, dynamic> _getRootInfo(RootNode node, Plant plant) {

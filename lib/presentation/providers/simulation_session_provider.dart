@@ -90,6 +90,15 @@ class SimulationSession extends _$SimulationSession {
     });
   }
 
+  /// Reset all view state that belongs to a single scenario run. Called when
+  /// a new scenario replaces the old one, so a selected layer or open
+  /// microscope cannot leak into the next run.
+  void resetForScenario() {
+    _pendingViewTime = null;
+    _isTimeUpdateScheduled = false;
+    state = const SimulationSessionState();
+  }
+
   void setScrubbing(bool isScrubbing) {
     if (state.isScrubbing == isScrubbing) return;
     state = state.copyWith(isScrubbing: isScrubbing);

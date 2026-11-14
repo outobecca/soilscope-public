@@ -198,7 +198,9 @@ class HoverTooltip extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.close_rounded, size: 18),
             padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+            // Keep a real touch target on phones; this is the only way to
+            // release a pinned inspection and resume the canvas.
+            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             color: Colors.white70,
             tooltip: AppLocalizations.of(context)?.closeAction ?? 'Close',
             onPressed: () {

@@ -11,6 +11,7 @@ import 'package:soilscope/domain/models/soil_profile.dart';
 import 'package:soilscope/domain/solvers/mycorrhiza_solver.dart';
 import 'package:soilscope/presentation/providers/simulation_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
+import 'package:soilscope/presentation/providers/ui_state_provider.dart';
 
 SoilProfile _profile(String id) {
   return SoilProfile(
@@ -123,6 +124,39 @@ void main() {
       expect(state.history, hasLength(1));
       expect(state.timeElapsed, 0);
       expect(state.currentScenario?.id, 'second');
+    });
+
+    test('loading a scenario clears inspection and HUD selection state', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+      final session = container.read(simulationSessionProvider.notifier);
+      final ui = container.read(uIStateProvider.notifier);
+
+      notifier.loadScenario(_scenario('first'));
+      session.selectLayer('A1');
+      session.selectInspector('leaf');
+      session.selectElement('N');
+      ui.setHoverInfo(
+        HoverInfo(
+          title: 'LEAF',
+          description: 'Pinned inspection',
+          isPinned: true,
+          sourceId: 'inspection-leaf',
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      notifier.loadScenario(_scenario('second'));
+
+      final state = container.read(simulationSessionProvider);
+      expect(state.selectedLayerId, isNull);
+      expect(state.selectedInspectorType, isNull);
+      expect(state.selectedElementSymbol, isNull);
+      expect(state.isMicroscopeEnabled, isFalse);
+      expect(state.isScrubbing, isFalse);
+      expect(state.viewTime, 0);
+      expect(container.read(uIStateProvider), isNull);
     });
   });
 

@@ -112,4 +112,45 @@ void main() {
 
     expect(dismissed, 0);
   });
+
+  test('a stale hover exit does not dismiss a pinned card from elsewhere', () async {
+    final notifier = container.read(uIStateProvider.notifier);
+    var dismissed = 0;
+
+    notifier.setHoverInfo(
+      info('LEAF', pinned: true, sourceId: 'inspection-leaf', onDismiss: () {
+        dismissed++;
+      }),
+    );
+    await flush();
+
+    notifier.clearUnpinnedHover();
+    await flush();
+
+    expect(container.read(uIStateProvider)?.title, 'LEAF');
+    expect(dismissed, 0);
+  });
+
+  test('a hover exit clears an unpinned card', () async {
+    final notifier = container.read(uIStateProvider.notifier);
+
+    notifier.setHoverInfo(info('SUN', pinned: false));
+    await flush();
+    expect(container.read(uIStateProvider)?.title, 'SUN');
+
+    notifier.clearUnpinnedHover();
+    await flush();
+
+    expect(container.read(uIStateProvider), isNull);
+  });
+
+  test('a hover exit cancels a hover still waiting to be published', () async {
+    final notifier = container.read(uIStateProvider.notifier);
+
+    notifier.setHoverInfo(info('SUN', pinned: false));
+    notifier.clearUnpinnedHover();
+    await flush();
+
+    expect(container.read(uIStateProvider), isNull);
+  });
 }

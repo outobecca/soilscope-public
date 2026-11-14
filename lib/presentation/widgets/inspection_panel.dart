@@ -148,7 +148,7 @@ class InspectionPanel extends ConsumerWidget {
                   },
                   icon: const Icon(Icons.close, size: 16),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   visualDensity: VisualDensity.compact,
                   color: theme.colorScheme.error.withValues(alpha: 0.7),
                 ),

@@ -34,7 +34,7 @@ mixin BiologicalEntityMixin on PositionComponent, HasGameReference<SoilScopeGame
   void handleHoverExit() {
     isHovered = false;
     if (!isPinned) {
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      game.ref.read(uIStateProvider.notifier).clearUnpinnedHover();
     }
   }
 

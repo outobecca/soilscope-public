@@ -18,6 +18,7 @@ import '../../domain/services/timeline_precalculation.dart';
 
 import 'event_log_provider.dart';
 import 'simulation_session_provider.dart';
+import 'ui_state_provider.dart';
 
 part 'simulation_provider.g.dart';
 
@@ -721,9 +722,11 @@ class Simulation extends _$Simulation {
       isInitializing: false,
     );
 
-    final session = ref.read(simulationSessionProvider.notifier);
-    session.setScrubbing(false);
-    session.setViewTime(0);
+    // Selection, microscope and inspection state belong to the run being
+    // replaced. Leaving them behind makes a new scenario open with a stale
+    // layer card and a paused canvas.
+    ref.read(uIStateProvider.notifier).resetInspection();
+    ref.read(simulationSessionProvider.notifier).resetForScenario();
 
     _syncIsolate();
     _saveState();
