@@ -254,36 +254,40 @@ void main() {
   });
 
   group('timeline display state', () {
-    test('history mode stays closed until there is a usable time range', () {
+    test('history mode opens from the initial snapshot', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
       final notifier = container.read(simulationProvider.notifier);
 
-      notifier.loadScenario(_scenario('no-timeline'));
+      notifier.loadScenario(_scenario('initial-timeline'));
       expect(container.read(simulationProvider).history, hasLength(1));
 
       notifier.startScrubbing();
+      await Future<void>.delayed(Duration.zero);
 
       expect(
         container.read(simulationSessionProvider).isScrubbing,
-        isFalse,
-        reason: 'a one-point history cannot be scrubbed',
+        isTrue,
+        reason: 'the timeline view is available from launch',
       );
+      expect(container.read(simulationSessionProvider).viewTime, 0);
+      expect(container.read(simulationProvider).isRunning, isFalse);
     });
 
-    test('a timeline needs at least an hour of distinct history', () {
+    test('a timeline is available before it has a scrub range', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
       final state = container.read(simulationProvider);
+      final initial = [state.copyWith(timeElapsed: 0)];
+      final withRange = [
+        ...initial,
+        state.copyWith(timeElapsed: 600),
+      ];
 
-      bool canScrubAt(double seconds) => hasScrubbableTimeline([
-            state.copyWith(timeElapsed: 0),
-            state.copyWith(timeElapsed: seconds),
-          ]);
-
-      expect(canScrubAt(3599), isFalse);
-      expect(canScrubAt(3600), isTrue);
-      expect(canScrubAt(86400), isTrue);
+      expect(hasTimelineHistory(initial), isTrue);
+      expect(hasTimelineHistory(const []), isFalse);
+      expect(hasTimelineRange(initial), isFalse);
+      expect(hasTimelineRange(withRange), isTrue);
     });
 
     test('scrubbing shows a snapshot that still carries the full run history',

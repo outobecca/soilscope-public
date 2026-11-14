@@ -22,16 +22,16 @@ import 'ui_state_provider.dart';
 
 part 'simulation_provider.g.dart';
 
-/// The shortest history range that is useful to scrub. Two snapshots taken a
-/// few seconds apart produce a timeline that reads "Day 0.0" and appears
-/// stuck, so keep history mode closed until there is an hour to review.
-const double minimumScrubbableHistorySeconds = 3600.0;
+/// Whether the run has a timeline to open. The starting snapshot is enough:
+/// history mode can show the run's origin immediately, and the scrub range
+/// grows as soon as the engine records a second snapshot.
+bool hasTimelineHistory(List<BiophysicalState> history) => history.isNotEmpty;
 
-bool hasScrubbableTimeline(List<BiophysicalState> history) {
-  if (history.length < 2) return false;
-  return history.last.timeElapsed - history.first.timeElapsed >=
-      minimumScrubbableHistorySeconds;
-}
+/// Whether history contains a range that can actually be scrubbed. A single
+/// snapshot is a valid timeline view but has no range to move through yet.
+bool hasTimelineRange(List<BiophysicalState> history) =>
+    history.length > 1 &&
+    history.last.timeElapsed > history.first.timeElapsed;
 
 @Riverpod(keepAlive: true)
 class Simulation extends _$Simulation {
@@ -769,10 +769,10 @@ class Simulation extends _$Simulation {
   }
 
   void startScrubbing() {
-    // A single initial snapshot, or two snapshots moments apart, is not a
-    // timeline. Opening history mode there gives the user a 0.0-day scrubber
-    // that cannot meaningfully change any displayed data.
-    if (!hasScrubbableTimeline(_history)) return;
+    // The starting snapshot is enough to enter the timeline view. There is no
+    // range to scrub until a second snapshot exists, but the view itself is
+    // available from launch and can show where the run began.
+    if (_history.isEmpty) return;
     stop(); // Pause simulation while scrubbing
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
     ref

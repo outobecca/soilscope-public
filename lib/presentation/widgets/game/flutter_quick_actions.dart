@@ -33,9 +33,6 @@ class FlutterQuickActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     final timeScale = ref.watch(simulationProvider.select((s) => s.timeScale));
-    final hasTimeline = ref.watch(
-      simulationProvider.select((s) => hasScrubbableTimeline(s.history)),
-    );
     final session = ref.watch(simulationSessionProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -83,14 +80,12 @@ class FlutterQuickActions extends ConsumerWidget {
             icon: Icons.linear_scale_rounded,
             label: l10n.timeline,
             isActive: session.isScrubbing,
-            onTap: hasTimeline || session.isScrubbing
-                ? () {
-                    final notifier = ref.read(simulationProvider.notifier);
-                    session.isScrubbing
-                        ? notifier.stopScrubbing()
-                        : notifier.startScrubbing();
-                  }
-                : null,
+            onTap: () {
+              final notifier = ref.read(simulationProvider.notifier);
+              session.isScrubbing
+                  ? notifier.stopScrubbing()
+                  : notifier.startScrubbing();
+            },
           ),
           _buildActionButton(
             context: context,
@@ -145,14 +140,12 @@ class FlutterQuickActions extends ConsumerWidget {
     required IconData icon,
     required String label,
     required bool isActive,
-    required VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    final isEnabled = onTap != null;
 
     return Semantics(
       button: true,
-      enabled: isEnabled,
       label: label,
       child: Tooltip(
         message: label,
@@ -161,9 +154,7 @@ class FlutterQuickActions extends ConsumerWidget {
         child: Material(
           color: isActive
               ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: isEnabled ? 1.0 : 0.55,
-                ),
+              : theme.colorScheme.surfaceContainerHighest,
           shape: const CircleBorder(),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -176,9 +167,7 @@ class FlutterQuickActions extends ConsumerWidget {
                 icon,
                 color: isActive
                     ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: isEnabled ? 1.0 : 0.45,
-                      ),
+                    : theme.colorScheme.onSurfaceVariant,
                 size: 22,
               ),
             ),

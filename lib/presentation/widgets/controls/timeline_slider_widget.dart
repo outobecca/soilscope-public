@@ -4,17 +4,29 @@ import '../../../l10n/app_localizations.dart';
 import '../../providers/simulation_provider.dart';
 import '../../providers/simulation_session_provider.dart';
 
-String _formatTimelineTime(AppLocalizations l10n, double seconds) {
+String _formatTimelineTime(
+  AppLocalizations l10n,
+  double seconds, {
+  bool includeSeconds = false,
+}) {
   // Match the HUD's minute formatting so the timeline label cannot show a
-  // different minute for the same snapshot.
-  final totalMinutes = (seconds / 60).floor();
+  // different minute for the same snapshot. Seconds are added only for short
+  // timelines, where a minute-only label would appear stuck while scrubbing.
+  final wholeSeconds = seconds.floor();
+  final totalMinutes = wholeSeconds ~/ 60;
   final day = totalMinutes ~/ Duration.minutesPerDay + 1;
   final hour =
       (totalMinutes % Duration.minutesPerDay) ~/ Duration.minutesPerHour;
   final minute = totalMinutes % Duration.minutesPerHour;
-  final time =
-      '${hour.toString().padLeft(2, '0')}:'
-      '${minute.toString().padLeft(2, '0')}';
+  final time = StringBuffer()
+    ..write(hour.toString().padLeft(2, '0'))
+    ..write(':')
+    ..write(minute.toString().padLeft(2, '0'));
+  if (includeSeconds) {
+    time
+      ..write(':')
+      ..write((wholeSeconds % 60).toString().padLeft(2, '0'));
+  }
   return '${l10n.dayPrefix('$day')} · $time';
 }
 
@@ -26,7 +38,7 @@ class TimelineSliderWidget extends ConsumerWidget {
     final history = ref.watch(simulationProvider.select((s) => s.history));
     final session = ref.watch(simulationSessionProvider);
 
-    if (!session.isScrubbing || !hasScrubbableTimeline(history)) {
+    if (!session.isScrubbing || history.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -39,7 +51,15 @@ class TimelineSliderWidget extends ConsumerWidget {
       history,
       displayedTime,
     ).clamp(0, history.length - 1);
-    final currentLabel = _formatTimelineTime(l10n, displayedTime);
+    final hasRange = hasTimelineRange(history);
+    final span = history.last.timeElapsed - history.first.timeElapsed;
+    final currentLabel = _formatTimelineTime(
+      l10n,
+      displayedTime,
+      // Keep seconds while the whole run is still under a minute, or when the
+      // available range is short enough that minute precision would hide it.
+      includeSeconds: span < 60 || history.last.timeElapsed < 60,
+    );
 
     final label = Text(
       currentLabel,
@@ -66,13 +86,18 @@ class TimelineSliderWidget extends ConsumerWidget {
       child: Slider(
         value: snapshotIndex.toDouble(),
         min: 0,
-        max: (history.length - 1).toDouble(),
-        onChanged: (value) {
-          final index = value.round().clamp(0, history.length - 1);
-          ref
-              .read(simulationSessionProvider.notifier)
-              .scrubTo(history[index].timeElapsed);
-        },
+        // A single snapshot has no range. Keep a visible track so the timeline
+        // view is present from launch, but wait for real history before it can
+        // be dragged.
+        max: hasRange ? (history.length - 1).toDouble() : 1,
+        onChanged: hasRange
+            ? (value) {
+                final index = value.round().clamp(0, history.length - 1);
+                ref
+                    .read(simulationSessionProvider.notifier)
+                    .scrubTo(history[index].timeElapsed);
+              }
+            : null,
       ),
     );
 

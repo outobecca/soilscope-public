@@ -84,6 +84,35 @@ void main() {
     expect(find.text('Day 1 · 08:15'), findsOneWidget);
   });
 
+  testWidgets('short timelines show seconds so early scrubbing is visible',
+      (tester) async {
+    await pumpTimeline(
+      tester,
+      width: 520,
+      viewTime: 2,
+      snapshots: [_state(0), _state(2)],
+    );
+
+    expect(find.text('Day 1 · 00:00:02'), findsOneWidget);
+    expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNotNull);
+  });
+
+  testWidgets('timeline view opens at the starting snapshot without a range',
+      (tester) async {
+    await pumpTimeline(
+      tester,
+      width: 520,
+      viewTime: 0,
+      snapshots: [_state(0)],
+    );
+
+    expect(find.text('Day 1 · 00:00:00'), findsOneWidget);
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.onChanged, isNull);
+    expect(slider.max, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('timeline label and slider fit a narrow screen', (tester) async {
     final longHistory = [_state(0), _state(123 * 86400 + 23 * 3600 + 59 * 60)];
     final latest = longHistory.last.timeElapsed;

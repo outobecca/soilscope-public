@@ -135,7 +135,7 @@ class _HUDScrubber extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final hasTimeline = ref.watch(
-      simulationProvider.select((s) => hasScrubbableTimeline(s.history)),
+      simulationProvider.select((s) => hasTimelineHistory(s.history)),
     );
 
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
@@ -215,8 +215,10 @@ class _HUDScrubber extends ConsumerWidget {
             value: viewTime.clamp(minTime, maxTime),
             min: minTime,
             max: maxTime > minTime ? maxTime : minTime + 1.0,
-            onChanged: (value) =>
-                ref.read(simulationSessionProvider.notifier).scrubTo(value),
+            onChanged: maxTime > minTime
+                ? (value) =>
+                      ref.read(simulationSessionProvider.notifier).scrubTo(value)
+                : null,
           ),
       ],
     );
