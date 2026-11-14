@@ -30,9 +30,15 @@ class ScientificOverlaysComponent extends Component
     // Draw surface grass strip across the soil column
     _drawSurfaceGrass(canvas, surfaceY, soilX, soilWidth);
 
-    // Draw depth markers that follow the camera horizontally but stay near the soil column
-    final markerX = (game.camera.viewfinder.position.x - (game.size.x / 2) + 20)
-        .clamp(soilX - 100, soilX + 20);
+    // Keep the depth rail inside the currently visible part of the soil
+    // column. A fixed column-edge rail disappears entirely on phones because
+    // the camera shows only the middle of the logical scene.
+    final visible = _visibleWorldRect;
+    final railMinX = soilX + 4 / zoom;
+    final railMaxX = soilX + soilWidth - 80 / zoom;
+    final markerX = railMaxX < railMinX
+        ? railMinX
+        : (visible.left + 16 / zoom).clamp(railMinX, railMaxX).toDouble();
     _drawDepthMarkers(
       canvas,
       zoom,
@@ -61,6 +67,17 @@ class ScientificOverlaysComponent extends Component
     _drawSurfaceLabel(canvas, surfaceY, markerX);
   }
 
+  /// The world rectangle currently visible through the camera viewport.
+  Rect get _visibleWorldRect {
+    final zoom = game.camera.viewfinder.zoom;
+    final viewport = game.camera.viewport.size;
+    return Rect.fromCenter(
+      center: game.camera.viewfinder.position.toOffset(),
+      width: viewport.x / zoom,
+      height: viewport.y / zoom,
+    );
+  }
+
   void _drawActualHorizonOverlays(
     Canvas canvas,
     double surfaceY,
@@ -74,6 +91,9 @@ class ScientificOverlaysComponent extends Component
     final activeLayers = layers.take(2).toList();
     final double thickness = game.activeProfileThickness;
     final double scaleY = soilHeight / thickness;
+    final visible = _visibleWorldRect;
+    final margin = 12 / zoom;
+    final labelFontSize = 11 / zoom;
 
     double currentY = surfaceY;
     final boundaryPaint = Paint()
@@ -98,17 +118,23 @@ class ScientificOverlaysComponent extends Component
         time,
       );
 
-      // Label on the right inside the soil column
-      final label = i == 0 ? "O/A: TOPSOIL" : "B: SUBSOIL";
-      _drawText(
-        canvas,
+      // Label on the visible right side of the soil column. Right-aligning
+      // the painter keeps long localized horizon names inside the column.
+      final horizonName = i == 0
+          ? game.l10n.topsoilHorizon
+          : game.l10n.subsoilHorizon;
+      final label = i == 0
+          ? 'O/A: ${horizonName.toUpperCase()}'
+          : 'B: ${horizonName.toUpperCase()}';
+      final tp = _textPainter(
         label,
-        soilX + soilWidth - 100,
-        currentY + 5,
         color: Colors.white.withValues(alpha: 0.35),
-        fontSize: 11 / zoom,
+        fontSize: labelFontSize,
         bold: true,
       );
+      final maxRight = math.min(soilX + soilWidth, visible.right) - margin;
+      final labelX = math.max(soilX + margin, maxRight - tp.width);
+      tp.paint(canvas, Offset(labelX, currentY + 5 / zoom));
 
       currentY += layerHeight;
     }
@@ -119,7 +145,7 @@ class ScientificOverlaysComponent extends Component
     double zoom,
     double surfaceY,
     double soilHeight,
-    double soilX,
+    double markerX,
     List<dynamic> layers,
   ) {
     final activeLayers = layers.take(2).toList();
@@ -132,8 +158,8 @@ class ScientificOverlaysComponent extends Component
 
     double currentY = surfaceY;
 
-    // Draw 0cm marker at the left edge of the soil column
-    _drawMarker(canvas, "0cm", currentY, soilX, markerPaint, zoom);
+    // Draw 0cm marker on the visible depth rail.
+    _drawMarker(canvas, "0cm", currentY, markerX, markerPaint, zoom);
 
     for (var layer in activeLayers) {
       currentY += layer.thickness * scaleY;
@@ -142,7 +168,7 @@ class ScientificOverlaysComponent extends Component
         canvas,
         "${depthCm.toStringAsFixed(0)}cm",
         currentY,
-        soilX,
+        markerX,
         markerPaint,
         zoom,
       );
@@ -157,15 +183,19 @@ class ScientificOverlaysComponent extends Component
     Paint paint,
     double zoom,
   ) {
-    final markerLeft = soilX + 5;
-    canvas.drawLine(Offset(markerLeft, y), Offset(markerLeft + 15, y), paint);
+    final markerLeft = soilX + 5 / zoom;
+    canvas.drawLine(
+      Offset(markerLeft, y),
+      Offset(markerLeft + 15 / zoom, y),
+      paint,
+    );
     final tp = _textPainter(
       label,
       color: const Color(0xFF455A64),
       fontSize: 11 / zoom,
       bold: true,
     );
-    tp.paint(canvas, Offset(markerLeft + 17, y - tp.height / 2));
+    tp.paint(canvas, Offset(markerLeft + 17 / zoom, y - tp.height / 2));
   }
 
   TextPainter _textPainter(
@@ -291,52 +321,43 @@ class ScientificOverlaysComponent extends Component
       Offset(backgroundX + backgroundWidth, waterTableY),
       linePaint,
     );
-    // Saturated zone label - Centered in logical viewport
-    final textX = (SoilScopeGame.logicalSize.x / 2) + 500;
-    _drawTableLabel(
-      canvas,
-      textX,
-      waterTableY + 10,
+    // Saturated zone label: right-align it to the visible soil column instead
+    // of a fixed logical x that can be clipped or far outside a phone viewport.
+    final visible = _visibleWorldRect;
+    final margin = 12 / zoom;
+    final label = _textPainter(
       l.saturatedZone.toUpperCase(),
+      color: const Color(0xFF0EA5E9),
+      fontSize: 12 / zoom,
+      bold: true,
     );
+    final maxRight = math.min(soilX + soilWidth, visible.right) - margin;
+    final textX = math.max(soilX + margin, maxRight - label.width);
+    label.paint(canvas, Offset(textX, waterTableY + 10 / zoom));
   }
 
   void _drawSurfaceLabel(Canvas canvas, double surfaceY, double soilX) {
+    final visible = _visibleWorldRect;
+    final zoom = game.camera.viewfinder.zoom;
     final boundaryTp = _textPainter(
-      'SURFACE (Z=0)',
+      game.l10n.surfaceLabel.toUpperCase(),
       color: const Color(0xFF8B5CF6),
-      fontSize: 12,
+      fontSize: 12 / zoom,
       bold: true,
     );
+    final minX = math.max(soilX + 10 / zoom, visible.left + 8 / zoom);
+    final maxX = math.max(
+      minX,
+      math.min(
+        soilX + SoilScopeGame.soilColumnWidth - boundaryTp.width - 8 / zoom,
+        visible.right - boundaryTp.width - 8 / zoom,
+      ),
+    );
+    final labelX = (soilX + 10 / zoom).clamp(minX, maxX).toDouble();
     boundaryTp.paint(
       canvas,
-      Offset(soilX + 10, surfaceY - boundaryTp.height - 2),
+      Offset(labelX, surfaceY - boundaryTp.height - 2 / zoom),
     );
-  }
-
-  void _drawTableLabel(Canvas canvas, double x, double y, String text) {
-    _drawText(
-      canvas,
-      text,
-      x,
-      y,
-      color: const Color(0xFF0EA5E9),
-      fontSize: 12,
-      bold: true,
-    );
-  }
-
-  void _drawText(
-    Canvas canvas,
-    String text,
-    double x,
-    double y, {
-    Color color = Colors.white,
-    double fontSize = 10,
-    bool bold = false,
-  }) {
-    final tp = _textPainter(text, color: color, fontSize: fontSize, bold: bold);
-    tp.paint(canvas, Offset(x, y));
   }
 
   @override

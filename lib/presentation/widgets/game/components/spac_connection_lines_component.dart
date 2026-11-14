@@ -23,9 +23,7 @@ class SPACConnectionLinesComponent extends Component
     final state = game.simulationState;
     // No layers means no soil column: the connection anchors below would be
     // meaningless (and reading layers.first would throw).
-    if (state == null ||
-        state.plants.isEmpty ||
-        state.profile.layers.isEmpty) {
+    if (state == null || state.plants.isEmpty || state.profile.layers.isEmpty) {
       return;
     }
 
@@ -42,6 +40,8 @@ class SPACConnectionLinesComponent extends Component
     // LOD: Hide continuum lines when zoomed out to reduce cognitive load
     if (zoom < 0.6) return;
     final zoomLOD = (zoom - 0.6).clamp(0.0, 1.0);
+    final invZoom = 1 / zoom;
+    final visible = _visibleWorldRect(zoom);
 
     // Plant geometry (matching AnimatedPlantComponent exactly)
     final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
@@ -53,10 +53,17 @@ class SPACConnectionLinesComponent extends Component
 
     final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
 
-    // Key anchor points
+    // Key anchor points. Keep the decorative sun endpoint inside the visible
+    // sky instead of pinning it to an off-screen logical corner.
     final canopyTop = Vector2(plantCenterX, surfaceY - visualHeight * 0.7);
     final rootCollar = Vector2(plantCenterX, surfaceY);
-    final sunPos = Vector2(soilX + soilColumnWidth - 80, 80);
+    final sunPos = Vector2(
+      math.min(
+        soilX + soilColumnWidth - 80 * invZoom,
+        visible.right - 24 * invZoom,
+      ),
+      math.max(80 * invZoom, visible.top + 24 * invZoom),
+    );
 
     // 1. Sun → Canopy (Solar radiation — warm orange)
     final parIntensity = (state.solarRadiation / 1000.0).clamp(0.1, 1.0);
@@ -85,7 +92,9 @@ class SPACConnectionLinesComponent extends Component
       dashLen: 4,
       gapLen: 6,
       alpha: (isNitrogenCycleMode ? 0.6 : 0.2) * transpirationRate * zoomLOD,
-      label: isNitrogenCycleMode ? (zoom > 1.2 ? 'N-TRANSPORT' : null) : (zoom > 1.2 ? game.l10n.xylem : null),
+      label: isNitrogenCycleMode
+          ? (zoom > 1.2 ? 'N-${game.l10n.transport.toUpperCase()}' : null)
+          : (zoom > 1.2 ? game.l10n.xylem : null),
       reverse: true, // Upward flow
       showArrow: true,
       zoom: zoom,
@@ -159,16 +168,27 @@ class SPACConnectionLinesComponent extends Component
         alpha: (isNitrogenCycleMode ? 0.02 : 0.1) * zoomLOD,
         reverse: true, // Upward flow
         showArrow: true,
-        label: zoom > 1.2 ? "CAPILLARY" : null,
+        label: zoom > 1.2 ? game.l10n.capillaryRiseTitle.toUpperCase() : null,
         zoom: zoom,
       );
     }
 
     // 6. Gas Exchange Flows (CO2 & O2 & N2O)
-    // Connecting canopy to atmospheric indicators
-    final co2UptakePos = Offset(soilX + soilColumnWidth * 0.35, surfaceY - 120);
-    final o2ProductionPos = Offset(soilX + soilColumnWidth * 0.65, surfaceY - 120);
-    final n2oEmissionPos = Offset(soilX + soilColumnWidth * 0.2, surfaceY - 120);
+    // Connecting canopy to atmospheric indicators. The vertical clearance is
+    // kept constant on screen rather than growing when the user zooms in.
+    final atmosphericOffset = 120 * invZoom;
+    final co2UptakePos = Offset(
+      soilX + soilColumnWidth * 0.35,
+      surfaceY - atmosphericOffset,
+    );
+    final o2ProductionPos = Offset(
+      soilX + soilColumnWidth * 0.65,
+      surfaceY - atmosphericOffset,
+    );
+    final n2oEmissionPos = Offset(
+      soilX + soilColumnWidth * 0.2,
+      surfaceY - atmosphericOffset,
+    );
 
     // CO2 Atmosphere -> Canopy
     _drawDashedConnection(
@@ -209,14 +229,14 @@ class SPACConnectionLinesComponent extends Component
       gapLen: 12,
       alpha: (isNitrogenCycleMode ? 0.8 : 0.15) * zoomLOD,
       showArrow: true,
-      label: zoom > 1.2 ? 'N2O EMISSION' : null,
+      label: zoom > 1.2 ? game.l10n.n2oEmissionTitle : null,
       zoom: zoom,
     );
 
     // Soil Respiration (Root zone -> Surface)
     _drawDashedConnection(
       canvas,
-      Offset(plantCenterX, surfaceY + 40),
+      Offset(plantCenterX, surfaceY + 40 * invZoom),
       Offset(soilX + soilColumnWidth * 0.35, surfaceY),
       const Color(0xFFEC4899), // Pink (CO2)
       time,
@@ -228,10 +248,19 @@ class SPACConnectionLinesComponent extends Component
     );
 
     // Draw connection node circles at key points
-    _drawConnectionNode(canvas, canopyTop.toOffset(), const Color(0xFF22D3EE), time);
-    _drawConnectionNode(canvas, rootCollar.toOffset(), const Color(0xFF4ADE80), time);
+    _drawConnectionNode(
+      canvas,
+      canopyTop.toOffset(),
+      const Color(0xFF22D3EE),
+      time,
+    );
+    _drawConnectionNode(
+      canvas,
+      rootCollar.toOffset(),
+      const Color(0xFF4ADE80),
+      time,
+    );
   }
-
 
   void _drawDashedConnection(
     Canvas canvas,
@@ -261,9 +290,13 @@ class SPACConnectionLinesComponent extends Component
     final layoutMode = game.ref.read(visualLayoutModeStateProvider);
     final isSchematic = layoutMode == VisualLayoutMode.schematic;
 
-    final flowSpeed = 20.0 + alpha * 100.0;
-    final offset = (time * flowSpeed) % (dashLen + gapLen);
-    
+    // Convert the authored screen-space dash cadence into world units so it
+    // stays legible at every camera zoom level.
+    final screenDashLen = dashLen / zoom;
+    final screenGapLen = gapLen / zoom;
+    final flowSpeed = (20.0 + alpha * 100.0) / zoom;
+    final offset = (time * flowSpeed) % (screenDashLen + screenGapLen);
+
     final path = Path();
     if (isSchematic) {
       path.moveTo(realStart.dx, realStart.dy);
@@ -285,8 +318,8 @@ class SPACConnectionLinesComponent extends Component
         ..color = color.withValues(alpha: alpha * 0.15)
         ..strokeWidth = 4.0 / zoom
         ..style = PaintingStyle.stroke
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-      
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 / zoom);
+
       for (final metric in pathMetrics) {
         canvas.drawPath(metric.extractPath(0, metric.length), glowPaint);
       }
@@ -302,11 +335,11 @@ class SPACConnectionLinesComponent extends Component
       double traveled = -offset;
       while (traveled < metric.length) {
         final dashStart = traveled.clamp(0.0, metric.length);
-        final dashEnd = (traveled + dashLen).clamp(0.0, metric.length);
+        final dashEnd = (traveled + screenDashLen).clamp(0.0, metric.length);
         if (dashEnd > dashStart) {
           canvas.drawPath(metric.extractPath(dashStart, dashEnd), basePaint);
         }
-        traveled += dashLen + gapLen;
+        traveled += screenDashLen + screenGapLen;
       }
 
       // 3. Draw Traveling Flow Particles (The "Soul" of the continuum)
@@ -314,18 +347,21 @@ class SPACConnectionLinesComponent extends Component
         final particlePaint = Paint()
           ..color = Colors.white.withValues(alpha: alpha * 0.8)
           ..style = PaintingStyle.fill;
-        
+
         // Multiple particles per path
         for (int p = 0; p < 3; p++) {
-          final pOffset = (time * flowSpeed * 1.5 + (p * distance / 3)) % distance;
+          final pOffset =
+              (time * flowSpeed * 1.5 + (p * distance / 3)) % distance;
           final tangent = metric.getTangentForOffset(pOffset % metric.length);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 1.2 / zoom, particlePaint);
             // Smaller glow for particle
             canvas.drawCircle(
-              tangent.position, 
-              3.0 / zoom, 
-              Paint()..color = color.withValues(alpha: alpha * 0.3)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2)
+              tangent.position,
+              3.0 / zoom,
+              Paint()
+                ..color = color.withValues(alpha: alpha * 0.3)
+                ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom),
             );
           }
         }
@@ -335,40 +371,75 @@ class SPACConnectionLinesComponent extends Component
     // 4. Directional Arrow
     if (showArrow) {
       final arrowPos = Offset(
-        realStart.dx + unitX * (distance * 0.6 + math.sin(time * 5) * 10),
-        realStart.dy + unitY * (distance * 0.6 + math.sin(time * 5) * 10),
+        realStart.dx +
+            unitX * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
+        realStart.dy +
+            unitY * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
       );
-      _drawArrowHead(canvas, arrowPos, unitX, unitY, color.withValues(alpha: alpha * 2));
+      _drawArrowHead(
+        canvas,
+        arrowPos,
+        unitX,
+        unitY,
+        color.withValues(alpha: alpha * 2),
+      );
     }
 
     // 5. Label (Monospaced Tech Style)
     if (label != null) {
       final mid = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
+      final visible = _visibleWorldRect(zoom);
+      final margin = 10 / zoom;
       final tp = TextPainter(
         text: TextSpan(
           text: label,
           style: TextStyle(
             color: color.withValues(alpha: alpha * 1.5),
-            fontSize: 12,
+            fontSize: 12 / zoom,
             fontWeight: FontWeight.bold,
             fontFamily: 'monospace',
-            letterSpacing: 1.2,
+            letterSpacing: 1.2 / zoom,
             backgroundColor: Colors.black.withValues(alpha: 0.2),
           ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, mid - Offset(tp.width / 2, tp.height / 2));
+      final minX = visible.left + margin;
+      final maxX = visible.right - tp.width - margin;
+      final minY = visible.top + margin;
+      final maxY = visible.bottom - tp.height - margin;
+      final labelX = maxX < minX
+          ? minX
+          : (mid.dx - tp.width / 2).clamp(minX, maxX).toDouble();
+      final labelY = maxY < minY
+          ? minY
+          : (mid.dy - tp.height / 2).clamp(minY, maxY).toDouble();
+      tp.paint(canvas, Offset(labelX, labelY));
     }
   }
 
-  void _drawArrowHead(Canvas canvas, Offset pos, double ux, double uy, Color color) {
+  Rect _visibleWorldRect(double zoom) {
+    final viewport = game.camera.viewport.size;
+    return Rect.fromCenter(
+      center: game.camera.viewfinder.position.toOffset(),
+      width: viewport.x / zoom,
+      height: viewport.y / zoom,
+    );
+  }
+
+  void _drawArrowHead(
+    Canvas canvas,
+    Offset pos,
+    double ux,
+    double uy,
+    Color color,
+  ) {
     final arrowPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
 
     final path = Path();
-    const size = 4.0;
+    final size = 4.0 / game.camera.viewfinder.zoom;
     // Rotate arrow to match direction
     path.moveTo(pos.dx + ux * size, pos.dy + uy * size);
     path.lineTo(pos.dx - uy * size - ux * size, pos.dy + ux * size - uy * size);
@@ -377,9 +448,15 @@ class SPACConnectionLinesComponent extends Component
     canvas.drawPath(path, arrowPaint);
   }
 
-  void _drawConnectionNode(Canvas canvas, Offset pos, Color color, double time) {
+  void _drawConnectionNode(
+    Canvas canvas,
+    Offset pos,
+    Color color,
+    double time,
+  ) {
     final pulse = 0.6 + 0.4 * math.sin(time * 2.5);
-    final radius = 3.0;
+    final zoom = game.camera.viewfinder.zoom;
+    final radius = 3.0 / zoom;
 
     // 1. Outer Glow (Complying with max 0.15 opacity)
     canvas.drawCircle(
@@ -387,12 +464,16 @@ class SPACConnectionLinesComponent extends Component
       radius * 4.0,
       Paint()
         ..color = color.withValues(alpha: 0.1 * pulse)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 6 / zoom),
     );
 
     // 2. Solid Shaded Core
     // Shadow
-    canvas.drawCircle(pos + const Offset(1, 1), radius, Paint()..color = Colors.black.withValues(alpha: 0.2 * pulse));
+    canvas.drawCircle(
+      pos + Offset(1 / zoom, 1 / zoom),
+      radius,
+      Paint()..color = Colors.black.withValues(alpha: 0.2 * pulse),
+    );
     // Body
     canvas.drawCircle(
       pos,
@@ -413,7 +494,7 @@ class SPACConnectionLinesComponent extends Component
       Paint()
         ..color = color.withValues(alpha: 0.3 * pulse)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
+        ..strokeWidth = 0.8 / zoom,
     );
   }
 }

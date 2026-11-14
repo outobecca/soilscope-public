@@ -36,11 +36,11 @@ class ProcessLabel extends PositionComponent
     this.isStatic = false,
     this.showTitle = false,
   }) : super(
-          position: position,
-          size: Vector2.all(36),
-          anchor: Anchor.center,
-          priority: 1600,
-        );
+         position: position,
+         size: Vector2.all(36),
+         anchor: Anchor.center,
+         priority: 1600,
+       );
 
   @override
   Future<void> onLoad() async {
@@ -91,7 +91,10 @@ class ProcessLabel extends PositionComponent
       width: _textPainter!.width + paddingH * 2,
       height: _textPainter!.height + paddingV * 2,
     );
-    _labelRRect = RRect.fromRectAndRadius(_labelRect!, const Radius.circular(4));
+    _labelRRect = RRect.fromRectAndRadius(
+      _labelRect!,
+      const Radius.circular(4),
+    );
   }
 
   @override
@@ -100,14 +103,14 @@ class ProcessLabel extends PositionComponent
     if (!(game.simulationState?.isRunning ?? false)) return;
     if (!isStatic && !_isPinned) {
       _elapsed += dt;
-      
+
       final layoutMode = game.ref.read(visualLayoutModeStateProvider);
       final isSchematic = layoutMode == VisualLayoutMode.schematic;
-      
+
       // Stabilize: Slower rise and NO jitter in schematic mode
       final speed = isSchematic ? 5.0 : (showTitle ? 25.0 : 10.0);
       position.y -= speed * dt;
-      
+
       if (showTitle && !isSchematic) {
         position.x += math.sin(_elapsed * 4) * 0.2;
       }
@@ -122,10 +125,20 @@ class ProcessLabel extends PositionComponent
         : (1.0 - _elapsed / lifeTime).clamp(0.0, 1.0);
     final isHighlighted = _isHovered || _isPinned;
     final center = Offset(size.x / 2, size.y / 2);
+    final zoom = game.camera.viewfinder.zoom;
+
+    // Process markers live in the world, but their explanatory UI should keep
+    // a constant on-screen size. Scaling around the marker center prevents
+    // them from becoming tiny at low zoom or overwhelming the canvas when
+    // the user inspects the soil closely.
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(1 / zoom);
+    final localCenter = Offset.zero;
 
     // Core glow effect
     canvas.drawCircle(
-      center,
+      localCenter,
       isHighlighted ? 16.0 : 12.0,
       Paint()
         ..color = color.withValues(
@@ -144,35 +157,36 @@ class ProcessLabel extends PositionComponent
       ..style = PaintingStyle.fill;
 
     // Draw the circular icon frame
-    canvas.drawCircle(center, 11, fillPaint);
-    canvas.drawCircle(center, 11, framePaint);
+    canvas.drawCircle(localCenter, 11, fillPaint);
+    canvas.drawCircle(localCenter, 11, framePaint);
 
-    _drawMarkerSymbol(canvas, center, framePaint, opacity);
+    _drawMarkerSymbol(canvas, localCenter, framePaint, opacity);
 
     if (showTitle) {
-      _drawFloatingLabel(canvas, center, opacity);
+      _drawFloatingLabel(canvas, localCenter, opacity);
     }
 
     // Visual feedback for selection - no more floating text boxes here
     if (_isPinned) {
       canvas.drawCircle(
-        center,
+        localCenter,
         14.5,
         Paint()
           ..color = Colors.white.withValues(alpha: 0.4 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0,
+          ..style = PaintingStyle.stroke,
       );
     }
+
+    canvas.restore();
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 11,
-        minWorld: 7,
-        maxWorld: 36,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 11,
+    minWorld: 7,
+    maxWorld: 36,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -385,7 +399,8 @@ class ProcessLabel extends PositionComponent
     // Tooltip background
     canvas.drawRRect(
       _labelRRect!,
-      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
+      Paint()
+        ..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
     );
 
     // CPK colored border
@@ -406,10 +421,10 @@ class ProcessLabel extends PositionComponent
         letterSpacing: 0.5,
       ),
     );
-    _textPainter!.layout(); // Still need to layout if opacity changed? 
-    // Actually, setting text is expensive. Let's just use opacity in the Paint if possible? 
+    _textPainter!.layout(); // Still need to layout if opacity changed?
+    // Actually, setting text is expensive. Let's just use opacity in the Paint if possible?
     // TextPainter doesn't support opacity in paint directly easily without color in style.
-    
+
     _textPainter!.paint(
       canvas,
       _labelRect!.topLeft + Offset(8, 4), // Padding compensation
