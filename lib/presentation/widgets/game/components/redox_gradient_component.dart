@@ -17,6 +17,7 @@ class RedoxGradientComponent extends Component
 
 
   final _paint = Paint();
+  bool _isPinned = false;
 
   @override
   void render(Canvas canvas) {
@@ -67,18 +68,29 @@ class RedoxGradientComponent extends Component
 
   @override
   void onTapUp(TapUpEvent event) {
-    _showRedoxInfo(pinned: true);
+    _isPinned = !_isPinned;
+    if (_isPinned) {
+      _showRedoxInfo(pinned: true);
+    } else {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
     event.handled = true;
   }
 
   @override
   void onHoverEnter() {
-    _showRedoxInfo(pinned: false);
+    final current = game.ref.read(uIStateProvider);
+    if (current == null || !current.isPinned) _showRedoxInfo(pinned: false);
   }
 
   @override
   void onHoverExit() {
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    if (!_isPinned) {
+      final current = game.ref.read(uIStateProvider);
+      if (current == null || !current.isPinned) {
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      }
+    }
   }
 
   void _showRedoxInfo({bool pinned = false}) {
@@ -99,6 +111,8 @@ class RedoxGradientComponent extends Component
               "Significance": "O₂ Availability",
             },
             isPinned: pinned,
+            sourceId: 'redox-gradient',
+            onDismiss: () => _isPinned = false,
             accentColor: const Color(0xFF0EA5E9),
             screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),

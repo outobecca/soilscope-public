@@ -386,8 +386,16 @@ class MolecularParticleFieldComponent extends Component
     }
 
     if (nearestIndex != null) {
-      _pinnedParticleId = _particleData[nearestIndex].toInt();
-      _showParticleInfoFromIndex(nearestIndex, pinned: true);
+      final pId = _particleData[nearestIndex].toInt();
+      if (_pinnedParticleId == pId) {
+        // Tapping the already-selected particle releases it. This mirrors the
+        // other canvas entities and keeps touch inspection togglable.
+        _pinnedParticleId = null;
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      } else {
+        _pinnedParticleId = pId;
+        _showParticleInfoFromIndex(nearestIndex, pinned: true);
+      }
       event.handled = true;
     } else {
       _pinnedParticleId = null;
@@ -396,14 +404,24 @@ class MolecularParticleFieldComponent extends Component
   }
 
   void _updatePinnedInfo() {
-    if (_pinnedParticleId == null) return;
+    final pinnedId = _pinnedParticleId;
+    if (pinnedId == null) return;
     for (int i = 0; i < _particleData.length; i += 10) {
-      if (_particleData[i].toInt() == _pinnedParticleId) {
+      if (_particleData[i].toInt() == pinnedId) {
         _showParticleInfoFromIndex(i, pinned: true);
         return;
       }
     }
+
+    // The selected particle left the simulation. Clear both the local id and
+    // the central card instead of leaving an orphaned pinned tooltip.
     _pinnedParticleId = null;
+    final current = game.ref.read(uIStateProvider);
+    if (current != null &&
+        current.isPinned &&
+        current.sourceId == 'particle-$pinnedId') {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
   }
 
   void _showParticleInfoFromIndex(int index, {bool pinned = false}) {
@@ -465,6 +483,7 @@ class MolecularParticleFieldComponent extends Component
       final py = _particleData[index + 2];
       final screenPos = game.worldToScreen(Vector2(px, py)).toOffset();
       final molType = MoleculeRenderer.mapParticleToMolecule(type);
+      final pId = _particleData[index].toInt();
 
       game.ref.read(uIStateProvider.notifier).setHoverInfo(
             HoverInfo(
@@ -473,6 +492,12 @@ class MolecularParticleFieldComponent extends Component
               stats: stats,
               formula: MoleculeRenderer.getMoleculeFormula(molType),
               isPinned: pinned,
+              sourceId: 'particle-$pId',
+              onDismiss: () {
+                if (_pinnedParticleId == pId) {
+                  _pinnedParticleId = null;
+                }
+              },
               accentColor: MoleculeRenderer.getMoleculeColor(molType),
               screenPosition: screenPos,
             ),

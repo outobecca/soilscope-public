@@ -167,6 +167,8 @@ class CapillaryRiseComponent extends Component
           l.sourceLabel: l.groundwaterLabel,
         },
         isPinned: pinned,
+        sourceId: 'capillary-rise',
+        onDismiss: () => _isPinned = false,
         accentColor: const Color(0xFF38BDF8),
         screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),

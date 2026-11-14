@@ -551,6 +551,8 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
               "Nodes": "${_edges.length * 2}",
             },
             isPinned: pinned,
+            sourceId: 'soil-symbiosis-network',
+            onDismiss: () => _isPinned = false,
             accentColor: const Color(0xFF2DD4BF),
             screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),

@@ -191,6 +191,8 @@ class PhotosynthesisIndicatorComponent extends Component
           l.productLabel: l.sugarCompound,
         },
         isPinned: pinned,
+        sourceId: 'photosynthesis-indicator',
+        onDismiss: () => _isPinned = false,
         accentColor: const Color(0xFF10B981),
         screenPosition: anchorScreen,
       ),

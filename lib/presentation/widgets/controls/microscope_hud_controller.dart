@@ -167,6 +167,7 @@ class MicroscopeHudController extends ConsumerWidget {
                         tooltip: l10n.turnOffMicroscope,
                         onPressed: () {
                           ref.read(simulationSessionProvider.notifier).toggleMicroscope();
+                          ref.read(simulationSessionProvider.notifier).selectInspector(null);
                           ref.read(uIStateProvider.notifier).clearHoverInfo();
                         },
                       ),

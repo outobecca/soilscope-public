@@ -23,6 +23,7 @@ class ProcessLabel extends PositionComponent
   double _elapsed = 0;
   bool _isHovered = false;
   bool _isPinned = false;
+  late final String _infoSourceId = 'process-${identityHashCode(this)}';
   TextPainter? _textPainter;
   Rect? _labelRect;
   RRect? _labelRRect;
@@ -243,6 +244,8 @@ class ProcessLabel extends PositionComponent
             description: description,
             stats: stats,
             isPinned: pinned,
+            sourceId: _infoSourceId,
+            onDismiss: () => _isPinned = false,
             accentColor: color,
             elementSymbol: symbol,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),

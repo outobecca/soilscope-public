@@ -423,6 +423,14 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               .read(uIStateProvider.notifier)
               .updateScreenPosition(event.position);
         },
+        onExit: (_) {
+          // A hover tooltip must not survive after the pointer leaves the
+          // window. Pinned inspection cards are intentionally persistent.
+          final info = ref.read(uIStateProvider);
+          if (info != null && !info.isPinned) {
+            ref.read(uIStateProvider.notifier).setHoverInfo(null);
+          }
+        },
         child: SizedBox.expand(
           child: Stack(
             children: [
@@ -563,6 +571,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               builder: (context, ref, child) {
                 final info = ref.watch(uIStateProvider);
                 if (info == null) return const SizedBox.shrink();
+                final microscopeOpen = ref.watch(
+                  simulationSessionProvider.select(
+                    (s) => s.isMicroscopeEnabled,
+                  ),
+                );
 
                 if (!info.isPinned && info.screenPosition != null) {
                   final pos = info.screenPosition!;
@@ -601,9 +614,16 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                   );
                 }
 
+                // The microscope controller spans most of the top strip until
+                // the layout is wide enough to leave room beside it. Keep the
+                // touch-accessible inspection card below it in that range.
+                final microscopeOverlapsCard =
+                    microscopeOpen && screenWidth < 1100;
                 return Positioned(
                   right: (isRightSidebarOpen && isExpanded) ? 340 : 20,
-                  top: isMobile ? 80 : 140,
+                  top: isMobile
+                      ? (microscopeOverlapsCard ? 210 : 80)
+                      : (microscopeOverlapsCard ? 210 : 140),
                   child: const SafeArea(child: HoverTooltip()),
                 );
               },

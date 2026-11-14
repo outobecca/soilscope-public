@@ -130,6 +130,7 @@ class FlutterQuickActions extends ConsumerWidget {
         ),
       );
     } else {
+      sessionNotifier.selectInspector(null);
       uiNotifier.clearHoverInfo();
     }
   }

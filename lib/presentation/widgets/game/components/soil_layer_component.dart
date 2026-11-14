@@ -109,8 +109,19 @@ class SoilLayerComponent extends PositionComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    game.ref.read(simulationSessionProvider.notifier).selectLayer(layerId);
-    _showLayerInfo(pinned: true);
+    final current = game.ref.read(uIStateProvider);
+    final isThisLayerPinned = current != null &&
+        current.isPinned &&
+        current.sourceId == 'soil-layer-$layerId';
+
+    if (isThisLayerPinned) {
+      // Second tap on the same layer dismisses the inspection instead of
+      // silently re-pinning it (important for touch, which has no hover exit).
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    } else {
+      game.ref.read(simulationSessionProvider.notifier).selectLayer(layerId);
+      _showLayerInfo(pinned: true);
+    }
     event.handled = true;
   }
 
@@ -133,6 +144,13 @@ class SoilLayerComponent extends PositionComponent
           description: _layer.description.isNotEmpty ? _layer.description : game.l10n.layerAnalysisDesc,
           stats: stats,
           isPinned: pinned,
+          sourceId: 'soil-layer-$layerId',
+          onDismiss: () {
+            final session = game.ref.read(simulationSessionProvider);
+            if (session.selectedLayerId == layerId) {
+              game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
+            }
+          },
           accentColor: Color(_layer.colorValue),
           screenPosition: game.worldToScreen(absolutePosition + Vector2(size.x / 2, size.y / 2)).toOffset(),
         ),

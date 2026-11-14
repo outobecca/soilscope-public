@@ -184,6 +184,8 @@ class DiffusionLinesComponent extends Component
               l.speedLabel: l.slow,
             },
             isPinned: pinned,
+            sourceId: 'diffusion-lines',
+            onDismiss: () => _isPinned = false,
           ),
         );
   }

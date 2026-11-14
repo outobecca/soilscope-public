@@ -93,6 +93,8 @@ class DataHotspotComponent extends CircleComponent
         description: info['description'] as String,
         stats: info['stats'] as Map<String, String>,
         isPinned: pinned,
+        sourceId: 'hotspot-$layerId-$label-${identityHashCode(this)}',
+        onDismiss: () => _isPinned = false,
         accentColor: color,
         elementSymbol: elementSymbol,
         screenPosition: game.worldToScreen(absolutePosition).toOffset(),

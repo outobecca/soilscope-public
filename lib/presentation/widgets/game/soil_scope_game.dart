@@ -63,6 +63,7 @@ class SoilScopeGame extends FlameGame
   double _elapsed = 0;
   double _uiElapsed = 0;
   double _startZoom = 1.0;
+  bool _inspectionPaused = false;
 
   late AppLocalizations l10n;
 
@@ -97,11 +98,32 @@ class SoilScopeGame extends FlameGame
       }
     }
 
-    super.update(dt);
-    _uiElapsed += dt;
+    // Selecting an element for its info is an inspection mode: freeze the
+    // canvas animation while leaving the simulation isolate and Flutter HUD
+    // responsive. The next frame after the card is dismissed resumes normally.
+    _inspectionPaused = _readInspectionPaused();
+    if (!_inspectionPaused) {
+      super.update(dt);
+    }
+    if (!_inspectionPaused) {
+      _uiElapsed += dt;
+    }
     if (simulationState?.isRunning ?? false) {
-      _elapsed += dt;
-      _updateMassFlow(dt);
+      if (!_inspectionPaused) {
+        _elapsed += dt;
+        _updateMassFlow(dt);
+      }
+    }
+  }
+
+  /// Whether the canvas is frozen so the selected info can be inspected.
+  bool get isInspectionPaused => _inspectionPaused;
+
+  bool _readInspectionPaused() {
+    try {
+      return ref.read(inspectionPausedProvider);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -332,9 +354,16 @@ class SoilScopeGame extends FlameGame
     _syncActionBuffer.add(() {
       _lastState = next;
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
-      final animLayer = world.children.query<SimulationAnimationLayerComponent>().firstOrNull;
-      if (animLayer != null) {
-        animLayer.updateState(next);
+      // While inspection is paused the canvas is intentionally frozen. Do
+      // not rebuild animation state here either, or a selected indicator can
+      // be removed and recreated behind its still-open info card.
+      if (!_inspectionPaused) {
+        final animLayer = world.children
+            .query<SimulationAnimationLayerComponent>()
+            .firstOrNull;
+        if (animLayer != null) {
+          animLayer.updateState(next);
+        }
       }
     });
   }
@@ -520,19 +549,12 @@ class SoilScopeGame extends FlameGame
 class BackgroundTapComponent extends Component with HasGameReference<SoilScopeGame>, TapCallbacks {
   @override
   void onTapUp(TapUpEvent event) {
-    // Only deselect if we are NOT clicking on the soil column.
-    // The soil layers themselves handle their own taps and set event.handled = true.
-    // This component is the fallback.
-    final localPos = event.localPosition;
-    final isInsideSoil = localPos.x >= game.soilLeftX && 
-                       localPos.x <= game.soilLeftX + SoilScopeGame.simulationWidth &&
-                       localPos.y >= game.soilSurfaceY;
-
-    if (!isInsideSoil) {
-      game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
-      game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
-      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
-    }
+    // This component is the fallback for taps not caught by an interactive
+    // layer, hotspot or entity. Clear both the visual selection and the info
+    // card no matter where the empty tap landed (mouse or touch).
+    game.ref.read(simulationSessionProvider.notifier).selectLayer(null);
+    game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
+    game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
   }
 
   @override

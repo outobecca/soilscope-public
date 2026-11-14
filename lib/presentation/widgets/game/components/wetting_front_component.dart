@@ -96,6 +96,8 @@ class WettingFrontComponent extends Component
           l.stateLabel: l.saturationLabel,
         },
         isPinned: pinned,
+        sourceId: 'wetting-front',
+        onDismiss: () => _isPinned = false,
         accentColor: const Color(0xFF38BDF8),
         screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),

@@ -214,6 +214,21 @@ class InspectionTargetComponent extends PositionComponent
             description: desc,
             stats: stats,
             isPinned: pinned,
+            sourceId: 'inspection-${type.name}',
+            onDismiss: () {
+              _isPinned = false;
+              magnifier.isVisible = false;
+              final selected = game
+                  .ref
+                  .read(simulationSessionProvider)
+                  .selectedInspectorType;
+              if (selected == type.name) {
+                game
+                    .ref
+                    .read(simulationSessionProvider.notifier)
+                    .selectInspector(null);
+              }
+            },
             accentColor: Colors.cyanAccent,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),
           ),

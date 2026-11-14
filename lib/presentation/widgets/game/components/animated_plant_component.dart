@@ -983,7 +983,11 @@ class AnimatedPlantComponent extends PositionComponent
             .worldToScreen(absolutePositionOf(pos))
             .toOffset();
         info['isPinned'] = true;
-        game.ref.read(uIStateProvider.notifier).showInfo(info);
+        game.ref.read(uIStateProvider.notifier).showInfo(
+          info,
+          sourceId: 'plant-root-$plantId-$i',
+          onDismiss: () => _pinnedRootIndex = null,
+        );
         event.handled = true;
         return;
       }
@@ -1068,6 +1072,8 @@ class AnimatedPlantComponent extends PositionComponent
               l.biomassLabel: '${plant.totalBiomass.toStringAsFixed(1)} mg',
             },
             isPinned: pinned,
+            sourceId: 'plant-$plantId',
+            onDismiss: () => _isPinned = false,
             accentColor: const Color(0xFF10B981), // Emerald
             screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),

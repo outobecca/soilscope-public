@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
+import '../providers/simulation_session_provider.dart';
 import '../providers/ui_state_provider.dart';
 
 /// A panel that displays detailed information about selected animation elements.
@@ -139,8 +140,12 @@ class InspectionPanel extends ConsumerWidget {
               ),
               if (info.isPinned)
                 IconButton(
-                  onPressed: () =>
-                      ref.read(uIStateProvider.notifier).clearPinnedInfo(),
+                  onPressed: () {
+                    ref.read(uIStateProvider.notifier).clearPinnedInfo();
+                    ref.read(simulationSessionProvider.notifier).selectLayer(null);
+                    ref.read(simulationSessionProvider.notifier).selectInspector(null);
+                    ref.read(simulationSessionProvider.notifier).selectElement(null);
+                  },
                   icon: const Icon(Icons.close, size: 16),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

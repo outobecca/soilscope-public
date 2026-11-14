@@ -190,6 +190,8 @@ class RhizosphereHotspotComponent extends PositionComponent
         description: desc,
         stats: stats,
         isPinned: pinned,
+        sourceId: 'rhizosphere-$hotspotId',
+        onDismiss: () => _isPinned = false,
         accentColor: _getColor(),
         screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),

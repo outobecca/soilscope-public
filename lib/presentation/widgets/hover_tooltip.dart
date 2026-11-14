@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/cpk_standards.dart';
+import '../providers/simulation_session_provider.dart';
 import '../providers/ui_state_provider.dart';
 
 /// The consolidated information overlay for the entire app.
@@ -184,15 +185,32 @@ class HoverTooltip extends ConsumerWidget {
             ],
           ),
         ),
-        if (info.isPinned)
+        if (info.isPinned) ...[
+          Tooltip(
+            message: l10n?.pausedStatus ?? 'Paused',
+            child: Icon(
+              Icons.pause_circle_outline_rounded,
+              size: 17,
+              color: accentColor.withValues(alpha: 0.9),
+            ),
+          ),
+          const SizedBox(width: 6),
           IconButton(
             icon: const Icon(Icons.close_rounded, size: 18),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             color: Colors.white70,
             tooltip: AppLocalizations.of(context)?.closeAction ?? 'Close',
-            onPressed: () => ref.read(uIStateProvider.notifier).setHoverInfo(null),
+            onPressed: () {
+              // Close the whole inspection, not just the Flutter card, so the
+              // canvas highlight and HUD selection cannot outlive the info.
+              ref.read(uIStateProvider.notifier).setHoverInfo(null);
+              ref.read(simulationSessionProvider.notifier).selectLayer(null);
+              ref.read(simulationSessionProvider.notifier).selectInspector(null);
+              ref.read(simulationSessionProvider.notifier).selectElement(null);
+            },
           ),
+        ],
       ],
     );
   }

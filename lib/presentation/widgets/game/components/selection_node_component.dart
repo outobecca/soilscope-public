@@ -161,9 +161,14 @@ class SelectionNodeComponent extends PositionComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    _isPinned = !_isPinned;
-    _handleSelection();
-    _showInfo(pinned: _isPinned);
+    if (_isPinned) {
+      _isPinned = false;
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    } else {
+      _isPinned = true;
+      _handleSelection();
+      _showInfo(pinned: true);
+    }
     event.handled = true;
   }
 
@@ -200,6 +205,23 @@ class SelectionNodeComponent extends PositionComponent
         description: description,
         stats: stats,
         isPinned: pinned,
+        sourceId: 'selection-${nodeType.name}-${layerId ?? identityHashCode(this)}',
+        onDismiss: () {
+          _isPinned = false;
+          final selectedLayerId = game
+              .ref
+              .read(simulationSessionProvider)
+              .selectedLayerId;
+          final targetLayer = nodeType == SelectionNodeType.atmosphere
+              ? 'atmosphere'
+              : layerId;
+          if (targetLayer != null && selectedLayerId == targetLayer) {
+            game
+                .ref
+                .read(simulationSessionProvider.notifier)
+                .selectLayer(null);
+          }
+        },
         accentColor: accentColor,
         screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),

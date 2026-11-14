@@ -379,6 +379,8 @@ class AtmosphericFluxIndicator extends PositionComponent
             description: desc,
             stats: stats,
             isPinned: pinned,
+            sourceId: 'gas-flux-${type.name}-${identityHashCode(this)}',
+            onDismiss: () => _isPinned = false,
             accentColor: accent,
             elementSymbol: symbol,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),

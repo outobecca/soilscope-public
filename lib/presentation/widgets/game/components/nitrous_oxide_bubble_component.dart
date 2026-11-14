@@ -120,6 +120,8 @@ class NitrousOxideBubbleComponent extends Component
         description: l.moleculeNitrousOxideDesc,
         accentColor: Colors.pinkAccent,
         isPinned: pinned,
+        sourceId: 'nitrous-oxide-bubbles',
+        onDismiss: () => _isPinned = false,
         screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),
     );

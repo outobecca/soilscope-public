@@ -156,8 +156,12 @@ class BubbleComponent extends CircleComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    _isPinned = true;
-    _showBubbleInfo(pinned: true);
+    _isPinned = !_isPinned;
+    if (_isPinned) {
+      _showBubbleInfo(pinned: true);
+    } else {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
     event.handled = true;
   }
 
@@ -226,6 +230,8 @@ class BubbleComponent extends CircleComponent
             description: info['description'] as String,
             stats: info['stats'] as Map<String, String>,
             isPinned: pinned,
+            sourceId: 'bubble-${identityHashCode(this)}',
+            onDismiss: () => _isPinned = false,
             legends: info['legends'] as List<LegendItem>?,
             accentColor: accent,
             elementSymbol: symbol,

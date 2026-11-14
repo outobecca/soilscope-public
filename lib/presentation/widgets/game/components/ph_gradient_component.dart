@@ -17,6 +17,7 @@ class PHGradientComponent extends Component
 
 
   final _paint = Paint();
+  bool _isPinned = false;
 
   @override
   void render(Canvas canvas) {
@@ -69,18 +70,29 @@ class PHGradientComponent extends Component
 
   @override
   void onTapUp(TapUpEvent event) {
-    _showPHInfo(pinned: true);
+    _isPinned = !_isPinned;
+    if (_isPinned) {
+      _showPHInfo(pinned: true);
+    } else {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
     event.handled = true;
   }
 
   @override
   void onHoverEnter() {
-    _showPHInfo(pinned: false);
+    final current = game.ref.read(uIStateProvider);
+    if (current == null || !current.isPinned) _showPHInfo(pinned: false);
   }
 
   @override
   void onHoverExit() {
-    game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    if (!_isPinned) {
+      final current = game.ref.read(uIStateProvider);
+      if (current == null || !current.isPinned) {
+        game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+      }
+    }
   }
 
   void _showPHInfo({bool pinned = false}) {
@@ -101,6 +113,8 @@ class PHGradientComponent extends Component
               l.significanceLabel: l.nutrientAvailability,
             },
             isPinned: pinned,
+            sourceId: 'ph-gradient',
+            onDismiss: () => _isPinned = false,
             accentColor: Colors.greenAccent,
             screenPosition: game.worldToScreen(anchorWorld).toOffset(),
           ),

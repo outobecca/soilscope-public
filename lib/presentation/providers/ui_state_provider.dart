@@ -35,6 +35,15 @@ class HoverInfo {
   final TooltipType type;
   final String? elementSymbol; // For CPK coloring
 
+  /// Stable identity of the visual element that owns this info card.
+  /// Used to tell a refresh of the same selection from a new selection.
+  final String? sourceId;
+
+  /// Called when this pinned card is dismissed or replaced by another one.
+  /// Interactive canvas components use it to release their local visual
+  /// selection state instead of keeping a stale highlight/pause forever.
+  final VoidCallback? onDismiss;
+
   HoverInfo({
     required this.title,
     required this.description,
@@ -46,6 +55,8 @@ class HoverInfo {
     this.accentColor,
     this.type = TooltipType.basic,
     this.elementSymbol,
+    this.sourceId,
+    this.onDismiss,
   });
 
   HoverInfo copyWith({
@@ -59,6 +70,8 @@ class HoverInfo {
     Color? accentColor,
     TooltipType? type,
     String? elementSymbol,
+    String? sourceId,
+    VoidCallback? onDismiss,
   }) {
     return HoverInfo(
       title: title ?? this.title,
@@ -71,6 +84,8 @@ class HoverInfo {
       accentColor: accentColor ?? this.accentColor,
       type: type ?? this.type,
       elementSymbol: elementSymbol ?? this.elementSymbol,
+      sourceId: sourceId ?? this.sourceId,
+      onDismiss: onDismiss ?? this.onDismiss,
     );
   }
 }
@@ -97,9 +112,29 @@ class UIState extends _$UIState {
     if (state?.title == info?.title &&
         state?.description == info?.description &&
         state?.isPinned == info?.isPinned &&
+        state?.sourceId == info?.sourceId &&
         mapEquals(state?.stats, info?.stats)) {
       return;
     }
+
+    // A pinned card is a visual selection, not just a Flutter overlay. Tell
+    // the old owner when the card is replaced or cleared so it can drop its
+    // highlight and local pause/damping state. Refreshes of the same source
+    // (for example a moving particle's live stats) are not dismissals.
+    final previous = state;
+    if (previous != null && previous.isPinned) {
+      final sameSource = info != null &&
+          info.isPinned &&
+          ((previous.sourceId != null &&
+                  previous.sourceId == info.sourceId) ||
+              (previous.sourceId == null &&
+                  info.sourceId == null &&
+                  previous.title == info.title));
+      if (!sameSource) {
+        previous.onDismiss?.call();
+      }
+    }
+
     _pendingHoverInfo = info;
     if (!_isUpdateScheduled) {
       _isUpdateScheduled = true;
@@ -132,6 +167,7 @@ class UIState extends _$UIState {
   /// Unpin and clear the current info
   void clearPinnedInfo() {
     if (state != null && state!.isPinned) {
+      state!.onDismiss?.call();
       Future.microtask(() {
         state = null;
       });
@@ -140,6 +176,10 @@ class UIState extends _$UIState {
 
   /// Clear any active hover or pinned info unconditionally
   void clearHoverInfo() {
+    final previous = state;
+    if (previous != null && previous.isPinned) {
+      previous.onDismiss?.call();
+    }
     _pendingHoverInfo = null;
     Future.microtask(() {
       state = null;
@@ -147,7 +187,11 @@ class UIState extends _$UIState {
   }
 
   /// Convenience method for showing pinned info from map
-  void showInfo(Map<String, dynamic> infoMap) {
+  void showInfo(
+    Map<String, dynamic> infoMap, {
+    String? sourceId,
+    VoidCallback? onDismiss,
+  }) {
     final legends = (infoMap['legends'] as List<dynamic>?)
         ?.cast<LegendItem>()
         .toList();
@@ -155,8 +199,8 @@ class UIState extends _$UIState {
       (k, v) => MapEntry(k, v.toString()),
     );
 
-    Future.microtask(() {
-      state = HoverInfo(
+    setHoverInfo(
+      HoverInfo(
         title: infoMap['title'] as String? ?? 'Info',
         description: infoMap['description'] as String? ?? '',
         stats: stats,
@@ -166,10 +210,19 @@ class UIState extends _$UIState {
         accentColor: infoMap['accentColor'] as Color?,
         elementSymbol: infoMap['elementSymbol'] as String?,
         screenPosition: infoMap['screenPosition'] as Offset?,
-      );
-    });
+        sourceId: sourceId ?? infoMap['sourceId'] as String?,
+        onDismiss: onDismiss ?? infoMap['onDismiss'] as VoidCallback?,
+      ),
+    );
   }
 }
+
+/// True while an interactive element is pinned for inspection. The game loop
+/// uses this to freeze visual animation without stopping the simulation.
+final inspectionPausedProvider = Provider<bool>((ref) {
+  final info = ref.watch(uIStateProvider);
+  return info?.isPinned ?? false;
+});
 
 enum ObservationCycle {
   none,

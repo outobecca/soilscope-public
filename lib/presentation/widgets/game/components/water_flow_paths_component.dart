@@ -277,6 +277,8 @@ class WaterFlowPathsComponent extends Component
           "Coupling": "SPAC-enabled",
         },
         isPinned: pinned,
+        sourceId: 'water-flow-paths',
+        onDismiss: () => _isPinned = false,
         accentColor: const Color(0xFF38BDF8),
         screenPosition: game.worldToScreen(anchorWorld).toOffset(),
       ),

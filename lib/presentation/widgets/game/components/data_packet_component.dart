@@ -29,6 +29,7 @@ class DataPacket extends PositionComponent
   final Color color;
   double _progress = 0;
   bool _isSelected = false;
+  bool _isPinned = false;
   double _selectionPulse = 0;
 
   DataPacket({
@@ -177,8 +178,13 @@ class DataPacket extends PositionComponent
 
   @override
   void onTapUp(TapUpEvent event) {
-    _isSelected = true;
-    _showFluxInfo(pinned: true);
+    _isPinned = !_isPinned;
+    _isSelected = _isPinned;
+    if (_isPinned) {
+      _showFluxInfo(pinned: true);
+    } else {
+      game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
+    }
     event.handled = true;
   }
 
@@ -193,7 +199,7 @@ class DataPacket extends PositionComponent
 
   @override
   void onHoverExit() {
-    _isSelected = false;
+    if (!_isPinned) _isSelected = false;
     final currentInfo = game.ref.read(uIStateProvider);
     if (currentInfo == null || !currentInfo.isPinned) {
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
@@ -211,6 +217,11 @@ class DataPacket extends PositionComponent
             description: info['description'] as String,
             stats: info['stats'] as Map<String, String>,
             isPinned: pinned,
+            sourceId: 'data-packet-${identityHashCode(this)}',
+            onDismiss: () {
+              _isPinned = false;
+              _isSelected = false;
+            },
             legends: info['legends'] as List<LegendItem>?,
             accentColor: color,
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),
