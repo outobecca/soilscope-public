@@ -139,7 +139,6 @@ class BiologicalEntitiesComponent extends Component
 
     if (currentCount < targetCount) {
       final int toAdd = targetCount - currentCount;
-      final plant = state.plants.first;
       final surfaceY = game.soilSurfaceY;
       final soilWidth = SoilScopeGame.soilColumnWidth;
 
@@ -148,6 +147,9 @@ class BiologicalEntitiesComponent extends Component
         if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes) {
           break;
         }
+        // Spread new microbes across all plants instead of always around the
+        // first plant in a multi-plant scenario.
+        final plant = state.plants[(currentCount + i) % state.plants.length];
 
         final centerX =
             SceneCoordinateMapper.mapShootPosition(
@@ -187,11 +189,11 @@ class BiologicalEntitiesComponent extends Component
         state.plants.isEmpty) {
       return;
     }
-    final plant = state.plants.first;
     final surfaceY = game.soilSurfaceY;
     final soilWidth = SoilScopeGame.soilColumnWidth;
 
     for (int i = 0; i < 3; i++) {
+      final plant = state.plants[i % state.plants.length];
       final centerX =
           SceneCoordinateMapper.mapShootPosition(
             plant.baseX,
