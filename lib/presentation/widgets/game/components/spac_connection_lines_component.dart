@@ -23,7 +23,9 @@ class SPACConnectionLinesComponent extends Component
     final state = game.simulationState;
     // No layers means no soil column: the connection anchors below would be
     // meaningless (and reading layers.first would throw).
-    if (state == null || state.plants.isEmpty || state.profile.layers.isEmpty) {
+    if (state == null ||
+        state.plants.isEmpty ||
+        state.profile.layers.isEmpty) {
       return;
     }
 
@@ -100,7 +102,7 @@ class SPACConnectionLinesComponent extends Component
       zoom: zoom,
     );
 
-    /* 
+    /*
     // 3. Root collar → Soil depth (Root exudation — green/amber)
     // REMOVED: Redundant with AnimatedPlantComponent root rendering
     final exudationRate = (state.plant.rootSystem.length / 100.0).clamp(0.1, 1.0);
@@ -248,19 +250,10 @@ class SPACConnectionLinesComponent extends Component
     );
 
     // Draw connection node circles at key points
-    _drawConnectionNode(
-      canvas,
-      canopyTop.toOffset(),
-      const Color(0xFF22D3EE),
-      time,
-    );
-    _drawConnectionNode(
-      canvas,
-      rootCollar.toOffset(),
-      const Color(0xFF4ADE80),
-      time,
-    );
+    _drawConnectionNode(canvas, canopyTop.toOffset(), const Color(0xFF22D3EE), time);
+    _drawConnectionNode(canvas, rootCollar.toOffset(), const Color(0xFF4ADE80), time);
   }
+
 
   void _drawDashedConnection(
     Canvas canvas,
@@ -350,8 +343,7 @@ class SPACConnectionLinesComponent extends Component
 
         // Multiple particles per path
         for (int p = 0; p < 3; p++) {
-          final pOffset =
-              (time * flowSpeed * 1.5 + (p * distance / 3)) % distance;
+          final pOffset = (time * flowSpeed * 1.5 + (p * distance / 3)) % distance;
           final tangent = metric.getTangentForOffset(pOffset % metric.length);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 1.2 / zoom, particlePaint);
@@ -359,9 +351,7 @@ class SPACConnectionLinesComponent extends Component
             canvas.drawCircle(
               tangent.position,
               3.0 / zoom,
-              Paint()
-                ..color = color.withValues(alpha: alpha * 0.3)
-                ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom),
+              Paint()..color = color.withValues(alpha: alpha * 0.3)..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom)
             );
           }
         }
@@ -371,18 +361,10 @@ class SPACConnectionLinesComponent extends Component
     // 4. Directional Arrow
     if (showArrow) {
       final arrowPos = Offset(
-        realStart.dx +
-            unitX * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
-        realStart.dy +
-            unitY * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
+        realStart.dx + unitX * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
+        realStart.dy + unitY * (distance * 0.6 + math.sin(time * 5) * 10 / zoom),
       );
-      _drawArrowHead(
-        canvas,
-        arrowPos,
-        unitX,
-        unitY,
-        color.withValues(alpha: alpha * 2),
-      );
+      _drawArrowHead(canvas, arrowPos, unitX, unitY, color.withValues(alpha: alpha * 2));
     }
 
     // 5. Label (Monospaced Tech Style)
@@ -427,13 +409,7 @@ class SPACConnectionLinesComponent extends Component
     );
   }
 
-  void _drawArrowHead(
-    Canvas canvas,
-    Offset pos,
-    double ux,
-    double uy,
-    Color color,
-  ) {
+  void _drawArrowHead(Canvas canvas, Offset pos, double ux, double uy, Color color) {
     final arrowPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
@@ -448,12 +424,7 @@ class SPACConnectionLinesComponent extends Component
     canvas.drawPath(path, arrowPaint);
   }
 
-  void _drawConnectionNode(
-    Canvas canvas,
-    Offset pos,
-    Color color,
-    double time,
-  ) {
+  void _drawConnectionNode(Canvas canvas, Offset pos, Color color, double time) {
     final pulse = 0.6 + 0.4 * math.sin(time * 2.5);
     final zoom = game.camera.viewfinder.zoom;
     final radius = 3.0 / zoom;
@@ -469,11 +440,7 @@ class SPACConnectionLinesComponent extends Component
 
     // 2. Solid Shaded Core
     // Shadow
-    canvas.drawCircle(
-      pos + Offset(1 / zoom, 1 / zoom),
-      radius,
-      Paint()..color = Colors.black.withValues(alpha: 0.2 * pulse),
-    );
+    canvas.drawCircle(pos + Offset(1 / zoom, 1 / zoom), radius, Paint()..color = Colors.black.withValues(alpha: 0.2 * pulse));
     // Body
     canvas.drawCircle(
       pos,

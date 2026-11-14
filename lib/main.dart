@@ -60,8 +60,9 @@ class SoilScopeApp extends ConsumerWidget {
           builder: (_) => MainSimulationScreen(scenarioId: scenarioId),
         );
       },
-      onUnknownRoute: (settings) =>
-          MaterialPageRoute(builder: (_) => const ScenarioSelectionScreen()),
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (_) => const ScenarioSelectionScreen(),
+      ),
       routes: {
         '/': (context) => const ScenarioSelectionScreen(),
         '/simulation': (context) => const MainSimulationScreen(),
@@ -113,9 +114,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     if (!mounted || _initialized || _initializing) return;
     _initializing = true;
 
-    debugLog(
-      '[MainSimulationScreen] _initSimulation START: _initialized=$_initialized',
-    );
+    debugLog('[MainSimulationScreen] _initSimulation START: _initialized=$_initialized');
 
     Future.microtask(() async {
       try {
@@ -137,30 +136,20 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           ref.read(simulationProvider.notifier).loadScenario(scenario);
         }
 
-        debugLog(
-          '[MainSimulationScreen] _initSimulation (microtask): reading session',
-        );
+        debugLog('[MainSimulationScreen] _initSimulation (microtask): reading session');
         final session = ref.read(simulationSessionProvider);
 
-        debugLog(
-          '[MainSimulationScreen] _initSimulation (microtask): isScrubbing=${session.isScrubbing}',
-        );
+        debugLog('[MainSimulationScreen] _initSimulation (microtask): isScrubbing=${session.isScrubbing}');
         if (!session.isScrubbing) {
-          debugLog(
-            '[MainSimulationScreen] _initSimulation (microtask): reading provider notifier',
-          );
+          debugLog('[MainSimulationScreen] _initSimulation (microtask): reading provider notifier');
           final notifier = ref.read(simulationProvider.notifier);
 
-          debugLog(
-            '[MainSimulationScreen] _initSimulation (microtask): calling start()',
-          );
+          debugLog('[MainSimulationScreen] _initSimulation (microtask): calling start()');
           notifier.start();
         }
 
         _initialized = true;
-        debugLog(
-          '[MainSimulationScreen] _initSimulation SUCCESS: _initialized set to true',
-        );
+        debugLog('[MainSimulationScreen] _initSimulation SUCCESS: _initialized set to true');
       } catch (e) {
         debugLog('[MainSimulationScreen] Error during _initSimulation: $e');
       } finally {
@@ -228,9 +217,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => ref
-                          .read(sidebarStateProvider.notifier)
-                          .setLeft(false),
+                      onPressed: () =>
+                          ref.read(sidebarStateProvider.notifier).setLeft(false),
                       icon: const Icon(Icons.chevron_left),
                       tooltip: l10n.hideSidebar,
                     ),
@@ -297,9 +285,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => ref
-                          .read(sidebarStateProvider.notifier)
-                          .setRight(false),
+                      onPressed: () =>
+                          ref.read(sidebarStateProvider.notifier).setRight(false),
                       icon: const Icon(Icons.chevron_right),
                       tooltip: l10n.hideSidebar,
                     ),
@@ -358,24 +345,15 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isInitializing = ref.watch(
-      simulationProvider.select((s) => s.isInitializing),
-    );
+    final isInitializing = ref.watch(simulationProvider.select((s) => s.isInitializing));
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     if (kDebugMode) {
-      debugLog(
-        '[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized',
-      );
+      debugLog('[MainSimulationScreen] build: isInitializing=$isInitializing, isRunning=$isRunning, _initialized=$_initialized');
     }
 
     // 1. Listen for the initialization to complete
-    ref.listen(simulationProvider.select((s) => s.isInitializing), (
-      previous,
-      next,
-    ) {
-      debugLog(
-        '[MainSimulationScreen] listener: isInitializing changed from $previous to $next',
-      );
+    ref.listen(simulationProvider.select((s) => s.isInitializing), (previous, next) {
+      debugLog('[MainSimulationScreen] listener: isInitializing changed from $previous to $next');
       if (previous == true && next == false) {
         debugLog('[MainSimulationScreen] listener: triggering _initSimulation');
         _initSimulation();
@@ -386,9 +364,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     // runtime is still initializing; loading the scenario also clears the
     // provider's initialization flag. Generic launches wait for the runtime.
     if (!_initialized && (!isInitializing || widget.scenarioId != null)) {
-      debugLog(
-        '[MainSimulationScreen] build: scheduling _initSimulation via PostFrameCallback',
-      );
+      debugLog('[MainSimulationScreen] build: scheduling _initSimulation via PostFrameCallback');
       WidgetsBinding.instance.addPostFrameCallback((_) => _initSimulation());
     }
 
@@ -406,10 +382,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               Text(
                 l10n?.preparingSimulation ?? 'VALMISTELLAAN SIMULAATIOTA...',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  letterSpacing: 2.0,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Colors.white,
+                      letterSpacing: 2.0,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -438,9 +414,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
     final isRightSidebarOpen = sidebarState.isRightOpen;
 
     if (l10n == null) {
-      debugLog(
-        '[MainSimulationScreen] build: L10N is NULL - showing fallback spinner',
-      );
+      debugLog('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -460,223 +434,215 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
         child: SizedBox.expand(
           child: Stack(
             children: [
-              // 1. FULL SCREEN SIMULATION
-              const Positioned.fill(child: FlameSimulationView()),
+            // 1. FULL SCREEN SIMULATION
+            const Positioned.fill(child: FlameSimulationView()),
 
-              // 2. TOP BAR (MISSION & SIDEBAR TOGGLES)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: topBarHorizontalPadding,
-                      vertical: topBarVerticalPadding,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!isLeftSidebarOpen)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: useCompactTopBar
-                                    ? IconButton.filledTonal(
-                                        onPressed: _toggleLeftSidebar,
-                                        icon: const Icon(Icons.menu),
-                                        tooltip: l10n.dashboard,
-                                      )
-                                    : FilledButton.tonalIcon(
-                                        onPressed: _toggleLeftSidebar,
-                                        icon: const Icon(Icons.menu),
-                                        label: Text(
-                                          l10n.dashboard.toUpperCase(),
-                                        ),
-                                      ),
-                              ),
-                            if (!isLeftSidebarOpen) SizedBox(width: topBarGap),
-                            const Expanded(child: GamificationBar()),
-                            if (!isRightSidebarOpen) SizedBox(width: topBarGap),
-                            if (!isRightSidebarOpen)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: useCompactTopBar
-                                    ? IconButton.filledTonal(
-                                        onPressed: _toggleRightSidebar,
-                                        icon: const Icon(Icons.settings),
-                                        tooltip: l10n.controls,
-                                      )
-                                    : FilledButton.tonalIcon(
-                                        onPressed: _toggleRightSidebar,
-                                        icon: const Icon(Icons.settings),
-                                        label: Text(
-                                          l10n.controls.toUpperCase(),
-                                        ),
-                                      ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+            // 2. TOP BAR (MISSION & SIDEBAR TOGGLES)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: topBarHorizontalPadding,
+                    vertical: topBarVerticalPadding,
                   ),
-                ),
-              ),
-
-              // Engine failure banner with a retry action.
-              if (ref.watch(engineFailureProvider))
-                Positioned(
-                  top: 76,
-                  left: 16,
-                  right: 16,
-                  child: SafeArea(
-                    child: MaterialBanner(
-                      content: Text(l10n.engineStartFailed),
-                      leading: const Icon(Icons.error_outline),
-                      actions: [
-                        TextButton(
-                          onPressed: () => ref
-                              .read(simulationProvider.notifier)
-                              .retryInitialization(),
-                          child: Text(l10n.retryAction),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              // 3. TIMELINE SLIDER
-              Positioned(
-                left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
-                right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
-                bottom: 120, // Above quick actions
-                child: const SafeArea(
-                  top: false,
-                  child: Center(child: TimelineSliderWidget()),
-                ),
-              ),
-
-              // 4. QUICK ACTIONS (BOTTOM)
-              Positioned(
-                left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
-                right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
-                bottom: 16,
-                child: const SafeArea(
-                  top: false,
-                  child: Center(child: FlutterQuickActions()),
-                ),
-              ),
-
-              // 5. OVERLAYS (NOTIFICATIONS)
-              const Positioned(
-                top: 16,
-                right: 16,
-                child: SafeArea(child: EventNotificationOverlay()),
-              ),
-
-              // 6. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)
-              Consumer(
-                builder: (context, ref, child) {
-                  final info = ref.watch(uIStateProvider);
-                  if (info == null) return const SizedBox.shrink();
-                  final microscopeOpen = ref.watch(
-                    simulationSessionProvider.select(
-                      (s) => s.isMicroscopeEnabled,
-                    ),
-                  );
-
-                  if (!info.isPinned && info.screenPosition != null) {
-                    final pos = info.screenPosition!;
-                    const tooltipWidth = 290.0;
-                    // Card height is typically 240-320px depending on stats & formula
-                    final statCount = info.stats?.length ?? 0;
-                    final hasFormula = info.formula != null;
-                    final hasLegends =
-                        info.legends != null && info.legends!.isNotEmpty;
-                    final estimatedHeight =
-                        160.0 +
-                        (statCount * 26.0) +
-                        (hasFormula ? 45.0 : 0.0) +
-                        (hasLegends ? 50.0 : 0.0);
-
-                    // Horizontal: try right of anchor, flip to left if it exceeds screen
-                    double left = pos.dx + 24;
-                    if (left + tooltipWidth > screenWidth - 16) {
-                      left = pos.dx - tooltipWidth - 24;
-                    }
-                    if (left < 16) left = 16;
-
-                    // Vertical: reserve space for timeline slider & bottom action bar
-                    final bottomReserve = isMobile ? 120.0 : 160.0;
-                    double top = pos.dy + 20;
-                    if (top + estimatedHeight > screenHeight - bottomReserve) {
-                      top = pos.dy - estimatedHeight - 20;
-                    }
-                    if (top < 70) top = 70; // Avoid top app bar
-
-                    return Positioned(
-                      left: left,
-                      top: top,
-                      child: const IgnorePointer(
-                        ignoring: true,
-                        child: HoverTooltip(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (!isLeftSidebarOpen)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: useCompactTopBar
+                                  ? IconButton.filledTonal(
+                                      onPressed: _toggleLeftSidebar,
+                                      icon: const Icon(Icons.menu),
+                                      tooltip: l10n.dashboard,
+                                    )
+                                  : FilledButton.tonalIcon(
+                                      onPressed: _toggleLeftSidebar,
+                                      icon: const Icon(Icons.menu),
+                                      label: Text(l10n.dashboard.toUpperCase()),
+                                    ),
+                            ),
+                          if (!isLeftSidebarOpen) SizedBox(width: topBarGap),
+                          const Expanded(child: GamificationBar()),
+                          if (!isRightSidebarOpen) SizedBox(width: topBarGap),
+                          if (!isRightSidebarOpen)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: useCompactTopBar
+                                  ? IconButton.filledTonal(
+                                      onPressed: _toggleRightSidebar,
+                                      icon: const Icon(Icons.settings),
+                                      tooltip: l10n.controls,
+                                    )
+                                  : FilledButton.tonalIcon(
+                                      onPressed: _toggleRightSidebar,
+                                      icon: const Icon(Icons.settings),
+                                      label: Text(l10n.controls.toUpperCase()),
+                                    ),
+                            ),
+                        ],
                       ),
-                    );
-                  }
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
-                  // The microscope controller spans most of the top strip until
-                  // the layout is wide enough to leave room beside it. Keep the
-                  // touch-accessible inspection card below it in that range.
-                  final microscopeOverlapsCard =
-                      microscopeOpen && screenWidth < 1100;
-                  return Positioned(
-                    right: (isRightSidebarOpen && isExpanded) ? 340 : 20,
-                    top: isMobile
-                        ? (microscopeOverlapsCard ? 210 : 80)
-                        : (microscopeOverlapsCard ? 210 : 140),
-                    child: const SafeArea(child: HoverTooltip()),
-                  );
-                },
+            // Engine failure banner with a retry action.
+            if (ref.watch(engineFailureProvider))
+              Positioned(
+                top: 76,
+                left: 16,
+                right: 16,
+                child: SafeArea(
+                  child: MaterialBanner(
+                    content: Text(l10n.engineStartFailed),
+                    leading: const Icon(Icons.error_outline),
+                    actions: [
+                      TextButton(
+                        onPressed: () => ref
+                            .read(simulationProvider.notifier)
+                            .retryInitialization(),
+                        child: Text(l10n.retryAction),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
-              // 6.5 NANOVISION MICROSCOPE HUD CONTROLLER
-              Consumer(
-                builder: (context, ref, child) {
-                  final isMicroscope = ref.watch(
-                    simulationSessionProvider.select(
-                      (s) => s.isMicroscopeEnabled,
+            // 3. TIMELINE SLIDER
+            Positioned(
+              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
+              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
+              bottom: 120, // Above quick actions
+              child: const SafeArea(
+                top: false,
+                child: Center(child: TimelineSliderWidget()),
+              ),
+            ),
+
+            // 4. QUICK ACTIONS (BOTTOM)
+            Positioned(
+              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
+              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
+              bottom: 16,
+              child: const SafeArea(
+                top: false,
+                child: Center(child: FlutterQuickActions()),
+              ),
+            ),
+
+            // 5. OVERLAYS (NOTIFICATIONS)
+            const Positioned(
+              top: 16,
+              right: 16,
+              child: SafeArea(child: EventNotificationOverlay()),
+            ),
+
+            // 6. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)
+            Consumer(
+              builder: (context, ref, child) {
+                final info = ref.watch(uIStateProvider);
+                if (info == null) return const SizedBox.shrink();
+                final microscopeOpen = ref.watch(
+                  simulationSessionProvider.select(
+                    (s) => s.isMicroscopeEnabled,
+                  ),
+                );
+
+                if (!info.isPinned && info.screenPosition != null) {
+                  final pos = info.screenPosition!;
+                  const tooltipWidth = 290.0;
+                  // Card height is typically 240-320px depending on stats & formula
+                  final statCount = info.stats?.length ?? 0;
+                  final hasFormula = info.formula != null;
+                  final hasLegends = info.legends != null && info.legends!.isNotEmpty;
+                  final estimatedHeight = 160.0 +
+                      (statCount * 26.0) +
+                      (hasFormula ? 45.0 : 0.0) +
+                      (hasLegends ? 50.0 : 0.0);
+
+                  // Horizontal: try right of anchor, flip to left if it exceeds screen
+                  double left = pos.dx + 24;
+                  if (left + tooltipWidth > screenWidth - 16) {
+                    left = pos.dx - tooltipWidth - 24;
+                  }
+                  if (left < 16) left = 16;
+
+                  // Vertical: reserve space for timeline slider & bottom action bar
+                  final bottomReserve = isMobile ? 120.0 : 160.0;
+                  double top = pos.dy + 20;
+                  if (top + estimatedHeight > screenHeight - bottomReserve) {
+                    top = pos.dy - estimatedHeight - 20;
+                  }
+                  if (top < 70) top = 70; // Avoid top app bar
+
+                  return Positioned(
+                    left: left,
+                    top: top,
+                    child: const IgnorePointer(
+                      ignoring: true,
+                      child: HoverTooltip(),
                     ),
                   );
-                  if (!isMicroscope) return const SizedBox.shrink();
+                }
 
-                  return Positioned(
-                    top: isMobile ? 80 : 88,
-                    left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
-                    child: const SafeArea(child: MicroscopeHudController()),
-                  );
-                },
-              ),
+                // The microscope controller spans most of the top strip until
+                // the layout is wide enough to leave room beside it. Keep the
+                // touch-accessible inspection card below it in that range.
+                final microscopeOverlapsCard =
+                    microscopeOpen && screenWidth < 1100;
+                return Positioned(
+                  right: (isRightSidebarOpen && isExpanded) ? 340 : 20,
+                  top: isMobile
+                      ? (microscopeOverlapsCard ? 210 : 80)
+                      : (microscopeOverlapsCard ? 210 : 140),
+                  child: const SafeArea(child: HoverTooltip()),
+                );
+              },
+            ),
 
-              // 8. LEFT SIDEBAR (DASHBOARD) - Placed to cover when full width on mobile
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: _buildLeftSidebar(isMobile, screenWidth),
-              ),
+            // 6.5 NANOVISION MICROSCOPE HUD CONTROLLER
+            Consumer(
+              builder: (context, ref, child) {
+                final isMicroscope = ref.watch(
+                  simulationSessionProvider.select((s) => s.isMicroscopeEnabled),
+                );
+                if (!isMicroscope) return const SizedBox.shrink();
 
-              // 9. RIGHT SIDEBAR (CONTROLS) - Placed to cover when full width on mobile
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: _buildRightSidebar(isMobile, screenWidth),
-              ),
+                return Positioned(
+                  top: isMobile ? 80 : 88,
+                  left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
+                  child: const SafeArea(child: MicroscopeHudController()),
+                );
+              },
+            ),
 
-              // 10. TUTORIAL OVERLAY - Placed topmost to spotlight components and guide user
-              const Positioned.fill(child: TutorialOverlayWidget()),
+            // 8. LEFT SIDEBAR (DASHBOARD) - Placed to cover when full width on mobile
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: _buildLeftSidebar(isMobile, screenWidth),
+            ),
+
+            // 9. RIGHT SIDEBAR (CONTROLS) - Placed to cover when full width on mobile
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: _buildRightSidebar(isMobile, screenWidth),
+            ),
+
+            // 10. TUTORIAL OVERLAY - Placed topmost to spotlight components and guide user
+            const Positioned.fill(child: TutorialOverlayWidget()),
             ],
           ),
         ),

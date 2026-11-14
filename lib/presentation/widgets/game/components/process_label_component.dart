@@ -36,11 +36,11 @@ class ProcessLabel extends PositionComponent
     this.isStatic = false,
     this.showTitle = false,
   }) : super(
-         position: position,
-         size: Vector2.all(36),
-         anchor: Anchor.center,
-         priority: 1600,
-       );
+          position: position,
+          size: Vector2.all(36),
+          anchor: Anchor.center,
+          priority: 1600,
+        );
 
   @override
   Future<void> onLoad() async {
@@ -91,10 +91,7 @@ class ProcessLabel extends PositionComponent
       width: _textPainter!.width + paddingH * 2,
       height: _textPainter!.height + paddingV * 2,
     );
-    _labelRRect = RRect.fromRectAndRadius(
-      _labelRect!,
-      const Radius.circular(4),
-    );
+    _labelRRect = RRect.fromRectAndRadius(_labelRect!, const Radius.circular(4));
   }
 
   @override
@@ -173,7 +170,8 @@ class ProcessLabel extends PositionComponent
         14.5,
         Paint()
           ..color = Colors.white.withValues(alpha: 0.4 * opacity)
-          ..style = PaintingStyle.stroke,
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
       );
     }
 
@@ -181,12 +179,12 @@ class ProcessLabel extends PositionComponent
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-    zoom: game.camera.viewfinder.zoom,
-    screenRadius: 24,
-    visualWorldRadius: 11,
-    minWorld: 7,
-    maxWorld: 36,
-  );
+        zoom: game.camera.viewfinder.zoom,
+        screenRadius: 24,
+        visualWorldRadius: 11,
+        minWorld: 7,
+        maxWorld: 36,
+      );
 
   @override
   bool containsLocalPoint(Vector2 point) {
@@ -399,8 +397,7 @@ class ProcessLabel extends PositionComponent
     // Tooltip background
     canvas.drawRRect(
       _labelRRect!,
-      Paint()
-        ..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
+      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
     );
 
     // CPK colored border

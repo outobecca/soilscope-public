@@ -18,19 +18,15 @@ class GamificationBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Only watch parts that affect gamification
-    final state = ref.watch(
-      displayedSimulationStateProvider.select(
-        (s) => _GamificationRelevantState(
-          score: s.score,
-          plants: s.plants,
-          currentScenario: s.currentScenario,
-          precipitation: s.precipitation,
-          hasCoverCrop: s.hasCoverCrop,
-          mycorrhizaState: s.mycorrhizaState,
-          profile: s.profile,
-        ),
-      ),
-    );
+    final state = ref.watch(displayedSimulationStateProvider.select((s) => _GamificationRelevantState(
+      score: s.score,
+      plants: s.plants,
+      currentScenario: s.currentScenario,
+      precipitation: s.precipitation,
+      hasCoverCrop: s.hasCoverCrop,
+      mycorrhizaState: s.mycorrhizaState,
+      profile: s.profile,
+    )));
 
     final l10n = AppLocalizations.of(context);
     final uiState = _GamificationUIState.fromState(state, l10n);
@@ -41,24 +37,17 @@ class GamificationBar extends ConsumerWidget {
         child: Card(
           color: Colors.black54,
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
               l10n!.preparingSoil,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
             ),
           ),
         ),
       );
     }
 
-    final isMobile =
-        MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
+    final isMobile = MediaQuery.of(context).size.width < AppTheme.mobileBreakpoint;
     final tutorialTooltip =
         l10n?.tutorialHelpTooltip ?? l10n?.tutorialTab ?? 'Tutorial';
     void startTutorial() => ref.read(tutorialProvider.notifier).startTutorial();
@@ -210,40 +199,16 @@ class GamificationBar extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: _buildMiniMeter(
-                context,
-                l10n?.meterSoilHealthShort ?? "MAA",
-                soilHealth,
-                soilColor,
-                Icons.grass_rounded,
-              ),
+              child: _buildMiniMeter(context, l10n?.meterSoilHealthShort ?? "MAA", soilHealth, soilColor, Icons.grass_rounded),
             ),
             Expanded(
-              child: _buildMiniMeter(
-                context,
-                l10n?.meterMoistureShort ?? "VESI",
-                waterSat,
-                Colors.blueAccent,
-                Icons.water_drop_rounded,
-              ),
+              child: _buildMiniMeter(context, l10n?.meterMoistureShort ?? "VESI", waterSat, Colors.blueAccent, Icons.water_drop_rounded),
             ),
             Expanded(
-              child: _buildMiniMeter(
-                context,
-                l10n?.meterMicrobesShort ?? "MIKR",
-                microbeFlux,
-                Colors.pinkAccent,
-                Icons.hub_rounded,
-              ),
+              child: _buildMiniMeter(context, l10n?.meterMicrobesShort ?? "MIKR", microbeFlux, Colors.pinkAccent, Icons.hub_rounded),
             ),
             Expanded(
-              child: _buildMiniMeter(
-                context,
-                l10n?.meterPlantVitalityShort ?? "KASVI",
-                plantHealth,
-                plantColor,
-                Icons.local_florist_rounded,
-              ),
+              child: _buildMiniMeter(context, l10n?.meterPlantVitalityShort ?? "KASVI", plantHealth, plantColor, Icons.local_florist_rounded),
             ),
           ],
         ),
@@ -346,13 +311,7 @@ class GamificationBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildMiniMeter(
-    BuildContext context,
-    String title,
-    double value,
-    Color color,
-    IconData icon,
-  ) {
+  Widget _buildMiniMeter(BuildContext context, String title, double value, Color color, IconData icon) {
     // The bar is squeezed by the top-bar buttons on narrow screens; scaling
     // keeps the four meters visible instead of overflowing the row.
     return FittedBox(
@@ -421,8 +380,7 @@ class _GamificationUIState {
       plantHealth = ((rwc * 0.6 + turgor * 0.4) * 100.0).clamp(0.0, 100.0);
     }
 
-    final int totalObjectives = (state.currentScenario?.objectives.length ?? 0)
-        .clamp(1, 999999);
+    final int totalObjectives = (state.currentScenario?.objectives.length ?? 0).clamp(1, 999999);
     final int metObjectives = state.score.metObjectiveIds.length;
     final double xpProgress = (metObjectives / totalObjectives).clamp(0.0, 1.0);
     final int currentLevel = 1 + metObjectives;
@@ -613,189 +571,188 @@ class HealthMeterWidget extends StatelessWidget {
           child: Row(
             children: [
               // RPG ORB
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Outer heavy metal frame
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF020617),
-                      border: Border.all(
-                        color: const Color(0xFF475569),
-                        width: 3.0,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Outer heavy metal frame
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF020617),
+                  border: Border.all(
+                    color: const Color(0xFF475569),
+                    width: 3.0,
                   ),
-                  // Inner liquid cavity
-                  ClipOval(
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      color: const Color(0xFF0F172A),
-                      child: Stack(
-                        children: [
-                          // Liquid
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 900),
-                              curve: Curves.easeOutCubic,
-                              height: 42 * (value / 100.0),
-                              decoration: BoxDecoration(gradient: gradient),
-                            ),
-                          ),
-                          // Liquid glow effect
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 900),
-                              curve: Curves.easeOutCubic,
-                              height: (42 * (value / 100.0)) + 4,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    color.withValues(alpha: 0.4),
-                                    Colors.transparent,
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Glass Sheen
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.2),
-                                  Colors.white.withValues(alpha: 0.0),
-                                  Colors.black.withValues(alpha: 0.4),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      spreadRadius: 1,
                     ),
-                  ),
-                  // Frame Overlay accent
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  // Center Metric Label
-                  Text(
-                    '${value.toStringAsFixed(0)}%',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      shadows: [
-                        const Shadow(color: Colors.black, blurRadius: 4),
-                        const Shadow(color: Colors.black, blurRadius: 4),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(width: 8),
-              // Info Text
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(icon, color: color, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              title,
-                              maxLines: 1,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.5,
-                              ),
+              // Inner liquid cavity
+              ClipOval(
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  color: const Color(0xFF0F172A),
+                  child: Stack(
+                    children: [
+                      // Liquid
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 900),
+                          curve: Curves.easeOutCubic,
+                          height: 42 * (value / 100.0),
+                          decoration: BoxDecoration(gradient: gradient),
+                        ),
+                      ),
+                      // Liquid glow effect
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 900),
+                          curve: Curves.easeOutCubic,
+                          height: (42 * (value / 100.0)) + 4,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                color.withValues(alpha: 0.4),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white10),
+                      // Glass Sheen
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withValues(alpha: 0.2),
+                              Colors.white.withValues(alpha: 0.0),
+                              Colors.black.withValues(alpha: 0.4),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              // Frame Overlay accent
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+              ),
+              // Center Metric Label
+              Text(
+                '${value.toStringAsFixed(0)}%',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  shadows: [
+                    const Shadow(color: Colors.black, blurRadius: 4),
+                    const Shadow(color: Colors.black, blurRadius: 4),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+          // Info Text
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, color: color, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              value > 70
-                                  ? (l10n?.qualityExcellent ?? 'EXCELLENT')
-                                  : (value > 40
-                                        ? (l10n?.qualityModerate ?? 'MODERATE')
-                                        : (l10n?.qualityCritical ??
-                                              'CRITICAL')),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          value > 70
+                              ? (l10n?.qualityExcellent ?? 'EXCELLENT')
+                              : (value > 40
+                                  ? (l10n?.qualityModerate ?? 'MODERATE')
+                                  : (l10n?.qualityCritical ?? 'CRITICAL')),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
             ],
           ),
         ),
@@ -825,9 +782,7 @@ class XpLevelPanelWidget extends StatelessWidget {
   });
 
   String _getLocalizedObjectiveTitle(
-    MissionObjective obj,
-    AppLocalizations? l10n,
-  ) {
+      MissionObjective obj, AppLocalizations? l10n) {
     if (l10n == null) return obj.title;
     switch (obj.id) {
       case 'clay_yield':
@@ -937,10 +892,7 @@ class XpLevelPanelWidget extends StatelessWidget {
               },
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6.0,
-                  vertical: 2.0,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -971,9 +923,8 @@ class XpLevelPanelWidget extends StatelessWidget {
                                 ? Colors.greenAccent
                                 : Colors.grey.shade400;
                             return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4.0,
-                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4.0),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
