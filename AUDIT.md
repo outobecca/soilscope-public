@@ -309,7 +309,7 @@ At audit time: `animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart`
 
 **Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (secure storage/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
 
-**Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; 1,334 lines of drawing code moved to `animated_plant_component_painting.dart` (1,390 lines including its extension wrapper). The provider is 851 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
+**Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; 1,334 lines of drawing code moved to `animated_plant_component_painting.dart` (1,390 lines including its extension wrapper). The provider is 853 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
 
 #### F3 — Manual state merging is brittle · P2
 `_mergeSimulationState` (`simulation_provider.dart:293`) re-implements "which side owns which field" by hand, with a comment saying the main thread is the source of truth. Every new field added to `BiophysicalState` silently defaults to isolate-owned until someone remembers to add it here. That is how A1-type bugs happen.
@@ -398,7 +398,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 | `debugPrint` calls | 79 |
 
 > After the close-out: `flutter analyze --fatal-infos` reports 0 issues and
-> `flutter test` passes 97; unreferenced files and sub-11 px labels are gone,
+> `flutter test` passes 114; unreferenced files and sub-11 px labels are gone,
 > and Finnish literals remain only in the guarded palette source and the
 > legacy tutorial matcher. The performance rows above are audit-time baselines;
 > the new wasm and LCP figures are recorded under C7.
@@ -424,7 +424,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | B1 | Done | `LayoutBuilder` phone/tablet/desktop tiers; `responsive_layout_test` at 390/768/1024. |
 > | B2 | Done | `SafeArea` around the simulation chrome; same test. |
 > | B3 | Done | Dialog width and height are clamped to the viewport in code; not asserted by the chrome test. |
-> | B4 | Done | Logic Lab is wrapped in `InteractiveViewer`; the chrome test does not mount Logic Lab. |
+> | B4 | Done (code; no widget assertion) | Logic Lab is wrapped in `InteractiveViewer` with initial fit scaling; the chrome test does not mount Logic Lab. |
 > | B5 | Done | XP bar sized by its parent `LayoutBuilder`, not the screen. |
 > | B6 | Done | Five primary 48 dp actions plus Manage/View/Elements/Navigate sheets; `element_selection_test`. |
 > | B7 | Done | All 7/10/11/11.5 px labels raised to a 12 px floor; the 200% text pass in `responsive_layout_test` still passes. |
@@ -432,7 +432,7 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | C1 | Done (audit minimum; Worker optional) | The audit allowed a Worker (a) **or** an in-thread budgeted loop (b); (b) is implemented with a >16 ms yield. A Worker is optional future scope, not unfinished audit work. Wasm runs single-threaded without COOP/COEP. |
 > | C2 | Done | Chunked pre-calculation with progress, cancel and a 180-day cap. |
 > | C3 | Done (always-mounted controllers; game note) | `_syncSpotlightTicker` starts and stops the tutorial controller with visibility; `EventNotificationOverlay` now starts its float controller only when an event is visible and stops/resets it on dismissal or timeout. The Flame `GameWidget` is left ticker-driven while its simulation route is mounted so paused/scrubbed state changes can repaint; it is not mounted on the selection or other menu routes. |
-> | C4 | Done | `BlurSurface` falls back to a solid panel on compact screens. |
+> | C4 | Done (code; no automated blur assertion) | `BlurSurface` returns its child unchanged below 600 px and only applies `BackdropFilter` on wider screens. |
 > | C5 | Done | `onGenerateRoute` parses `/#/simulation/<id>` and `MainSimulationScreen` loads the scenario before starting; parser tests in `scenario_route_test` and a direct-URL widget test in `scenario_navigation_test`. Generic `/simulation` still refreshes; imported custom scenarios remain on the generic route because they are not asset-backed. |
 > | C6 | Done | PWA manifest, title, theme colour, OG metadata and Android label. |
 > | C7 | Done | `--wasm` build succeeds; lab: first frame 137 ms warm, LCP 238 ms cold, 3.6 MB wasm; splash marks `soilscope-first-frame`. |
@@ -442,12 +442,12 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 > | D2 | Done | pH badges pair colour with an acid/neutral/alkaline icon. |
 > | D3 | Done | Type floor raised; 200% text layout verified. |
 > | D4 | Done | `_HUDDataView` ExpansionTile exposes the layer table. |
-> | D5 | Done | Faintest labels lifted to AA contrast. |
+> | D5 | Done (manual contrast review; no automated test) | Faintest Logic Lab hint/unit text moved from 40–50% white to 70% white, and the search hint uses `onSurfaceVariant`; `Colors.white38`/`grey.shade500` text is gone. No device contrast audit is claimed. |
 > | E1 | Done | Timeline/gamification/periodic-table ARBs now include element role/category/number/mass/group labels; `ui_state_provider` no longer branches on Finnish and was removed from the hardcoded-Finnish allowlist; English function/input palettes covered by `palette_l10n_test` and `tool/check_hardcoded_finnish.py`. |
 > | E2 | Done | `appLocaleProvider` follows the platform locale when no choice is stored. |
-> | E3 | Done | English README intro; test count updated to 114. |
-> | F1 | Done | 21 unreferenced modules and their dead tests removed. |
-> | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus two parts. |
+> | E3 | Done | English README intro; the close-out test count is 114 (see the note above). |
+> | F1 | Done | Unreferenced modules and their dead tests removed; the remaining `plant_style_engine.dart` was removed in follow-up. No unreferenced production module remains (`validation_reference_run.dart` is a test fixture used by the validation tests). |
+> | F2 | Done | `SimulationRuntime` owns isolate lifecycle, watchdog, tick subscription and particle dispatch; `SimulationTickProcessor` owns merging/events/snapshots; pre-calculation is a service; persistence and the painter are separate; HUD is 520 lines plus four parts and Logic Lab is 371 plus its graph/palette parts. The provider is 853 lines. |
 > | F3 | Done | `uiFields`/`engineFields` plus a drift test over every state field. |
 > | F4 | Done | Score computed once; cached `_historyView`; `_lowerBound` scrub search; validation only under `kDebugMode`. |
 > | F5 | Done | Provider, responsive, stability, palette and two screen-golden tests (`test/presentation/screens/goldens/`). |

@@ -638,11 +638,11 @@ class _InputPaletteState extends State<InputPalette> {
               decoration: InputDecoration(
                 hintText: isFi ? 'Hae...' : 'Search...',
                 hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: Colors.white70,
                 ),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.3),
@@ -765,7 +765,7 @@ class _InputPaletteState extends State<InputPalette> {
             child: Text(
               '${inputCategories.values.expand((e) => e).length} ${isFi ? 'inputtia käytettävissä' : 'inputs available'}',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: Colors.white70,
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -835,7 +835,7 @@ class _InputTile extends StatelessWidget {
                       Text(
                         input.descriptionFor(isFi),
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
+                          color: Colors.white70,
                           fontSize: 12,
                         ),
                       ),
@@ -845,7 +845,7 @@ class _InputTile extends StatelessWidget {
                 Text(
                   input.unit,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: Colors.white70,
                     fontFamily: 'monospace',
                     fontSize: 12,
                   ),

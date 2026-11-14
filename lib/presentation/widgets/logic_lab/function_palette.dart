@@ -459,11 +459,11 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                 hintText:
                     l10n?.logicLabSearch ?? (isFi ? 'Hae...' : 'Search...'),
                 hintStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: Colors.white70,
                 ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: Colors.white70,
                 ),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.3),
@@ -596,7 +596,7 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                       ? '${functionCategories.values.expand((e) => e).length} funktiota käytettävissä'
                       : '${functionCategories.values.expand((e) => e).length} functions available'),
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: Colors.white70,
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
@@ -665,7 +665,7 @@ class _FunctionTile extends StatelessWidget {
                           Text(
                             func.descriptionFor(isFi),
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: Colors.white70,
                               fontSize: 12,
                             ),
                           ),
@@ -731,7 +731,7 @@ class _FunctionTile extends StatelessWidget {
                             child: Text(
                               '→ $label',
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.4),
+                                color: Colors.white70,
                                 fontSize: 12,
                               ),
                             ),
