@@ -256,9 +256,18 @@ class GamificationBar extends ConsumerWidget {
                 ),
               ),
             ),
-            if (state.currentScenario?.objectives.isNotEmpty == true) ...[
-              const SizedBox(width: 6),
-              InkWell(
+          ],
+        ),
+        if (state.currentScenario?.objectives.isNotEmpty == true) ...[
+          const SizedBox(height: 2),
+          Align(
+            alignment: Alignment.centerRight,
+            // The compact bar can be as narrow as the top-bar buttons allow;
+            // the label does not fit there, so keep the action as an icon with
+            // a tooltip and semantic label.
+            child: Tooltip(
+              message: l10n?.briefingButton ?? 'BRIEFING',
+              child: InkWell(
                 onTap: () {
                   showDialog(
                     context: context,
@@ -267,27 +276,18 @@ class GamificationBar extends ConsumerWidget {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.flag_rounded, size: 11, color: const Color(0xFFC084FC)),
-                      const SizedBox(width: 2),
-                      Text(
-                        l10n?.briefingButton ?? 'BRIEFING',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFC084FC),
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.flag_rounded,
+                    size: 14,
+                    color: const Color(0xFFC084FC),
+                    semanticLabel: l10n?.briefingButton ?? 'BRIEFING',
                   ),
                 ),
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -845,42 +845,45 @@ class XpLevelPanelWidget extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: objectives.map((obj) {
-                          final isMet = metObjectiveIds.contains(obj.id);
-                          final color = isMet
-                              ? Colors.greenAccent
-                              : Colors.grey.shade400;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  isMet
-                                      ? Icons.check_circle_rounded
-                                      : Icons.radio_button_unchecked_rounded,
-                                  color: color,
-                                  size: 11,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  _getLocalizedObjectiveTitle(obj, l10n),
-                                  style: TextStyle(
+                    Flexible(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: objectives.map((obj) {
+                            final isMet = metObjectiveIds.contains(obj.id);
+                            final color = isMet
+                                ? Colors.greenAccent
+                                : Colors.grey.shade400;
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isMet
+                                        ? Icons.check_circle_rounded
+                                        : Icons.radio_button_unchecked_rounded,
                                     color: color,
-                                    fontSize: 12,
-                                    fontWeight: isMet
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                    size: 11,
                                   ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _getLocalizedObjectiveTitle(obj, l10n),
+                                    style: TextStyle(
+                                      color: color,
+                                      fontSize: 12,
+                                      fontWeight: isMet
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],

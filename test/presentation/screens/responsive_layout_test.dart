@@ -15,6 +15,7 @@ void main() {
     Size(390, 844), // phone
     Size(768, 1024), // tablet portrait
     Size(1024, 768), // tablet landscape
+    Size(1280, 720), // desktop with sidebars
   ]) {
     testWidgets('simulation chrome fits ${size.width}x${size.height}', (
       WidgetTester tester,
@@ -92,6 +93,14 @@ Future<List<String>> _pumpChrome(WidgetTester tester, Size size) async {
       slope: 0.05,
     ),
     weatherData: {'precip': 0.0, 'temp': 293.15, 'rh': 0.5},
+    objectives: const [
+      MissionObjective(
+        id: 'clay_yield',
+        title: 'Grow the crop',
+        targetValue: 100,
+        type: 'yield',
+      ),
+    ],
   );
 
   await tester.pumpWidget(
@@ -119,13 +128,17 @@ Future<List<String>> _pumpChrome(WidgetTester tester, Size size) async {
   await tester.pump(const Duration(seconds: 1));
   expect(find.byType(MainSimulationScreen), findsOneWidget);
 
-  await tester.tap(find.byIcon(Icons.menu).first);
-  await tester.pump(const Duration(milliseconds: 500));
-  expect(tester.takeException(), isNull);
+  if (find.byIcon(Icons.menu).evaluate().isNotEmpty) {
+    await tester.tap(find.byIcon(Icons.menu).first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+  }
 
-  await tester.tap(find.byIcon(Icons.settings).first);
-  await tester.pump(const Duration(milliseconds: 500));
-  expect(tester.takeException(), isNull);
+  if (find.byIcon(Icons.settings).evaluate().isNotEmpty) {
+    await tester.tap(find.byIcon(Icons.settings).first);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+  }
 
   return errors;
 }

@@ -726,6 +726,10 @@ class _GestureIntroDialogState extends State<_GestureIntroDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
+              // AlertDialog asks its content for an intrinsic width, which a
+              // PageView cannot provide. Give the pager a concrete width so
+              // the dialog can lay out instead of crashing on first launch.
+              width: 320,
               height: 220,
               child: PageView.builder(
                 controller: _controller,
