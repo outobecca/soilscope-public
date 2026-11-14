@@ -76,12 +76,18 @@ class ScienceValidationTab extends StatelessWidget {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    // Compare the live run at the reference sample times. Absolute measured
+    // Compare the full run at the reference sample times. Absolute measured
     // times are used as-is; synthetic patterns scale with the run. This is a
     // reference check, not a field-data validation.
-    final referenceTimes = reference.timesFor(state.timeElapsed);
+    final runHistory = state.history;
+    // The live clock can sit at the start after a pre-calculation while the
+    // timeline extends forward. Use the history end as the run duration.
+    final runEnd = runHistory.isNotEmpty
+        ? runHistory.last.timeElapsed
+        : state.timeElapsed;
+    final referenceTimes = reference.timesFor(runEnd);
     final comparison = ValidationFramework.compareToReferenceSeries(
-      state.history,
+      runHistory,
       reference.series,
       referenceTimes,
     );

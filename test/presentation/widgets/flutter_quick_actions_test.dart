@@ -2,8 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:soilscope/presentation/widgets/game/flutter_quick_actions.dart';
+import 'package:soilscope/domain/models/biophysical_state.dart';
+import 'package:soilscope/domain/models/soil_profile.dart';
 import 'package:soilscope/l10n/app_localizations.dart';
+import 'package:soilscope/presentation/providers/simulation_provider.dart';
+import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
+import 'package:soilscope/presentation/widgets/game/flutter_quick_actions.dart';
 
 void main() {
   testWidgets('FlutterQuickActions tooltips have preferBelow set to false', (tester) async {
@@ -44,6 +48,84 @@ void main() {
         reason: 'Tooltip with message "${tooltip.message}" should have preferBelow: false so it floats above the bottom bar',
       );
     }
+  });
+
+  testWidgets('manage sheet shows the displayed snapshot during history playback',
+      (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    const historical = BiophysicalState(
+      profile: SoilProfile(
+        id: 'historical',
+        name: 'Historical',
+        layers: [],
+        surfaceAlbedo: 0.2,
+        slope: 0.0,
+      ),
+      plants: [],
+      timeElapsed: 0,
+      autoWeather: false,
+      precipitation: 0.0,
+      hasCoverCrop: false,
+    );
+    final live = historical.copyWith(
+      timeElapsed: 86400,
+      autoWeather: true,
+      precipitation: 10.0,
+      hasCoverCrop: true,
+      history: const [historical],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [simulationProvider.overrideWithValue(live)],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale('en'),
+          home: Scaffold(body: FlutterQuickActions()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FlutterQuickActions)),
+    );
+    container.read(simulationSessionProvider.notifier).setScrubbing(true);
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+    await tester.pumpAndSettle();
+
+    final autoWeatherTile = find.ancestor(
+      of: find.text('Auto Weather'),
+      matching: find.byType(ListTile),
+    );
+    final coverCropTile = find.ancestor(
+      of: find.text('Cover Crop'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(
+        of: autoWeatherTile,
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsNothing,
+      reason: 'the historical auto-weather state is off, not the live on state',
+    );
+    expect(
+      find.descendant(
+        of: coverCropTile,
+        matching: find.byIcon(Icons.check_rounded),
+      ),
+      findsNothing,
+      reason: 'the historical cover-crop state is off, not the live on state',
+    );
+    expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.water_drop_rounded), findsNothing);
   });
 
   testWidgets('Hovering button in FlutterQuickActions triggers tooltip', (tester) async {

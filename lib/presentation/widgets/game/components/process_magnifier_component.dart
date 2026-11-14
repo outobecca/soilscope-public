@@ -73,7 +73,11 @@ class ProcessMagnifierComponent extends PositionComponent
   final double radius = 120.0;
   double _opacity = 0.0;
   double _scale = 0.0;
+  double _microscopeTime = 0.0;
   bool isVisible = false;
+
+  @visibleForTesting
+  double get opacity => _opacity;
   
   // Reference to the world hotspot for orientation
   Vector2? _hotspotWorldPosition;
@@ -210,7 +214,9 @@ class ProcessMagnifierComponent extends PositionComponent
   }
 
   void _drawDetailedAnatomy(Canvas canvas, Offset center) {
-    final double time = game.currentTime();
+    // The simulation clock freezes while an inspection card is pinned, but
+    // the microscope should keep animating as its own live UI view.
+    final double time = _microscopeTime;
     final state = game.simulationState;
     if (state == null) return;
 
@@ -817,6 +823,7 @@ class ProcessMagnifierComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
     if (isVisible) {
+      _microscopeTime += dt;
       _opacity = (_opacity + dt * 4).clamp(0.0, 1.0);
       _scale = (_scale + dt * 3).clamp(0.0, 1.0);
     } else {
@@ -829,8 +836,10 @@ class ProcessMagnifierComponent extends PositionComponent
       _scanlineOffset = (_scanlineOffset + dt * 150) % 240;
     }
 
-    // Dynamic positioning near hotspot
-    if (_opacity > 0 && _hotspotWorldPosition != null) {
+    // Keep the screen positioned in the viewport even before the first
+    // inspection target has supplied a hotspot. Otherwise a microscope opened
+    // during startup can render at the component origin (behind the HUD).
+    if (_opacity > 0) {
       _updateViewportPosition();
     }
   }
@@ -840,10 +849,16 @@ class ProcessMagnifierComponent extends PositionComponent
     final zoom = camera.viewfinder.zoom;
     final camPos = camera.viewfinder.position;
     final viewportSize = camera.viewport.size;
+    final hotspot = _hotspotWorldPosition;
     
-    // World-to-Viewport transformation
-    final screenX = (_hotspotWorldPosition!.x - camPos.x) * zoom + viewportSize.x / 2;
-    final screenY = (_hotspotWorldPosition!.y - camPos.y) * zoom + viewportSize.y / 2;
+    // World-to-Viewport transformation. Before targets are initialized, use a
+    // safe upper-center anchor so the microscope is never drawn at (0, 0).
+    final screenX = hotspot == null
+        ? viewportSize.x / 2
+        : (hotspot.x - camPos.x) * zoom + viewportSize.x / 2;
+    final screenY = hotspot == null
+        ? viewportSize.y * 0.35
+        : (hotspot.y - camPos.y) * zoom + viewportSize.y / 2;
 
     // Smart positioning:
     // Try to stay on the same side as the plant, but offset to avoid covering the hotspot
@@ -858,11 +873,17 @@ class ProcessMagnifierComponent extends PositionComponent
     final panelHeight = session.isMicroscopeEnabled ? 170.0 : 120.0; 
     const rightBarWidth = 100.0; // Buffer for quick actions
     
-    // Keep within horizontal bounds, avoiding right bar
-    targetX = targetX.clamp(radius + 20, viewportSize.x - radius - rightBarWidth);
+    // Keep within horizontal bounds, avoiding right bar. Small phones can be
+    // narrower than the full magnifier diameter, so never pass an inverted
+    // range to clamp (that would throw and stop the microscope from showing).
+    final minX = radius + 20;
+    final maxX = math.max(minX, viewportSize.x - radius - rightBarWidth);
+    targetX = targetX.clamp(minX, maxX);
     
     // Keep within vertical bounds, avoiding the bottom panel
-    targetY = targetY.clamp(radius + 40, viewportSize.y - panelHeight - radius - 20);
+    final minY = radius + 40;
+    final maxY = math.max(minY, viewportSize.y - panelHeight - radius - 20);
+    targetY = targetY.clamp(minY, maxY);
 
     position = Vector2(targetX, targetY);
   }

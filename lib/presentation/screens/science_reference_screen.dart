@@ -16,7 +16,10 @@ class ScienceReferenceScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(simulationProvider);
+    // The reference screen should describe the same snapshot that the HUD,
+    // inspection cards and animated canvas are showing. During timeline
+    // scrubbing that is the selected history snapshot, not the live engine.
+    final state = ref.watch(displayedSimulationStateProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 

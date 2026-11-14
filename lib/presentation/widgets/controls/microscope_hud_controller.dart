@@ -145,7 +145,7 @@ class MicroscopeHudController extends ConsumerWidget {
                         icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
                         tooltip: l10n.moreInfo,
                         onPressed: () {
-                          final state = ref.read(simulationProvider);
+                          final state = ref.read(displayedSimulationStateProvider);
                           ref.read(uIStateProvider.notifier).setHoverInfo(
                             MicroscopeInfoHelper.createHoverInfo(
                               type: currentType,
@@ -190,7 +190,7 @@ class MicroscopeHudController extends ConsumerWidget {
                           child: InkWell(
                             onTap: () {
                               ref.read(simulationSessionProvider.notifier).selectInspector(target.name);
-                              final state = ref.read(simulationProvider);
+                              final state = ref.read(displayedSimulationStateProvider);
                               ref.read(uIStateProvider.notifier).setHoverInfo(
                                 MicroscopeInfoHelper.createHoverInfo(
                                   type: target,

@@ -38,6 +38,25 @@ class MagnifierGroupComponent extends PositionComponent
 
   @override
   void update(double dt) {
+    _updateMagnifiers(dt);
+  }
+
+  /// The game freezes world updates while an inspection card is pinned. The
+  /// microscope lives in the viewport and must keep fading in above it, so
+  /// the game calls this explicitly during that paused phase.
+  ///
+  /// A parent's [update] does not recurse into its children in Flame, so this
+  /// must drive the child update tree explicitly. Otherwise the microscope
+  /// coordinator gets updated while each magnifier's opacity stays at zero.
+  void updateForInspectionPause(double dt) {
+    _updateMagnifierVisibility();
+    super.update(dt);
+    for (final child in children) {
+      child.updateTree(dt);
+    }
+  }
+
+  void _updateMagnifiers(double dt) {
     super.update(dt);
     _updateMagnifierVisibility();
   }

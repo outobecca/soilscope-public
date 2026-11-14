@@ -61,16 +61,24 @@ class _HUDHeader extends ConsumerWidget {
   }
 
   void _showInfoDialog(BuildContext context, AppLocalizations l10n) {
+    // AlertDialog measures its content with IntrinsicWidth. The reference view
+    // contains rows with Expanded children, and a ListView/PageView cannot
+    // provide an intrinsic width, which used to abort layout and leave the HUD
+    // untappable. A concrete content width keeps the dialog measurable.
+    final contentWidth =
+        (MediaQuery.sizeOf(context).width - 80).clamp(280.0, 500.0).toDouble();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.index),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 500,
-            maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+        content: SizedBox(
+          width: contentWidth,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+            ),
+            child: const SingleChildScrollView(child: InformaticsView()),
           ),
-          child: const SingleChildScrollView(child: InformaticsView()),
         ),
         actions: [
           TextButton(
@@ -126,10 +134,9 @@ class _HUDScrubber extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final historyEmpty = ref.watch(
-      simulationProvider.select((s) => s.history.isEmpty),
+    final hasTimeline = ref.watch(
+      simulationProvider.select((s) => hasScrubbableTimeline(s.history)),
     );
-    if (historyEmpty) return const SizedBox.shrink();
 
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     final isScrubbing = ref.watch(
@@ -139,9 +146,18 @@ class _HUDScrubber extends ConsumerWidget {
       simulationSessionProvider.select((s) => s.viewTime),
     );
     final minTime = ref.watch(
-      simulationProvider.select((s) => s.history.first.timeElapsed),
+      simulationProvider.select(
+        (s) => s.history.isNotEmpty ? s.history.first.timeElapsed : 0.0,
+      ),
     );
-    final maxTime = ref.watch(simulationProvider.select((s) => s.timeElapsed));
+    // A pre-calculated timeline can leave the live clock at its start while
+    // history extends into the future. The scrub range must follow the history
+    // end, matching TimelineSliderWidget and the displayed snapshot.
+    final maxTime = ref.watch(
+      simulationProvider.select(
+        (s) => s.history.isNotEmpty ? s.history.last.timeElapsed : s.timeElapsed,
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,9 +194,15 @@ class _HUDScrubber extends ConsumerWidget {
                     isScrubbing ? Icons.close : Icons.history,
                     size: 16,
                   ),
-                  onPressed: () => isScrubbing
-                      ? ref.read(simulationProvider.notifier).stopScrubbing()
-                      : ref.read(simulationProvider.notifier).startScrubbing(),
+                  onPressed: !hasTimeline && !isScrubbing
+                      ? null
+                      : () => isScrubbing
+                          ? ref
+                              .read(simulationProvider.notifier)
+                              .stopScrubbing()
+                          : ref
+                              .read(simulationProvider.notifier)
+                              .startScrubbing(),
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                 ),

@@ -14,9 +14,11 @@ class ControlPanelSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch only the layer list: plants, clock, weather and score updates no
-    // longer rebuild thirty sliders five times a second.
+    // longer rebuild thirty sliders five times a second. Use the displayed
+    // snapshot so the sidebar agrees with the canvas while scrubbing; editing
+    // a value returns the whole app to the live run.
     final layers = ref.watch(
-      simulationProvider.select((s) => s.profile.layers),
+      displayedSimulationStateProvider.select((s) => s.profile.layers),
     );
     final session = ref.watch(simulationSessionProvider);
     final selectedId = session.selectedLayerId;

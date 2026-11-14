@@ -8,7 +8,9 @@ class _HUDDataView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-    final profile = ref.watch(simulationProvider.select((s) => s.profile));
+    final profile = ref.watch(
+      displayedSimulationStateProvider.select((s) => s.profile),
+    );
 
     return ExpansionTile(
       title: Text(

@@ -33,6 +33,9 @@ class FlutterQuickActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isRunning = ref.watch(simulationProvider.select((s) => s.isRunning));
     final timeScale = ref.watch(simulationProvider.select((s) => s.timeScale));
+    final hasTimeline = ref.watch(
+      simulationProvider.select((s) => hasScrubbableTimeline(s.history)),
+    );
     final session = ref.watch(simulationSessionProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -75,18 +78,19 @@ class FlutterQuickActions extends ConsumerWidget {
               ref.read(simulationProvider.notifier).setSpeed(speeds[next]);
             },
           ),
-          _buildActionButton(
-            context: context,
-            icon: Icons.linear_scale_rounded,
-            label: l10n.timeline,
-            isActive: session.isScrubbing,
-            onTap: () {
-              final notifier = ref.read(simulationProvider.notifier);
-              session.isScrubbing
-                  ? notifier.stopScrubbing()
-                  : notifier.startScrubbing();
-            },
-          ),
+          if (hasTimeline || session.isScrubbing)
+            _buildActionButton(
+              context: context,
+              icon: Icons.linear_scale_rounded,
+              label: l10n.timeline,
+              isActive: session.isScrubbing,
+              onTap: () {
+                final notifier = ref.read(simulationProvider.notifier);
+                session.isScrubbing
+                    ? notifier.stopScrubbing()
+                    : notifier.startScrubbing();
+              },
+            ),
           _buildActionButton(
             context: context,
             icon: session.isMicroscopeEnabled
@@ -125,7 +129,7 @@ class FlutterQuickActions extends ConsumerWidget {
         MicroscopeInfoHelper.createHoverInfo(
           type: targetType,
           l: l10n,
-          state: ref.read(simulationProvider),
+          state: ref.read(displayedSimulationStateProvider),
           isPinned: true,
         ),
       );
@@ -192,12 +196,18 @@ class FlutterQuickActions extends ConsumerWidget {
           minChildSize: 0.35,
           maxChildSize: 0.92,
           builder: (context, controller) {
-            final autoWeather =
-                ref.watch(simulationProvider.select((s) => s.autoWeather));
-            final precipitation =
-                ref.watch(simulationProvider.select((s) => s.precipitation));
-            final hasCoverCrop =
-                ref.watch(simulationProvider.select((s) => s.hasCoverCrop));
+            // The manage sheet is part of the read-only presentation of the
+            // current snapshot, so its active states must follow the timeline
+            // while scrubbing just like the HUD and canvas.
+            final autoWeather = ref.watch(
+              displayedSimulationStateProvider.select((s) => s.autoWeather),
+            );
+            final precipitation = ref.watch(
+              displayedSimulationStateProvider.select((s) => s.precipitation),
+            );
+            final hasCoverCrop = ref.watch(
+              displayedSimulationStateProvider.select((s) => s.hasCoverCrop),
+            );
             final session = ref.watch(simulationSessionProvider);
             final cycle = ref.watch(activeCycleProvider);
             final flowOn = ref.watch(particleFlowModeProvider);
@@ -216,7 +226,11 @@ class FlutterQuickActions extends ConsumerWidget {
                   label: l10n.autoWeather,
                   isActive: autoWeather,
                   onTap: () {
-                    ref.read(simulationProvider.notifier).toggleAutoWeather();
+                    // Apply the state the user saw, not the opposite of whatever
+                    // the live engine happens to hold behind the timeline.
+                    ref
+                        .read(simulationProvider.notifier)
+                        .setAutoWeather(!autoWeather);
                     close();
                   },
                 ),
@@ -251,7 +265,7 @@ class FlutterQuickActions extends ConsumerWidget {
                   isActive: hasCoverCrop,
                   onTap: () {
                     if (!hasCoverCrop) {
-                      ref.read(simulationProvider.notifier).applyCoverCrop();
+                      ref.read(simulationProvider.notifier).setCoverCrop(true);
                     }
                     close();
                   },
@@ -541,27 +555,33 @@ class FlutterQuickActions extends ConsumerWidget {
 
   void _showEventLog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     final events = ref.read(eventLogProvider);
+    // A ListView cannot provide an intrinsic width to AlertDialog. Give the
+    // dialog content a concrete width so opening the log cannot break layout.
+    final contentWidth =
+        (MediaQuery.sizeOf(context).width - 80).clamp(280.0, 400.0).toDouble();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.eventLog),
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 400,
-            maxHeight: MediaQuery.sizeOf(context).height * 0.6,
-          ),
-          child: events.isEmpty
-              ? Center(child: Text(l10n.noEvents))
-              : ListView.builder(
-                  itemCount: events.length,
-                  itemBuilder: (context, index) => ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: Text(events[index].getLocalizedMessage(l10n)),
-                    subtitle: Text(
-                      'T+ ${events[index].timestamp.toStringAsFixed(0)}s',
+        content: SizedBox(
+          width: contentWidth,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+            ),
+            child: events.isEmpty
+                ? Center(child: Text(l10n.noEvents))
+                : ListView.builder(
+                    itemCount: events.length,
+                    itemBuilder: (context, index) => ListTile(
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(events[index].getLocalizedMessage(l10n)),
+                      subtitle: Text(
+                        'T+ ${events[index].timestamp.toStringAsFixed(0)}s',
+                      ),
                     ),
                   ),
-                ),
+          ),
         ),
         actions: [
           TextButton(

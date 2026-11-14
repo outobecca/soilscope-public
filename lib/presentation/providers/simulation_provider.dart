@@ -22,6 +22,17 @@ import 'ui_state_provider.dart';
 
 part 'simulation_provider.g.dart';
 
+/// The shortest history range that is useful to scrub. Two snapshots taken a
+/// few seconds apart produce a timeline that reads "Day 0.0" and appears
+/// stuck, so keep history mode closed until there is an hour to review.
+const double minimumScrubbableHistorySeconds = 3600.0;
+
+bool hasScrubbableTimeline(List<BiophysicalState> history) {
+  if (history.length < 2) return false;
+  return history.last.timeElapsed - history.first.timeElapsed >=
+      minimumScrubbableHistorySeconds;
+}
+
 @Riverpod(keepAlive: true)
 class Simulation extends _$Simulation {
   final SimulationPersistence _persistence = SimulationPersistence();
@@ -286,10 +297,9 @@ class Simulation extends _$Simulation {
     ref.read(engineFailureProvider.notifier).setFailed(true);
     // Never leave the app stuck on the splash if the isolate cannot start.
     state = state.copyWith(isInitializing: false);
-    ref.read(eventLogProvider.notifier).addEvent(
-          'Simulation engine failed to start.',
-          state.timeElapsed,
-        );
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent('Simulation engine failed to start.', state.timeElapsed);
   }
 
   Future<void> _initializeRuntime() async {
@@ -337,23 +347,44 @@ class Simulation extends _$Simulation {
       _saveState();
     }
   }
+
   void _syncIsolate() => _runtime.sync(state);
 
+  /// Leaving history mode makes every displayed surface follow the live engine
+  /// again. Used before starting a run or applying an edit from a control that
+  /// was showing a historical snapshot.
+  void _leaveHistoryMode() {
+    final session = ref.read(simulationSessionProvider);
+    if (session.isScrubbing) {
+      ref.read(simulationSessionProvider.notifier).setScrubbing(false);
+    }
+  }
+
   void start() {
-    debugLog('[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}');
+    // Starting the run while the timeline is open must leave history mode;
+    // otherwise the displayed snapshot would stay frozen while the engine
+    // advances underneath it.
+    _leaveHistoryMode();
+    debugLog(
+      '[SimulationProvider] start() called: isRunning=${state.isRunning}, isInitializing=${state.isInitializing}',
+    );
     if (state.isRunning || state.isInitializing) {
-      debugLog('[SimulationProvider] start() ABORTED: already running or initializing');
+      debugLog(
+        '[SimulationProvider] start() ABORTED: already running or initializing',
+      );
       return;
     }
-    
+
     state = state.copyWith(isRunning: true);
     debugLog('[SimulationProvider] start() state updated: isRunning=true');
-    
+
     _syncIsolate(); // Ensure isolate has the latest state before starting
     debugLog('[SimulationProvider] start() isolate synced');
-    
+
     _runtime.start();
-    debugLog('[SimulationProvider] start() SUCCESS: all isolate managers started');
+    debugLog(
+      '[SimulationProvider] start() SUCCESS: all isolate managers started',
+    );
   }
 
   void stop() {
@@ -368,11 +399,13 @@ class Simulation extends _$Simulation {
   }
 
   void setPrecipitation(double p) {
+    _leaveHistoryMode();
     state = state.copyWith(precipitation: p);
     _syncIsolate();
   }
 
   void toggleAutoWeather() {
+    _leaveHistoryMode();
     state = SimulationActions.updateWeather(
       state,
       state.airTemperature,
@@ -381,7 +414,35 @@ class Simulation extends _$Simulation {
     _syncIsolate();
   }
 
+  /// Sets the auto-weather mode explicitly so a control shown from a historical
+  /// snapshot can apply the state the user actually saw.
+  void setAutoWeather(bool enabled) {
+    _leaveHistoryMode();
+    state = SimulationActions.updateWeather(
+      state,
+      state.airTemperature,
+      state.relativeHumidity,
+    ).copyWith(autoWeather: enabled);
+    _syncIsolate();
+  }
+
   void applyCoverCrop() {
+    _leaveHistoryMode();
+    state = SimulationActions.toggleCoverCrop(state);
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent(
+          'Cover crop ${state.hasCoverCrop ? "planted" : "removed"}.',
+          state.timeElapsed,
+        );
+    _syncIsolate();
+  }
+
+  /// Sets the cover-crop state explicitly for controls that may be showing a
+  /// historical snapshot rather than the live engine.
+  void setCoverCrop(bool planted) {
+    _leaveHistoryMode();
+    if (state.hasCoverCrop == planted) return;
     state = SimulationActions.toggleCoverCrop(state);
     ref
         .read(eventLogProvider.notifier)
@@ -393,6 +454,7 @@ class Simulation extends _$Simulation {
   }
 
   void applyNutrients(Map<String, double> pendingNutrients) {
+    _leaveHistoryMode();
     final session = ref.read(simulationSessionProvider);
     if (session.selectedLayerId == null) return;
 
@@ -410,6 +472,7 @@ class Simulation extends _$Simulation {
   }
 
   void triggerHeatWave() {
+    _leaveHistoryMode();
     state = SimulationActions.triggerHeatWave(state);
     ref
         .read(eventLogProvider.notifier)
@@ -418,6 +481,7 @@ class Simulation extends _$Simulation {
   }
 
   void triggerFlashFlood() {
+    _leaveHistoryMode();
     state = SimulationActions.triggerFlashFlood(state);
     ref
         .read(eventLogProvider.notifier)
@@ -426,26 +490,36 @@ class Simulation extends _$Simulation {
   }
 
   void updateWeather(double temperature, double humidity) {
+    _leaveHistoryMode();
     state = SimulationActions.updateWeather(state, temperature, humidity);
     _syncIsolate();
   }
 
   void updateNutrient(String layerId, String symbol, double value) {
+    _leaveHistoryMode();
     state = SimulationActions.applyNutrients(state, layerId, symbol, value);
     _syncIsolate();
   }
-  
+
   void updateSolarRadiation(double value) {
+    _leaveHistoryMode();
     state = state.copyWith(solarRadiationOverride: value);
     _syncIsolate();
   }
 
   void updatePAR(double value) {
+    _leaveHistoryMode();
     state = state.copyWith(solarRadiationOverride: value / 2.1);
     _syncIsolate();
   }
 
-  void updateAtmosphere({double? temperature, double? humidity, double? precipitation, double? co2}) {
+  void updateAtmosphere({
+    double? temperature,
+    double? humidity,
+    double? precipitation,
+    double? co2,
+  }) {
+    _leaveHistoryMode();
     state = state.copyWith(
       airTemperature: temperature ?? state.airTemperature,
       relativeHumidity: humidity ?? state.relativeHumidity,
@@ -456,6 +530,7 @@ class Simulation extends _$Simulation {
   }
 
   bool applyTillage() {
+    _leaveHistoryMode();
     state = SimulationActions.applyTillage(state);
     ref
         .read(eventLogProvider.notifier)
@@ -475,6 +550,7 @@ class Simulation extends _$Simulation {
     }).toList();
 
     if (_disposed) return;
+    _leaveHistoryMode();
     // Apply synchronously so a dragged slider never lags a frame behind.
     state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
     _syncIsolate();
@@ -551,7 +627,8 @@ class Simulation extends _$Simulation {
 
     bool changed = false;
     for (int i = 0; i < state.profile.layers.length; i++) {
-      if (state.profile.layers[i].potassiumContent != newLayers[i].potassiumContent) {
+      if (state.profile.layers[i].potassiumContent !=
+          newLayers[i].potassiumContent) {
         changed = true;
         break;
       }
@@ -560,7 +637,9 @@ class Simulation extends _$Simulation {
     if (changed) {
       Future.microtask(() {
         if (!_disposed) {
-          state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+          state = state.copyWith(
+            profile: state.profile.copyWith(layers: newLayers),
+          );
           _syncIsolate();
         }
       });
@@ -575,13 +654,19 @@ class Simulation extends _$Simulation {
       if (l.id == layerId) {
         switch (resourceType) {
           case 'labileCarbon':
-            if (l.labileCarbon >= amount) return l.copyWith(labileCarbon: l.labileCarbon - amount);
+            if (l.labileCarbon >= amount) {
+              return l.copyWith(labileCarbon: l.labileCarbon - amount);
+            }
             break;
           case 'nitrate':
-            if (l.nitrateContent >= amount) return l.copyWith(nitrateContent: l.nitrateContent - amount);
+            if (l.nitrateContent >= amount) {
+              return l.copyWith(nitrateContent: l.nitrateContent - amount);
+            }
             break;
           case 'ammonium':
-            if (l.ammoniumContent >= amount) return l.copyWith(ammoniumContent: l.ammoniumContent - amount);
+            if (l.ammoniumContent >= amount) {
+              return l.copyWith(ammoniumContent: l.ammoniumContent - amount);
+            }
             break;
         }
       }
@@ -590,7 +675,9 @@ class Simulation extends _$Simulation {
 
     Future.microtask(() {
       if (!_disposed) {
-        state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+        state = state.copyWith(
+          profile: state.profile.copyWith(layers: newLayers),
+        );
         _syncIsolate();
       }
     });
@@ -604,17 +691,25 @@ class Simulation extends _$Simulation {
       if (l.id == layerId) {
         switch (gasSymbol) {
           case 'CO2':
-            if (l.co2Content >= amount) return l.copyWith(co2Content: l.co2Content - amount);
+            if (l.co2Content >= amount) {
+              return l.copyWith(co2Content: l.co2Content - amount);
+            }
             break;
           case 'CH4':
-            if (l.methaneContent >= amount) return l.copyWith(methaneContent: l.methaneContent - amount);
+            if (l.methaneContent >= amount) {
+              return l.copyWith(methaneContent: l.methaneContent - amount);
+            }
             break;
           case 'N2O':
-            if (l.nitrousOxideContent >= amount) return l.copyWith(nitrousOxideContent: l.nitrousOxideContent - amount);
+            if (l.nitrousOxideContent >= amount) {
+              return l.copyWith(
+                nitrousOxideContent: l.nitrousOxideContent - amount,
+              );
+            }
             break;
           case 'O2':
-             // Oxygen actually increases when bubbles diffuse in
-             return l.copyWith(oxygenContent: l.oxygenContent + amount);
+            // Oxygen actually increases when bubbles diffuse in
+            return l.copyWith(oxygenContent: l.oxygenContent + amount);
         }
       }
       return l;
@@ -624,8 +719,8 @@ class Simulation extends _$Simulation {
     for (int i = 0; i < state.profile.layers.length; i++) {
       final oldL = state.profile.layers[i];
       final newL = newLayers[i];
-      if (oldL.co2Content != newL.co2Content || 
-          oldL.methaneContent != newL.methaneContent || 
+      if (oldL.co2Content != newL.co2Content ||
+          oldL.methaneContent != newL.methaneContent ||
           oldL.nitrousOxideContent != newL.nitrousOxideContent ||
           oldL.oxygenContent != newL.oxygenContent) {
         changed = true;
@@ -636,7 +731,9 @@ class Simulation extends _$Simulation {
     if (changed) {
       Future.microtask(() {
         if (!_disposed) {
-          state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
+          state = state.copyWith(
+            profile: state.profile.copyWith(layers: newLayers),
+          );
           _syncIsolate();
         }
       });
@@ -645,14 +742,13 @@ class Simulation extends _$Simulation {
     return false;
   }
 
-
   Future<void> _saveState() => _persistence.save(state);
 
   Future<bool> hasSavedState() => _persistence.hasSavedState(
-        // A run that has started but has not reached the periodic save yet.
-        // A pristine provider only has the default entry, not a session.
-        hasLiveRun: _history.length > 1,
-      );
+    // A run that has started but has not reached the periodic save yet.
+    // A pristine provider only has the default entry, not a session.
+    hasLiveRun: _history.length > 1,
+  );
 
   Future<bool> loadLastState() async {
     final loadedState = await _persistence.load();
@@ -673,11 +769,15 @@ class Simulation extends _$Simulation {
   }
 
   void startScrubbing() {
+    // A single initial snapshot, or two snapshots moments apart, is not a
+    // timeline. Opening history mode there gives the user a 0.0-day scrubber
+    // that cannot meaningfully change any displayed data.
+    if (!hasScrubbableTimeline(_history)) return;
     stop(); // Pause simulation while scrubbing
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
-    if (_history.isNotEmpty) {
-      ref.read(simulationSessionProvider.notifier).setViewTime(_history.last.timeElapsed);
-    }
+    ref
+        .read(simulationSessionProvider.notifier)
+        .setViewTime(_history.last.timeElapsed);
   }
 
   void stopScrubbing() {
@@ -717,10 +817,7 @@ class Simulation extends _$Simulation {
       ..add(initial);
     _rebuildHistoryView();
 
-    state = initial.copyWith(
-      history: _historyView,
-      isInitializing: false,
-    );
+    state = initial.copyWith(history: _historyView, isInitializing: false);
 
     // Selection, microscope and inspection state belong to the run being
     // replaced. Leaving them behind makes a new scenario open with a stale
@@ -796,7 +893,12 @@ class Simulation extends _$Simulation {
     return true;
   }
 
-  void configureParticleDomain(double minX, double maxX, double height, double surfaceY) {
+  void configureParticleDomain(
+    double minX,
+    double maxX,
+    double height,
+    double surfaceY,
+  ) {
     _runtime.configureParticleDomain(
       minX,
       maxX,
@@ -815,29 +917,39 @@ class EngineFailureNotifier extends Notifier<bool> {
   void setFailed(bool value) => state = value;
 }
 
-final engineFailureProvider =
-    NotifierProvider<EngineFailureNotifier, bool>(EngineFailureNotifier.new);
+final engineFailureProvider = NotifierProvider<EngineFailureNotifier, bool>(
+  EngineFailureNotifier.new,
+);
 
 @Riverpod(keepAlive: true)
 BiophysicalState displayedSimulationState(Ref ref) {
   final simState = ref.watch(simulationProvider);
   final session = ref.watch(simulationSessionProvider);
-  
+
   if (session.isScrubbing) {
     final history = simState.history;
     if (history.isEmpty) return simState;
-    final index = _lowerBound(history, session.viewTime);
-    if (index >= history.length) return history.last;
-    if (index == 0) return history.first;
-    final before = history[index - 1];
-    final after = history[index];
-    if ((session.viewTime - before.timeElapsed).abs() <
-        (after.timeElapsed - session.viewTime).abs()) {
-      return before;
-    }
-    return after;
+    final index = nearestHistorySnapshotIndex(history, session.viewTime);
+    // Keep the run's timeline on the displayed snapshot. Report and validation
+    // widgets need the full run history even while the visible values come
+    // from a historical snapshot; the actual _history entries stay stripped.
+    return history[index].copyWith(history: history);
   }
   return simState;
+}
+
+/// Index of the history snapshot nearest to [time]. History is sorted by time.
+/// A tie selects the later snapshot, matching the displayed-state fallback.
+int nearestHistorySnapshotIndex(List<BiophysicalState> history, double time) {
+  if (history.isEmpty) return -1;
+  final index = _lowerBound(history, time);
+  if (index >= history.length) return history.length - 1;
+  if (index == 0) return 0;
+  final before = history[index - 1];
+  final after = history[index];
+  return (time - before.timeElapsed).abs() < (after.timeElapsed - time).abs()
+      ? index - 1
+      : index;
 }
 
 /// First index whose snapshot is at or after [time]; history is sorted.

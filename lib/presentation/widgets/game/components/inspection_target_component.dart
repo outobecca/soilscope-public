@@ -14,8 +14,16 @@ class InspectionTargetComponent extends PositionComponent
   final MagnifierType type;
   final ProcessMagnifierComponent magnifier;
   double opacity = 1.0;
-  bool _isPinned = false;
   bool _isHovered = false;
+
+  /// Derived from the shared session so opening/closing the microscope from
+  /// the HUD or quick actions cannot leave a target stuck in a stale pinned
+  /// state (which used to make the next tap close instead of open the view).
+  bool get _isPinned {
+    final session = game.ref.read(simulationSessionProvider);
+    return session.isMicroscopeEnabled &&
+        session.selectedInspectorType == type.name;
+  }
 
   InspectionTargetComponent({
     required this.type,
@@ -98,9 +106,9 @@ class InspectionTargetComponent extends PositionComponent
   @override
   void onTapUp(TapUpEvent event) {
     if (opacity <= 0) return;
-    _isPinned = !_isPinned;
-    magnifier.isVisible = _isPinned;
-    if (_isPinned) {
+    final wasPinned = _isPinned;
+    magnifier.isVisible = !wasPinned;
+    if (!wasPinned) {
       if (!game.ref.read(simulationSessionProvider).isMicroscopeEnabled) {
         game.ref.read(simulationSessionProvider.notifier).toggleMicroscope();
       }
@@ -225,7 +233,6 @@ class InspectionTargetComponent extends PositionComponent
             isPinned: pinned,
             sourceId: 'inspection-${type.name}',
             onDismiss: () {
-              _isPinned = false;
               magnifier.isVisible = false;
               final selected = game
                   .ref

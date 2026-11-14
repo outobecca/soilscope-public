@@ -253,6 +253,111 @@ void main() {
     });
   });
 
+  group('timeline display state', () {
+    test('history mode stays closed until there is a usable time range', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('no-timeline'));
+      expect(container.read(simulationProvider).history, hasLength(1));
+
+      notifier.startScrubbing();
+
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isFalse,
+        reason: 'a one-point history cannot be scrubbed',
+      );
+    });
+
+    test('a timeline needs at least an hour of distinct history', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final state = container.read(simulationProvider);
+
+      bool canScrubAt(double seconds) => hasScrubbableTimeline([
+            state.copyWith(timeElapsed: 0),
+            state.copyWith(timeElapsed: seconds),
+          ]);
+
+      expect(canScrubAt(3599), isFalse);
+      expect(canScrubAt(3600), isTrue);
+      expect(canScrubAt(86400), isTrue);
+    });
+
+    test('scrubbing shows a snapshot that still carries the full run history',
+        () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('displayed'));
+      await notifier.preCalculateTimeline(1);
+      final history = container.read(simulationProvider).history;
+      expect(history.length, greaterThan(2));
+
+      notifier.startScrubbing();
+      final target = history[history.length ~/ 2].timeElapsed;
+      notifier.scrubTo(target);
+      await Future<void>.delayed(Duration.zero);
+
+      final displayed = container.read(displayedSimulationStateProvider);
+      expect(displayed.timeElapsed, closeTo(target, 1));
+      expect(displayed.profile.id, 'displayed');
+      expect(
+        displayed.history,
+        hasLength(history.length),
+        reason: 'report widgets need the run timeline while values are historical',
+      );
+    });
+
+    test('editing a live value leaves history mode', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('edit'));
+      await notifier.preCalculateTimeline(1);
+      notifier.startScrubbing();
+      final layerId = container.read(simulationProvider).profile.layers.first.id;
+
+      notifier.updateLayer(layerId, (layer) => layer.copyWith(ph: 6.4));
+
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isFalse,
+        reason: 'an edit must not be applied behind a historical display',
+      );
+      expect(
+        container.read(simulationProvider).profile.layers.first.ph,
+        6.4,
+      );
+    });
+
+    test('starting a run leaves history mode', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      notifier.loadScenario(_scenario('resume'));
+      await notifier.preCalculateTimeline(1);
+      notifier.startScrubbing();
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isTrue,
+      );
+
+      notifier.start();
+      expect(
+        container.read(simulationSessionProvider).isScrubbing,
+        isFalse,
+        reason: 'the visible snapshot must follow the live engine again',
+      );
+      notifier.stop();
+    });
+  });
+
   group('state ownership', () {
     test('every BiophysicalState field is classified as UI- or engine-owned',
         () {

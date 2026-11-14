@@ -17,7 +17,7 @@ class GamificationBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Only watch parts that affect gamification
-    final state = ref.watch(simulationProvider.select((s) => _GamificationRelevantState(
+    final state = ref.watch(displayedSimulationStateProvider.select((s) => _GamificationRelevantState(
       score: s.score,
       plants: s.plants,
       currentScenario: s.currentScenario,

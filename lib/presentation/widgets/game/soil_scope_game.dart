@@ -104,6 +104,14 @@ class SoilScopeGame extends FlameGame
     _inspectionPaused = _readInspectionPaused();
     if (!_inspectionPaused) {
       super.update(dt);
+    } else {
+      // Magnifiers live in the viewport, outside the simulation world. Keep
+      // their fade/position updates running so selecting a microscope target
+      // can actually reveal the microscope while the world itself is frozen.
+      final magnifierGroup = camera.viewport.children
+          .query<MagnifierGroupComponent>()
+          .firstOrNull;
+      magnifierGroup?.updateForInspectionPause(dt);
     }
     if (!_inspectionPaused) {
       _uiElapsed += dt;

@@ -26,6 +26,12 @@ class InspectionTargetLayerComponent extends Component
         game.camera.viewport.children.query<MagnifierGroupComponent>().firstOrNull;
     if (magnifierGroup == null) return;
 
+    final magnifiers = magnifierGroup.magnifiers;
+    // Children are mounted asynchronously when the group is loaded. Retry on a
+    // later state update instead of permanently marking a partial group as
+    // initialized; a missing target also means a missing microscope hotspot.
+    if (magnifiers.length < MagnifierType.values.length) return;
+
     for (final type in MagnifierType.values) {
       final magnifier = magnifierGroup.getMagnifier(type);
       if (magnifier != null) {
