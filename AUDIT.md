@@ -536,9 +536,11 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub`: 185 tests passing across 49 test files.
+- `flutter test --no-pub --coverage`: 192 tests passing across 51 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
+- Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
+  (121/170 lines); whole `lib/` 44.96% is reported without a gate.
 - `flutter build web --release --base-href /soilscope-public/`: succeeds.
 - Latest local desktop frame profile from the pinned-inspection work: build
   ~11 ms, raster ~25 ms, total ~38 ms (~27 FPS). This is a desktop snapshot,
@@ -609,7 +611,9 @@ valid session, so the existing `resumeFailed` snackbar is shown and the
 resume card refreshes to its locked state. `flutter_secure_storage` and its
 platform plugins are removed. Tests cover versioned save/load, legacy
 migration, corrupt versioned and legacy payloads, an unsupported version and
-resume availability; a provider test covers the corrupt-session path.
+resume availability; a provider test covers the corrupt-session path. A
+session that exists only in the removed secure store is not read; the
+pre-versioned SharedPreferences key is the only migration path.
 
 #### H4 — CI validates only pushes to `master`, not pull requests · P2
 
@@ -629,18 +633,21 @@ and branch `push`. It gates analysis, the Finnish string guard, the full test
 suite and a release web build. The custom 138-line formatter ratchet is gone;
 the gate checks changed whitespace and requires newly added Dart files to be
 formatted, which keeps the one-time formatting cleanup from growing without
-forcing a repository-wide reformat. Deploy remains in `deploy_web.yml`. The
-workflow must still be marked as a required status check in GitHub branch
-protection to block merges; that repository setting is not stored in the
-tree.
+forcing a repository-wide reformat. Deploy remains in `deploy_web.yml`. It
+now also runs the ARB parity/new-unused-key check and the domain/services
+coverage floors. The workflow must still be marked as a required status
+check in GitHub branch protection to block merges; that repository setting
+is not stored in the tree.
 
 #### H5 — Canvas interaction coverage is still thin · P2
 
-The suite has 47 test files, but most coverage is unit-level. The new
+The suite has 51 test files, but most coverage is unit-level. The
 `pinned_inspection_selection_test` is the main canvas-selection regression
 test; layer, plant, root, rhizosphere, microscope, pan/zoom and duplicate
-component behavior remain largely untested. The only golden currently covers
-the scenario selection screen, not the simulation HUD or its dialogs.
+component behavior remain largely untested. `scenario_golden_test` and
+`simulation_golden_test` now cover the selection and simulation screens at
+390×844 and 1024×768, and a semantics smoke test checks the simulation's
+quick-action and HUD nodes; the 200% text pass is still missing.
 
 **Acceptance:** one interaction test per selectable canvas family, plus
 goldens or semantics assertions for the simulation HUD at 390×844 and
@@ -687,9 +694,10 @@ interventions and pause/resume.
 #### H9 — Accessibility has code-level coverage, not device verification · P2
 
 Semantics exist for the HUD, health meters and quick actions, and the data
-table is a good canvas alternative. There is still no TalkBack/VoiceOver
-walkthrough, no keyboard-only canvas path, no reduced-motion handling and no
-automated semantics test.
+table is a good canvas alternative. A semantics smoke test now covers the
+quick-action labels and HUD health/index nodes. There is still no
+TalkBack/VoiceOver walkthrough, no keyboard-only canvas path and no
+reduced-motion handling.
 
 **Acceptance:** a semantics test for the HUD and inspection card, a
 screen-reader pass on Android and iOS/web, keyboard access to every
@@ -697,10 +705,11 @@ inspection target, and reduced-motion behavior for decorative animation.
 
 #### H10 — Release and maintainability debt remains · P2
 
-The current branch carries a large uncommitted change set, which makes a
-second audit pass hard to attribute. `simulation_provider.dart` has grown
-back to about 1,019 lines, `main.dart` is 676 lines, and the empty fertilizer
-hook is an example of code paths that look live but are not.
+The branch previously carried a large uncommitted change set, which made a
+second audit pass hard to attribute; that set is now split into reviewable
+commits. `simulation_provider.dart` has grown back to about 1,026 lines,
+`main.dart` is 717 lines, and the empty fertilizer hook is an example of code
+paths that look live but are not.
 
 **Acceptance:** the current work is split into reviewable commits, the
 provider’s remaining concerns are named and owned, and dead hooks are removed
@@ -747,11 +756,14 @@ succeeding. The PR gate is separate from the Pages deployment.
 **Exit:** no stale game reference, no silently skipped fertilizer action, no
 silent save loss, and route/lifecycle tests pass.
 
-**Progress (2026-11-15):** H1/H2 completed in Phase 0. H3 completed: the
-versioned SharedPreferences store replaces secure storage, legacy saves
+**Status (2026-11-15): complete.** H1/H2 completed in Phase 0. H3 completed:
+the versioned SharedPreferences store replaces secure storage, legacy saves
 migrate, corrupt and unsupported saves are removed, and the resume card
-refreshes after a failed load. Background/resume and repeated-entry
-lifecycle tests remain.
+refreshes after a failed load. `simulation_lifecycle_test` covers
+background pause/resume, a paused run saving on background, and route
+exit/re-entry; `simulation_provider_test` covers repeated scenario loads.
+The simulation route now stops the keep-alive engine on disposal and
+lifecycle events instead of running behind the menu.
 
 #### Phase 2 — Quality gate and regression evidence (2–3 days)
 
@@ -765,6 +777,15 @@ lifecycle tests remain.
 
 **Exit:** every pull request is gated; localization and visual regressions are
 detected before merge; coverage trend is visible.
+
+**Status (2026-11-15): complete.** `.github/workflows/pr_quality.yml` runs the
+formatter check, analyzer, Finnish guard, ARB parity/new-unused-key check,
+the full suite with coverage, the domain/services coverage floors and the web
+build. `tool/check_l10n.py` reports 397 pre-existing unused keys but fails
+only newly added ones; `tool/check_coverage.py` floors domain at 67% and
+services at 70% (measured 67.35% and 71.18%). `simulation_golden_test` adds
+390×844 and 1024×768 goldens plus a semantics smoke test. The workflow still
+needs to be marked as a required GitHub status check.
 
 #### Phase 3 — Interaction and accessibility (4–6 days)
 
