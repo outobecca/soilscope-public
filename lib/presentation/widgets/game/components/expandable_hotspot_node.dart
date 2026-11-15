@@ -181,7 +181,7 @@ class ExpandableHotspotNode extends PositionComponent
             EffectController(duration: 0.4, curve: Curves.easeOutBack),
           ),
         );
-        
+
         hotspot.add(
           OpacityEffect.fadeIn(
             EffectController(duration: 0.3),
