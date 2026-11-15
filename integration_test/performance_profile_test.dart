@@ -8,18 +8,24 @@
 //     --driver=test_driver/integration_test.dart \
 //     --target=integration_test/performance_profile_test.dart
 //
-// The same command works on a physical Android or iOS device (use its device
-// id); those captures are lower bounds, so record the run-to-run spread before
-// comparing anything. A single run is not a before/after.
+// The phase order is rotated per run (seed printed with the results) so each
+// phase appears early, mid and late across three runs; pass
+// --dart-define=PHASE4_SEED=<int> to reproduce a run. A rotation is used
+// instead of a free shuffle because a shuffle can legitimately put the same
+// phases first in every run, which is the bias this is meant to remove.
+//
+// Add --dart-define=PHASE4_AB=true to run the interleaved A/B for the backdrop
+// blur instead of the phase capture. A = blur enabled, B = panel only, in
+// short adjacent pairs. B is always measured second, so upward drift biases
+// the result against the panel variant; read the sign with that in mind.
 //
 // The harness loads the real `compacted_clay` scenario, warms up, then records
-// frame timings for the four states in PERFORMANCE.md: steady simulation,
-// pinned inspection, open microscope and pan/zoom. FrameTiming is only
+// frame timings for the four states in PERFORMANCE.md. FrameTiming is only
 // populated in profile/release builds, so debug runs report no numbers.
 //
-// Results are printed as `PHASE4_RESULT <json>` and written to the driver's
-// integration response data. Nothing is asserted against an FPS budget: the
-// capture exists to inform decisions, not to gate CI on a device.
+// Results are printed as `PHASE4_PHASE`/`PHASE4_RESULT`/`PHASE4_AB` JSON and
+// written to the driver's integration response data. Nothing is asserted
+// against an FPS budget: the capture informs decisions, it does not gate CI.
 
 import 'dart:convert';
 
@@ -36,16 +42,24 @@ import 'package:soilscope/presentation/providers/game_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
 import 'package:soilscope/presentation/providers/ui_state_provider.dart';
+import 'package:soilscope/presentation/widgets/common/blur_surface.dart';
 import 'package:soilscope/presentation/widgets/game/soil_scope_game.dart';
 
 const String _scenarioId = 'compacted_clay';
-// Attribution phases split per-tick simulation work and decorative animation
-// from the baseline scene: run with --dart-define=PHASE4_ATTRIBUTION=true.
-const bool _attribution = bool.fromEnvironment('PHASE4_ATTRIBUTION');
 const Duration _warmUp = Duration(seconds: 20);
 const Duration _steadyWindow = Duration(seconds: 30);
 const Duration _stateWindow = Duration(seconds: 10);
+const Duration _abWindow = Duration(seconds: 3);
+const Duration _settle = Duration(seconds: 2);
 const double _frameBudgetMs = 1000 / 60;
+
+// Attribution phases split per-tick simulation work and decorative animation
+// from the baseline scene: run with --dart-define=PHASE4_ATTRIBUTION=true.
+const bool _attribution = bool.fromEnvironment('PHASE4_ATTRIBUTION');
+// Interleaved backdrop-blur A/B: run with --dart-define=PHASE4_AB=true.
+const bool _ab = bool.fromEnvironment('PHASE4_AB');
+// Fixed shuffle seed for a reproducible phase order; 0 means pick one.
+const int _seedOverride = int.fromEnvironment('PHASE4_SEED');
 
 class _PhaseStats {
   final String name;
@@ -110,154 +124,393 @@ class _PhaseStats {
   };
 }
 
+/// One scripted capture window: how to enter the state, how long to measure
+/// and how to leave it again before the next phase.
+class _PhaseSpec {
+  final String name;
+  final Duration duration;
+  final Duration settle;
+  final Future<void> Function() setUp;
+  final Future<void> Function() tearDown;
+  final void Function()? everySlice;
+
+  const _PhaseSpec({
+    required this.name,
+    required this.duration,
+    required this.setUp,
+    required this.tearDown,
+    this.settle = _settle,
+    this.everySlice,
+  });
+}
+
+class _SimHandle {
+  final ProviderContainer container;
+  const _SimHandle(this.container);
+
+  SoilScopeGame? get game => container.read(soilScopeGameProviderProvider);
+}
+
 double _ms(num micros) => double.parse((micros / 1000).toStringAsFixed(2));
+
+double _medianOf(Iterable<num> values) {
+  final list = values.map((v) => v.toDouble()).toList()..sort();
+  if (list.isEmpty) return 0;
+  final middle = list.length ~/ 2;
+  final median = list.length.isOdd
+      ? list[middle]
+      : (list[middle - 1] + list[middle]) / 2;
+  return double.parse(median.toStringAsFixed(2));
+}
+
+double _round(double value) => double.parse(value.toStringAsFixed(1));
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   // Let the engine drive frames at vsync; the harness only observes them.
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 
-  testWidgets('phase 4 device profile capture', (tester) async {
-    SharedPreferences.setMockInitialValues({
-      'gesture_intro_seen_v1': true,
-      'soilscope_onboarding_completed_v1': true,
-    });
-    tester.binding.platformDispatcher.defaultRouteNameTestValue =
-        '/simulation/$_scenarioId';
-    addTearDown(
-      tester.binding.platformDispatcher.clearDefaultRouteNameTestValue,
-    );
+  testWidgets(
+    'phase 4 device profile capture',
+    (tester) async {
+      final sim = await _loadSimulation(tester);
+      final media = MediaQuery.of(
+        tester.element(find.byType(MainSimulationScreen)),
+      );
 
-    await tester.pumpWidget(const ProviderScope(child: SoilScopeApp()));
-    await tester.pump();
+      // Let textures, particles and the isolate reach steady state before the
+      // first capture; startup frames are excluded from every window.
+      await _idle(tester, _warmUp);
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(MainSimulationScreen)),
-      listen: false,
-    );
+      final seed = _seedOverride != 0
+          ? _seedOverride
+          : DateTime.now().millisecondsSinceEpoch & 0x7fffffff;
+      var panStep = 0;
 
-    SoilScopeGame? game() => container.read(soilScopeGameProviderProvider);
+      final specs = <_PhaseSpec>[
+        _PhaseSpec(
+          name: 'steady_simulation',
+          duration: _steadyWindow,
+          setUp: () async {},
+          tearDown: () async {},
+        ),
+        _PhaseSpec(
+          name: 'pinned_inspection',
+          duration: _stateWindow,
+          setUp: () async {
+            sim.game
+              ?..focusNextInspectable()
+              ..activateKeyboardTarget();
+          },
+          tearDown: () async {
+            sim.container.read(uIStateProvider.notifier).setHoverInfo(null);
+            sim.container
+                .read(simulationSessionProvider.notifier)
+                .selectLayer(null);
+            sim.game?.clearKeyboardTarget();
+          },
+        ),
+        _PhaseSpec(
+          name: 'microscope_open',
+          duration: _stateWindow,
+          settle: const Duration(seconds: 3),
+          setUp: () async {
+            sim.container
+                .read(simulationSessionProvider.notifier)
+                .toggleMicroscope();
+          },
+          tearDown: () async {
+            sim.container
+                .read(simulationSessionProvider.notifier)
+                .toggleMicroscope();
+          },
+        ),
+        _PhaseSpec(
+          name: 'pan_zoom',
+          duration: _stateWindow,
+          setUp: () async {
+            sim.game?.resetCamera();
+          },
+          tearDown: () async {
+            sim.game?.resetCamera();
+          },
+          everySlice: () {
+            final target = sim.game;
+            if (target == null) return;
+            panStep++;
+            final direction = panStep.isEven ? 1.0 : -1.0;
+            target.panCameraBy(Vector2(140 * direction, 0));
+            target.zoomCameraBy(panStep.isEven ? 1.08 : 1 / 1.08);
+          },
+        ),
+      ];
 
-    await _waitFor(
-      tester,
-      () =>
-          container.read(simulationProvider).isRunning &&
-          (game()?.children.isNotEmpty ?? false),
-      label: 'the simulation to start',
-    );
+      if (_attribution) {
+        specs.addAll([
+          _PhaseSpec(
+            name: 'paused_simulation',
+            duration: _stateWindow,
+            setUp: () async {
+              sim.container.read(simulationProvider.notifier).stop();
+            },
+            tearDown: () async {
+              sim.container.read(simulationProvider.notifier).start();
+            },
+          ),
+          _PhaseSpec(
+            name: 'reduced_motion',
+            duration: _stateWindow,
+            setUp: () async {
+              sim.game?.setReducedMotion(true);
+            },
+            tearDown: () async {
+              sim.game?.setReducedMotion(false);
+            },
+          ),
+        ]);
+      }
 
-    final media = MediaQuery.of(
-      tester.element(find.byType(MainSimulationScreen)),
-    );
+      // Rotate so no phase is systematically late in a drifting session. With
+      // three runs, each phase lands once early, once mid and once late.
+      final rotation = seed % specs.length;
+      final ordered = <_PhaseSpec>[
+        for (var i = 0; i < specs.length; i++)
+          specs[(i + rotation) % specs.length],
+      ];
 
-    // Let textures, particles and the isolate reach steady state before the
-    // first capture; startup frames are excluded from every window.
-    await _idle(tester, _warmUp);
+      final order = <String>[];
+      final results = <_PhaseStats>[];
+      for (final spec in ordered) {
+        order.add(spec.name);
+        await spec.setUp();
+        await _idle(tester, spec.settle);
+        results.add(
+          await _capture(
+            tester,
+            spec.name,
+            spec.duration,
+            everySlice: spec.everySlice,
+          ),
+        );
+        await spec.tearDown();
+        await _idle(tester, _settle);
+      }
 
-    final results = <_PhaseStats>[];
+      if (_attribution) {
+        // Control stays last: it exists to detect drift across the session.
+        order.add('steady_control');
+        results.add(await _capture(tester, 'steady_control', _stateWindow));
+      }
 
-    results.add(await _capture(tester, 'steady_simulation', _steadyWindow));
-
-    // Pinned inspection: the same card a canvas tap opens.
-    game()
-      ?..focusNextInspectable()
-      ..activateKeyboardTarget();
-    await _idle(tester, const Duration(seconds: 2));
-    results.add(await _capture(tester, 'pinned_inspection', _stateWindow));
-
-    // Close the inspection card before the next phase: the same hover/pin
-    // channel a second tap on the layer clears.
-    container.read(uIStateProvider.notifier).setHoverInfo(null);
-    container.read(simulationSessionProvider.notifier).selectLayer(null);
-    game()?.clearKeyboardTarget();
-    await _idle(tester, const Duration(seconds: 2));
-
-    container.read(simulationSessionProvider.notifier).toggleMicroscope();
-    await _idle(tester, const Duration(seconds: 3));
-    results.add(await _capture(tester, 'microscope_open', _stateWindow));
-
-    container.read(simulationSessionProvider.notifier).toggleMicroscope();
-    await _idle(tester, const Duration(seconds: 2));
-
-    var panStep = 0;
-    results.add(
-      await _capture(
-        tester,
-        'pan_zoom',
-        _stateWindow,
-        everySlice: () {
-          final target = game();
-          if (target == null) return;
-          panStep++;
-          final direction = panStep.isEven ? 1.0 : -1.0;
-          target.panCameraBy(Vector2(140 * direction, 0));
-          target.zoomCameraBy(panStep.isEven ? 1.08 : 1 / 1.08);
+      final payload = <String, Object?>{
+        'scenario': _scenarioId,
+        'profileMode': kProfileMode,
+        'seed': seed,
+        'phaseOrder': order,
+        'device': {
+          'platform': defaultTargetPlatform.name,
+          'logicalWidth': _round(media.size.width),
+          'logicalHeight': _round(media.size.height),
+          'devicePixelRatio': media.devicePixelRatio,
         },
-      ),
-    );
-    game()?.resetCamera();
-    await _idle(tester, const Duration(seconds: 2));
+        'frameBudgetMs': double.parse(_frameBudgetMs.toStringAsFixed(2)),
+        'phases': results.map((r) => r.toJson()).toList(),
+      };
 
-    if (_attribution) {
-      // Paused: the engine stops ticking, so per-tick state merges, provider
-      // rebuilds and simulation-driven repaints disappear; rendering remains.
-      container.read(simulationProvider.notifier).stop();
-      await _idle(tester, const Duration(seconds: 2));
-      results.add(await _capture(tester, 'paused_simulation', _stateWindow));
-      container.read(simulationProvider.notifier).start();
-      await _idle(tester, const Duration(seconds: 2));
+      binding.reportData = {'phase4': payload};
+      debugPrint('PHASE4_RESULT ${jsonEncode(payload)}');
 
-      // Reduced motion freezes decorative clocks only; simulation data keeps
-      // flowing.
-      game()?.setReducedMotion(true);
-      await _idle(tester, const Duration(seconds: 2));
-      results.add(await _capture(tester, 'reduced_motion', _stateWindow));
-      game()?.setReducedMotion(false);
-      await _idle(tester, const Duration(seconds: 2));
+      expect(results, hasLength(_attribution ? 7 : 4));
+      if (kProfileMode) {
+        final captured = results.fold<int>(0, (sum, r) => sum + r.frames);
+        expect(
+          captured,
+          greaterThan(60),
+          reason:
+              'profile mode should report FrameTiming for every rendered '
+              'frame; $captured frames across the session means the harness did '
+              'not observe real frames',
+        );
+      } else {
+        debugPrint(
+          'PHASE4_WARNING debug build: FrameTiming is not reported. '
+          'Run with --profile for device numbers.',
+        );
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 8)),
+    skip: _ab,
+  );
 
-      // Control run at the end of the session: a large difference against
-      // steady_simulation means thermal throttling or drift confounds the
-      // attribution windows above.
-      results.add(await _capture(tester, 'steady_control', _stateWindow));
-    }
+  testWidgets(
+    'phase 4 interleaved backdrop-blur A/B',
+    (tester) async {
+      final sim = await _loadSimulation(tester);
+      final media = MediaQuery.of(
+        tester.element(find.byType(MainSimulationScreen)),
+      );
+      addTearDown(() => BlurSurface.backdropBlurEnabled.value = false);
 
-    final payload = <String, Object?>{
-      'scenario': _scenarioId,
-      'profileMode': kProfileMode,
-      'device': {
-        'platform': defaultTargetPlatform.name,
-        'logicalWidth': _round(media.size.width),
-        'logicalHeight': _round(media.size.height),
-        'devicePixelRatio': media.devicePixelRatio,
-      },
-      'frameBudgetMs': double.parse(_frameBudgetMs.toStringAsFixed(2)),
-      'phases': results.map((r) => r.toJson()).toList(),
-    };
+      sim.container.read(simulationSessionProvider.notifier).toggleMicroscope();
+      await _idle(tester, const Duration(seconds: 3));
 
-    binding.reportData = {'phase4': payload};
-    debugPrint('PHASE4_RESULT ${jsonEncode(payload)}');
+      // A = backdrop blur (previous behaviour), B = panel only (the change).
+      // Short adjacent A/B pairs keep a drifting scene from swamping the
+      // signal: the scene grows within a minute and a long block design would
+      // measure the drift instead of the surface.
+      const pattern = [
+        'A',
+        'B',
+        'A',
+        'B',
+        'A',
+        'B',
+        'A',
+        'B',
+        'A',
+        'B',
+        'A',
+        'B',
+      ];
+      final blocks = <Map<String, Object?>>[];
+      final byCondition = {'A': <_PhaseStats>[], 'B': <_PhaseStats>[]};
 
-    expect(results, hasLength(_attribution ? 7 : 4));
-    if (kProfileMode) {
-      final captured = results.fold<int>(0, (sum, r) => sum + r.frames);
+      for (final condition in pattern) {
+        BlurSurface.backdropBlurEnabled.value = condition == 'A';
+        await _idle(tester, const Duration(seconds: 1));
+        final stats = await _capture(
+          tester,
+          'microscope_blur_$condition',
+          _abWindow,
+        );
+        byCondition[condition]!.add(stats);
+        blocks.add({
+          ...stats.toJson(),
+          'condition': condition,
+          // Proves the switch changed the tree rather than being a no-op.
+          'backdropFilters': find.byType(BackdropFilter).evaluate().length,
+        });
+      }
+
+      BlurSurface.backdropBlurEnabled.value = false;
+      sim.container.read(simulationSessionProvider.notifier).toggleMicroscope();
+
+      final blurRaster = _medianOf(
+        byCondition['A']!.map((stats) => stats.rasterP50),
+      );
+      final panelRaster = _medianOf(
+        byCondition['B']!.map((stats) => stats.rasterP50),
+      );
+      final blurBuild = _medianOf(
+        byCondition['A']!.map((stats) => stats.buildP50),
+      );
+      final panelBuild = _medianOf(
+        byCondition['B']!.map((stats) => stats.buildP50),
+      );
+
+      // Pair each A block with the B block that follows it.
+      final pairedDeltas = <double>[];
+      for (var i = 0; i + 1 < pattern.length; i += 2) {
+        if (pattern[i] != 'A' || pattern[i + 1] != 'B') continue;
+        final a = byCondition['A']![i ~/ 2].rasterP50;
+        final b = byCondition['B']![i ~/ 2].rasterP50;
+        pairedDeltas.add((a - b) / 1000);
+      }
+
+      final payload = <String, Object?>{
+        'phase': 'microscope_blur_ab',
+        'profileMode': kProfileMode,
+        'pattern': pattern,
+        'blocksPerCondition': byCondition['A']!.length,
+        'blurRasterP50Ms': _ms(blurRaster),
+        'panelRasterP50Ms': _ms(panelRaster),
+        'rasterDeltaMs': _ms(blurRaster - panelRaster),
+        'rasterDeltaPercent': blurRaster == 0
+            ? 0
+            : double.parse(
+                (((blurRaster - panelRaster) * 100) / blurRaster)
+                    .toStringAsFixed(1),
+              ),
+        'blurBuildP50Ms': _ms(blurBuild),
+        'panelBuildP50Ms': _ms(panelBuild),
+        'pairedRasterDeltasMs': [
+          for (final delta in pairedDeltas)
+            double.parse(delta.toStringAsFixed(2)),
+        ],
+        'pairedRasterDeltaMedianMs': _medianOf(pairedDeltas),
+        'pairedRasterDeltaMeanMs': double.parse(
+          (pairedDeltas.isEmpty
+                  ? 0
+                  : pairedDeltas.reduce((a, b) => a + b) / pairedDeltas.length)
+              .toStringAsFixed(2),
+        ),
+        'device': {
+          'platform': defaultTargetPlatform.name,
+          'logicalWidth': _round(media.size.width),
+          'logicalHeight': _round(media.size.height),
+          'devicePixelRatio': media.devicePixelRatio,
+        },
+        'blocks': blocks,
+      };
+
+      binding.reportData = {'phase4Ab': payload};
+      debugPrint('PHASE4_AB ${jsonEncode(payload)}');
+
+      expect(byCondition['A'], hasLength(6));
+      expect(byCondition['B'], hasLength(6));
+      expect(pairedDeltas, hasLength(6));
+      final blurLayers = blocks
+          .where((block) => block['condition'] == 'A')
+          .map((block) => block['backdropFilters']! as int);
+      final panelLayers = blocks
+          .where((block) => block['condition'] == 'B')
+          .map((block) => block['backdropFilters']! as int);
       expect(
-        captured,
-        greaterThan(60),
-        reason:
-            'profile mode should report FrameTiming for every rendered '
-            'frame; $captured frames across four phases means the harness did '
-            'not observe real frames',
+        blurLayers.every((count) => count > 0),
+        isTrue,
+        reason: 'the blur condition must mount a BackdropFilter',
       );
-    } else {
-      debugPrint(
-        'PHASE4_WARNING debug build: FrameTiming is not reported. '
-        'Run with --profile for device numbers.',
+      expect(
+        panelLayers.every((count) => count == 0),
+        isTrue,
+        reason: 'the panel condition must not mount a BackdropFilter',
       );
-    }
-  }, timeout: const Timeout(Duration(minutes: 8)));
+      if (kProfileMode) {
+        expect(blocks.every((block) => (block['frames']! as int) > 0), isTrue);
+      }
+    },
+    timeout: const Timeout(Duration(minutes: 6)),
+    skip: !_ab,
+  );
 }
 
-double _round(double value) => double.parse(value.toStringAsFixed(1));
+Future<_SimHandle> _loadSimulation(WidgetTester tester) async {
+  SharedPreferences.setMockInitialValues({
+    'gesture_intro_seen_v1': true,
+    'soilscope_onboarding_completed_v1': true,
+  });
+  tester.binding.platformDispatcher.defaultRouteNameTestValue =
+      '/simulation/$_scenarioId';
+  addTearDown(tester.binding.platformDispatcher.clearDefaultRouteNameTestValue);
+
+  await tester.pumpWidget(const ProviderScope(child: SoilScopeApp()));
+  await tester.pump();
+
+  final container = ProviderScope.containerOf(
+    tester.element(find.byType(MainSimulationScreen)),
+    listen: false,
+  );
+  final sim = _SimHandle(container);
+
+  await _waitFor(
+    tester,
+    () =>
+        container.read(simulationProvider).isRunning &&
+        (sim.game?.children.isNotEmpty ?? false),
+    label: 'the simulation to start',
+  );
+  return sim;
+}
 
 Future<void> _waitFor(
   WidgetTester tester,

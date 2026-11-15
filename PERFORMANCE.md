@@ -15,7 +15,7 @@ script for before/after comparisons.
 |---|---|---|---|---|---|
 | Low-end Android | 4K Hybrid STB (Amlogic HY46B, Mali-G31) | Android 14 / API 34, 1920×1080 @ dpr 2.0 | `flutter drive --profile` | 2026-11-15 | Captured, below budget |
 | Mid-range Android | Record model | Record API level | `flutter run --profile` | — | Pending |
-| Desktop (Linux) | AMD Radeon 760M, Ryzen, Flutter 3.47.9 | Pop!_OS 24.04, kernel 7.2.15 | `flutter drive --profile` | 2026-11-15 | Captured, median of 3 runs; raster-bound |
+| Desktop (Linux) | AMD Radeon 760M, Ryzen, Flutter 3.47.9 | Pop!_OS 24.04, kernel 7.2.15 | `flutter drive --profile` | 2026-11-15 | Captured, median of 3 rotated runs; raster-bound |
 | Desktop Chrome | Record GPU/CPU | Record Chrome version | Flutter web profile | — | Pending |
 | iPhone / iPad | Record model | Record iOS version | `flutter run --profile` | — | Pending if hardware is available |
 
@@ -114,53 +114,79 @@ What survives the confound:
 same baseline and load a fixed pre-advanced simulation state so both runs see
 the same scene. Sequential phases cannot be compared as a before/after.
 
-### Capture: Linux desktop reference (median of 3 runs), 2026-11-15
+### Capture: Linux desktop reference (rotated order, 3 runs), 2026-11-15
 
-The Linux desktop is the reference environment for repeatable captures: it has
-real GPU acceleration, does not thermally throttle, and every run starts from
-the same fresh scenario. Same harness and scenario as the device rows
-(AMD Radeon 760M via Mesa radeonsi, OpenGL 4.6, Pop!_OS 24.04, kernel 7.2.15),
-1280×720 at dpr 1.0, Flutter 3.47.9 profile build, default four-phase protocol.
+The Linux desktop is the reference environment: real GPU (AMD Radeon 760M via
+Mesa radeonsi, OpenGL 4.6), Pop!_OS 24.04, kernel 7.2.15, 1280×720 at dpr 1.0,
+Flutter 3.47.9 profile build, same scenario and harness as the device rows.
 
-Command, run three times on three fresh installs of the app:
+Three fresh runs, seeds 101–103. The phase order is a rotation of the protocol
+list (`seed % 4`) instead of a free shuffle: a shuffle can legitimately put the
+same phases first in every run, which is the bias the rotation removes. With
+three runs each phase lands once early, once mid-session and once late.
 
-```sh
-flutter drive --profile -d linux \
-  --driver=test_driver/integration_test.dart \
-  --target=integration_test/performance_profile_test.dart
-```
+| Run | Phase order |
+|---|---|
+| 101 | pinned inspection, microscope, pan + zoom, steady |
+| 102 | microscope, pan + zoom, steady, pinned inspection |
+| 103 | pan + zoom, steady, pinned inspection, microscope |
 
-| Phase | Frames | FPS | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Total p50 / p95 (ms) | Raster p50 across runs (ms) |
-|---|---|---|---|---|---|---|
-| Steady simulation | 470 | 15.64 | 13.4 / 36.8 | 61.4 / 86.3 | 116.0 / 163.9 | 46.5–63.7 |
-| Pinned inspection | 134 | 13.39 | 16.6 / 42.7 | 74.0 / 80.9 | 141.2 / 154.0 | 58.2–82.2 |
-| Microscope open | 93 | 9.25 | 21.8 / 45.9 | 108.1 / 128.4 | 209.8 / 237.2 | 100.8–119.4 |
-| Pan + zoom | 87 | 8.69 | 20.9 / 48.5 | 113.6 / 145.8 | 225.7 / 268.2 | 93.9–118.3 |
+Medians of the three per-run p50/p95 values:
 
-Medians are of the three per-run p50/p95 values. Every window has 100 % janky
-frames against a 16.67 ms budget.
+| Phase | FPS | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Total p50 (ms) | Raster p50 across runs (ms) |
+|---|---|---|---|---|---|
+| Steady simulation | 9.94 | 17.6 / 40.7 | 98.7 / 123.4 | 190.3 | 69.9–99.1 |
+| Pinned inspection | 13.68 | 15.0 / 43.0 | 72.1 / 77.9 | 137.9 | 50.8–95.7 |
+| Microscope open | 13.71 | 13.8 / 37.6 | 73.3 / 87.5 | 138.9 | 49.8–140.7 |
+| Pan + zoom | 11.11 | 13.4 / 38.3 | 78.7 / 103.0 | 155.0 | 61.8–86.3 |
 
-What the desktop reference establishes:
+What the rotated capture establishes:
 
-- Build p50 stays between 13.4 and 21.8 ms, close to or under the 16.7 ms
-  budget, while raster p50 is 61–114 ms. The bottleneck is GPU draw work, not
-  Dart, the solvers or provider rebuilds. That matches the phone and means the
-  next optimization should target raster.
-- Median deltas against steady: pinned inspection +12.7 ms raster and +3.2 ms
-  build, microscope +46.8 ms raster and +8.4 ms build, pan/zoom +52.3 ms
-  raster and +7.5 ms build. Blurred HUD surfaces and full-canvas redraw are
-  the measured costs, in that order.
-- Run-to-run raster spread is large: steady 46.5–63.7 ms, microscope
-  100.8–119.4 ms, pan/zoom 93.9–118.3 ms. A single desktop run is therefore
-  not evidence for a before/after; use the median of at least three runs, and
-  prefer an interleaved A/B for a specific change.
-- Build p95 (36.8–48.5 ms) shows that even the parts that are usually cheap
-  spike above budget, so p50 alone understates the jank.
+- The previous fixed-order numbers were placement artifacts. Steady was always
+  measured first and read 61.4 ms raster; with rotation it reads 98.7 ms
+  because some runs sample it late. The microscope was always second and read
+  108.1 ms; with rotation it reads 73.3 ms. The old "overlay costs" were the
+  session drift, not the overlays.
+- Spread is still large (steady 69.9–99.1 ms, microscope 49.8–140.7 ms).
+  Rotation removes the systematic bias, but three 10–30 s windows cannot
+  average out a 2× drift within a session. Treat these medians as direction,
+  not as a baseline for a before/after; use the interleaved A/B for that.
+- Build p50 stays at 13.4–17.6 ms, at or near the 16.7 ms budget; raster is
+  72–99 ms. The bottleneck remains GPU draw work.
+- These runs used the panel-only `BlurSurface` variant described below. The
+  A/B found the blur unmeasurable, so the restored default does not change
+  these numbers beyond noise.
 
-This run reports ~15.6 FPS steady where an earlier DevTools desktop profile of
-the pinned-inspection state reported ~27 FPS. Different window size, state and
-instrumentation, so the two are not directly comparable; both are desktop
-signals, not release-device baselines.
+### First optimization: HUD backdrop blur (rejected by measurement)
+
+Candidate: drop the `BackdropFilter` from `BlurSurface` (the panel-only look
+phones already use below 600 px), because the microscope phase had carried the
+largest apparent delta.
+
+`PHASE4_AB` opens the microscope and alternates A (blur) and B (panel) in 3 s
+blocks, six pairs, asserting that A blocks mount a `BackdropFilter` and B
+blocks mount none. That assertion passed, so the switch is real. Deltas are
+A − B, so a positive value would mean the blur costs time. The pairing always
+measures B second, which biases the result *against* B under upward drift —
+the bias direction is stated so a negative value is not read as a blur win.
+
+| Target | Blur p50 (ms) | Panel p50 (ms) | Pooled delta | Paired delta median | Paired delta mean |
+|---|---|---|---|---|---|
+| Linux desktop, running | 59.8 | 59.9 | −0.1 | −2.37 | −2.33 |
+| Linux desktop, paused | 34.3 | 33.7 | +0.5 | +0.43 | +0.28 |
+| Low-end Android, running | 185.7 | 192.4 | −6.7 | −7.47 | −12.47 |
+
+No target shows a win for removing the blur; the negative values sit inside
+the drift bias against the panel variant. The visual default is therefore
+restored to blurred, and the switch remains only as measurement
+instrumentation. The optimization log records the rejection rather than an
+unmeasured change.
+
+The useful side measurement: with the simulation paused, the open-microscope
+state renders at ~34 ms raster on desktop versus ~60 ms running. The cost is
+the animated scene, not the HUD surface, so the next candidate should target
+per-frame animated draw work (particles, flow lines, plant glow) rather than
+panel compositing.
 
 ### Provisional budget
 
@@ -236,33 +262,33 @@ before drawing any retention conclusion.
 
 | Date | Change | Before | After | Device | Result |
 |---|---|---|---|---|---|
-| — | No optimization accepted yet | — | — | Low-end Android, Linux desktop | Baselines captured; scene is raster-bound; the next change needs an interleaved A/B to be attributable |
+| 2026-11-15 | `BlurSurface` backdrop blur removed (panel-only) | Microscope raster 59.8 ms desktop, 185.7 ms box | 59.9 ms desktop, 192.4 ms box | Linux desktop, low-end Android | **Rejected:** paired deltas inside drift bias, no measured win; default restored to blurred |
 
 ## Status
 
-Two matrix rows are now captured. The Linux desktop reference has the
-three-run median the protocol asks for: ~15.6 FPS steady (1280×720), build
-13.4 ms p50 against raster 61.4 ms p50. The low-end Android box is a
-single-run lower bound: ~5.4–5.8 FPS, build 100–106 ms, raster 169–182 ms, and
-it drifts 2.5× across a session. Both are raster-bound, so the bottleneck is
-GPU draw work, not Dart or the solver.
+Two matrix rows are captured. The Linux desktop reference now has the
+three-run median with rotated phase order: steady 9.9 FPS at 1280×720, build
+17.6 ms p50 against raster 98.7 ms p50, and 72–99 ms raster across the four
+phases. The low-end Android box is a single-run lower bound at ~5.4–5.8 FPS.
+Both are raster-bound, so the bottleneck is GPU draw work, not Dart or the
+solver.
+
+Rotation also corrected the phase picture: the earlier fixed-order capture
+measured steady first every time and microscope second every time, which made
+steady look 1.6× better and the microscope 1.5× worse than the rotated
+medians. Three windows per run still leave a large spread (49.8–140.7 ms on
+the microscope), so the phase medians are directional only; a change must be
+verified with the interleaved A/B.
+
+The first candidate, removing the HUD backdrop blur, failed that test: paired
+deltas were −2.4 ms on desktop and −7.5 ms on the box, both in the drift-bias
+direction against the panel variant, so there was no measured win and the
+blurred default was restored. Pausing the simulation cuts the microscope state
+from ~60 ms to ~34 ms raster on desktop, so the cost is per-frame animated
+draw work, not panel compositing. That is the next candidate class.
 
 The matrix still needs a mid-range phone, a desktop browser and (if available)
-an iOS device. The Android row still needs repeated runs; the desktop row is
-the one to compare against for a change, because fresh runs there are
-repeatable within ~30 % and the same scene is loaded every time.
-
-Measured candidates for that A/B, in order of evidence:
-
-1. Blurred HUD surfaces and blur-heavy canvas overlays. Median deltas on the
-   desktop reference: microscope +46.8 ms raster, inspection card +12.7 ms;
-   on the box the microscope is +84 ms in a run already drifting slow.
-   `BackdropFilter` and the `MaskFilter.blur` calls are the first suspects.
-2. Full-canvas redraw under camera motion (+52.3 ms raster on the desktop
-   median, +138 ms box), consistent with re-rasterizing every blurred layer
-   as the view changes.
-3. Per-tick engine and provider work, which is bounded to ~20 ms of build
-   when the simulation is paused on the box and is not the primary target.
+an iOS device, and the Android row still needs repeated runs.
 
 H7 stays open until at least the mid-range Android row exists and a measured
 optimization moves the low-end capture toward the budget without changing

@@ -876,17 +876,25 @@ are recorded: the device is far below budget, raster dominates build, and
 pausing the simulation lowers build (per-tick work is real but secondary to
 scene recording).
 
-The Linux desktop is now the reference environment for repeatable captures:
-three fresh profile runs give a median steady 15.6 FPS at 1280×720, build
-13.4 ms p50 / 36.8 ms p95 against raster 61.4 ms p50 / 86.3 ms p95. Raster is
-3.7× the frame budget while build is under it, which confines the next change
-to GPU draw work; run-to-run raster spread is ~30 %, so single runs are not
-usable as before/after evidence. The microscope (+46.8 ms raster) and camera
-motion (+52.3 ms) are the largest measured add-ons.
+The Linux desktop is the reference environment for repeatable captures. Three
+fresh profile runs with rotated phase order give a median steady 9.9 FPS at
+1280×720, build 17.6 ms p50 / 40.7 ms p95 against raster 98.7 ms p50 /
+123.4 ms p95; across phases raster is 72–99 ms. Raster remains the bottleneck,
+but the rotation also showed that the earlier fixed-order "overlay costs" were
+placement artifacts: steady was always measured first and the microscope
+always second.
+
+The harness now supports an interleaved A/B (`PHASE4_AB`) that alternates two
+conditions in short adjacent blocks and asserts the condition actually changed
+the widget tree. The first candidate, removing the HUD `BackdropFilter`, was
+rejected by it: paired deltas were −2.4 ms on desktop and −7.5 ms on the box,
+both inside the drift bias against the panel variant, with no measured win. The
+blurred default is restored and the rejection is recorded in `PERFORMANCE.md`.
+Pausing the simulation drops the microscope state from ~60 ms to ~34 ms raster,
+so the next candidate is per-frame animated draw work.
 
 The device matrix still lacks a mid-range phone, a desktop browser and iOS
-hardware, and the Android row still needs repeated runs. No optimization has
-been accepted yet; the desktop median is its before-profile.
+hardware, and the Android row still needs repeated runs.
 
 #### Phase 5 — Scientific credibility and sustainability (ongoing)
 
