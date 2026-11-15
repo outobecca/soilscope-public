@@ -5,6 +5,12 @@ validation dataset. The reference-check tab says so in the UI, and the CI gate
 checks that the model still reproduces the committed illustrative pattern. It
 is a regression gate, not evidence of field accuracy.
 
+**Measured data is an external blocker.** Producing a real validation dataset
+needs field or lysimeter observations at known depths and times with documented
+uncertainty. Until such a dataset exists, the illustrative gate remains the
+only accuracy check and no result may be described as field-validated (see
+[Measured data: external blocker](#measured-data-external-blocker)).
+
 The active reference is:
 
 ```
@@ -19,6 +25,9 @@ No code changes are needed to replace it.
 168-hour soil column (`ValidationReferenceRun`), samples the model at the
 reference times, and computes NSE and RMSE for every series. It fails if any
 metric crosses the threshold declared **inside the reference file**.
+`test/validation/model_version_test.dart` additionally requires the file's
+`model` block to match the current parameter fingerprint, so a solver constant
+cannot change without a deliberate reference update.
 
 Current illustrative thresholds:
 
@@ -39,6 +48,38 @@ the same model. A 5% change to the hydrology interface flux was shown to move
 water NSE to 0.999923 and RMSE to 2.6e-4, which fails these tolerances. They are
 **not** a claim that the model is within 1e-5 m3/m3 of reality.
 
+## Model parameter fingerprint
+
+The model-affecting constants in `lib/core/simulation_constants.dart` are
+versioned by `ModelParameterSet`
+(`lib/domain/models/model_parameter_set.dart`) as an `id`, a `version` and an
+8-character fingerprint. Rendering and component-layout constants are
+deliberately excluded, so a visual change does not invalidate a scientific
+reference.
+
+The fingerprint is recorded in three places:
+
+- the saved session envelope (`simulation_session` → `model`),
+- this reference file (`model`),
+- Phase 4 profile captures (`model` in the JSON payload).
+
+Print the current identity with:
+
+```bash
+dart run tool/model_version.dart
+```
+
+When a listed constant changes:
+
+1. bump `ModelParameterSet.currentVersion`,
+2. update the pinned fingerprint in `test/validation/model_version_test.dart`,
+3. regenerate the illustrative values and update the `model` block in
+   `reference.json`,
+4. update the capture expectations in `PERFORMANCE.md`.
+
+A save produced by a different parameter set still loads, but the mismatch is
+logged with both labels; it is never silently presented as the current model.
+
 ## JSON schema
 
 The fixture is one JSON object. Provenance lives beside the numbers.
@@ -51,6 +92,11 @@ The fixture is one JSON object. Provenance lives beside the numbers.
   "provenanceNotes": "Method, calibration, license, contact, limitations.",
   "sampling": "Depths, dates/intervals, and what each point represents.",
   "generatedBy": "Instrument/process and the script or person that produced it.",
+  "model": {
+    "id": "soilscope-core",
+    "version": 1,
+    "fingerprint": "8712a30f"
+  },
   "relativeTimes": [0.125, 0.25, 0.5, 1.0],
   "series": [
     {
@@ -162,10 +208,29 @@ change is intentional and reviewed, and record the reason in `provenanceNotes`.
 Capture the eight sampled values from that run and update `reference.json`; do
 not regenerate it as part of a normal fix.
 
+## Measured data: external blocker
+
+No measured dataset is bundled, and none can be produced from this repository
+alone. A defensible dataset requires site, depth and time-resolved observations
+with documented methods, units and uncertainty; synthesising one would be
+fabrication. Until that external input arrives:
+
+- the bundled reference stays `kind: "illustrative"`;
+- the gate proves reproducibility and internal consistency, not field accuracy;
+- the UI badge, README and any paper must say the same.
+
+When data arrives, follow
+[Replacing the illustrative reference with measured data](#replacing-the-illustrative-reference-with-measured-data)
+and keep a `model` block in the new file so the comparison is tied to the
+parameterisation that produced it.
+
 ## What this does not establish
 
 This gate does not establish that SoilScope is validated against field
 measurements. It establishes that the committed model still matches a
 provenance-stamped illustrative pattern within the declared tolerances. Only a
 `kind: "measured"` dataset with real observations, matching depths/times, and
-defensible thresholds can support an accuracy claim.
+defensible thresholds can support an accuracy claim. The conservation and
+sensitivity tests in `test/validation/` show that pools stay physical and that
+parameters move results in the expected direction; they are not calibration
+evidence either.

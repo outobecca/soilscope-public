@@ -128,6 +128,7 @@ Seuraavat osa-alueet vaativat vielä tutkimuksellista validointia ja kooditason 
 * **Visuaaliset rajoitteet vs. Biologinen todellisuus:** Suorituskykysyistä (vältääksemme Flame-moottorin GC-kuormitusta ja renderöinnin hidastumista) mikrobiklustereiden ja ravinnehiukkasten maksimimäärät on tällä hetkellä kovakoodattu. Tämä abstrahoi visuaalisesti biomassan todellisen mittakaavan.
 * **Denitrifikaation reunaehdot:** Veden kyllästämän huokostilavuuden (WFPS) kynnysarvot ja niiden suora korrelaatio typen kaasumaiseen hävikkiin ($N_2$, $N_2O$) vaativat hienosäätöä asiantuntijoiden datasettien pohjalta.
 * **Kosteusprofiili ja kapillaarisuus:** Maaperän kosteutta käsitellään toistaiseksi liian homogeenisesti; kapillaarisen nousun fysiikka savimaissa puuttuu vielä mallista.
+* **Validointiaineisto:** Mukana ei ole mitattua kenttädataa. Tarkkuusportti on toistaiseksi illustratiivinen regressiotarkistus, ei näyttö kenttätarkkuudesta. Mitatun aineiston pudotusohje on tiedostossa [`docs/validation/README.md`](docs/validation/README.md).
 
 Otamme mielellämme vastaan Pull Requesteja – koskivat ne sitten Dart-koodin optimointia tai fysiologisten kaavojen korjaamista!
 
@@ -152,7 +153,6 @@ Katso täydet ehdot tiedostosta [LICENSE.md](LICENSE.md).
 | **Freezed** | Immuuttomat datamallit | MIT |
 | **Intl** | Kansainvälistyminen ja lokalisointi | BSD-3-Clause |
 | **Shared Preferences** | Paikallinen asetusten tallennus | BSD-3-Clause |
-| **Flutter Secure Storage** | Suojattu avainten tallennus | BSD-3-Clause |
 | **JSON Annotation** | JSON-serialisointi | BSD-3-Clause |
 
 

@@ -20,6 +20,9 @@ void main() {
     final dataset = ReferenceDataset.fromJson(
       jsonDecode(raw) as Map<String, dynamic>,
     );
+    // A metric means nothing without the parameterisation behind it.
+    // ignore: avoid_print
+    print('GATE model: ${dataset.model?.label ?? 'unrecorded'}');
     final history = ValidationReferenceRun.run();
     final referenceTimes = dataset.timesFor(history.last.timeElapsed);
 

@@ -4,6 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/debug_log.dart';
 import '../models/biophysical_state.dart';
+import '../models/model_parameter_set.dart';
+
+/// A loaded session together with the model parameter set that produced it.
+class SavedSession {
+  final BiophysicalState state;
+  final ModelParameterSet? model;
+
+  const SavedSession({required this.state, this.model});
+}
 
 /// Reads and writes the resumable session in platform preferences.
 ///
@@ -46,7 +55,14 @@ class SimulationPersistence {
     }
   }
 
-  Future<BiophysicalState?> load() async {
+  Future<BiophysicalState?> load() async => (await loadSession())?.state;
+
+  /// Loads the saved session and the model parameter set recorded with it.
+  ///
+  /// A missing model block (legacy or pre-versioning save) is allowed. A
+  /// different fingerprint is logged rather than rejected: the state is still
+  /// resumable, but the caller can tell that the physics changed under it.
+  Future<SavedSession?> loadSession() async {
     final SharedPreferences prefs;
     try {
       prefs = await _preferences();
@@ -57,11 +73,11 @@ class SimulationPersistence {
 
     final encoded = prefs.getString(stateKey);
     if (encoded != null) {
-      final state = _decodeVersioned(encoded);
-      if (state == null) {
+      final session = _decodeVersioned(encoded);
+      if (session == null) {
         await _discard(prefs, stateKey);
       }
-      return state;
+      return session;
     }
 
     final legacy = prefs.getString(legacyStateKey);
@@ -76,20 +92,30 @@ class SimulationPersistence {
     // Upgrade the pre-versioned raw JSON. save() removes the legacy key only
     // after the versioned value has been written successfully.
     await save(state);
-    return state;
+    return SavedSession(state: state, model: ModelParameterSet.current);
   }
 
-  String _encode(BiophysicalState state) =>
-      jsonEncode({'version': formatVersion, 'state': state.toJson()});
+  String _encode(BiophysicalState state) => jsonEncode({
+    'version': formatVersion,
+    'model': ModelParameterSet.current.toJson(),
+    'state': state.toJson(),
+  });
 
-  BiophysicalState? _decodeVersioned(String encoded) {
+  SavedSession? _decodeVersioned(String encoded) {
     try {
       final envelope = jsonDecode(encoded);
       if (envelope is! Map<String, dynamic>) return null;
       if (envelope['version'] != formatVersion) return null;
       final data = envelope['state'];
       if (data is! Map<String, dynamic>) return null;
-      return BiophysicalState.fromJson(data);
+      final model = ModelParameterSet.fromJson(envelope['model']);
+      if (model != null && !model.sameAsCurrent()) {
+        debugLog(
+          'Saved session was produced by ${model.label}; '
+          'current model is ${ModelParameterSet.current.label}',
+        );
+      }
+      return SavedSession(state: BiophysicalState.fromJson(data), model: model);
     } catch (error) {
       debugLog('Error loading saved state: $error');
       return null;

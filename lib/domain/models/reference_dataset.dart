@@ -16,6 +16,7 @@ class ReferenceDataset {
     required this.series,
     this.relativeTimes,
     this.timesSeconds,
+    this.model,
   }) {
     if (kind != 'illustrative' && kind != 'measured') {
       throw FormatException('Unknown reference kind: $kind');
@@ -77,6 +78,11 @@ class ReferenceDataset {
   final String provenanceNotes;
   final String sampling;
   final String generatedBy;
+
+  /// The model parameter set that generated or was compared against this
+  /// reference. Recorded so a parameter change can be traced to the dataset
+  /// it invalidates.
+  final ModelReference? model;
   final List<double>? relativeTimes;
   final List<double>? timesSeconds;
   final List<ReferenceSeries> series;
@@ -117,6 +123,7 @@ class ReferenceDataset {
 
     final relativeTimes = readTimes('relativeTimes');
     final timesSeconds = readTimes('timesSeconds');
+    final model = ModelReference.fromJson(json['model']);
 
     final rawSeries = json['series'];
     if (rawSeries is! List || rawSeries.isEmpty) {
@@ -162,7 +169,49 @@ class ReferenceDataset {
       relativeTimes: relativeTimes,
       timesSeconds: timesSeconds,
       series: series,
+      model: model,
     );
+  }
+}
+
+/// Identifies the parameter set behind a reference dataset.
+class ModelReference {
+  final String id;
+  final int version;
+  final String fingerprint;
+
+  const ModelReference({
+    required this.id,
+    required this.version,
+    required this.fingerprint,
+  });
+
+  String get label => '$id v$version ($fingerprint)';
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'version': version,
+    'fingerprint': fingerprint,
+  };
+
+  static ModelReference? fromJson(Object? raw) {
+    if (raw == null) return null;
+    if (raw is! Map) {
+      throw const FormatException('Reference "model" must be an object');
+    }
+    final id = raw['id'];
+    final version = raw['version'];
+    final fingerprint = raw['fingerprint'];
+    if (id is! String || id.trim().isEmpty) {
+      throw const FormatException('Reference model is missing "id"');
+    }
+    if (version is! int || version <= 0) {
+      throw const FormatException('Reference model is missing "version"');
+    }
+    if (fingerprint is! String || fingerprint.trim().isEmpty) {
+      throw const FormatException('Reference model is missing "fingerprint"');
+    }
+    return ModelReference(id: id, version: version, fingerprint: fingerprint);
   }
 }
 

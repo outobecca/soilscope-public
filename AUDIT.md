@@ -898,16 +898,28 @@ hardware, and the Android row still needs repeated runs.
 
 #### Phase 5 — Scientific credibility and sustainability (ongoing)
 
-1. H8: add a measured validation drop-in when data is available; add
-   conservation and sensitivity tests now.
-2. Version the model/parameter set and record it with saved runs and
-   validation reports.
-3. Continue H10 refactoring: split the remaining provider responsibilities,
-   narrow the game’s `WidgetRef` dependency and remove dead hooks.
-4. Re-run the localization, accessibility and performance checks each release.
+1. **H8 — internal half done; measured half blocked on data.** Conservation
+   (`test/validation/conservation_test.dart`) and directional sensitivity
+   (`test/validation/sensitivity_test.dart`) tests pass. The measured drop-in
+   path is documented and the absent dataset is named as an external blocker in
+   `docs/validation/README.md`. No measured data were fabricated.
+2. **Done.** `ModelParameterSet` versions the model-affecting constants and
+   records `{id, version, fingerprint}` in saved sessions, `reference.json` and
+   Phase 4 captures. The validation gate fails on parameter drift until the
+   reference is updated deliberately; `model_version_test.dart` pins the
+   fingerprint.
+3. **Open — H10 remains incremental.** `simulation_provider.dart` still carries
+   the intervention wrappers, autosave and isolate sync (~1,026 lines), and the
+   game widgets still read through `WidgetRef`. This pass deliberately did not
+   attempt the provider split, to keep the scientific change reviewable; the
+   next slice is moving the intervention commands behind a narrow controller.
+4. **Done.** `tool/release_check.sh` runs the model printout, analyzer, locale
+   guards, full tests, validation gates, benchmarks and (unless `SKIP_WEB=1`)
+   the web build.
 
 **Exit:** the project can state exactly what is validated, what is
 illustrative and what remains unmeasured; the release path is repeatable.
+Phase 5 meets that exit except for the ongoing H10 split (item 3).
 
 ### 7.3 Mission exit criteria
 

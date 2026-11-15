@@ -26,6 +26,11 @@ script for before/after comparisons.
 build/raster durations for each protocol phase. It prints one
 `PHASE4_PHASE {json}` line per phase and a final `PHASE4_RESULT {json}`.
 
+Every payload carries a `model` block (`id`, `version`, `fingerprint`) from
+`ModelParameterSet`. Compare before/after numbers only within the same
+fingerprint: a parameter change can move frame costs and invalidates the
+comparison. Print the current identity with `dart run tool/model_version.dart`.
+
 ```sh
 flutter drive --profile -d <device-id> \
   --driver=test_driver/integration_test.dart \
