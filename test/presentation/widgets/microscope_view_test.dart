@@ -117,6 +117,7 @@ void main() {
 
       expect(game, isNotNull, reason: 'the game should mount');
       expect(rhizosphere, isNotNull, reason: 'the microscope should mount');
+      final mountedGame = game!;
       expect(rhizosphere!.opacity, 0.0);
 
       await tester.tap(find.byIcon(Icons.biotech_outlined).first);
@@ -125,7 +126,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
-      expect(game!.isInspectionPaused, isTrue);
+      expect(mountedGame.isInspectionPaused, isTrue);
       expect(rhizosphere.isVisible, isTrue);
       expect(
         rhizosphere.opacity,

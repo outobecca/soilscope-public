@@ -14,22 +14,30 @@ class ExpandableHotspotNode extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks {
   final String layerId;
   final List<String> metrics;
-  
+
+  /// Position inside the owning layer, normalised to 0..1. The layer's world
+  /// rect can change when the scenario or viewport changes; keeping the
+  /// anchor relative lets the node follow its layer instead of staying where
+  /// it was spawned and opening another layer's data.
+  final Vector2 layerAnchor;
+
   bool _isExpanded = false;
   final List<DataHotspotComponent> _childHotspots = [];
-  
+
   late final CircleComponent _baseIndicator;
 
   ExpandableHotspotNode({
     required this.layerId,
     required this.metrics,
     required Vector2 position,
-  }) : super(
-          position: position,
-          size: Vector2.all(80), // Increased container size for touch ergonomics
-          anchor: Anchor.center,
-          priority: 1001,
-        );
+    Vector2? layerAnchor,
+  }) : layerAnchor = layerAnchor ?? Vector2(0.5, 0.5),
+       super(
+         position: position,
+         size: Vector2.all(80), // Increased container size for touch ergonomics
+         anchor: Anchor.center,
+         priority: 1001,
+       );
 
   @override
   Future<void> onLoad() async {
@@ -89,15 +97,15 @@ class ExpandableHotspotNode extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    
+
     // Draw a visual indicator in the center of the hotspot
     // This represents the "core" or main function of the node.
     final center = Offset(size.x / 2, size.y / 2);
     final coreRadius = 6.0;
-    
+
     // 1. Core color based on the first metric (usually indicative of function)
     final coreColor = _getMetricColor(metrics.isNotEmpty ? metrics.first : 'C');
-    
+
     // 2. Glow effect
     canvas.drawCircle(
       center,
@@ -106,7 +114,7 @@ class ExpandableHotspotNode extends PositionComponent
         ..color = coreColor.withValues(alpha: 0.15)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0),
     );
-    
+
     // 3. Solid core
     canvas.drawCircle(
       center,
@@ -115,7 +123,7 @@ class ExpandableHotspotNode extends PositionComponent
         ..color = coreColor.withValues(alpha: 0.9)
         ..style = PaintingStyle.fill,
     );
-    
+
     // 4. Contrast Ring
     canvas.drawCircle(
       center,
@@ -125,7 +133,7 @@ class ExpandableHotspotNode extends PositionComponent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0,
     );
-    
+
     // 5. Subtle inner highlight
     canvas.drawCircle(
       center - const Offset(1.5, 1.5),
@@ -136,10 +144,10 @@ class ExpandableHotspotNode extends PositionComponent
 
   void _toggleExpansion() {
     _isExpanded = !_isExpanded;
-    
+
     // Boost priority when expanded to sit above neighboring unexpanded hotspots
     priority = _isExpanded ? 1100 : 1001;
-    
+
     if (_isExpanded) {
       _expand();
     } else {
@@ -150,15 +158,17 @@ class ExpandableHotspotNode extends PositionComponent
   void _expand() {
     _baseIndicator.paint.color = Colors.white.withValues(alpha: 0.95);
     final immediate = game.isInspectionPaused;
-    
+
     final double radius = 60.0;
     final double angleStep = (2 * math.pi) / metrics.length;
 
     for (int i = 0; i < metrics.length; i++) {
       final label = metrics[i];
       final angle = i * angleStep - math.pi / 2;
-      final targetPos = (size / 2) + Vector2(math.cos(angle) * radius, math.sin(angle) * radius);
-      
+      final targetPos =
+          (size / 2) +
+          Vector2(math.cos(angle) * radius, math.sin(angle) * radius);
+
       final hotspot = DataHotspotComponent(
         layerId: layerId,
         label: label,
@@ -169,10 +179,10 @@ class ExpandableHotspotNode extends PositionComponent
         position: immediate ? targetPos : size / 2,
       );
       if (immediate) hotspot.opacity = 1.0;
-      
+
       add(hotspot);
       _childHotspots.add(hotspot);
-      
+
       if (!immediate) {
         // Animate out only while the visual clock is running.
         hotspot.add(
@@ -182,11 +192,7 @@ class ExpandableHotspotNode extends PositionComponent
           ),
         );
 
-        hotspot.add(
-          OpacityEffect.fadeIn(
-            EffectController(duration: 0.3),
-          ),
-        );
+        hotspot.add(OpacityEffect.fadeIn(EffectController(duration: 0.3)));
       }
     }
   }
@@ -202,7 +208,7 @@ class ExpandableHotspotNode extends PositionComponent
       _childHotspots.clear();
       return;
     }
-    
+
     for (final hotspot in _childHotspots) {
       hotspot.add(
         MoveToEffect(
@@ -223,11 +229,16 @@ class ExpandableHotspotNode extends PositionComponent
   Color _getMetricColor(String label) {
     if (['pH', 'W', 'T', 'O2'].contains(label)) {
       switch (label) {
-        case 'pH': return Colors.pinkAccent;
-        case 'W': return Colors.blueAccent;
-        case 'T': return Colors.orange;
-        case 'O2': return Colors.cyanAccent;
-        default: return Colors.grey;
+        case 'pH':
+          return Colors.pinkAccent;
+        case 'W':
+          return Colors.blueAccent;
+        case 'T':
+          return Colors.orange;
+        case 'O2':
+          return Colors.cyanAccent;
+        default:
+          return Colors.grey;
       }
     }
     if (label == 'CEC') return Colors.amber;
@@ -236,7 +247,21 @@ class ExpandableHotspotNode extends PositionComponent
 
   HotspotType _getHotspotType(String label) {
     // Treat all quantitative soil metrics as "sensors" to use the high-fidelity circular meter
-    if (['pH', 'W', 'T', 'O2', 'CEC', 'NO3-', 'NH4+', 'NO₃⁻', 'NH₄⁺', 'P', 'K', 'SOM', 'MAOM-N'].contains(label)) {
+    if ([
+      'pH',
+      'W',
+      'T',
+      'O2',
+      'CEC',
+      'NO3-',
+      'NH4+',
+      'NO₃⁻',
+      'NH₄⁺',
+      'P',
+      'K',
+      'SOM',
+      'MAOM-N',
+    ].contains(label)) {
       return HotspotType.sensor;
     }
     return HotspotType.nutrient;

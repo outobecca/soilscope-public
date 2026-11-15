@@ -1,16 +1,17 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide PointerMoveEvent;
+import 'package:flutter/material.dart';
 import '../soil_scope_game.dart';
-import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import 'soil_component_mixin.dart';
 
 /// High-fidelity soil texture component that visualizes physical composition
 /// (sand, silt, clay) and biological hotspots.
+///
+/// Decorative only: soil body taps are handled by [SoilLayerComponent] so
+/// they open that layer's own analysis card.
 class SoilTexturePatternComponent extends Component
-    with HasGameReference<SoilScopeGame>, TapCallbacks, SoilComponentMixin {
+    with HasGameReference<SoilScopeGame>, SoilComponentMixin {
   final Paint _overlayPaint = Paint();
   final Paint _sandPaint = Paint();
   final Paint _siltPaint = Paint()..style = PaintingStyle.stroke;
@@ -286,58 +287,5 @@ class SoilTexturePatternComponent extends Component
       ).withValues(alpha: 0.1); // Increased alpha for visibility but kept small
       canvas.drawCircle(Offset(x, y), radius, spotPaint);
     }
-  }
-
-  @override
-  bool containsLocalPoint(Vector2 point) => isInsideSimulation(point);
-
-  @override
-  void onTapUp(TapUpEvent event) {
-    final state = game.displayedState;
-    final double scaleY = calculateVerticalScale(
-      state.profile.layers.fold(0.0, (sum, l) => sum + l.thickness),
-    );
-    double currentY = surfaceY;
-    for (final layer in state.profile.layers) {
-      final layerHeight = layer.thickness * scaleY;
-      if (event.localPosition.y >= currentY &&
-          event.localPosition.y <= currentY + layerHeight) {
-        _showTextureInfo(
-          layer,
-          pinned: true,
-          targetY: currentY + layerHeight / 2,
-        );
-        break;
-      }
-      currentY += layerHeight;
-    }
-    event.handled = true;
-  }
-
-  void _showTextureInfo(dynamic layer, {bool pinned = false, double? targetY}) {
-    final l = game.l10n;
-    final anchorWorld = Vector2(
-      game.soilLeftX + SoilScopeGame.soilColumnWidth / 2,
-      targetY ?? (surfaceY + 100.0),
-    );
-
-    game.ref
-        .read(uIStateProvider.notifier)
-        .setHoverInfo(
-          HoverInfo(
-            title: l.soilStructureTexture.toUpperCase(),
-            description: l.soilStructureTexture,
-            stats: {
-              l.sand: '${(layer.sandFraction * 100).toStringAsFixed(0)}%',
-              l.silt: '${(layer.siltFraction * 100).toStringAsFixed(0)}%',
-              l.clay: '${(layer.clayFraction * 100).toStringAsFixed(0)}%',
-              l.bulkDensity: '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
-              l.porosity: '${(layer.porosity * 100).toStringAsFixed(0)}%',
-            },
-            isPinned: pinned,
-            accentColor: const Color(0xFFA1887F),
-            screenPosition: game.worldToScreen(anchorWorld).toOffset(),
-          ),
-        );
   }
 }

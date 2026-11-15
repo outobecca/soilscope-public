@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/gestures.dart';
@@ -21,6 +23,8 @@ import 'package:soilscope/presentation/widgets/game/components/expandable_hotspo
 import 'package:soilscope/presentation/widgets/game/components/inspection_target_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/process_magnifier_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/rhizosphere_hotspot_component.dart';
+import 'package:soilscope/presentation/widgets/game/components/scene_coordinate_mapper.dart';
+import 'package:soilscope/presentation/widgets/game/components/selection_node_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/soil_scope_game.dart';
 
@@ -156,6 +160,7 @@ void main() {
       'topsoil',
     );
     expect(container.read(uIStateProvider)?.title, 'TOPSOIL');
+    expect(container.read(uIStateProvider)?.sourceId, 'soil-layer-topsoil');
 
     final plant = game.world
         .descendants()
@@ -400,6 +405,76 @@ void main() {
     expect(harness.container.read(uIStateProvider)?.isPinned, isTrue);
   });
 
+  testWidgets('rhizosphere microscope opens on a root and near it', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final game = harness.game;
+
+    await _pumpUntil(
+      tester,
+      () => game.world
+          .descendants()
+          .whereType<InspectionTargetComponent>()
+          .isNotEmpty,
+    );
+    final target = game.world
+        .descendants()
+        .whereType<InspectionTargetComponent>()
+        .firstWhere((candidate) => candidate.type == MagnifierType.rhizosphere);
+
+    final plant = game.displayedState.plants.isNotEmpty
+        ? game.displayedState.plants.first
+        : game.displayedState.plant;
+    final rootWorldPositions = plant.rootSystem
+        .where((node) => node.z > 0)
+        .map(
+          (node) => Vector2(
+            SceneCoordinateMapper.mapRootX(
+                  node.x,
+                  SoilScopeGame.soilColumnWidth,
+                  baseX: plant.baseX,
+                ) +
+                game.soilLeftX,
+            SceneCoordinateMapper.mapRootY(
+              node.z,
+              game.soilSurfaceY,
+              game.soilColumnHeight,
+            ),
+          ),
+        )
+        .toList();
+    expect(rootWorldPositions, isNotEmpty);
+    expect(
+      rootWorldPositions
+          .map((position) => position.distanceTo(target.position))
+          .reduce(math.min),
+      lessThan(25),
+      reason: 'the rhizosphere target must be anchored to a root node',
+    );
+
+    harness.container
+        .read(simulationSessionProvider.notifier)
+        .toggleMicroscope();
+    harness.container
+        .read(simulationSessionProvider.notifier)
+        .selectInspector(MagnifierType.rhizosphere.name);
+    await tester.pump();
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(target.magnifier.isVisible, isTrue);
+    final targetOnScreen = game.worldToScreen(target.absolutePosition);
+    expect(
+      (target.magnifier.position - targetOnScreen).length,
+      lessThan(320),
+      reason: 'the rhizosphere microscope should open near the roots',
+    );
+    expect(target.magnifier.position.x, inInclusiveRange(0, game.size.x));
+    expect(target.magnifier.position.y, inInclusiveRange(0, game.size.y));
+  });
+
   testWidgets('canvas honors the platform reduced-motion preference', (
     tester,
   ) async {
@@ -472,6 +547,53 @@ void main() {
           .where((node) => node.layerId == oldLayerId),
       isEmpty,
       reason: 'a removed layer must not leave tappable hotspots behind',
+    );
+  });
+
+  testWidgets('technical hotspots follow their layer when its rect changes', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final game = harness.game;
+
+    await _pumpUntil(
+      tester,
+      () => game.technicalHotspotLayer.children
+          .whereType<ExpandableHotspotNode>()
+          .any((node) => node.layerId == 'topsoil'),
+    );
+    final nodes = game.technicalHotspotLayer.children
+        .whereType<ExpandableHotspotNode>()
+        .where((node) => node.layerId == 'topsoil')
+        .toList();
+    final layer = game.world.children
+        .whereType<SoilLayerComponent>()
+        .firstWhere((layer) => layer.layerId == 'topsoil');
+
+    final nextPosition = Vector2(layer.position.x, layer.position.y + 40);
+    final nextSize = Vector2(layer.size.x, layer.size.y * 0.8);
+    layer.updateLayerRect(nextPosition, nextSize);
+    await tester.pump();
+
+    for (final node in nodes) {
+      expect(
+        node.position.x,
+        closeTo(nextPosition.x + node.layerAnchor.x * nextSize.x, 0.01),
+      );
+      expect(
+        node.position.y,
+        closeTo(nextPosition.y + node.layerAnchor.y * nextSize.y, 0.01),
+        reason: 'a hotspot must stay over its own layer',
+      );
+    }
+
+    final selectionNode = layer.children
+        .whereType<SelectionNodeComponent>()
+        .single;
+    expect(
+      selectionNode.position.y,
+      closeTo(nextSize.y / 2, 0.01),
+      reason: 'the layer icon must stay in its own diagnostic gutter',
     );
   });
 

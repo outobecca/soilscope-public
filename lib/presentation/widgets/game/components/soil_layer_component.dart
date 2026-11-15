@@ -44,6 +44,7 @@ class SoilLayerComponent extends PositionComponent
   SoilLayer? _paintSourceLayer;
   Size _paintedSize = Size.zero;
   late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
+  SelectionNodeComponent? _selectionNode;
 
   SoilLayerComponent({
     required this.layerId,
@@ -93,43 +94,40 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _addLayerNode() {
-    add(
-      SelectionNodeComponent(
-        nodeType: SelectionNodeType.soilLayer,
-        layerId: layerId,
-        title: _layer.name.isNotEmpty
-            ? _layer.name.toUpperCase()
-            : 'LAYER ${layerId.toUpperCase()}',
-        description: _layer.description.isNotEmpty
-            ? _layer.description
-            : game.l10n.layerAnalysisDesc,
-        accentColor: Color(_layer.colorValue),
-        icon: Icons.layers_rounded,
-        position: Vector2(60, size.y / 2), // Aligned with diagnostic gutter
-        statsProvider: () {
-          final state = game.displayedState;
-          try {
-            final layer = state.profile.layers.firstWhere(
-              (l) => l.id == layerId,
-            );
-            return {
-              game.l10n.waterContentLabel:
-                  '${(layer.waterContent * 100).toStringAsFixed(1)}%',
-              game.l10n.temperatureLabel:
-                  '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
-              'pH': layer.ph.toStringAsFixed(1),
-              'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
-              game.l10n.bulkDensity:
-                  '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
-              game.l10n.porosity:
-                  '${(layer.porosity * 100).toStringAsFixed(0)}%',
-            };
-          } catch (_) {
-            return null;
-          }
-        },
-      ),
+    final node = SelectionNodeComponent(
+      nodeType: SelectionNodeType.soilLayer,
+      layerId: layerId,
+      title: _layer.name.isNotEmpty
+          ? _layer.name.toUpperCase()
+          : 'LAYER ${layerId.toUpperCase()}',
+      description: _layer.description.isNotEmpty
+          ? _layer.description
+          : game.l10n.layerAnalysisDesc,
+      accentColor: Color(_layer.colorValue),
+      icon: Icons.layers_rounded,
+      position: Vector2(60, size.y / 2), // Aligned with diagnostic gutter
+      statsProvider: () {
+        final state = game.displayedState;
+        try {
+          final layer = state.profile.layers.firstWhere((l) => l.id == layerId);
+          return {
+            game.l10n.waterContentLabel:
+                '${(layer.waterContent * 100).toStringAsFixed(1)}%',
+            game.l10n.temperatureLabel:
+                '${(layer.temperature - 273.15).toStringAsFixed(1)}°C',
+            'pH': layer.ph.toStringAsFixed(1),
+            'ORP': '${layer.redoxPotential.toStringAsFixed(0)}mV',
+            game.l10n.bulkDensity:
+                '${layer.bulkDensity.toStringAsFixed(0)} kg/m³',
+            game.l10n.porosity: '${(layer.porosity * 100).toStringAsFixed(0)}%',
+          };
+        } catch (_) {
+          return null;
+        }
+      },
     );
+    _selectionNode = node;
+    add(node);
   }
 
   @override
@@ -262,6 +260,20 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void triggerSubComponentSync() {
+    _syncSubComponents();
+  }
+
+  void updateLayerRect(Vector2 nextPosition, Vector2 nextSize) {
+    final geometryChanged =
+        position.x != nextPosition.x ||
+        position.y != nextPosition.y ||
+        size.x != nextSize.x ||
+        size.y != nextSize.y;
+    if (!geometryChanged) return;
+
+    position = nextPosition;
+    size = nextSize;
+    _selectionNode?.position = Vector2(60, size.y / 2);
     _syncSubComponents();
   }
 
@@ -443,7 +455,18 @@ class SoilLayerComponent extends PositionComponent
     // Tech Nodes Sync (Nutrients, Sensors)
     final existingHotspots = game.technicalHotspotLayer.children
         .query<ExpandableHotspotNode>()
-        .where((h) => h.layerId == layerId);
+        .where((h) => h.layerId == layerId)
+        .toList();
+
+    // Layer heights change when the scenario or viewport changes. Re-anchor
+    // the existing nodes so a hotspot cannot drift over a neighbouring layer
+    // and open that layer's data.
+    for (final node in existingHotspots) {
+      node.position = Vector2(
+        position.x + node.layerAnchor.x * size.x,
+        position.y + node.layerAnchor.y * size.y,
+      );
+    }
 
     if (existingHotspots.isEmpty) {
       spawnLayerHUDNodes(layerId: layerId, state: state);

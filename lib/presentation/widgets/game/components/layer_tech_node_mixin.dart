@@ -144,6 +144,10 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
           layerId: layerId,
           metrics: metrics,
           position: validPosition,
+          layerAnchor: Vector2(
+            ((validPosition.x - position.x) / size.x).clamp(0.0, 1.0),
+            ((validPosition.y - position.y) / size.y).clamp(0.0, 1.0),
+          ),
         );
         game.technicalHotspotLayer.add(newNode);
         allNodes.add(newNode);

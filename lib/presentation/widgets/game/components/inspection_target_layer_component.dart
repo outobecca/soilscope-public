@@ -22,8 +22,9 @@ class InspectionTargetLayerComponent extends Component
   }
 
   void _initInspectionTargets() {
-    final magnifierGroup =
-        game.camera.viewport.children.query<MagnifierGroupComponent>().firstOrNull;
+    final magnifierGroup = game.camera.viewport.children
+        .query<MagnifierGroupComponent>()
+        .firstOrNull;
     if (magnifierGroup == null) return;
 
     final magnifiers = magnifierGroup.magnifiers;
@@ -57,14 +58,16 @@ class InspectionTargetLayerComponent extends Component
     final currentHeight = SceneCoordinateMapper.plantVisualHeight(plant);
     // Movement is disabled to maintain sync with the static AnimatedPlantComponent
     const totalAngle = 0.0;
-    
+
     for (final target in _inspectionTargets) {
       target.opacity = 1.0;
-      
+
       // Calculate top position
       final topX = math.sin(totalAngle) * currentHeight * 0.4;
       final topY = -currentHeight;
-      final plantBaseX = SceneCoordinateMapper.mapRootX(0.5, worldWidth, baseX: plant.baseX) + soilX;
+      final plantBaseX =
+          SceneCoordinateMapper.mapRootX(0.5, worldWidth, baseX: plant.baseX) +
+          soilX;
       final plantBaseY = surfaceY;
 
       switch (target.type) {
@@ -74,7 +77,8 @@ class InspectionTargetLayerComponent extends Component
           break;
         case MagnifierType.leaf:
           // LEAF BOTTOM: Junction of the lowest major leaf with the stem
-          final t = 0.2; // Lower position on the stem for the "bottom of leaf" request
+          final t =
+              0.2; // Lower position on the stem for the "bottom of leaf" request
           final cp1X = math.sin(totalAngle) * currentHeight * 0.1;
           final cp1Y = -currentHeight * 0.4;
           final cp2X = topX * 0.8;
@@ -105,43 +109,66 @@ class InspectionTargetLayerComponent extends Component
             }
           }
 
+          // A small plant may not expose an explicit tip yet. Fall back to
+          // the deepest node so the root microscope still has a target.
+          deepestTip ??= _deepestRootNode(plant.rootSystem);
           if (deepestTip != null) {
             target.position = Vector2(
-              SceneCoordinateMapper.mapRootX(deepestTip.x, worldWidth, baseX: plant.baseX) + soilX,
-              SceneCoordinateMapper.mapRootY(deepestTip.z, surfaceY, soilHeight),
+              SceneCoordinateMapper.mapRootX(
+                    deepestTip.x,
+                    worldWidth,
+                    baseX: plant.baseX,
+                  ) +
+                  soilX,
+              SceneCoordinateMapper.mapRootY(
+                deepestTip.z,
+                surfaceY,
+                soilHeight,
+              ),
             );
+          } else {
+            target.position = Vector2(plantBaseX, surfaceY + soilHeight * 0.1);
           }
           break;
         case MagnifierType.rhizosphere:
-          // MIDDLE OF THE ROOT: A central node in the taproot
-          int validNodeCount = 0;
-          for (final node in plant.rootSystem) {
-            if (node.radius > 0.01) {
-              validNodeCount++;
-            }
-          }
+          // MIDDLE OF THE ROOT: stay inside the root mass. The seedling's
+          // default roots are thin (radius well below 0.01), so filtering on
+          // radius left this target at the world origin and the microscope
+          // opened far away from the roots.
+          final rootNodes = plant.rootSystem.where((n) => n.z > 0).toList();
+          final RootNode? rhizosphereNode = rootNodes.isEmpty
+              ? _deepestRootNode(plant.rootSystem)
+              : (rootNodes.length >= 3
+                    ? rootNodes[rootNodes.length ~/ 2]
+                    : rootNodes.last);
 
-          if (validNodeCount > 5) {
-            final middleIndex = validNodeCount ~/ 2;
-            int currentIndex = 0;
-            for (final node in plant.rootSystem) {
-              if (node.radius > 0.01) {
-                if (currentIndex == middleIndex) {
-                  target.position = Vector2(
-                    SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX,
-                    SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
-                  );
-                  break;
-                }
-                currentIndex++;
-              }
-            }
+          if (rhizosphereNode != null) {
+            target.position = Vector2(
+              SceneCoordinateMapper.mapRootX(
+                    rhizosphereNode.x,
+                    worldWidth,
+                    baseX: plant.baseX,
+                  ) +
+                  soilX,
+              SceneCoordinateMapper.mapRootY(
+                rhizosphereNode.z,
+                surfaceY,
+                soilHeight,
+              ),
+            );
+          } else {
+            target.position = Vector2(plantBaseX, surfaceY + soilHeight * 0.12);
           }
           break;
         case MagnifierType.microbe:
           // Soil micro-zone near the top layer
           target.position = Vector2(
-            SceneCoordinateMapper.mapRootX(0.2, worldWidth, baseX: plant.baseX) + soilX,
+            SceneCoordinateMapper.mapRootX(
+                  0.2,
+                  worldWidth,
+                  baseX: plant.baseX,
+                ) +
+                soilX,
             surfaceY + 80,
           );
           break;
@@ -150,14 +177,27 @@ class InspectionTargetLayerComponent extends Component
           target.position = Vector2(soilX + worldWidth * 0.15, surfaceY + 220);
           break;
       }
-      
+
       // Update orientation linkage for the projection beam
       target.magnifier.setHotspot(target.position);
     }
   }
 
+  RootNode? _deepestRootNode(List<RootNode> roots) {
+    RootNode? deepest;
+    for (final node in roots) {
+      if (node.z > 0 && (deepest == null || node.z > deepest.z)) {
+        deepest = node;
+      }
+    }
+    return deepest;
+  }
+
   double _cubicBezier(double p0, double p1, double p2, double p3, double t) {
     final u = 1 - t;
-    return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3;
+    return u * u * u * p0 +
+        3 * u * u * t * p1 +
+        3 * u * t * t * p2 +
+        t * t * t * p3;
   }
 }

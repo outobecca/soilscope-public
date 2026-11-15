@@ -715,8 +715,10 @@ class SoilScopeGame extends FlameGame
         world.add(layerComp);
       }
 
-      layerComp.position = Vector2(layerRect.left, layerRect.top);
-      layerComp.size = Vector2(layerRect.width, layerRect.height);
+      layerComp.updateLayerRect(
+        Vector2(layerRect.left, layerRect.top),
+        Vector2(layerRect.width, layerRect.height),
+      );
 
       currentY += layerHeight;
     }
