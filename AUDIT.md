@@ -536,7 +536,7 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub --coverage`: 195 tests passing across 52 test files.
+- `flutter test --no-pub`: 200 tests passing across 52 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
@@ -643,12 +643,13 @@ is not stored in the tree.
 
 The suite has 52 test files, but most coverage is unit-level.
 `pinned_inspection_selection_test` covers expandable/data hotspots, and
-`canvas_interaction_test` now covers a soil layer, plant shoot, root and
-rhizosphere target. Microscope targets have dedicated tests, while pan/zoom
-and 200% text remain untested. `scenario_golden_test` and
-`simulation_golden_test` cover the selection and simulation screens at
-390×844 and 1024×768, and a semantics smoke test checks the simulation's
-quick-action and HUD nodes.
+`canvas_interaction_test` covers a soil layer, plant shoot, root,
+rhizosphere target, drag-panning and pointer-anchored wheel zoom. Microscope
+targets have dedicated tests. The 200% text pass now runs on phone, tablet
+portrait, tablet landscape and desktop, which exposed and fixed two HUD row
+overflows. `scenario_golden_test` and `simulation_golden_test` cover the
+selection and simulation screens at 390×844 and 1024×768, and a semantics
+smoke test checks the simulation's quick-action and HUD nodes.
 
 **Acceptance:** one interaction test per selectable canvas family, plus
 goldens or semantics assertions for the simulation HUD at 390×844 and
@@ -675,6 +676,15 @@ inspection test asserts one layer component and unique hotspot positions;
 `LayerTechNodeMixin` documents that Flame routes a tap to the topmost target
 and keeps expanded clusters separated. `canvas_interaction_test` taps the
 layer, shoot, root and rhizosphere paths through the real canvas.
+
+A fresh review then found two adjacent gaps. Technical hotspots live in a
+global overlay, so removing a layer component left its hotspots behind;
+`_updateScene` now removes them when their layer disappears. Separately, a
+second subcomponent sync could spawn another set before Flame mounted the
+first; the mixin now records the spawn itself. The pinned test also triggers
+`onGameResize` after the initial scene to prove a repeat rebuild reuses the
+layer instead of adding a duplicate, and the canvas suite replaces a layer to
+prove its technical hotspots are removed with it.
 
 #### H7 — Performance evidence is still local and raster-bound · P2
 
@@ -814,9 +824,10 @@ equivalent; no known tap-order ambiguity remains.
 
 **Progress (2026-11-15):** H6 is resolved: duplicate layer/hotspot creation is
 gone, topmost-target routing is documented, and layer/shoot/root/rhizosphere
-taps are covered. Remaining Phase 3 work: pan/zoom and microscope-target
-integration coverage, the 200% text pass, keyboard access, reduced motion and
-real-device screen-reader walks.
+taps are covered. Drag panning and pointer-anchored wheel zoom are covered,
+and the 200% text pass runs across phone, tablet and desktop sizes. Remaining
+Phase 3 work: microscope-target integration coverage, keyboard access,
+reduced motion and real-device screen-reader walks.
 
 #### Phase 4 — Performance on target devices (3–5 days)
 

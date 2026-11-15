@@ -89,15 +89,24 @@ void main() {
     );
   });
 
-  testWidgets('simulation chrome fits a phone at 200% text', (
-    WidgetTester tester,
-  ) async {
-    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+  for (final size in const [
+    Size(390, 844), // phone
+    Size(768, 1024), // tablet portrait
+    Size(1024, 768), // tablet landscape
+    Size(1280, 720), // desktop with sidebars
+  ]) {
+    testWidgets(
+      'simulation chrome fits ${size.width.toInt()}x${size.height.toInt()} '
+      'at 200% text',
+      (WidgetTester tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-    final errors = await _pumpChrome(tester, const Size(390, 844));
-    expect(errors, isEmpty, reason: 'layout errors at 200% text: $errors');
-  });
+        final errors = await _pumpChrome(tester, size);
+        expect(errors, isEmpty, reason: 'layout errors at 200% text: $errors');
+      },
+    );
+  }
 }
 
 Future<List<String>> _pumpChrome(

@@ -167,13 +167,15 @@ class _HUDScrubber extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              isScrubbing ? l10n.historyMode.toUpperCase() : l10n.realTime,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: isScrubbing
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                isScrubbing ? l10n.historyMode.toUpperCase() : l10n.realTime,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: isScrubbing
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Row(
