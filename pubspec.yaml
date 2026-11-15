@@ -14,7 +14,7 @@ dependencies:
   equations: ^6.0.0
   flame: ^1.18.0
   flame_riverpod: ^5.5.2
-  flame_svg: ^1.12.0
+  flame_svg: ^2.0.0
   flutter:
     sdk: flutter
   flutter_localizations:
