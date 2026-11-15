@@ -536,7 +536,7 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub --coverage`: 193 tests passing across 51 test files.
+- `flutter test --no-pub --coverage`: 195 tests passing across 52 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
@@ -641,13 +641,14 @@ is not stored in the tree.
 
 #### H5 — Canvas interaction coverage is still thin · P2
 
-The suite has 51 test files, but most coverage is unit-level. The
-`pinned_inspection_selection_test` is the main canvas-selection regression
-test; layer, plant, root, rhizosphere, microscope, pan/zoom and duplicate
-component behavior remain largely untested. `scenario_golden_test` and
-`simulation_golden_test` now cover the selection and simulation screens at
+The suite has 52 test files, but most coverage is unit-level.
+`pinned_inspection_selection_test` covers expandable/data hotspots, and
+`canvas_interaction_test` now covers a soil layer, plant shoot, root and
+rhizosphere target. Microscope targets have dedicated tests, while pan/zoom
+and 200% text remain untested. `scenario_golden_test` and
+`simulation_golden_test` cover the selection and simulation screens at
 390×844 and 1024×768, and a semantics smoke test checks the simulation's
-quick-action and HUD nodes; the 200% text pass is still missing.
+quick-action and HUD nodes.
 
 **Acceptance:** one interaction test per selectable canvas family, plus
 goldens or semantics assertions for the simulation HUD at 390×844 and
@@ -665,6 +666,15 @@ has not been proven either way.
 **Acceptance:** document the intended winner for overlapping targets, add a
 test for each overlap pair, and verify whether duplicate nodes are expected;
 if not, remove them and assert unique positions after a scene rebuild.
+
+**Resolved (Phase 3):** the duplicates came from two `SoilLayerComponent`s
+for the same layer when a second scene rebuild ran before Flame mounted the
+first. `SoilScopeGame` now tracks layer components in `_layerComponents` and
+reuses pending components, so one layer owns one hotspot set. The pinned
+inspection test asserts one layer component and unique hotspot positions;
+`LayerTechNodeMixin` documents that Flame routes a tap to the topmost target
+and keeps expanded clusters separated. `canvas_interaction_test` taps the
+layer, shoot, root and rhizosphere paths through the real canvas.
 
 #### H7 — Performance evidence is still local and raster-bound · P2
 
@@ -801,6 +811,12 @@ needs to be marked as a required GitHub status check.
 
 **Exit:** every inspectable object has a tested pointer path and an accessible
 equivalent; no known tap-order ambiguity remains.
+
+**Progress (2026-11-15):** H6 is resolved: duplicate layer/hotspot creation is
+gone, topmost-target routing is documented, and layer/shoot/root/rhizosphere
+taps are covered. Remaining Phase 3 work: pan/zoom and microscope-target
+integration coverage, the 200% text pass, keyboard access, reduced motion and
+real-device screen-reader walks.
 
 #### Phase 4 — Performance on target devices (3–5 days)
 
