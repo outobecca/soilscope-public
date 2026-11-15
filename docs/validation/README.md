@@ -169,9 +169,16 @@ the model's purpose:
   document why the reference/threshold was wrong.
 
 The loader rejects a file with a missing source, provenance note, sampling
-description, generation note, unit, threshold, duplicate series, or mismatched
-value/time lengths. That is intentional: a silent loss of provenance is worse
-than a failed load.
+description, generation note, model parameter set, unit, threshold, duplicate
+series, or mismatched value/time lengths. That is intentional: a silent loss of
+provenance is worse than a failed load. A measured file must carry a `model`
+block so its result cannot be detached from the parameterisation that produced
+it; copy the current block printed by `dart run tool/model_version.dart`.
+
+A measured series whose `layerIndex` is absent from the current scenario, or
+whose `variable` is not supported by `ValidationFramework.extractTimeSeries`,
+is reported as a coverage gap and skipped. It never crashes the Reference Check
+tab and is never silently compared against a different depth or variable.
 
 ## Replacing the illustrative reference with measured data
 
@@ -180,7 +187,8 @@ than a failed load.
    method, units, detection limits, timezone, license, and citation.
 2. Put those observations into a copy of
    [`reference.template.json`](reference.template.json). Use
-   `"kind": "measured"`, `timesSeconds`, and one series per variable/depth.
+   `"kind": "measured"`, `timesSeconds`, the current `model` block, and one
+   series per variable/depth.
 3. Set each series' `threshold` from the source's uncertainty and the decision
    the model is meant to support. Explain the choice in `provenanceNotes`.
 4. Replace `assets/validation/reference.json` with your file. Keep the same

@@ -52,6 +52,46 @@ void main() {
       expect(changed.fingerprint, isNot(ModelParameterSet.current.fingerprint));
     });
 
+    test('every model-affecting SimulationConstant is fingerprinted', () {
+      // Keep this list limited to values that only affect rendering or
+      // component layout. Everything else in SimulationConstants changes a
+      // simulated value and must be part of the model identity.
+      const renderingOnly = {
+        'massFlowVisualDensity',
+        'nitrificationVisualDensity',
+        'minVisualFlux',
+        'particleBaseSpeed',
+        'fluxToSpeedScale',
+        'minNodeDistance',
+        'nodeRepulsionIterations',
+        'detailZoomThreshold',
+        'particleJitterBase',
+        'attractorForceScale',
+        'interactionDistance',
+        'physicsTickMs',
+      };
+      final declared = RegExp(r'static const \w+ (\w+) =')
+          .allMatches(
+            File('lib/core/simulation_constants.dart').readAsStringSync(),
+          )
+          .map((match) => match.group(1)!)
+          .where((name) => !renderingOnly.contains(name))
+          .toSet();
+
+      expect(
+        ModelParameterSet.current.parameters.keys.toSet(),
+        declared,
+        reason:
+            'a model-affecting constant was added or removed without joining '
+            'the parameter fingerprint',
+      );
+      expect(
+        declared,
+        isNotEmpty,
+        reason: 'the parameter scan must not silently find no constants',
+      );
+    });
+
     test('a version bump alone changes the fingerprint', () {
       final bumped = ModelParameterSet(
         id: ModelParameterSet.current.id,

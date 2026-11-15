@@ -245,13 +245,27 @@ class ValidationFramework {
 
     for (final profile in referenceSeries) {
       // Extract simulated values at reference times
-      // (requires interpolation or nearest-neighbor matching)
-      final predicted = _extractAtTimes(
-        simulationHistory,
-        profile.variable,
-        referenceTimes,
-        layerIndex: profile.layerIndex,
-      );
+      // (requires interpolation or nearest-neighbor matching). A measured
+      // dataset may legitimately use a depth or variable this scenario does
+      // not expose; report that series as uncovered instead of crashing the
+      // Reference Check tab.
+      List<double>? predicted;
+      try {
+        predicted = _extractAtTimes(
+          simulationHistory,
+          profile.variable,
+          referenceTimes,
+          layerIndex: profile.layerIndex,
+        );
+      } on RangeError {
+        uncovered[profile.key] =
+            'reference depth ${profile.layerIndex} is not in this scenario';
+        continue;
+      } on ArgumentError {
+        uncovered[profile.key] =
+            'reference variable ${profile.variable} is not supported';
+        continue;
+      }
 
       if (predicted == null) {
         uncovered[profile.key] =

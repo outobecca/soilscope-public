@@ -5,6 +5,11 @@
   "provenanceNotes": "REPLACE: instrument/method, calibration, detection limit, missing-data handling, license, contact, and why these thresholds are appropriate.",
   "sampling": "REPLACE: depths, ISO dates and timezone, sampling interval, and what each point represents.",
   "generatedBy": "REPLACE: measurement programme and the script/person that converted it to this file.",
+  "model": {
+    "id": "soilscope-core",
+    "version": 1,
+    "fingerprint": "8712a30f"
+  },
   "timesSeconds": [0.0, 86400.0],
   "series": [
     {

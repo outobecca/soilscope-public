@@ -9,7 +9,11 @@ import '../../../l10n/app_localizations.dart';
 class ScienceValidationTab extends StatelessWidget {
   final BiophysicalState state;
 
-  const ScienceValidationTab({super.key, required this.state});
+  /// Optional reference injection for tests and alternate data sources. The
+  /// app leaves this null and loads the bundled asset through the repository.
+  final ReferenceDataset? reference;
+
+  const ScienceValidationTab({super.key, required this.state, this.reference});
 
   @override
   Widget build(BuildContext context) {
@@ -31,20 +35,26 @@ class ScienceValidationTab extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 l10n.gatheringData,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 l10n.minStepsForValidation,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
         ),
       );
+    }
+
+    if (reference != null) {
+      return _buildContent(context, reference!, theme, l10n);
     }
 
     return FutureBuilder<ReferenceDataset>(
@@ -116,12 +126,7 @@ class ScienceValidationTab extends StatelessWidget {
         const SizedBox(height: 8),
         for (final profile in reference.series)
           if (comparison.variableResults[profile.key] case final result?)
-            _buildVariableCard(
-              profile,
-              result,
-              theme,
-              l10n,
-            ),
+            _buildVariableCard(profile, result, theme, l10n),
       ],
     );
   }
@@ -135,8 +140,9 @@ class ScienceValidationTab extends StatelessWidget {
     final badge = isIllustrative
         ? l10n.validationIllustrativeBadge
         : l10n.validationMeasuredBadge;
-    final badgeColor =
-        isIllustrative ? theme.colorScheme.tertiary : theme.colorScheme.primary;
+    final badgeColor = isIllustrative
+        ? theme.colorScheme.tertiary
+        : theme.colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -163,13 +169,13 @@ class ScienceValidationTab extends StatelessWidget {
                   isIllustrative
                       ? l10n.illustrativePatternCheck
                       : l10n.scientificValidation,
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -189,8 +195,9 @@ class ScienceValidationTab extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             reference.source,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -382,8 +389,9 @@ class ScienceValidationTab extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Nash-Sutcliffe Efficiency (NSE): ${nse.isNaN ? "N/A" : nse.toStringAsFixed(3)}',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(fontFamily: 'monospace'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+              ),
             ),
           ],
         ),
@@ -413,7 +421,9 @@ class ScienceValidationTab extends StatelessWidget {
       child: ExpansionTile(
         title: Text(
           '${_translateVariable(profile.variable, l10n)} · ${profile.layerLabel}',
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         subtitle: Text(
           '${profile.unit} · gate NSE ≥ ${profile.threshold.nse}',

@@ -21,6 +21,11 @@ class ReferenceDataset {
     if (kind != 'illustrative' && kind != 'measured') {
       throw FormatException('Unknown reference kind: $kind');
     }
+    if (kind == 'measured' && model == null) {
+      throw const FormatException(
+        'Measured reference datasets must record the model parameter set',
+      );
+    }
     if (source.trim().isEmpty ||
         provenanceNotes.trim().isEmpty ||
         sampling.trim().isEmpty ||

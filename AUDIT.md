@@ -914,12 +914,16 @@ hardware, and the Android row still needs repeated runs.
    (`test/validation/conservation_test.dart`) and directional sensitivity
    (`test/validation/sensitivity_test.dart`) tests pass. The measured drop-in
    path is documented and the absent dataset is named as an external blocker in
-   `docs/validation/README.md`. No measured data were fabricated.
+   `docs/validation/README.md`. No measured data were fabricated. A measured
+   drop-in must now carry the `model` parameter block, and a measured series at
+   a depth or variable the scenario does not expose is reported as a coverage
+   gap instead of crashing the Reference Check tab; both paths are tested.
 2. **Done.** `ModelParameterSet` versions the model-affecting constants and
    records `{id, version, fingerprint}` in saved sessions, `reference.json` and
    Phase 4 captures. The validation gate fails on parameter drift until the
    reference is updated deliberately; `model_version_test.dart` pins the
-   fingerprint.
+   fingerprint and scans `SimulationConstants` so a model-affecting constant
+   cannot be added without joining the fingerprint.
 3. **Done — H10.** `simulation_provider.dart` fell from ~1,026 to ~590 lines:
    intervention rules moved to `SimulationInterventions`, timeline storage to
    `SimulationTimeline`, the default scenario to
@@ -927,8 +931,11 @@ hardware, and the Android row still needs repeated runs.
    `SimulationResourceExchange`. Flame objects now receive
    `GameProviderReader`, a snapshot-only adapter, instead of `WidgetRef`. The
    fertilizer hook is live and tested; remaining empty overrides are Oxygen’s
-   required `PoolObject.reset` hooks, documented in place. `main.dart` stays a
-   single layout-heavy screen, which this item did not target.
+   required `PoolObject.reset` hooks, documented in place. A fertilizer mix
+   applied from the console falls back to the topsoil when no valid layer is
+   selected, so the live visual hook and the nutrient state change together.
+   `main.dart` stays a single layout-heavy screen, which this item did not
+   target.
 4. **Done.** `tool/release_check.sh` runs the model printout, analyzer, locale
    guards, full tests, validation gates, benchmarks and (unless `SKIP_WEB=1`)
    the web build.

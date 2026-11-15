@@ -93,11 +93,14 @@ class SimulationInterventions {
   }
 
   void applyNutrients(Map<String, double> pendingNutrients) {
-    leaveHistoryMode();
-    final layerId = selectedLayerId();
+    if (pendingNutrients.isEmpty) return;
+
+    final current = readState();
+    final layerId = _targetLayerId(current);
     if (layerId == null) return;
 
-    var next = readState();
+    leaveHistoryMode();
+    var next = current;
     pendingNutrients.forEach((symbol, amount) {
       next = SimulationActions.applyNutrients(next, layerId, symbol, amount);
     });
@@ -196,14 +199,11 @@ class SimulationInterventions {
   /// Applies a one-tap fertilizer dose to the selected layer, falling back to
   /// the topsoil when the user has not selected a layer.
   void applyQuickNutrient(String symbol, {double amount = 20.0}) {
-    leaveHistoryMode();
     final current = readState();
-    if (current.profile.layers.isEmpty) return;
+    final targetLayer = _targetLayerId(current);
+    if (targetLayer == null) return;
 
-    final selected = selectedLayerId();
-    final targetLayer = selected != null && selected != 'atmosphere'
-        ? selected
-        : current.profile.layers.first.id;
+    leaveHistoryMode();
     final next = SimulationActions.applyNutrients(
       current,
       targetLayer,
@@ -212,6 +212,22 @@ class SimulationInterventions {
     );
     apply(next);
     log('$symbol applied to $targetLayer.', next.timeElapsed);
+  }
+
+  /// Resolves the layer a nutrient application should target. A missing,
+  /// atmosphere or stale selection falls back to the topsoil, matching the
+  /// fertilizer console's expectation that applying a mix always reaches the
+  /// soil instead of only playing the canvas effect.
+  String? _targetLayerId(BiophysicalState state) {
+    if (state.profile.layers.isEmpty) return null;
+
+    final selected = selectedLayerId();
+    if (selected != null &&
+        selected != 'atmosphere' &&
+        state.profile.layers.any((layer) => layer.id == selected)) {
+      return selected;
+    }
+    return state.profile.layers.first.id;
   }
 
   /// Functional update pattern for soil layers.
