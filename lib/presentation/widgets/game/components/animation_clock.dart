@@ -20,6 +20,7 @@ class AnimationClock {
   double _frameDt = 0;
   double _visualElapsed = 0;
   double _uiElapsed = 0;
+  bool _reducedMotion = false;
   AnimationMode _mode = AnimationMode.paused;
 
   /// Clamped delta for the current frame.
@@ -29,8 +30,10 @@ class AnimationClock {
   ///
   /// Only live playback advances this clock. Paused, history, inspection and
   /// hidden states freeze visual elapsed time, matching the pre-existing
-  /// `currentTime()` behavior while making the rule explicit.
-  double get visualDt => _mode == AnimationMode.live ? _frameDt : 0;
+  /// `currentTime()` behavior while making the rule explicit. Reduced motion
+  /// also freezes it, even while the simulation itself is running.
+  double get visualDt =>
+      _mode == AnimationMode.live && !_reducedMotion ? _frameDt : 0;
 
   /// Monotonic clock for ambient/cosmetic animation.
   double get visualElapsed => _visualElapsed;
@@ -38,6 +41,7 @@ class AnimationClock {
   /// Clock used by viewport HUD/selection animations. Like the visual clock,
   /// it advances only during live playback so canvas overlays do not keep
   /// moving while the simulation is paused, scrubbed, inspected or hidden.
+  /// Reduced motion freezes it as well.
   double get uiElapsed => _uiElapsed;
 
   AnimationMode get mode => _mode;
@@ -50,8 +54,10 @@ class AnimationClock {
     required bool isScrubbing,
     required bool inspectionPaused,
     bool appVisible = true,
+    bool reducedMotion = false,
   }) {
     _frameDt = _sanitizeDelta(rawDt);
+    _reducedMotion = reducedMotion;
     _mode = _resolveMode(
       isRunning: isRunning,
       isScrubbing: isScrubbing,
@@ -59,7 +65,7 @@ class AnimationClock {
       appVisible: appVisible,
     );
 
-    if (_mode == AnimationMode.live) {
+    if (_mode == AnimationMode.live && !reducedMotion) {
       _visualElapsed += _frameDt;
       _uiElapsed += _frameDt;
     }
@@ -71,6 +77,7 @@ class AnimationClock {
     _frameDt = 0;
     _visualElapsed = 0;
     _uiElapsed = 0;
+    _reducedMotion = false;
     _mode = AnimationMode.paused;
   }
 

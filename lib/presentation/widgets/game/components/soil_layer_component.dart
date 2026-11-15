@@ -263,6 +263,13 @@ class SoilLayerComponent extends PositionComponent
     _syncSubComponents();
   }
 
+  /// Opens the same layer inspection used by a canvas tap. Keyboard users
+  /// reach this through the canvas focus target list.
+  void activateFromKeyboard() {
+    game.ref.read(simulationSessionProvider.notifier).selectLayer(layerId);
+    _showLayerInfo(pinned: true);
+  }
+
   void _updatePaint() {
     _paintSourceLayer = _layer;
     _paintedSize = size.toSize();

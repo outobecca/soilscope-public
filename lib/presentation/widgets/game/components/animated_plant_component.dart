@@ -1023,6 +1023,16 @@ class AnimatedPlantComponent extends PositionComponent
     super.onPointerMove(event);
   }
 
+  /// Opens the shoot inspection used by a canvas tap. Keyboard users reach
+  /// this through the canvas focus target list.
+  void activateFromKeyboard() {
+    if (_plantData == null) return;
+    _pinnedRootIndex = null;
+    _isPinned = true;
+    _showPlantInfo(pinned: true, localHoverY: -100);
+    game.ref.read(simulationSessionProvider.notifier).selectInspector('stem');
+  }
+
   @override
   void onTapUp(TapUpEvent event) {
     final plant = _plantData;

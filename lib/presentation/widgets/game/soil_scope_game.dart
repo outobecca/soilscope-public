@@ -70,6 +70,8 @@ class SoilScopeGame extends FlameGame
   BiophysicalState? _pendingAnimationState;
   double _startZoom = 1.0;
   bool _inspectionPaused = false;
+  bool _reducedMotion = false;
+  Component? _keyboardTarget;
 
   late AppLocalizations l10n;
 
@@ -125,12 +127,18 @@ class SoilScopeGame extends FlameGame
       _pendingAnimationState = null;
       if (pending != null) _applyAnimationState(pending);
     }
+    if (_reducedMotion && _lastState != null) {
+      // A preference change must not leave a half-finished visual transition
+      // running; snap to the current authoritative snapshot instead.
+      _visualState.setTarget(_lastState!, immediate: true);
+    }
     final isRunning = simulationState?.isRunning ?? false;
     _animationClock.tick(
       dt,
       isRunning: isRunning,
       isScrubbing: _readIsScrubbing(),
       inspectionPaused: _inspectionPaused,
+      reducedMotion: _reducedMotion,
     );
     final frameDt = _animationClock.frameDt;
 
@@ -139,7 +147,7 @@ class SoilScopeGame extends FlameGame
       // playback may advance them; paused, historical and hidden frames keep
       // the displayed value fixed.
       _visualState.advance(_animationClock.visualDt);
-      super.update(frameDt);
+      super.update(_reducedMotion ? 0 : frameDt);
     } else {
       // Keep the component lifecycle moving while the visual clock is frozen.
       // A zero delta mounts components added by a new selection (for example
@@ -348,6 +356,104 @@ class SoilScopeGame extends FlameGame
     _clampCamera();
   }
 
+  /// Whether decorative canvas motion is currently suppressed by the
+  /// platform's reduced-motion preference.
+  bool get reducedMotion => _reducedMotion;
+
+  Component? get keyboardTarget => _keyboardTarget;
+
+  void setReducedMotion(bool value) {
+    if (_reducedMotion == value) return;
+    _reducedMotion = value;
+    if (value && _lastState != null) {
+      _visualState.setTarget(_lastState!, immediate: true);
+    }
+  }
+
+  /// Moves the camera by a screen-space delta, used by keyboard navigation.
+  void panCameraBy(Vector2 screenDelta) {
+    final zoom = camera.viewfinder.zoom;
+    camera.viewfinder.position += screenDelta / zoom;
+    _clampCamera();
+  }
+
+  /// Zooms by [factor] while keeping the camera inside its bounds.
+  void zoomCameraBy(double factor) {
+    final nextZoom = (camera.viewfinder.zoom * factor)
+        .clamp(0.8, 10.0)
+        .toDouble();
+    if (nextZoom == camera.viewfinder.zoom) return;
+    camera.viewfinder.zoom = nextZoom;
+    _clampCamera();
+  }
+
+  /// Selects and centers the next keyboard-inspectable canvas target.
+  ///
+  /// Soil layers and plants are the stable, visible targets shared by touch
+  /// and keyboard users. Activating the target also opens its inspection card
+  /// so focus changes are observable without a pointer hover.
+  void focusNextInspectable({bool reverse = false}) {
+    final targets = _keyboardTargets();
+    if (targets.isEmpty) {
+      _keyboardTarget = null;
+      return;
+    }
+    final currentIndex = _keyboardTarget == null
+        ? -1
+        : targets.indexOf(_keyboardTarget!);
+    final nextIndex = currentIndex < 0
+        ? (reverse ? targets.length - 1 : 0)
+        : (currentIndex + (reverse ? -1 : 1) + targets.length) % targets.length;
+    final target = targets[nextIndex];
+    _keyboardTarget = target;
+    if (target is PositionComponent) {
+      camera.viewfinder.position = target.absolutePositionOf(target.size / 2);
+      _clampCamera();
+    }
+    _activateKeyboardTarget(target);
+  }
+
+  /// Activates the current keyboard target, if any.
+  void activateKeyboardTarget() {
+    final target = _keyboardTarget;
+    if (target == null) return;
+    if (!target.isMounted) {
+      _keyboardTarget = null;
+      return;
+    }
+    _activateKeyboardTarget(target);
+  }
+
+  void clearKeyboardTarget() {
+    _keyboardTarget = null;
+  }
+
+  void _activateKeyboardTarget(Component target) {
+    if (target is SoilLayerComponent) {
+      target.activateFromKeyboard();
+    } else if (target is AnimatedPlantComponent) {
+      target.activateFromKeyboard();
+    }
+  }
+
+  List<Component> _keyboardTargets() {
+    final targets = <Component>[
+      ...world.descendants().whereType<SoilLayerComponent>(),
+      ...world.descendants().whereType<AnimatedPlantComponent>(),
+    ];
+    targets.sort((a, b) {
+      double y(Component component) => component is PositionComponent
+          ? component.absolutePositionOf(component.size / 2).y
+          : 0;
+      double x(Component component) => component is PositionComponent
+          ? component.absolutePositionOf(component.size / 2).x
+          : 0;
+      final yOrder = y(a).compareTo(y(b));
+      return yOrder != 0 ? yOrder : x(a).compareTo(x(b));
+    });
+    return targets;
+  }
+
   void _clampCamera() {
     if (camera.viewfinder.zoom <= 0.05) {
       camera.viewfinder.zoom = 1.35;
@@ -407,7 +513,7 @@ class SoilScopeGame extends FlameGame
       // immediately instead of lagging one transition behind it.
       _visualState.setTarget(
         state,
-        immediate: _readIsScrubbing() || !state.isRunning,
+        immediate: _reducedMotion || _readIsScrubbing() || !state.isRunning,
       );
       _pendingSceneState = state;
       _pendingSceneSession = session;
@@ -419,7 +525,7 @@ class SoilScopeGame extends FlameGame
       _lastState = state;
       _visualState.setTarget(
         state,
-        immediate: _readIsScrubbing() || !isRunning,
+        immediate: _reducedMotion || _readIsScrubbing() || !isRunning,
       );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });
@@ -430,7 +536,7 @@ class SoilScopeGame extends FlameGame
       _lastState = next;
       _visualState.setTarget(
         next,
-        immediate: _readIsScrubbing() || !next.isRunning,
+        immediate: _reducedMotion || _readIsScrubbing() || !next.isRunning,
       );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(next);
       _applyAnimationState(next);
@@ -442,7 +548,7 @@ class SoilScopeGame extends FlameGame
       _lastState = state;
       _visualState.setTarget(
         state,
-        immediate: _readIsScrubbing() || !state.isRunning,
+        immediate: _reducedMotion || _readIsScrubbing() || !state.isRunning,
       );
       _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
     });

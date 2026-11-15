@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,10 +49,19 @@ class _Harness {
 Future<_Harness> _pumpSimulation(
   WidgetTester tester, {
   bool withHotspot = false,
+  bool reduceMotion = false,
 }) async {
   tester.view.physicalSize = const Size(1024, 900);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
+  if (reduceMotion) {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(
+          disableAnimations: true,
+          reduceMotion: true,
+        );
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  }
   SharedPreferences.setMockInitialValues({
     'gesture_intro_seen_v1': true,
     'soilscope_onboarding_completed_v1': true,
@@ -96,6 +106,20 @@ Future<_Harness> _pumpSimulation(
     game: game,
     topLeft: tester.getTopLeft(gameFinder),
   );
+}
+
+bool _focusWithin(WidgetTester tester, String key) {
+  final focusContext = FocusManager.instance.primaryFocus?.context;
+  if (focusContext is! Element) return false;
+  return find
+      .ancestor(
+        of: find.byElementPredicate(
+          (element) => identical(element, focusContext),
+        ),
+        matching: find.byKey(ValueKey(key)),
+      )
+      .evaluate()
+      .isNotEmpty;
 }
 
 Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
@@ -224,6 +248,108 @@ void main() {
       greaterThan(0.01),
       reason: 'an off-center zoom must move the camera',
     );
+  });
+
+  testWidgets('canvas keyboard focus tabs into the HUD and activates actions', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final canvasFinder = find.byKey(const ValueKey('simulation-canvas-focus'));
+    expect(canvasFinder, findsOneWidget);
+
+    await tester.tapAt(
+      harness.topLeft +
+          Offset(harness.game.size.x / 2, harness.game.size.y * 0.3),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+    final canvasFocus = tester.widget<Focus>(canvasFinder);
+    expect(canvasFocus.focusNode?.hasFocus, isTrue);
+    expect(_focusWithin(tester, 'canvas-focus-region'), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(_focusWithin(tester, 'quick-actions-focus-region'), isTrue);
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.pump();
+    expect(_focusWithin(tester, 'canvas-focus-region'), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    expect(_focusWithin(tester, 'quick-actions-focus-region'), isTrue);
+
+    final wasRunning = harness.container.read(simulationProvider).isRunning;
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(
+      harness.container.read(simulationProvider).isRunning,
+      isNot(wasRunning),
+      reason: 'Enter must activate the focused HUD action',
+    );
+  });
+
+  testWidgets('canvas keyboard shortcuts inspect targets and reset the view', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final game = harness.game;
+    await _pumpUntil(
+      tester,
+      () => game.world.descendants().whereType<SoilLayerComponent>().isNotEmpty,
+    );
+
+    await tester.tapAt(
+      harness.topLeft + Offset(game.size.x / 2, game.size.y * 0.3),
+    );
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+    await tester.pump();
+    expect(game.keyboardTarget, isNotNull);
+    expect(harness.container.read(uIStateProvider), isNotNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(harness.container.read(uIStateProvider)?.isPinned, isTrue);
+
+    final beforePan = game.camera.viewfinder.position.clone();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(game.camera.viewfinder.position.x, greaterThan(beforePan.x));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+    await tester.pump();
+    expect(game.camera.viewfinder.zoom, greaterThan(1.0));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
+    await tester.pump();
+    expect(game.camera.viewfinder.zoom, closeTo(1.35, 0.001));
+  });
+
+  testWidgets('canvas honors the platform reduced-motion preference', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester, reduceMotion: true);
+    final game = harness.game;
+    expect(game.reducedMotion, isTrue);
+    expect(
+      MediaQuery.of(
+        tester.element(find.byKey(const ValueKey('simulation-canvas-focus'))),
+      ).disableAnimations,
+      isTrue,
+    );
+
+    final frozenTime = game.currentTime();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(game.currentTime(), frozenTime);
+
+    tester.platformDispatcher.clearAccessibilityFeaturesTestValue();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(game.reducedMotion, isFalse);
+    expect(game.currentTime(), greaterThan(frozenTime));
   });
 
   testWidgets('replacing a layer removes its stale technical hotspots', (

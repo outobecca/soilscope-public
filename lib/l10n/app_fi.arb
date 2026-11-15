@@ -1330,6 +1330,7 @@
   "tutorialWelcomePoint2": "Vesi ja ionit liikkuvat maaprofiilissa fysiikan lakien (Richards-yhtälö) mukaisesti.",
   "tutorialWelcomePoint3": "Maaperän mikrobit ja sienijuuret (mykorritsa) muuntavat ravinteita kasville sopivaan muotoon.",
   "tutorialCanvasTitle": "Simulaationäkymä & Tarkastelupisteet",
+  "canvasKeyboardHint": "Nuolinäppäimet siirtävät näkymää. Plus ja miinus zoomaavat. Valitse kohde [ ja ] -näppäimillä, tarkastele se Enterillä tai välilyönnillä ja palauta näkymä 0-näppäimellä.",
   "tutorialCanvasDesc": "Päänäkymässä näet 2D-fysiikkamaailman: kasvin verson, juuriston kasvun ja maannoskerrokset sekä ravinnehiukkasten dynaamisen virtauksen.",
   "tutorialCanvasPoint1": "Klikkaa maassa ja kasvissa hehkuvia kohdepisteitä (hotspots) avataksesi mikroskooppisen analyysin.",
   "tutorialCanvasPoint2": "Vie hiiri minkä tahansa elementin päälle nähdäksesi reaaliaikaisia tieteellisiä arvoja ja kaavoja.",

@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/debug_log.dart';
 import 'game/soil_scope_game.dart';
@@ -22,6 +23,14 @@ class FlameSimulationView extends ConsumerStatefulWidget {
 
 class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   late SoilScopeGame _game;
+  final FocusNode _canvasFocusNode = FocusNode(debugLabel: 'Simulation canvas');
+  // Flame's GameWidget installs its own focus node and autofocuses it. Keep
+  // that node out of the Tab order so canvas shortcuts and HUD traversal share
+  // one deterministic focus path.
+  final FocusNode _gameWidgetFocusNode = FocusNode(
+    debugLabel: 'Flame input surface',
+    skipTraversal: true,
+  );
 
   @override
   void initState() {
@@ -39,6 +48,70 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
       debugLog('[FlameSimulationView] PostFrameCallback: Calling onGameReady');
       widget.onGameReady?.call(_game);
     });
+  }
+
+  @override
+  void dispose() {
+    _canvasFocusNode.dispose();
+    _gameWidgetFocusNode.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _handleCanvasKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+
+    const panStep = 80.0;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      _game.panCameraBy(Vector2(-panStep, 0));
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowRight) {
+      _game.panCameraBy(Vector2(panStep, 0));
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _game.panCameraBy(Vector2(0, -panStep));
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _game.panCameraBy(Vector2(0, panStep));
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.equal ||
+        key == LogicalKeyboardKey.numpadAdd) {
+      _game.zoomCameraBy(1.15);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.minus ||
+        key == LogicalKeyboardKey.numpadSubtract) {
+      _game.zoomCameraBy(1 / 1.15);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) {
+      _game.resetCamera();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.bracketLeft) {
+      _game.focusNextInspectable(reverse: true);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.bracketRight) {
+      _game.focusNextInspectable();
+      return KeyEventResult.handled;
+    }
+    if (event is KeyRepeatEvent) return KeyEventResult.ignored;
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.space) {
+      _game.activateKeyboardTarget();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      _game.clearKeyboardTarget();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -99,7 +172,12 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
       },
     );
 
+    _game.setReducedMotion(MediaQuery.of(context).disableAnimations);
+
     debugLog('[FlameSimulationView] build: Returning GameWidget');
+
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       color: const Color(0xFF1A1A1A),
@@ -108,26 +186,77 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
           debugLog(
             '[FlameSimulationView] Layout constraints: ${constraints.maxWidth}x${constraints.maxHeight}',
           );
-          return GameWidget(
-            key: const ValueKey('soil_scope_game_main'),
-            game: _game,
-            loadingBuilder: (context) {
-              debugLog('[FlameSimulationView] GameWidget is LOADING...');
-              final l10n = AppLocalizations.of(context);
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          return Semantics(
+            container: true,
+            focusable: true,
+            label: l10n?.tutorialCanvasTitle ?? 'Simulation Canvas',
+            hint:
+                l10n?.canvasKeyboardHint ??
+                'Arrow keys pan. Plus and minus zoom. Use [ and ] to choose a '
+                    'target, Enter or Space to inspect it, and 0 to reset.',
+            child: Focus(
+              key: const ValueKey('simulation-canvas-focus'),
+              focusNode: _canvasFocusNode,
+              // Flame wraps its painting surface in a FocusScope. The canvas
+              // owns keyboard input here, so keep that inner scope out of
+              // traversal and let Tab move directly to the HUD.
+              descendantsAreFocusable: false,
+              onKeyEvent: _handleCanvasKey,
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (_) => _canvasFocusNode.requestFocus(),
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${l10n?.loadingSimulation ?? 'Ladataan simulaatiota...'} (${constraints.maxWidth.toInt()}x${constraints.maxHeight.toInt()})',
-                      style: const TextStyle(color: Colors.white54),
+                    GameWidget(
+                      key: const ValueKey('soil_scope_game_main'),
+                      game: _game,
+                      focusNode: _gameWidgetFocusNode,
+                      autofocus: false,
+                      loadingBuilder: (context) {
+                        debugLog(
+                          '[FlameSimulationView] GameWidget is LOADING...',
+                        );
+                        final loadingL10n = AppLocalizations.of(context);
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(
+                                '${loadingL10n?.loadingSimulation ?? 'Ladataan simulaatiota...'} (${constraints.maxWidth.toInt()}x${constraints.maxHeight.toInt()})',
+                                style: const TextStyle(color: Colors.white54),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: AnimatedBuilder(
+                          animation: _canvasFocusNode,
+                          builder: (context, child) {
+                            if (!_canvasFocusNode.hasFocus) {
+                              return const SizedBox.shrink();
+                            }
+                            return DecoratedBox(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: theme.colorScheme.primary,
+                                  width: 3,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
           );
         },
       ),

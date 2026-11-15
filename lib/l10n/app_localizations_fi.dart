@@ -3410,6 +3410,9 @@ class AppLocalizationsFi extends AppLocalizations {
   String get tutorialCanvasTitle => 'Simulaationäkymä & Tarkastelupisteet';
 
   @override
+  String get canvasKeyboardHint => 'Nuolinäppäimet siirtävät näkymää. Plus ja miinus zoomaavat. Valitse kohde [ ja ] -näppäimillä, tarkastele se Enterillä tai välilyönnillä ja palauta näkymä 0-näppäimellä.';
+
+  @override
   String get tutorialCanvasDesc => 'Päänäkymässä näet 2D-fysiikkamaailman: kasvin verson, juuriston kasvun ja maannoskerrokset sekä ravinnehiukkasten dynaamisen virtauksen.';
 
   @override

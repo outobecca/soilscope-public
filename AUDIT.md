@@ -536,7 +536,7 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub`: 200 tests passing across 52 test files.
+- `flutter test --no-pub`: 203 tests passing across 52 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
@@ -715,9 +715,10 @@ interventions and pause/resume.
 
 Semantics exist for the HUD, health meters and quick actions, and the data
 table is a good canvas alternative. A semantics smoke test now covers the
-quick-action labels and HUD health/index nodes. There is still no
-TalkBack/VoiceOver walkthrough, no keyboard-only canvas path and no
-reduced-motion handling.
+quick-action labels and HUD health/index nodes. Keyboard focus order, canvas
+pan/zoom/target shortcuts and HUD activation have widget coverage, and the
+canvas now freezes decorative clocks when the platform requests reduced
+motion. There is still no TalkBack/VoiceOver walkthrough.
 
 **Acceptance:** a semantics test for the HUD and inspection card, a
 screen-reader pass on Android and iOS/web, keyboard access to every
@@ -825,9 +826,11 @@ equivalent; no known tap-order ambiguity remains.
 **Progress (2026-11-15):** H6 is resolved: duplicate layer/hotspot creation is
 gone, topmost-target routing is documented, and layer/shoot/root/rhizosphere
 taps are covered. Drag panning and pointer-anchored wheel zoom are covered,
-and the 200% text pass runs across phone, tablet and desktop sizes. Remaining
-Phase 3 work: microscope-target integration coverage, keyboard access,
-reduced motion and real-device screen-reader walks.
+and the 200% text pass runs across phone, tablet and desktop sizes. Canvas
+and HUD keyboard focus/activation are covered, including focus order back to
+the canvas, and reduced motion freezes decorative clocks while simulation
+data continues. Remaining Phase 3 work: microscope-target integration
+coverage and real-device screen-reader walks.
 
 #### Phase 4 — Performance on target devices (3–5 days)
 

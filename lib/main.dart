@@ -497,10 +497,18 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
           ref.read(uIStateProvider.notifier).clearUnpinnedHover();
         },
         child: SizedBox.expand(
-          child: Stack(
+          child: FocusTraversalGroup(
+            policy: OrderedTraversalPolicy(),
+            child: Stack(
             children: [
             // 1. FULL SCREEN SIMULATION
-            const Positioned.fill(child: FlameSimulationView()),
+            const Positioned.fill(
+              child: FocusTraversalOrder(
+                key: ValueKey('canvas-focus-region'),
+                order: NumericFocusOrder(3),
+                child: FlameSimulationView(),
+              ),
+            ),
 
             // 2. TOP BAR (MISSION & SIDEBAR TOGGLES)
             Positioned(
@@ -513,7 +521,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
                     horizontal: topBarHorizontalPadding,
                     vertical: topBarVerticalPadding,
                   ),
-                  child: Column(
+                  child: FocusTraversalOrder(
+                    key: const ValueKey('topbar-focus-region'),
+                    order: const NumericFocusOrder(1),
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
@@ -569,6 +580,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
                       ),
                     ],
                   ),
+                  ),
                 ),
               ),
             ),
@@ -603,9 +615,13 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               left: 16,
               right: 16,
               bottom: 120, // Above quick actions
-              child: const SafeArea(
-                top: false,
-                child: Center(child: TimelineSliderWidget()),
+              child: FocusTraversalOrder(
+                key: const ValueKey('timeline-focus-region'),
+                order: const NumericFocusOrder(4),
+                child: const SafeArea(
+                  top: false,
+                  child: Center(child: TimelineSliderWidget()),
+                ),
               ),
             ),
 
@@ -614,9 +630,13 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               left: 16,
               right: 16,
               bottom: 16,
-              child: const SafeArea(
-                top: false,
-                child: Center(child: FlutterQuickActions()),
+              child: FocusTraversalOrder(
+                key: const ValueKey('quick-actions-focus-region'),
+                order: const NumericFocusOrder(5),
+                child: const SafeArea(
+                  top: false,
+                  child: Center(child: FlutterQuickActions()),
+                ),
               ),
             ),
 
@@ -711,7 +731,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               left: 0,
               top: 0,
               bottom: 0,
-              child: _buildLeftSidebar(isMobile, screenWidth),
+              child: FocusTraversalOrder(
+                key: const ValueKey('left-sidebar-focus-region'),
+                order: const NumericFocusOrder(2),
+                child: _buildLeftSidebar(isMobile, screenWidth),
+              ),
             ),
 
             // 9. RIGHT SIDEBAR (CONTROLS) - Placed to cover when full width on mobile
@@ -719,7 +743,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               right: 0,
               top: 0,
               bottom: 0,
-              child: _buildRightSidebar(isMobile, screenWidth),
+              child: FocusTraversalOrder(
+                key: const ValueKey('right-sidebar-focus-region'),
+                order: const NumericFocusOrder(6),
+                child: _buildRightSidebar(isMobile, screenWidth),
+              ),
             ),
 
             // 10. TUTORIAL OVERLAY - Placed topmost to spotlight components and guide user
@@ -728,6 +756,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
