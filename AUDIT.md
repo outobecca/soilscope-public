@@ -876,9 +876,17 @@ are recorded: the device is far below budget, raster dominates build, and
 pausing the simulation lowers build (per-tick work is real but secondary to
 scene recording).
 
+The Linux desktop is now the reference environment for repeatable captures:
+three fresh profile runs give a median steady 15.6 FPS at 1280×720, build
+13.4 ms p50 / 36.8 ms p95 against raster 61.4 ms p50 / 86.3 ms p95. Raster is
+3.7× the frame budget while build is under it, which confines the next change
+to GPU draw work; run-to-run raster spread is ~30 %, so single runs are not
+usable as before/after evidence. The microscope (+46.8 ms raster) and camera
+motion (+52.3 ms) are the largest measured add-ons.
+
 The device matrix still lacks a mid-range phone, a desktop browser and iOS
-hardware, and the three-run median. No optimization has been accepted yet; the
-low-end capture is its before-profile.
+hardware, and the Android row still needs repeated runs. No optimization has
+been accepted yet; the desktop median is its before-profile.
 
 #### Phase 5 — Scientific credibility and sustainability (ongoing)
 

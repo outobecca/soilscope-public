@@ -15,7 +15,7 @@ script for before/after comparisons.
 |---|---|---|---|---|---|
 | Low-end Android | 4K Hybrid STB (Amlogic HY46B, Mali-G31) | Android 14 / API 34, 1920×1080 @ dpr 2.0 | `flutter drive --profile` | 2026-11-15 | Captured, below budget |
 | Mid-range Android | Record model | Record API level | `flutter run --profile` | — | Pending |
-| Desktop (Linux) | AMD Radeon 760M, Ryzen, Flutter 3.47.9 | Pop!_OS 24.04, kernel 7.2.15 | `flutter drive --profile` | 2026-11-15 | Captured, raster-bound; single run |
+| Desktop (Linux) | AMD Radeon 760M, Ryzen, Flutter 3.47.9 | Pop!_OS 24.04, kernel 7.2.15 | `flutter drive --profile` | 2026-11-15 | Captured, median of 3 runs; raster-bound |
 | Desktop Chrome | Record GPU/CPU | Record Chrome version | Flutter web profile | — | Pending |
 | iPhone / iPad | Record model | Record iOS version | `flutter run --profile` | — | Pending if hardware is available |
 
@@ -114,39 +114,53 @@ What survives the confound:
 same baseline and load a fixed pre-advanced simulation state so both runs see
 the same scene. Sequential phases cannot be compared as a before/after.
 
-### Capture: Linux desktop, 2026-11-15
+### Capture: Linux desktop reference (median of 3 runs), 2026-11-15
 
-Same harness and scenario on a desktop with real GPU acceleration (AMD Radeon
-760M via Mesa radeonsi, OpenGL 4.6), 1280×720 at dpr 1.0, Flutter 3.47.9
-profile build. Single run, attribution phases enabled.
+The Linux desktop is the reference environment for repeatable captures: it has
+real GPU acceleration, does not thermally throttle, and every run starts from
+the same fresh scenario. Same harness and scenario as the device rows
+(AMD Radeon 760M via Mesa radeonsi, OpenGL 4.6, Pop!_OS 24.04, kernel 7.2.15),
+1280×720 at dpr 1.0, Flutter 3.47.9 profile build, default four-phase protocol.
 
-| Phase | Frames | FPS | Build p50 (ms) | Raster p50 (ms) | Total p50 (ms) |
-|---|---|---|---|---|---|
-| Steady simulation (opening) | 437 | 14.52 | 16.7 | 68.9 | 131.1 |
-| Pinned inspection | 121 | 11.93 | 19.6 | 83.2 | 159.3 |
-| Microscope open | 81 | 8.01 | 24.8 | 125.3 | 251.2 |
-| Pan + zoom | 69 | 6.79 | 25.6 | 135.3 | 272.8 |
-| Paused simulation | 87 | 8.68 | 12.7 | 112.7 | 219.9 |
-| Reduced motion | 87 | 8.66 | 27.6 | 114.9 | 224.6 |
-| Steady control (end) | 63 | 6.29 | 26.7 | 153.4 | 299.3 |
+Command, run three times on three fresh installs of the app:
 
-What the desktop capture establishes:
+```sh
+flutter drive --profile -d linux \
+  --driver=test_driver/integration_test.dart \
+  --target=integration_test/performance_profile_test.dart
+```
 
-- Build is close to the 16.7 ms frame budget while raster is ~4× it, so the
-  bottleneck is GPU draw work, not Dart. That matches the phone and means the
-  next optimization should target raster, not engine or provider work.
-- The overlay and camera deltas repeat here with the same direction: pinned
-  inspection +14 ms raster, microscope +56 ms, pan/zoom +66 ms against the
-  opening steady window. Blurred HUD surfaces and full-canvas redraw are the
-  measured costs.
-- The end-of-session control is 2.2× slower than the opening baseline. No
-  thermal explanation applies to a desktop in three minutes, so treat the
-  later phases as contaminated by scene growth and prior interactions. The
-  opening steady window is the comparable baseline.
-- This run reports ~14.5 FPS where an earlier DevTools desktop profile of the
-  pinned-inspection state reported ~27 FPS. Different window size, state and
-  instrumentation, so the two are not directly comparable; both are desktop
-  signals, not release-device baselines.
+| Phase | Frames | FPS | Build p50 / p95 (ms) | Raster p50 / p95 (ms) | Total p50 / p95 (ms) | Raster p50 across runs (ms) |
+|---|---|---|---|---|---|---|
+| Steady simulation | 470 | 15.64 | 13.4 / 36.8 | 61.4 / 86.3 | 116.0 / 163.9 | 46.5–63.7 |
+| Pinned inspection | 134 | 13.39 | 16.6 / 42.7 | 74.0 / 80.9 | 141.2 / 154.0 | 58.2–82.2 |
+| Microscope open | 93 | 9.25 | 21.8 / 45.9 | 108.1 / 128.4 | 209.8 / 237.2 | 100.8–119.4 |
+| Pan + zoom | 87 | 8.69 | 20.9 / 48.5 | 113.6 / 145.8 | 225.7 / 268.2 | 93.9–118.3 |
+
+Medians are of the three per-run p50/p95 values. Every window has 100 % janky
+frames against a 16.67 ms budget.
+
+What the desktop reference establishes:
+
+- Build p50 stays between 13.4 and 21.8 ms, close to or under the 16.7 ms
+  budget, while raster p50 is 61–114 ms. The bottleneck is GPU draw work, not
+  Dart, the solvers or provider rebuilds. That matches the phone and means the
+  next optimization should target raster.
+- Median deltas against steady: pinned inspection +12.7 ms raster and +3.2 ms
+  build, microscope +46.8 ms raster and +8.4 ms build, pan/zoom +52.3 ms
+  raster and +7.5 ms build. Blurred HUD surfaces and full-canvas redraw are
+  the measured costs, in that order.
+- Run-to-run raster spread is large: steady 46.5–63.7 ms, microscope
+  100.8–119.4 ms, pan/zoom 93.9–118.3 ms. A single desktop run is therefore
+  not evidence for a before/after; use the median of at least three runs, and
+  prefer an interleaved A/B for a specific change.
+- Build p95 (36.8–48.5 ms) shows that even the parts that are usually cheap
+  spike above budget, so p50 alone understates the jank.
+
+This run reports ~15.6 FPS steady where an earlier DevTools desktop profile of
+the pinned-inspection state reported ~27 FPS. Different window size, state and
+instrumentation, so the two are not directly comparable; both are desktop
+signals, not release-device baselines.
 
 ### Provisional budget
 
@@ -176,7 +190,9 @@ in the matrix.
    every device, run a steady control phase at the end of the session (see the
    session-drift note above); if it differs from the opening baseline, the
    captures are not comparable and must be interleaved instead. Growth of the
-   simulated scene during a run is itself a confound, not just heat.
+   simulated scene during a run is itself a confound, not just heat. Prefer the
+   Linux desktop for the three-run median: fresh runs there start from the same
+   scene and the frame times are repeatable within ~30 %.
 6. Use the Flutter Inspector repaint/layer overlays and, where supported, the
    platform GPU profiler to check these suspected costs:
    - `BackdropFilter` and other blur/`MaskFilter` layers;
@@ -224,27 +240,27 @@ before drawing any retention conclusion.
 
 ## Status
 
-Two matrix rows are now captured: a low-end Android box at ~5.4–5.8 FPS
-(roughly 10× over the 33.3 ms budget) and a Linux desktop at ~14.5 FPS
-(1280×720). Both are raster-bound — 169 ms vs 100 ms build on the box, 69 ms
-vs 16.7 ms on the desktop — so the bottleneck is GPU draw work, not Dart or
-the solver.
+Two matrix rows are now captured. The Linux desktop reference has the
+three-run median the protocol asks for: ~15.6 FPS steady (1280×720), build
+13.4 ms p50 against raster 61.4 ms p50. The low-end Android box is a
+single-run lower bound: ~5.4–5.8 FPS, build 100–106 ms, raster 169–182 ms, and
+it drifts 2.5× across a session. Both are raster-bound, so the bottleneck is
+GPU draw work, not Dart or the solver.
 
 The matrix still needs a mid-range phone, a desktop browser and (if available)
-an iOS device, and every row needs the three-run median before an optimization
-is accepted. Both captures also drift across a session (2.5× on the box, 2.2×
-on the desktop), so the next step is an interleaved A/B harness rather than
-more sequential phases.
+an iOS device. The Android row still needs repeated runs; the desktop row is
+the one to compare against for a change, because fresh runs there are
+repeatable within ~30 % and the same scene is loaded every time.
 
 Measured candidates for that A/B, in order of evidence:
 
-1. Blurred HUD surfaces and blur-heavy canvas overlays. The microscope window
-   costs +56 ms raster on desktop and the inspection card +14 ms; on the box
-   the microscope is +84 ms in a run already drifting slow. `BackdropFilter`
-   and the `MaskFilter.blur` calls are the first suspects.
-2. Full-canvas redraw under camera motion (+66 ms raster desktop, +138 ms
-   box), consistent with re-rasterizing every blurred layer as the view
-   changes.
+1. Blurred HUD surfaces and blur-heavy canvas overlays. Median deltas on the
+   desktop reference: microscope +46.8 ms raster, inspection card +12.7 ms;
+   on the box the microscope is +84 ms in a run already drifting slow.
+   `BackdropFilter` and the `MaskFilter.blur` calls are the first suspects.
+2. Full-canvas redraw under camera motion (+52.3 ms raster on the desktop
+   median, +138 ms box), consistent with re-rasterizing every blurred layer
+   as the view changes.
 3. Per-tick engine and provider work, which is bounded to ~20 ms of build
    when the simulation is paused on the box and is not the primary target.
 

@@ -1,10 +1,16 @@
-// On-device profile capture for the Phase 4 (H7) performance matrix.
+// Profile capture for the Phase 4 (H7) performance matrix.
 //
-// Run against a physical device in profile mode:
+// The Linux desktop is the reference environment: it has real GPU acceleration,
+// does not thermally throttle, and every run starts from the same fresh
+// scenario, so three runs give a usable median. Run it with:
 //
-//   flutter drive --profile -d <device-id> \
+//   flutter drive --profile -d linux \
 //     --driver=test_driver/integration_test.dart \
 //     --target=integration_test/performance_profile_test.dart
+//
+// The same command works on a physical Android or iOS device (use its device
+// id); those captures are lower bounds, so record the run-to-run spread before
+// comparing anything. A single run is not a before/after.
 //
 // The harness loads the real `compacted_clay` scenario, warms up, then records
 // frame timings for the four states in PERFORMANCE.md: steady simulation,
