@@ -9,6 +9,7 @@ import 'visual_seed.dart';
 /// Mixin to handle technical node (nutrients, sensors) placement in world space.
 mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
   final math.Random _random = visualRandom(const ['layer-tech-nodes']);
+  bool _hudNodesSpawned = false;
 
   /// Box-Muller transform for Gaussian distribution
   double _nextGaussian(double mean, double stdDev) {
@@ -24,6 +25,18 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
   }) {
     final layerIndex = state.profile.layers.indexWhere((l) => l.id == layerId);
     if (layerIndex == -1) return;
+
+    // Flame does not expose a just-added child in the tree until it mounts.
+    // Remember the spawn on the layer itself so two syncs in one frame cannot
+    // add duplicate targets while the first set is still pending.
+    final existingNodes = game.technicalHotspotLayer.children
+        .query<ExpandableHotspotNode>()
+        .where((node) => node.layerId == layerId)
+        .toList();
+    if (_hudNodesSpawned || existingNodes.isNotEmpty) {
+      _hudNodesSpawned = true;
+      return;
+    }
 
     final double layerHeight = size.y;
     final worldWidth = SoilScopeGame.soilColumnWidth;
@@ -55,7 +68,7 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     final double minDistanceSq =
         minCenterToCenterDistance * minCenterToCenterDistance;
 
-    final existingNodes = game.technicalHotspotLayer.children
+    final allNodes = game.technicalHotspotLayer.children
         .whereType<ExpandableHotspotNode>()
         .toList();
 
@@ -95,7 +108,7 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
         final candidatePos = Vector2(px, py);
 
         bool isValid = true;
-        for (final node in existingNodes) {
+        for (final node in allNodes) {
           if (node.position.distanceToSquared(candidatePos) < minDistanceSq) {
             isValid = false;
             break;
@@ -133,7 +146,8 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
           position: validPosition,
         );
         game.technicalHotspotLayer.add(newNode);
-        existingNodes.add(newNode);
+        allNodes.add(newNode);
+        _hudNodesSpawned = true;
       }
     }
   }

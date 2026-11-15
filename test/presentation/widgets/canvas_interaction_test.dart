@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,7 +16,9 @@ import 'package:soilscope/presentation/providers/simulation_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
 import 'package:soilscope/presentation/providers/ui_state_provider.dart';
 import 'package:soilscope/presentation/widgets/game/components/animated_plant_component.dart';
+import 'package:soilscope/presentation/widgets/game/components/expandable_hotspot_node.dart';
 import 'package:soilscope/presentation/widgets/game/components/rhizosphere_hotspot_component.dart';
+import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/soil_scope_game.dart';
 
 class _Harness {
@@ -170,6 +173,110 @@ void main() {
     );
   });
 
+  testWidgets('drag pans the canvas and wheel zoom stays under the pointer', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final game = harness.game;
+    final viewfinder = game.camera.viewfinder;
+    final canvasCenter =
+        harness.topLeft + Offset(game.size.x / 2, game.size.y / 2);
+    final startZoom = viewfinder.zoom;
+    final startPosition = viewfinder.position.clone();
+
+    await tester.dragFrom(canvasCenter, const Offset(-120, 0));
+    // Let the tap recognizer's disambiguation timer expire before teardown.
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(viewfinder.zoom, closeTo(startZoom, 1e-6));
+    expect(
+      viewfinder.position.x,
+      greaterThan(startPosition.x),
+      reason: 'a left drag moves the camera right',
+    );
+
+    final zoomPoint = canvasCenter + const Offset(120, 80);
+    final pointer = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.hover(zoomPoint));
+    final worldBeforeZoom = game.camera.globalToLocal(
+      Vector2(zoomPoint.dx, zoomPoint.dy),
+    );
+    final positionBeforeZoom = viewfinder.position.clone();
+
+    await tester.sendEventToBinding(pointer.scroll(const Offset(0, -120)));
+    await tester.pump();
+
+    expect(
+      viewfinder.zoom,
+      greaterThan(startZoom),
+      reason: 'a wheel-up scroll must zoom in',
+    );
+    final worldAfterZoom = game.camera.globalToLocal(
+      Vector2(zoomPoint.dx, zoomPoint.dy),
+    );
+    expect(
+      (worldAfterZoom - worldBeforeZoom).length,
+      lessThan(0.01),
+      reason: 'zoom must stay anchored at the pointer',
+    );
+    expect(
+      (viewfinder.position - positionBeforeZoom).length,
+      greaterThan(0.01),
+      reason: 'an off-center zoom must move the camera',
+    );
+  });
+
+  testWidgets('replacing a layer removes its stale technical hotspots', (
+    tester,
+  ) async {
+    final harness = await _pumpSimulation(tester);
+    final game = harness.game;
+    await _pumpUntil(
+      tester,
+      () => game.technicalHotspotLayer.children
+          .whereType<ExpandableHotspotNode>()
+          .isNotEmpty,
+    );
+
+    final oldLayer = game.world.children.whereType<SoilLayerComponent>().single;
+    final oldLayerId = oldLayer.layerId;
+    final oldNodes = game.technicalHotspotLayer.children
+        .whereType<ExpandableHotspotNode>()
+        .where((node) => node.layerId == oldLayerId)
+        .toList();
+    expect(oldNodes, isNotEmpty);
+
+    harness.container
+        .read(simulationProvider.notifier)
+        .loadScenario(_scenario(withHotspot: false, layerId: 'subsoil'));
+    // The screen listener is paused after the first scenario stops; push the
+    // replacement snapshot directly so this test exercises scene cleanup.
+    game.updateSession(
+      harness.container.read(displayedSimulationStateProvider),
+      harness.container.read(simulationSessionProvider),
+    );
+    await _pumpUntil(
+      tester,
+      () => game.world.children.whereType<SoilLayerComponent>().any(
+        (layer) => layer.layerId == 'subsoil',
+      ),
+    );
+
+    expect(
+      game.world.children.whereType<SoilLayerComponent>().where(
+        (layer) => layer.layerId == oldLayerId,
+      ),
+      isEmpty,
+    );
+    expect(
+      game.technicalHotspotLayer.children
+          .whereType<ExpandableHotspotNode>()
+          .where((node) => node.layerId == oldLayerId),
+      isEmpty,
+      reason: 'a removed layer must not leave tappable hotspots behind',
+    );
+  });
+
   testWidgets('rhizosphere hotspots select their own inspection card', (
     tester,
   ) async {
@@ -199,9 +306,9 @@ void main() {
   });
 }
 
-Scenario _scenario({required bool withHotspot}) {
+Scenario _scenario({required bool withHotspot, String layerId = 'topsoil'}) {
   return Scenario(
-    id: 'canvas_interaction',
+    id: 'canvas_interaction_$layerId',
     title: 'Canvas Interaction',
     description: 'A deterministic layer for canvas interaction tests.',
     initialProfile: SoilProfile(
@@ -209,7 +316,7 @@ Scenario _scenario({required bool withHotspot}) {
       name: 'Canvas',
       layers: [
         SoilLayer(
-          id: 'topsoil',
+          id: layerId,
           depth: 0.0,
           thickness: 0.3,
           kSat: 1e-5,
@@ -235,7 +342,7 @@ Scenario _scenario({required bool withHotspot}) {
           particulateOrganicMatter: 6000.0,
           mineralAssociatedOrganicMatter: 6000.0,
           nitrogenContent: 1000.0,
-          name: 'Topsoil',
+          name: layerId == 'topsoil' ? 'Topsoil' : 'Subsoil',
           hotspots: withHotspot
               ? const [
                   RhizosphereHotspot(

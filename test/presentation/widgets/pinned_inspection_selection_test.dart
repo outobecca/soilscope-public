@@ -139,6 +139,33 @@ void main() {
       reason: 'each expandable hotspot must have a unique position',
     );
 
+    // A resize triggers the same full scene rebuild that previously created
+    // a second layer before Flame mounted the first. The rebuild must reuse
+    // the existing component and its hotspot set.
+    game.onGameResize(game.size);
+    await tester.pump();
+    expect(
+      game.world.children.whereType<SoilLayerComponent>().length,
+      1,
+      reason: 'a scene rebuild must not add a second layer component',
+    );
+    final rebuiltNodes = game.world
+        .descendants()
+        .whereType<ExpandableHotspotNode>()
+        .toList();
+    expect(rebuiltNodes.length, nodes.length);
+    expect(
+      rebuiltNodes
+          .map(
+            (node) =>
+                '${node.layerId}:${node.position.x.toStringAsFixed(1)}:'
+                '${node.position.y.toStringAsFixed(1)}',
+          )
+          .toSet()
+          .length,
+      rebuiltNodes.length,
+    );
+
     Offset screenOf(PositionComponent component) {
       final pos = game.worldToScreen(
         component.absolutePositionOf(component.size / 2),

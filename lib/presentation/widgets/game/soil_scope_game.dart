@@ -24,6 +24,7 @@ import 'components/scene_coordinate_mapper.dart';
 import 'components/magnifier_group_component.dart';
 import 'components/molecule_particle_pool.dart';
 import 'components/fertilizer_effect_component.dart';
+import 'components/expandable_hotspot_node.dart';
 import 'components/sky_background_component.dart';
 import 'components/soil_symbiosis_network_component.dart';
 import 'components/animation_clock.dart';
@@ -533,6 +534,16 @@ class SoilScopeGame extends FlameGame
     for (var layerId in _layerComponents.keys.toList()) {
       if (!activeIds.contains(layerId)) {
         _layerComponents.remove(layerId)?.removeFromParent();
+        // Hotspots live in a global overlay, so removing the layer component
+        // does not remove them. Clear the layer's nodes as well; otherwise a
+        // later reassignment of the same layer id keeps stale targets around.
+        final staleNodes = technicalHotspotLayer.children
+            .query<ExpandableHotspotNode>()
+            .where((node) => node.layerId == layerId)
+            .toList();
+        for (final node in staleNodes) {
+          node.removeFromParent();
+        }
       }
     }
 
