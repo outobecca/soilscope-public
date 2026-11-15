@@ -138,6 +138,11 @@ class SoilScopeGame extends FlameGame
       _visualState.advance(_animationClock.visualDt);
       super.update(frameDt);
     } else {
+      // Keep the component lifecycle moving while the visual clock is frozen.
+      // A zero delta mounts components added by a new selection (for example
+      // the metrics of another hotspot) without advancing any animation, so
+      // another object can be inspected without closing the pinned card first.
+      super.update(0);
       // Magnifiers live in the viewport, outside the simulation world. Keep
       // their fade/position updates running so selecting a microscope target
       // can actually reveal the microscope while the world itself is frozen.

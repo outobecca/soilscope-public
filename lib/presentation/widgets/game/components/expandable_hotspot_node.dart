@@ -149,6 +149,7 @@ class ExpandableHotspotNode extends PositionComponent
 
   void _expand() {
     _baseIndicator.paint.color = Colors.white.withValues(alpha: 0.95);
+    final immediate = game.isInspectionPaused;
     
     final double radius = 60.0;
     final double angleStep = (2 * math.pi) / metrics.length;
@@ -163,30 +164,44 @@ class ExpandableHotspotNode extends PositionComponent
         label: label,
         color: _getMetricColor(label),
         type: _getHotspotType(label),
-        position: size / 2, // Start from center
+        // A paused canvas cannot run the opening animation, so place the
+        // metric directly at its final position and make it visible/tappable.
+        position: immediate ? targetPos : size / 2,
       );
+      if (immediate) hotspot.opacity = 1.0;
       
       add(hotspot);
       _childHotspots.add(hotspot);
       
-      // Animate out
-      hotspot.add(
-        MoveToEffect(
-          targetPos,
-          EffectController(duration: 0.4, curve: Curves.easeOutBack),
-        ),
-      );
-      
-      hotspot.add(
-        OpacityEffect.fadeIn(
-          EffectController(duration: 0.3),
-        ),
-      );
+      if (!immediate) {
+        // Animate out only while the visual clock is running.
+        hotspot.add(
+          MoveToEffect(
+            targetPos,
+            EffectController(duration: 0.4, curve: Curves.easeOutBack),
+          ),
+        );
+        
+        hotspot.add(
+          OpacityEffect.fadeIn(
+            EffectController(duration: 0.3),
+          ),
+        );
+      }
     }
   }
 
   void _collapse() {
     _baseIndicator.paint.color = Colors.white.withValues(alpha: 0.2);
+    if (game.isInspectionPaused) {
+      // Removal effects cannot complete while time is frozen. Drop the metric
+      // hotspots immediately so a collapsed cluster really is collapsed.
+      for (final hotspot in _childHotspots) {
+        hotspot.removeFromParent();
+      }
+      _childHotspots.clear();
+      return;
+    }
     
     for (final hotspot in _childHotspots) {
       hotspot.add(
