@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'sustainability_score.dart';
@@ -9,6 +9,7 @@ part of 'sustainability_score.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $SustainabilityScoreCopyWith<SustainabilityScore> get copyWith => _$Sustainabili
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SustainabilityScore&&(identical(other.yieldScore, yieldScore) || other.yieldScore == yieldScore)&&(identical(other.carbonScore, carbonScore) || other.carbonScore == carbonScore)&&(identical(other.biodiversityScore, biodiversityScore) || other.biodiversityScore == biodiversityScore)&&(identical(other.environmentalImpact, environmentalImpact) || other.environmentalImpact == environmentalImpact)&&(identical(other.totalSoilHealth, totalSoilHealth) || other.totalSoilHealth == totalSoilHealth)&&const DeepCollectionEquality().equals(other.metObjectiveIds, metObjectiveIds));
+  final _this = this as SustainabilityScore;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SustainabilityScore&&(identical(other.yieldScore, _this.yieldScore) || other.yieldScore == _this.yieldScore)&&(identical(other.carbonScore, _this.carbonScore) || other.carbonScore == _this.carbonScore)&&(identical(other.biodiversityScore, _this.biodiversityScore) || other.biodiversityScore == _this.biodiversityScore)&&(identical(other.environmentalImpact, _this.environmentalImpact) || other.environmentalImpact == _this.environmentalImpact)&&(identical(other.totalSoilHealth, _this.totalSoilHealth) || other.totalSoilHealth == _this.totalSoilHealth)&&const DeepCollectionEquality().equals(other.metObjectiveIds, _this.metObjectiveIds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,yieldScore,carbonScore,biodiversityScore,environmentalImpact,totalSoilHealth,const DeepCollectionEquality().hash(metObjectiveIds));
+int get hashCode {
+  final _this = this as SustainabilityScore;
+  return Object.hash(runtimeType,_this.yieldScore,_this.carbonScore,_this.biodiversityScore,_this.environmentalImpact,_this.totalSoilHealth,const DeepCollectionEquality().hash(_this.metObjectiveIds));
+}
 
 @override
 String toString() {
-  return 'SustainabilityScore(yieldScore: $yieldScore, carbonScore: $carbonScore, biodiversityScore: $biodiversityScore, environmentalImpact: $environmentalImpact, totalSoilHealth: $totalSoilHealth, metObjectiveIds: $metObjectiveIds)';
+  final _this = this as SustainabilityScore;
+  return 'SustainabilityScore(yieldScore: ${_this.yieldScore}, carbonScore: ${_this.carbonScore}, biodiversityScore: ${_this.biodiversityScore}, environmentalImpact: ${_this.environmentalImpact}, totalSoilHealth: ${_this.totalSoilHealth}, metObjectiveIds: ${_this.metObjectiveIds})';
 }
 
 
@@ -66,7 +72,7 @@ class _$SustainabilityScoreCopyWithImpl<$Res>
 /// Create a copy of SustainabilityScore
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? yieldScore = null,Object? carbonScore = null,Object? biodiversityScore = null,Object? environmentalImpact = null,Object? totalSoilHealth = null,Object? metObjectiveIds = null,}) {
-  return _then(_self.copyWith(
+  return _then(SustainabilityScore(
 yieldScore: null == yieldScore ? _self.yieldScore : yieldScore // ignore: cast_nullable_to_non_nullable
 as double,carbonScore: null == carbonScore ? _self.carbonScore : carbonScore // ignore: cast_nullable_to_non_nullable
 as double,biodiversityScore: null == biodiversityScore ? _self.biodiversityScore : biodiversityScore // ignore: cast_nullable_to_non_nullable
@@ -214,7 +220,7 @@ return $default(_that.yieldScore,_that.carbonScore,_that.biodiversityScore,_that
 @JsonSerializable()
 
 class _SustainabilityScore implements SustainabilityScore {
-  const _SustainabilityScore({this.yieldScore = 0.0, this.carbonScore = 0.0, this.biodiversityScore = 0.0, this.environmentalImpact = 0.0, this.totalSoilHealth = 0.0, final  List<String> metObjectiveIds = const []}): _metObjectiveIds = metObjectiveIds;
+  const _SustainabilityScore({this.yieldScore = 0.0, this.carbonScore = 0.0, this.biodiversityScore = 0.0, this.environmentalImpact = 0.0, this.totalSoilHealth = 0.0,  List<String> metObjectiveIds = const []}): _metObjectiveIds = metObjectiveIds;
   factory _SustainabilityScore.fromJson(Map<String, dynamic> json) => _$SustainabilityScoreFromJson(json);
 
 @override@JsonKey() final  double yieldScore;
@@ -243,16 +249,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SustainabilityScore&&(identical(other.yieldScore, yieldScore) || other.yieldScore == yieldScore)&&(identical(other.carbonScore, carbonScore) || other.carbonScore == carbonScore)&&(identical(other.biodiversityScore, biodiversityScore) || other.biodiversityScore == biodiversityScore)&&(identical(other.environmentalImpact, environmentalImpact) || other.environmentalImpact == environmentalImpact)&&(identical(other.totalSoilHealth, totalSoilHealth) || other.totalSoilHealth == totalSoilHealth)&&const DeepCollectionEquality().equals(other._metObjectiveIds, _metObjectiveIds));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SustainabilityScore&&(identical(other.yieldScore, yieldScore) || other.yieldScore == yieldScore)&&(identical(other.carbonScore, carbonScore) || other.carbonScore == carbonScore)&&(identical(other.biodiversityScore, biodiversityScore) || other.biodiversityScore == biodiversityScore)&&(identical(other.environmentalImpact, environmentalImpact) || other.environmentalImpact == environmentalImpact)&&(identical(other.totalSoilHealth, totalSoilHealth) || other.totalSoilHealth == totalSoilHealth)&&const DeepCollectionEquality().equals(other.metObjectiveIds, _metObjectiveIds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,yieldScore,carbonScore,biodiversityScore,environmentalImpact,totalSoilHealth,const DeepCollectionEquality().hash(_metObjectiveIds));
+int get hashCode {
+    return Object.hash(runtimeType,yieldScore,carbonScore,biodiversityScore,environmentalImpact,totalSoilHealth,const DeepCollectionEquality().hash(_metObjectiveIds));
+}
 
 @override
 String toString() {
-  return 'SustainabilityScore(yieldScore: $yieldScore, carbonScore: $carbonScore, biodiversityScore: $biodiversityScore, environmentalImpact: $environmentalImpact, totalSoilHealth: $totalSoilHealth, metObjectiveIds: $metObjectiveIds)';
+    return 'SustainabilityScore(yieldScore: $yieldScore, carbonScore: $carbonScore, biodiversityScore: $biodiversityScore, environmentalImpact: $environmentalImpact, totalSoilHealth: $totalSoilHealth, metObjectiveIds: $metObjectiveIds)';
 }
 
 

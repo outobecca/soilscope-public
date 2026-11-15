@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../../core/debug_log.dart';

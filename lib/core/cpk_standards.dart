@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// CPK (Corey-Pauling-Koltun) standards for chemical visualization.
 /// These constants ensure scientific accuracy and pedagogical consistency.

@@ -3,7 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide Image, PointerMoveEvent;
 import '../../../core/debug_log.dart';
 import '../../providers/game_provider_reader.dart';
 import '../../providers/simulation_provider.dart';
@@ -25,6 +25,7 @@ import 'components/magnifier_group_component.dart';
 import 'components/molecule_particle_pool.dart';
 import 'components/fertilizer_effect_component.dart';
 import 'components/expandable_hotspot_node.dart';
+import 'components/inspection_target_tap_router.dart';
 import 'components/sky_background_component.dart';
 import 'components/soil_symbiosis_network_component.dart';
 import 'components/animation_clock.dart';
@@ -298,6 +299,15 @@ class SoilScopeGame extends FlameGame
 
     // TECHNICAL OVERLAY (Always on top of world components)
     world.add(technicalHotspotLayer);
+
+    // Inspection targets sit inside the soil and under the technical overlay,
+    // so give them a dedicated tap route above both without changing the
+    // rendering order of the layers and hotspots around them. Layer icons and
+    // rhizosphere hotspots need a route above passive process overlays, but
+    // below the technical hotspot overlay so a data hotspot drawn on top still
+    // keeps its tap.
+    world.add(InspectionTargetTapRouter());
+    world.add(CanvasAnchorTapRouter());
 
     // Keyboard target reticle; kept in the world so camera changes track it.
     world.add(keyboardFocusCue);

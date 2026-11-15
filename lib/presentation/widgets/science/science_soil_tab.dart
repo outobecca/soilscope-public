@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../../core/biophysics_utils.dart';
 import '../../../../domain/models/soil_layer.dart';
 import '../../../l10n/app_localizations.dart';

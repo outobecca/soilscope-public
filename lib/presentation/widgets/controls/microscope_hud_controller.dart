@@ -1,5 +1,5 @@
 import '../common/blur_surface.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/simulation_provider.dart';
@@ -109,27 +109,33 @@ class MicroscopeHudController extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            // Magnification & Active Target Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF06B6D4).withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: const Color(0xFF22D3EE).withValues(alpha: 0.6),
-                                  width: 1,
+                            // Magnification & Active Target Badge. Flexible so a
+                            // long target name ellipsizes instead of overflowing
+                            // the narrow HUD.
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
-                              ),
-                              child: Text(
-                                '$currentTitle ($currentMag)',
-                                style: const TextStyle(
-                                  color: Color(0xFF67E8F9),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'monospace',
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF06B6D4).withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFF22D3EE).withValues(alpha: 0.6),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '$currentTitle ($currentMag)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF67E8F9),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'monospace',
+                                  ),
                                 ),
                               ),
                             ),

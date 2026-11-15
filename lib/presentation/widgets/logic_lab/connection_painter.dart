@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../domain/logic_lab/models.dart';
 
 class ConnectionPainter extends CustomPainter {

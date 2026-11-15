@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'soil_profile.dart';
@@ -9,6 +9,7 @@ part of 'soil_profile.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $SoilProfileCopyWith<SoilProfile> get copyWith => _$SoilProfileCopyWithImpl<Soil
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoilProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.layers, layers)&&(identical(other.surfaceAlbedo, surfaceAlbedo) || other.surfaceAlbedo == surfaceAlbedo)&&(identical(other.slope, slope) || other.slope == slope));
+  final _this = this as SoilProfile;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoilProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&const DeepCollectionEquality().equals(other.layers, _this.layers)&&(identical(other.surfaceAlbedo, _this.surfaceAlbedo) || other.surfaceAlbedo == _this.surfaceAlbedo)&&(identical(other.slope, _this.slope) || other.slope == _this.slope));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,const DeepCollectionEquality().hash(layers),surfaceAlbedo,slope);
+int get hashCode {
+  final _this = this as SoilProfile;
+  return Object.hash(runtimeType,_this.id,_this.name,const DeepCollectionEquality().hash(_this.layers),_this.surfaceAlbedo,_this.slope);
+}
 
 @override
 String toString() {
-  return 'SoilProfile(id: $id, name: $name, layers: $layers, surfaceAlbedo: $surfaceAlbedo, slope: $slope)';
+  final _this = this as SoilProfile;
+  return 'SoilProfile(id: ${_this.id}, name: ${_this.name}, layers: ${_this.layers}, surfaceAlbedo: ${_this.surfaceAlbedo}, slope: ${_this.slope})';
 }
 
 
@@ -66,7 +72,7 @@ class _$SoilProfileCopyWithImpl<$Res>
 /// Create a copy of SoilProfile
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? layers = null,Object? surfaceAlbedo = null,Object? slope = null,}) {
-  return _then(_self.copyWith(
+  return _then(SoilProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,layers: null == layers ? _self.layers : layers // ignore: cast_nullable_to_non_nullable
@@ -213,7 +219,7 @@ return $default(_that.id,_that.name,_that.layers,_that.surfaceAlbedo,_that.slope
 @JsonSerializable()
 
 class _SoilProfile implements SoilProfile {
-  const _SoilProfile({required this.id, required this.name, required final  List<SoilLayer> layers, required this.surfaceAlbedo, required this.slope}): _layers = layers;
+  const _SoilProfile({required this.id, required this.name, required  List<SoilLayer> layers, required this.surfaceAlbedo, required this.slope}): _layers = layers;
   factory _SoilProfile.fromJson(Map<String, dynamic> json) => _$SoilProfileFromJson(json);
 
 @override final  String id;
@@ -241,16 +247,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoilProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other._layers, _layers)&&(identical(other.surfaceAlbedo, surfaceAlbedo) || other.surfaceAlbedo == surfaceAlbedo)&&(identical(other.slope, slope) || other.slope == slope));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoilProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.layers, _layers)&&(identical(other.surfaceAlbedo, surfaceAlbedo) || other.surfaceAlbedo == surfaceAlbedo)&&(identical(other.slope, slope) || other.slope == slope));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,const DeepCollectionEquality().hash(_layers),surfaceAlbedo,slope);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,const DeepCollectionEquality().hash(_layers),surfaceAlbedo,slope);
+}
 
 @override
 String toString() {
-  return 'SoilProfile(id: $id, name: $name, layers: $layers, surfaceAlbedo: $surfaceAlbedo, slope: $slope)';
+    return 'SoilProfile(id: $id, name: $name, layers: $layers, surfaceAlbedo: $surfaceAlbedo, slope: $slope)';
 }
 
 

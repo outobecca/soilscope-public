@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import 'soil_component_mixin.dart';
 

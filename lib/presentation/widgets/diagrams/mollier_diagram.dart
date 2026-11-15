@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart' hide TextStyle;
+import 'package:material_ui/material_ui.dart' hide TextStyle;
 import 'package:flutter/painting.dart';
 import '../../../core/biophysics_utils.dart';
 import '../../../l10n/app_localizations.dart';

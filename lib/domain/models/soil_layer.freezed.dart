@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'soil_layer.dart';
@@ -9,70 +9,14 @@ part of 'soil_layer.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$SoilLayer {
 
- String get id; double get depth;// m
- double get thickness;// m
-// Physical properties
- double get kSat;// Hydraulic conductivity (m/s)
- double get porosity;// (0.0 - 1.0) - also thetaS
- double get thetaR;// Residual water content
- double get vgAlpha;// van Genuchten alpha (1/m)
- double get vgN;// van Genuchten n
- double get vgL;// Tortuosity parameter
- double get bulkDensity;// (kg/m^3)
- double get waterContent;// (m^3/m^3)
- double get previousWaterContent; double get verticalFlux;// m/s (Net flux within layer)
- double get temperature;// K
- double get heatCapacity;// J/(m^3*K) (volumetric heat capacity Cv)
-// Chemical properties
- double get ph; double get ec;// Electrical conductivity (dS/m)
- double get redoxPotential;// Eh (mV)
- double get nitrateContent;// mg/kg
- double get ammoniumContent;// mg/kg
- double get phosphateContent;// mg/kg (solution pool)
- double get sorbedPhosphate;// mg/kg (solid pool)
- double get potassiumContent;// mg/kg (solution pool)
- double get exchangeablePotassium;// mg/kg
- double get solutionCalcium;// mg/kg
- double get exchangeableCalcium;// mg/kg
- double get solutionMagnesium;// mg/kg
- double get exchangeableMagnesium;// mg/kg
- double get exchangeableAluminium;// mg/kg
- double get cec;// cmol(+)/kg
- double get clayFraction;// (0.0 - 1.0)
- double get sandFraction;// (0.0 - 1.0)
- double get siltFraction;// (0.0 - 1.0)
- double get effectiveMacroPorosity;// (0.0 - 1.0)
- double get aggregateStability;// (0.0 - 1.0)
- double get oxygenContent;// mol/m^3 (approx 21% air at 20C)
- double get co2Content;// mol/m^3 (approx 400 ppm)
- double get methaneContent;// mol/m^3
- double get nitrousOxideContent;// mol/m^3
- double get thermalConductivity;// W/m*K
-// Biological properties
- double get microbialBiomass;// (kg/m^3)
- double get epsContent;// Extracellular Polymeric Substances
- double get fungalHyphaeDensity; double get necromass;// Stabilized organic matter (MAOM)
-// Carbon/Nutrients
- double get organicCarbon; double get particulateOrganicMatter;// Labile (POM) (kg/m^3)
- double get mineralAssociatedOrganicMatter;// Stable (MAOM) (kg/m^3)
-// Cultivation / Tillage
- bool get isCultivated; double get cultivationDisturbance;// 0.0 to 1.0 (1.0 = fully disturbed)
- double get labileCarbon;// Alias/Specific pool for POM
- double get stableCarbon;// Alias/Specific pool for MAOM
- double get organicNitrogen;// mg/kg (POM-N pool)
- double get microbialNitrogen;// mg/kg (Mic-N pool)
- double get maomNitrogen;// mg/kg (MAOM-N pool)
- double get nitrogenContent; String get name; String get description; int get colorValue;// === NEW DIAGNOSTIC FLUXES ===
- double get nitrificationRate;// mg/kg/s
- double get denitrificationRate;// mg/kg/s
- Map<String, double> get traceElements;// === HOTSPOTS (Rhizosphere / Decomposition) ===
- List<RhizosphereHotspot> get hotspots;
+ String get id; double get depth; double get thickness; double get kSat; double get porosity; double get thetaR; double get vgAlpha; double get vgN; double get vgL; double get bulkDensity; double get waterContent; double get previousWaterContent; double get verticalFlux; double get temperature; double get heatCapacity; double get ph; double get ec; double get redoxPotential; double get nitrateContent; double get ammoniumContent; double get phosphateContent; double get sorbedPhosphate; double get potassiumContent; double get exchangeablePotassium; double get solutionCalcium; double get exchangeableCalcium; double get solutionMagnesium; double get exchangeableMagnesium; double get exchangeableAluminium; double get cec; double get clayFraction; double get sandFraction; double get siltFraction; double get effectiveMacroPorosity; double get aggregateStability; double get oxygenContent; double get co2Content; double get methaneContent; double get nitrousOxideContent; double get thermalConductivity; double get microbialBiomass; double get epsContent; double get fungalHyphaeDensity; double get necromass; double get organicCarbon; double get particulateOrganicMatter; double get mineralAssociatedOrganicMatter; bool get isCultivated; double get cultivationDisturbance; double get labileCarbon; double get stableCarbon; double get organicNitrogen; double get microbialNitrogen; double get maomNitrogen; double get nitrogenContent; String get name; String get description; int get colorValue; double get nitrificationRate; double get denitrificationRate; Map<String, double> get traceElements; List<RhizosphereHotspot> get hotspots;
 /// Create a copy of SoilLayer
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -85,16 +29,21 @@ $SoilLayerCopyWith<SoilLayer> get copyWith => _$SoilLayerCopyWithImpl<SoilLayer>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoilLayer&&(identical(other.id, id) || other.id == id)&&(identical(other.depth, depth) || other.depth == depth)&&(identical(other.thickness, thickness) || other.thickness == thickness)&&(identical(other.kSat, kSat) || other.kSat == kSat)&&(identical(other.porosity, porosity) || other.porosity == porosity)&&(identical(other.thetaR, thetaR) || other.thetaR == thetaR)&&(identical(other.vgAlpha, vgAlpha) || other.vgAlpha == vgAlpha)&&(identical(other.vgN, vgN) || other.vgN == vgN)&&(identical(other.vgL, vgL) || other.vgL == vgL)&&(identical(other.bulkDensity, bulkDensity) || other.bulkDensity == bulkDensity)&&(identical(other.waterContent, waterContent) || other.waterContent == waterContent)&&(identical(other.previousWaterContent, previousWaterContent) || other.previousWaterContent == previousWaterContent)&&(identical(other.verticalFlux, verticalFlux) || other.verticalFlux == verticalFlux)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.heatCapacity, heatCapacity) || other.heatCapacity == heatCapacity)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.ec, ec) || other.ec == ec)&&(identical(other.redoxPotential, redoxPotential) || other.redoxPotential == redoxPotential)&&(identical(other.nitrateContent, nitrateContent) || other.nitrateContent == nitrateContent)&&(identical(other.ammoniumContent, ammoniumContent) || other.ammoniumContent == ammoniumContent)&&(identical(other.phosphateContent, phosphateContent) || other.phosphateContent == phosphateContent)&&(identical(other.sorbedPhosphate, sorbedPhosphate) || other.sorbedPhosphate == sorbedPhosphate)&&(identical(other.potassiumContent, potassiumContent) || other.potassiumContent == potassiumContent)&&(identical(other.exchangeablePotassium, exchangeablePotassium) || other.exchangeablePotassium == exchangeablePotassium)&&(identical(other.solutionCalcium, solutionCalcium) || other.solutionCalcium == solutionCalcium)&&(identical(other.exchangeableCalcium, exchangeableCalcium) || other.exchangeableCalcium == exchangeableCalcium)&&(identical(other.solutionMagnesium, solutionMagnesium) || other.solutionMagnesium == solutionMagnesium)&&(identical(other.exchangeableMagnesium, exchangeableMagnesium) || other.exchangeableMagnesium == exchangeableMagnesium)&&(identical(other.exchangeableAluminium, exchangeableAluminium) || other.exchangeableAluminium == exchangeableAluminium)&&(identical(other.cec, cec) || other.cec == cec)&&(identical(other.clayFraction, clayFraction) || other.clayFraction == clayFraction)&&(identical(other.sandFraction, sandFraction) || other.sandFraction == sandFraction)&&(identical(other.siltFraction, siltFraction) || other.siltFraction == siltFraction)&&(identical(other.effectiveMacroPorosity, effectiveMacroPorosity) || other.effectiveMacroPorosity == effectiveMacroPorosity)&&(identical(other.aggregateStability, aggregateStability) || other.aggregateStability == aggregateStability)&&(identical(other.oxygenContent, oxygenContent) || other.oxygenContent == oxygenContent)&&(identical(other.co2Content, co2Content) || other.co2Content == co2Content)&&(identical(other.methaneContent, methaneContent) || other.methaneContent == methaneContent)&&(identical(other.nitrousOxideContent, nitrousOxideContent) || other.nitrousOxideContent == nitrousOxideContent)&&(identical(other.thermalConductivity, thermalConductivity) || other.thermalConductivity == thermalConductivity)&&(identical(other.microbialBiomass, microbialBiomass) || other.microbialBiomass == microbialBiomass)&&(identical(other.epsContent, epsContent) || other.epsContent == epsContent)&&(identical(other.fungalHyphaeDensity, fungalHyphaeDensity) || other.fungalHyphaeDensity == fungalHyphaeDensity)&&(identical(other.necromass, necromass) || other.necromass == necromass)&&(identical(other.organicCarbon, organicCarbon) || other.organicCarbon == organicCarbon)&&(identical(other.particulateOrganicMatter, particulateOrganicMatter) || other.particulateOrganicMatter == particulateOrganicMatter)&&(identical(other.mineralAssociatedOrganicMatter, mineralAssociatedOrganicMatter) || other.mineralAssociatedOrganicMatter == mineralAssociatedOrganicMatter)&&(identical(other.isCultivated, isCultivated) || other.isCultivated == isCultivated)&&(identical(other.cultivationDisturbance, cultivationDisturbance) || other.cultivationDisturbance == cultivationDisturbance)&&(identical(other.labileCarbon, labileCarbon) || other.labileCarbon == labileCarbon)&&(identical(other.stableCarbon, stableCarbon) || other.stableCarbon == stableCarbon)&&(identical(other.organicNitrogen, organicNitrogen) || other.organicNitrogen == organicNitrogen)&&(identical(other.microbialNitrogen, microbialNitrogen) || other.microbialNitrogen == microbialNitrogen)&&(identical(other.maomNitrogen, maomNitrogen) || other.maomNitrogen == maomNitrogen)&&(identical(other.nitrogenContent, nitrogenContent) || other.nitrogenContent == nitrogenContent)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.colorValue, colorValue) || other.colorValue == colorValue)&&(identical(other.nitrificationRate, nitrificationRate) || other.nitrificationRate == nitrificationRate)&&(identical(other.denitrificationRate, denitrificationRate) || other.denitrificationRate == denitrificationRate)&&const DeepCollectionEquality().equals(other.traceElements, traceElements)&&const DeepCollectionEquality().equals(other.hotspots, hotspots));
+  final _this = this as SoilLayer;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SoilLayer&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.depth, _this.depth) || other.depth == _this.depth)&&(identical(other.thickness, _this.thickness) || other.thickness == _this.thickness)&&(identical(other.kSat, _this.kSat) || other.kSat == _this.kSat)&&(identical(other.porosity, _this.porosity) || other.porosity == _this.porosity)&&(identical(other.thetaR, _this.thetaR) || other.thetaR == _this.thetaR)&&(identical(other.vgAlpha, _this.vgAlpha) || other.vgAlpha == _this.vgAlpha)&&(identical(other.vgN, _this.vgN) || other.vgN == _this.vgN)&&(identical(other.vgL, _this.vgL) || other.vgL == _this.vgL)&&(identical(other.bulkDensity, _this.bulkDensity) || other.bulkDensity == _this.bulkDensity)&&(identical(other.waterContent, _this.waterContent) || other.waterContent == _this.waterContent)&&(identical(other.previousWaterContent, _this.previousWaterContent) || other.previousWaterContent == _this.previousWaterContent)&&(identical(other.verticalFlux, _this.verticalFlux) || other.verticalFlux == _this.verticalFlux)&&(identical(other.temperature, _this.temperature) || other.temperature == _this.temperature)&&(identical(other.heatCapacity, _this.heatCapacity) || other.heatCapacity == _this.heatCapacity)&&(identical(other.ph, _this.ph) || other.ph == _this.ph)&&(identical(other.ec, _this.ec) || other.ec == _this.ec)&&(identical(other.redoxPotential, _this.redoxPotential) || other.redoxPotential == _this.redoxPotential)&&(identical(other.nitrateContent, _this.nitrateContent) || other.nitrateContent == _this.nitrateContent)&&(identical(other.ammoniumContent, _this.ammoniumContent) || other.ammoniumContent == _this.ammoniumContent)&&(identical(other.phosphateContent, _this.phosphateContent) || other.phosphateContent == _this.phosphateContent)&&(identical(other.sorbedPhosphate, _this.sorbedPhosphate) || other.sorbedPhosphate == _this.sorbedPhosphate)&&(identical(other.potassiumContent, _this.potassiumContent) || other.potassiumContent == _this.potassiumContent)&&(identical(other.exchangeablePotassium, _this.exchangeablePotassium) || other.exchangeablePotassium == _this.exchangeablePotassium)&&(identical(other.solutionCalcium, _this.solutionCalcium) || other.solutionCalcium == _this.solutionCalcium)&&(identical(other.exchangeableCalcium, _this.exchangeableCalcium) || other.exchangeableCalcium == _this.exchangeableCalcium)&&(identical(other.solutionMagnesium, _this.solutionMagnesium) || other.solutionMagnesium == _this.solutionMagnesium)&&(identical(other.exchangeableMagnesium, _this.exchangeableMagnesium) || other.exchangeableMagnesium == _this.exchangeableMagnesium)&&(identical(other.exchangeableAluminium, _this.exchangeableAluminium) || other.exchangeableAluminium == _this.exchangeableAluminium)&&(identical(other.cec, _this.cec) || other.cec == _this.cec)&&(identical(other.clayFraction, _this.clayFraction) || other.clayFraction == _this.clayFraction)&&(identical(other.sandFraction, _this.sandFraction) || other.sandFraction == _this.sandFraction)&&(identical(other.siltFraction, _this.siltFraction) || other.siltFraction == _this.siltFraction)&&(identical(other.effectiveMacroPorosity, _this.effectiveMacroPorosity) || other.effectiveMacroPorosity == _this.effectiveMacroPorosity)&&(identical(other.aggregateStability, _this.aggregateStability) || other.aggregateStability == _this.aggregateStability)&&(identical(other.oxygenContent, _this.oxygenContent) || other.oxygenContent == _this.oxygenContent)&&(identical(other.co2Content, _this.co2Content) || other.co2Content == _this.co2Content)&&(identical(other.methaneContent, _this.methaneContent) || other.methaneContent == _this.methaneContent)&&(identical(other.nitrousOxideContent, _this.nitrousOxideContent) || other.nitrousOxideContent == _this.nitrousOxideContent)&&(identical(other.thermalConductivity, _this.thermalConductivity) || other.thermalConductivity == _this.thermalConductivity)&&(identical(other.microbialBiomass, _this.microbialBiomass) || other.microbialBiomass == _this.microbialBiomass)&&(identical(other.epsContent, _this.epsContent) || other.epsContent == _this.epsContent)&&(identical(other.fungalHyphaeDensity, _this.fungalHyphaeDensity) || other.fungalHyphaeDensity == _this.fungalHyphaeDensity)&&(identical(other.necromass, _this.necromass) || other.necromass == _this.necromass)&&(identical(other.organicCarbon, _this.organicCarbon) || other.organicCarbon == _this.organicCarbon)&&(identical(other.particulateOrganicMatter, _this.particulateOrganicMatter) || other.particulateOrganicMatter == _this.particulateOrganicMatter)&&(identical(other.mineralAssociatedOrganicMatter, _this.mineralAssociatedOrganicMatter) || other.mineralAssociatedOrganicMatter == _this.mineralAssociatedOrganicMatter)&&(identical(other.isCultivated, _this.isCultivated) || other.isCultivated == _this.isCultivated)&&(identical(other.cultivationDisturbance, _this.cultivationDisturbance) || other.cultivationDisturbance == _this.cultivationDisturbance)&&(identical(other.labileCarbon, _this.labileCarbon) || other.labileCarbon == _this.labileCarbon)&&(identical(other.stableCarbon, _this.stableCarbon) || other.stableCarbon == _this.stableCarbon)&&(identical(other.organicNitrogen, _this.organicNitrogen) || other.organicNitrogen == _this.organicNitrogen)&&(identical(other.microbialNitrogen, _this.microbialNitrogen) || other.microbialNitrogen == _this.microbialNitrogen)&&(identical(other.maomNitrogen, _this.maomNitrogen) || other.maomNitrogen == _this.maomNitrogen)&&(identical(other.nitrogenContent, _this.nitrogenContent) || other.nitrogenContent == _this.nitrogenContent)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.colorValue, _this.colorValue) || other.colorValue == _this.colorValue)&&(identical(other.nitrificationRate, _this.nitrificationRate) || other.nitrificationRate == _this.nitrificationRate)&&(identical(other.denitrificationRate, _this.denitrificationRate) || other.denitrificationRate == _this.denitrificationRate)&&const DeepCollectionEquality().equals(other.traceElements, _this.traceElements)&&const DeepCollectionEquality().equals(other.hotspots, _this.hotspots));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,depth,thickness,kSat,porosity,thetaR,vgAlpha,vgN,vgL,bulkDensity,waterContent,previousWaterContent,verticalFlux,temperature,heatCapacity,ph,ec,redoxPotential,nitrateContent,ammoniumContent,phosphateContent,sorbedPhosphate,potassiumContent,exchangeablePotassium,solutionCalcium,exchangeableCalcium,solutionMagnesium,exchangeableMagnesium,exchangeableAluminium,cec,clayFraction,sandFraction,siltFraction,effectiveMacroPorosity,aggregateStability,oxygenContent,co2Content,methaneContent,nitrousOxideContent,thermalConductivity,microbialBiomass,epsContent,fungalHyphaeDensity,necromass,organicCarbon,particulateOrganicMatter,mineralAssociatedOrganicMatter,isCultivated,cultivationDisturbance,labileCarbon,stableCarbon,organicNitrogen,microbialNitrogen,maomNitrogen,nitrogenContent,name,description,colorValue,nitrificationRate,denitrificationRate,const DeepCollectionEquality().hash(traceElements),const DeepCollectionEquality().hash(hotspots)]);
+int get hashCode {
+  final _this = this as SoilLayer;
+  return Object.hashAll([runtimeType,_this.id,_this.depth,_this.thickness,_this.kSat,_this.porosity,_this.thetaR,_this.vgAlpha,_this.vgN,_this.vgL,_this.bulkDensity,_this.waterContent,_this.previousWaterContent,_this.verticalFlux,_this.temperature,_this.heatCapacity,_this.ph,_this.ec,_this.redoxPotential,_this.nitrateContent,_this.ammoniumContent,_this.phosphateContent,_this.sorbedPhosphate,_this.potassiumContent,_this.exchangeablePotassium,_this.solutionCalcium,_this.exchangeableCalcium,_this.solutionMagnesium,_this.exchangeableMagnesium,_this.exchangeableAluminium,_this.cec,_this.clayFraction,_this.sandFraction,_this.siltFraction,_this.effectiveMacroPorosity,_this.aggregateStability,_this.oxygenContent,_this.co2Content,_this.methaneContent,_this.nitrousOxideContent,_this.thermalConductivity,_this.microbialBiomass,_this.epsContent,_this.fungalHyphaeDensity,_this.necromass,_this.organicCarbon,_this.particulateOrganicMatter,_this.mineralAssociatedOrganicMatter,_this.isCultivated,_this.cultivationDisturbance,_this.labileCarbon,_this.stableCarbon,_this.organicNitrogen,_this.microbialNitrogen,_this.maomNitrogen,_this.nitrogenContent,_this.name,_this.description,_this.colorValue,_this.nitrificationRate,_this.denitrificationRate,const DeepCollectionEquality().hash(_this.traceElements),const DeepCollectionEquality().hash(_this.hotspots)]);
+}
 
 @override
 String toString() {
-  return 'SoilLayer(id: $id, depth: $depth, thickness: $thickness, kSat: $kSat, porosity: $porosity, thetaR: $thetaR, vgAlpha: $vgAlpha, vgN: $vgN, vgL: $vgL, bulkDensity: $bulkDensity, waterContent: $waterContent, previousWaterContent: $previousWaterContent, verticalFlux: $verticalFlux, temperature: $temperature, heatCapacity: $heatCapacity, ph: $ph, ec: $ec, redoxPotential: $redoxPotential, nitrateContent: $nitrateContent, ammoniumContent: $ammoniumContent, phosphateContent: $phosphateContent, sorbedPhosphate: $sorbedPhosphate, potassiumContent: $potassiumContent, exchangeablePotassium: $exchangeablePotassium, solutionCalcium: $solutionCalcium, exchangeableCalcium: $exchangeableCalcium, solutionMagnesium: $solutionMagnesium, exchangeableMagnesium: $exchangeableMagnesium, exchangeableAluminium: $exchangeableAluminium, cec: $cec, clayFraction: $clayFraction, sandFraction: $sandFraction, siltFraction: $siltFraction, effectiveMacroPorosity: $effectiveMacroPorosity, aggregateStability: $aggregateStability, oxygenContent: $oxygenContent, co2Content: $co2Content, methaneContent: $methaneContent, nitrousOxideContent: $nitrousOxideContent, thermalConductivity: $thermalConductivity, microbialBiomass: $microbialBiomass, epsContent: $epsContent, fungalHyphaeDensity: $fungalHyphaeDensity, necromass: $necromass, organicCarbon: $organicCarbon, particulateOrganicMatter: $particulateOrganicMatter, mineralAssociatedOrganicMatter: $mineralAssociatedOrganicMatter, isCultivated: $isCultivated, cultivationDisturbance: $cultivationDisturbance, labileCarbon: $labileCarbon, stableCarbon: $stableCarbon, organicNitrogen: $organicNitrogen, microbialNitrogen: $microbialNitrogen, maomNitrogen: $maomNitrogen, nitrogenContent: $nitrogenContent, name: $name, description: $description, colorValue: $colorValue, nitrificationRate: $nitrificationRate, denitrificationRate: $denitrificationRate, traceElements: $traceElements, hotspots: $hotspots)';
+  final _this = this as SoilLayer;
+  return 'SoilLayer(id: ${_this.id}, depth: ${_this.depth}, thickness: ${_this.thickness}, kSat: ${_this.kSat}, porosity: ${_this.porosity}, thetaR: ${_this.thetaR}, vgAlpha: ${_this.vgAlpha}, vgN: ${_this.vgN}, vgL: ${_this.vgL}, bulkDensity: ${_this.bulkDensity}, waterContent: ${_this.waterContent}, previousWaterContent: ${_this.previousWaterContent}, verticalFlux: ${_this.verticalFlux}, temperature: ${_this.temperature}, heatCapacity: ${_this.heatCapacity}, ph: ${_this.ph}, ec: ${_this.ec}, redoxPotential: ${_this.redoxPotential}, nitrateContent: ${_this.nitrateContent}, ammoniumContent: ${_this.ammoniumContent}, phosphateContent: ${_this.phosphateContent}, sorbedPhosphate: ${_this.sorbedPhosphate}, potassiumContent: ${_this.potassiumContent}, exchangeablePotassium: ${_this.exchangeablePotassium}, solutionCalcium: ${_this.solutionCalcium}, exchangeableCalcium: ${_this.exchangeableCalcium}, solutionMagnesium: ${_this.solutionMagnesium}, exchangeableMagnesium: ${_this.exchangeableMagnesium}, exchangeableAluminium: ${_this.exchangeableAluminium}, cec: ${_this.cec}, clayFraction: ${_this.clayFraction}, sandFraction: ${_this.sandFraction}, siltFraction: ${_this.siltFraction}, effectiveMacroPorosity: ${_this.effectiveMacroPorosity}, aggregateStability: ${_this.aggregateStability}, oxygenContent: ${_this.oxygenContent}, co2Content: ${_this.co2Content}, methaneContent: ${_this.methaneContent}, nitrousOxideContent: ${_this.nitrousOxideContent}, thermalConductivity: ${_this.thermalConductivity}, microbialBiomass: ${_this.microbialBiomass}, epsContent: ${_this.epsContent}, fungalHyphaeDensity: ${_this.fungalHyphaeDensity}, necromass: ${_this.necromass}, organicCarbon: ${_this.organicCarbon}, particulateOrganicMatter: ${_this.particulateOrganicMatter}, mineralAssociatedOrganicMatter: ${_this.mineralAssociatedOrganicMatter}, isCultivated: ${_this.isCultivated}, cultivationDisturbance: ${_this.cultivationDisturbance}, labileCarbon: ${_this.labileCarbon}, stableCarbon: ${_this.stableCarbon}, organicNitrogen: ${_this.organicNitrogen}, microbialNitrogen: ${_this.microbialNitrogen}, maomNitrogen: ${_this.maomNitrogen}, nitrogenContent: ${_this.nitrogenContent}, name: ${_this.name}, description: ${_this.description}, colorValue: ${_this.colorValue}, nitrificationRate: ${_this.nitrificationRate}, denitrificationRate: ${_this.denitrificationRate}, traceElements: ${_this.traceElements}, hotspots: ${_this.hotspots})';
 }
 
 
@@ -123,7 +72,7 @@ class _$SoilLayerCopyWithImpl<$Res>
 /// Create a copy of SoilLayer
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? depth = null,Object? thickness = null,Object? kSat = null,Object? porosity = null,Object? thetaR = null,Object? vgAlpha = null,Object? vgN = null,Object? vgL = null,Object? bulkDensity = null,Object? waterContent = null,Object? previousWaterContent = null,Object? verticalFlux = null,Object? temperature = null,Object? heatCapacity = null,Object? ph = null,Object? ec = null,Object? redoxPotential = null,Object? nitrateContent = null,Object? ammoniumContent = null,Object? phosphateContent = null,Object? sorbedPhosphate = null,Object? potassiumContent = null,Object? exchangeablePotassium = null,Object? solutionCalcium = null,Object? exchangeableCalcium = null,Object? solutionMagnesium = null,Object? exchangeableMagnesium = null,Object? exchangeableAluminium = null,Object? cec = null,Object? clayFraction = null,Object? sandFraction = null,Object? siltFraction = null,Object? effectiveMacroPorosity = null,Object? aggregateStability = null,Object? oxygenContent = null,Object? co2Content = null,Object? methaneContent = null,Object? nitrousOxideContent = null,Object? thermalConductivity = null,Object? microbialBiomass = null,Object? epsContent = null,Object? fungalHyphaeDensity = null,Object? necromass = null,Object? organicCarbon = null,Object? particulateOrganicMatter = null,Object? mineralAssociatedOrganicMatter = null,Object? isCultivated = null,Object? cultivationDisturbance = null,Object? labileCarbon = null,Object? stableCarbon = null,Object? organicNitrogen = null,Object? microbialNitrogen = null,Object? maomNitrogen = null,Object? nitrogenContent = null,Object? name = null,Object? description = null,Object? colorValue = null,Object? nitrificationRate = null,Object? denitrificationRate = null,Object? traceElements = null,Object? hotspots = null,}) {
-  return _then(_self.copyWith(
+  return _then(SoilLayer(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,depth: null == depth ? _self.depth : depth // ignore: cast_nullable_to_non_nullable
 as double,thickness: null == thickness ? _self.thickness : thickness // ignore: cast_nullable_to_non_nullable
@@ -327,136 +276,77 @@ return $default(_that.id,_that.depth,_that.thickness,_that.kSat,_that.porosity,_
 @JsonSerializable()
 
 class _SoilLayer extends SoilLayer {
-  const _SoilLayer({required this.id, required this.depth, required this.thickness, required this.kSat, required this.porosity, required this.thetaR, required this.vgAlpha, required this.vgN, this.vgL = 0.5, required this.bulkDensity, required this.waterContent, this.previousWaterContent = 0.0, this.verticalFlux = 0.0, required this.temperature, required this.heatCapacity, required this.ph, required this.ec, required this.redoxPotential, required this.nitrateContent, required this.ammoniumContent, required this.phosphateContent, this.sorbedPhosphate = 0.0, this.potassiumContent = 5.0, this.exchangeablePotassium = 50.0, this.solutionCalcium = 100.0, this.exchangeableCalcium = 1000.0, this.solutionMagnesium = 20.0, this.exchangeableMagnesium = 200.0, this.exchangeableAluminium = 5.0, this.cec = 10.0, this.clayFraction = 0.2, this.sandFraction = 0.4, this.siltFraction = 0.4, this.effectiveMacroPorosity = 0.0, this.aggregateStability = 0.5, this.oxygenContent = 8.5, this.co2Content = 0.02, this.methaneContent = 0.0, this.nitrousOxideContent = 0.0, this.thermalConductivity = 1.0, required this.microbialBiomass, required this.epsContent, required this.fungalHyphaeDensity, required this.necromass, required this.organicCarbon, required this.particulateOrganicMatter, required this.mineralAssociatedOrganicMatter, this.isCultivated = false, this.cultivationDisturbance = 0.0, this.labileCarbon = 0.0, this.stableCarbon = 0.0, this.organicNitrogen = 100.0, this.microbialNitrogen = 10.0, this.maomNitrogen = 50.0, required this.nitrogenContent, this.name = '', this.description = '', this.colorValue = 0xFF795548, this.nitrificationRate = 0.0, this.denitrificationRate = 0.0, final  Map<String, double> traceElements = const {}, final  List<RhizosphereHotspot> hotspots = const []}): _traceElements = traceElements,_hotspots = hotspots,super._();
+  const _SoilLayer({required this.id, required this.depth, required this.thickness, required this.kSat, required this.porosity, required this.thetaR, required this.vgAlpha, required this.vgN, this.vgL = 0.5, required this.bulkDensity, required this.waterContent, this.previousWaterContent = 0.0, this.verticalFlux = 0.0, required this.temperature, required this.heatCapacity, required this.ph, required this.ec, required this.redoxPotential, required this.nitrateContent, required this.ammoniumContent, required this.phosphateContent, this.sorbedPhosphate = 0.0, this.potassiumContent = 5.0, this.exchangeablePotassium = 50.0, this.solutionCalcium = 100.0, this.exchangeableCalcium = 1000.0, this.solutionMagnesium = 20.0, this.exchangeableMagnesium = 200.0, this.exchangeableAluminium = 5.0, this.cec = 10.0, this.clayFraction = 0.2, this.sandFraction = 0.4, this.siltFraction = 0.4, this.effectiveMacroPorosity = 0.0, this.aggregateStability = 0.5, this.oxygenContent = 8.5, this.co2Content = 0.02, this.methaneContent = 0.0, this.nitrousOxideContent = 0.0, this.thermalConductivity = 1.0, required this.microbialBiomass, required this.epsContent, required this.fungalHyphaeDensity, required this.necromass, required this.organicCarbon, required this.particulateOrganicMatter, required this.mineralAssociatedOrganicMatter, this.isCultivated = false, this.cultivationDisturbance = 0.0, this.labileCarbon = 0.0, this.stableCarbon = 0.0, this.organicNitrogen = 100.0, this.microbialNitrogen = 10.0, this.maomNitrogen = 50.0, required this.nitrogenContent, this.name = '', this.description = '', this.colorValue = 0xFF795548, this.nitrificationRate = 0.0, this.denitrificationRate = 0.0,  Map<String, double> traceElements = const {},  List<RhizosphereHotspot> hotspots = const []}): _traceElements = traceElements,_hotspots = hotspots,super._();
   factory _SoilLayer.fromJson(Map<String, dynamic> json) => _$SoilLayerFromJson(json);
 
 @override final  String id;
 @override final  double depth;
-// m
 @override final  double thickness;
-// m
-// Physical properties
 @override final  double kSat;
-// Hydraulic conductivity (m/s)
 @override final  double porosity;
-// (0.0 - 1.0) - also thetaS
 @override final  double thetaR;
-// Residual water content
 @override final  double vgAlpha;
-// van Genuchten alpha (1/m)
 @override final  double vgN;
-// van Genuchten n
 @override@JsonKey() final  double vgL;
-// Tortuosity parameter
 @override final  double bulkDensity;
-// (kg/m^3)
 @override final  double waterContent;
-// (m^3/m^3)
 @override@JsonKey() final  double previousWaterContent;
 @override@JsonKey() final  double verticalFlux;
-// m/s (Net flux within layer)
 @override final  double temperature;
-// K
 @override final  double heatCapacity;
-// J/(m^3*K) (volumetric heat capacity Cv)
-// Chemical properties
 @override final  double ph;
 @override final  double ec;
-// Electrical conductivity (dS/m)
 @override final  double redoxPotential;
-// Eh (mV)
 @override final  double nitrateContent;
-// mg/kg
 @override final  double ammoniumContent;
-// mg/kg
 @override final  double phosphateContent;
-// mg/kg (solution pool)
 @override@JsonKey() final  double sorbedPhosphate;
-// mg/kg (solid pool)
 @override@JsonKey() final  double potassiumContent;
-// mg/kg (solution pool)
 @override@JsonKey() final  double exchangeablePotassium;
-// mg/kg
 @override@JsonKey() final  double solutionCalcium;
-// mg/kg
 @override@JsonKey() final  double exchangeableCalcium;
-// mg/kg
 @override@JsonKey() final  double solutionMagnesium;
-// mg/kg
 @override@JsonKey() final  double exchangeableMagnesium;
-// mg/kg
 @override@JsonKey() final  double exchangeableAluminium;
-// mg/kg
 @override@JsonKey() final  double cec;
-// cmol(+)/kg
 @override@JsonKey() final  double clayFraction;
-// (0.0 - 1.0)
 @override@JsonKey() final  double sandFraction;
-// (0.0 - 1.0)
 @override@JsonKey() final  double siltFraction;
-// (0.0 - 1.0)
 @override@JsonKey() final  double effectiveMacroPorosity;
-// (0.0 - 1.0)
 @override@JsonKey() final  double aggregateStability;
-// (0.0 - 1.0)
 @override@JsonKey() final  double oxygenContent;
-// mol/m^3 (approx 21% air at 20C)
 @override@JsonKey() final  double co2Content;
-// mol/m^3 (approx 400 ppm)
 @override@JsonKey() final  double methaneContent;
-// mol/m^3
 @override@JsonKey() final  double nitrousOxideContent;
-// mol/m^3
 @override@JsonKey() final  double thermalConductivity;
-// W/m*K
-// Biological properties
 @override final  double microbialBiomass;
-// (kg/m^3)
 @override final  double epsContent;
-// Extracellular Polymeric Substances
 @override final  double fungalHyphaeDensity;
 @override final  double necromass;
-// Stabilized organic matter (MAOM)
-// Carbon/Nutrients
 @override final  double organicCarbon;
 @override final  double particulateOrganicMatter;
-// Labile (POM) (kg/m^3)
 @override final  double mineralAssociatedOrganicMatter;
-// Stable (MAOM) (kg/m^3)
-// Cultivation / Tillage
 @override@JsonKey() final  bool isCultivated;
 @override@JsonKey() final  double cultivationDisturbance;
-// 0.0 to 1.0 (1.0 = fully disturbed)
 @override@JsonKey() final  double labileCarbon;
-// Alias/Specific pool for POM
 @override@JsonKey() final  double stableCarbon;
-// Alias/Specific pool for MAOM
 @override@JsonKey() final  double organicNitrogen;
-// mg/kg (POM-N pool)
 @override@JsonKey() final  double microbialNitrogen;
-// mg/kg (Mic-N pool)
 @override@JsonKey() final  double maomNitrogen;
-// mg/kg (MAOM-N pool)
 @override final  double nitrogenContent;
 @override@JsonKey() final  String name;
 @override@JsonKey() final  String description;
 @override@JsonKey() final  int colorValue;
-// === NEW DIAGNOSTIC FLUXES ===
 @override@JsonKey() final  double nitrificationRate;
-// mg/kg/s
 @override@JsonKey() final  double denitrificationRate;
-// mg/kg/s
  final  Map<String, double> _traceElements;
-// mg/kg/s
 @override@JsonKey() Map<String, double> get traceElements {
   if (_traceElements is EqualUnmodifiableMapView) return _traceElements;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_traceElements);
 }
 
-// === HOTSPOTS (Rhizosphere / Decomposition) ===
  final  List<RhizosphereHotspot> _hotspots;
-// === HOTSPOTS (Rhizosphere / Decomposition) ===
 @override@JsonKey() List<RhizosphereHotspot> get hotspots {
   if (_hotspots is EqualUnmodifiableListView) return _hotspots;
   // ignore: implicit_dynamic_type
@@ -477,16 +367,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoilLayer&&(identical(other.id, id) || other.id == id)&&(identical(other.depth, depth) || other.depth == depth)&&(identical(other.thickness, thickness) || other.thickness == thickness)&&(identical(other.kSat, kSat) || other.kSat == kSat)&&(identical(other.porosity, porosity) || other.porosity == porosity)&&(identical(other.thetaR, thetaR) || other.thetaR == thetaR)&&(identical(other.vgAlpha, vgAlpha) || other.vgAlpha == vgAlpha)&&(identical(other.vgN, vgN) || other.vgN == vgN)&&(identical(other.vgL, vgL) || other.vgL == vgL)&&(identical(other.bulkDensity, bulkDensity) || other.bulkDensity == bulkDensity)&&(identical(other.waterContent, waterContent) || other.waterContent == waterContent)&&(identical(other.previousWaterContent, previousWaterContent) || other.previousWaterContent == previousWaterContent)&&(identical(other.verticalFlux, verticalFlux) || other.verticalFlux == verticalFlux)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.heatCapacity, heatCapacity) || other.heatCapacity == heatCapacity)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.ec, ec) || other.ec == ec)&&(identical(other.redoxPotential, redoxPotential) || other.redoxPotential == redoxPotential)&&(identical(other.nitrateContent, nitrateContent) || other.nitrateContent == nitrateContent)&&(identical(other.ammoniumContent, ammoniumContent) || other.ammoniumContent == ammoniumContent)&&(identical(other.phosphateContent, phosphateContent) || other.phosphateContent == phosphateContent)&&(identical(other.sorbedPhosphate, sorbedPhosphate) || other.sorbedPhosphate == sorbedPhosphate)&&(identical(other.potassiumContent, potassiumContent) || other.potassiumContent == potassiumContent)&&(identical(other.exchangeablePotassium, exchangeablePotassium) || other.exchangeablePotassium == exchangeablePotassium)&&(identical(other.solutionCalcium, solutionCalcium) || other.solutionCalcium == solutionCalcium)&&(identical(other.exchangeableCalcium, exchangeableCalcium) || other.exchangeableCalcium == exchangeableCalcium)&&(identical(other.solutionMagnesium, solutionMagnesium) || other.solutionMagnesium == solutionMagnesium)&&(identical(other.exchangeableMagnesium, exchangeableMagnesium) || other.exchangeableMagnesium == exchangeableMagnesium)&&(identical(other.exchangeableAluminium, exchangeableAluminium) || other.exchangeableAluminium == exchangeableAluminium)&&(identical(other.cec, cec) || other.cec == cec)&&(identical(other.clayFraction, clayFraction) || other.clayFraction == clayFraction)&&(identical(other.sandFraction, sandFraction) || other.sandFraction == sandFraction)&&(identical(other.siltFraction, siltFraction) || other.siltFraction == siltFraction)&&(identical(other.effectiveMacroPorosity, effectiveMacroPorosity) || other.effectiveMacroPorosity == effectiveMacroPorosity)&&(identical(other.aggregateStability, aggregateStability) || other.aggregateStability == aggregateStability)&&(identical(other.oxygenContent, oxygenContent) || other.oxygenContent == oxygenContent)&&(identical(other.co2Content, co2Content) || other.co2Content == co2Content)&&(identical(other.methaneContent, methaneContent) || other.methaneContent == methaneContent)&&(identical(other.nitrousOxideContent, nitrousOxideContent) || other.nitrousOxideContent == nitrousOxideContent)&&(identical(other.thermalConductivity, thermalConductivity) || other.thermalConductivity == thermalConductivity)&&(identical(other.microbialBiomass, microbialBiomass) || other.microbialBiomass == microbialBiomass)&&(identical(other.epsContent, epsContent) || other.epsContent == epsContent)&&(identical(other.fungalHyphaeDensity, fungalHyphaeDensity) || other.fungalHyphaeDensity == fungalHyphaeDensity)&&(identical(other.necromass, necromass) || other.necromass == necromass)&&(identical(other.organicCarbon, organicCarbon) || other.organicCarbon == organicCarbon)&&(identical(other.particulateOrganicMatter, particulateOrganicMatter) || other.particulateOrganicMatter == particulateOrganicMatter)&&(identical(other.mineralAssociatedOrganicMatter, mineralAssociatedOrganicMatter) || other.mineralAssociatedOrganicMatter == mineralAssociatedOrganicMatter)&&(identical(other.isCultivated, isCultivated) || other.isCultivated == isCultivated)&&(identical(other.cultivationDisturbance, cultivationDisturbance) || other.cultivationDisturbance == cultivationDisturbance)&&(identical(other.labileCarbon, labileCarbon) || other.labileCarbon == labileCarbon)&&(identical(other.stableCarbon, stableCarbon) || other.stableCarbon == stableCarbon)&&(identical(other.organicNitrogen, organicNitrogen) || other.organicNitrogen == organicNitrogen)&&(identical(other.microbialNitrogen, microbialNitrogen) || other.microbialNitrogen == microbialNitrogen)&&(identical(other.maomNitrogen, maomNitrogen) || other.maomNitrogen == maomNitrogen)&&(identical(other.nitrogenContent, nitrogenContent) || other.nitrogenContent == nitrogenContent)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.colorValue, colorValue) || other.colorValue == colorValue)&&(identical(other.nitrificationRate, nitrificationRate) || other.nitrificationRate == nitrificationRate)&&(identical(other.denitrificationRate, denitrificationRate) || other.denitrificationRate == denitrificationRate)&&const DeepCollectionEquality().equals(other._traceElements, _traceElements)&&const DeepCollectionEquality().equals(other._hotspots, _hotspots));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SoilLayer&&(identical(other.id, id) || other.id == id)&&(identical(other.depth, depth) || other.depth == depth)&&(identical(other.thickness, thickness) || other.thickness == thickness)&&(identical(other.kSat, kSat) || other.kSat == kSat)&&(identical(other.porosity, porosity) || other.porosity == porosity)&&(identical(other.thetaR, thetaR) || other.thetaR == thetaR)&&(identical(other.vgAlpha, vgAlpha) || other.vgAlpha == vgAlpha)&&(identical(other.vgN, vgN) || other.vgN == vgN)&&(identical(other.vgL, vgL) || other.vgL == vgL)&&(identical(other.bulkDensity, bulkDensity) || other.bulkDensity == bulkDensity)&&(identical(other.waterContent, waterContent) || other.waterContent == waterContent)&&(identical(other.previousWaterContent, previousWaterContent) || other.previousWaterContent == previousWaterContent)&&(identical(other.verticalFlux, verticalFlux) || other.verticalFlux == verticalFlux)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.heatCapacity, heatCapacity) || other.heatCapacity == heatCapacity)&&(identical(other.ph, ph) || other.ph == ph)&&(identical(other.ec, ec) || other.ec == ec)&&(identical(other.redoxPotential, redoxPotential) || other.redoxPotential == redoxPotential)&&(identical(other.nitrateContent, nitrateContent) || other.nitrateContent == nitrateContent)&&(identical(other.ammoniumContent, ammoniumContent) || other.ammoniumContent == ammoniumContent)&&(identical(other.phosphateContent, phosphateContent) || other.phosphateContent == phosphateContent)&&(identical(other.sorbedPhosphate, sorbedPhosphate) || other.sorbedPhosphate == sorbedPhosphate)&&(identical(other.potassiumContent, potassiumContent) || other.potassiumContent == potassiumContent)&&(identical(other.exchangeablePotassium, exchangeablePotassium) || other.exchangeablePotassium == exchangeablePotassium)&&(identical(other.solutionCalcium, solutionCalcium) || other.solutionCalcium == solutionCalcium)&&(identical(other.exchangeableCalcium, exchangeableCalcium) || other.exchangeableCalcium == exchangeableCalcium)&&(identical(other.solutionMagnesium, solutionMagnesium) || other.solutionMagnesium == solutionMagnesium)&&(identical(other.exchangeableMagnesium, exchangeableMagnesium) || other.exchangeableMagnesium == exchangeableMagnesium)&&(identical(other.exchangeableAluminium, exchangeableAluminium) || other.exchangeableAluminium == exchangeableAluminium)&&(identical(other.cec, cec) || other.cec == cec)&&(identical(other.clayFraction, clayFraction) || other.clayFraction == clayFraction)&&(identical(other.sandFraction, sandFraction) || other.sandFraction == sandFraction)&&(identical(other.siltFraction, siltFraction) || other.siltFraction == siltFraction)&&(identical(other.effectiveMacroPorosity, effectiveMacroPorosity) || other.effectiveMacroPorosity == effectiveMacroPorosity)&&(identical(other.aggregateStability, aggregateStability) || other.aggregateStability == aggregateStability)&&(identical(other.oxygenContent, oxygenContent) || other.oxygenContent == oxygenContent)&&(identical(other.co2Content, co2Content) || other.co2Content == co2Content)&&(identical(other.methaneContent, methaneContent) || other.methaneContent == methaneContent)&&(identical(other.nitrousOxideContent, nitrousOxideContent) || other.nitrousOxideContent == nitrousOxideContent)&&(identical(other.thermalConductivity, thermalConductivity) || other.thermalConductivity == thermalConductivity)&&(identical(other.microbialBiomass, microbialBiomass) || other.microbialBiomass == microbialBiomass)&&(identical(other.epsContent, epsContent) || other.epsContent == epsContent)&&(identical(other.fungalHyphaeDensity, fungalHyphaeDensity) || other.fungalHyphaeDensity == fungalHyphaeDensity)&&(identical(other.necromass, necromass) || other.necromass == necromass)&&(identical(other.organicCarbon, organicCarbon) || other.organicCarbon == organicCarbon)&&(identical(other.particulateOrganicMatter, particulateOrganicMatter) || other.particulateOrganicMatter == particulateOrganicMatter)&&(identical(other.mineralAssociatedOrganicMatter, mineralAssociatedOrganicMatter) || other.mineralAssociatedOrganicMatter == mineralAssociatedOrganicMatter)&&(identical(other.isCultivated, isCultivated) || other.isCultivated == isCultivated)&&(identical(other.cultivationDisturbance, cultivationDisturbance) || other.cultivationDisturbance == cultivationDisturbance)&&(identical(other.labileCarbon, labileCarbon) || other.labileCarbon == labileCarbon)&&(identical(other.stableCarbon, stableCarbon) || other.stableCarbon == stableCarbon)&&(identical(other.organicNitrogen, organicNitrogen) || other.organicNitrogen == organicNitrogen)&&(identical(other.microbialNitrogen, microbialNitrogen) || other.microbialNitrogen == microbialNitrogen)&&(identical(other.maomNitrogen, maomNitrogen) || other.maomNitrogen == maomNitrogen)&&(identical(other.nitrogenContent, nitrogenContent) || other.nitrogenContent == nitrogenContent)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.colorValue, colorValue) || other.colorValue == colorValue)&&(identical(other.nitrificationRate, nitrificationRate) || other.nitrificationRate == nitrificationRate)&&(identical(other.denitrificationRate, denitrificationRate) || other.denitrificationRate == denitrificationRate)&&const DeepCollectionEquality().equals(other.traceElements, _traceElements)&&const DeepCollectionEquality().equals(other.hotspots, _hotspots));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,depth,thickness,kSat,porosity,thetaR,vgAlpha,vgN,vgL,bulkDensity,waterContent,previousWaterContent,verticalFlux,temperature,heatCapacity,ph,ec,redoxPotential,nitrateContent,ammoniumContent,phosphateContent,sorbedPhosphate,potassiumContent,exchangeablePotassium,solutionCalcium,exchangeableCalcium,solutionMagnesium,exchangeableMagnesium,exchangeableAluminium,cec,clayFraction,sandFraction,siltFraction,effectiveMacroPorosity,aggregateStability,oxygenContent,co2Content,methaneContent,nitrousOxideContent,thermalConductivity,microbialBiomass,epsContent,fungalHyphaeDensity,necromass,organicCarbon,particulateOrganicMatter,mineralAssociatedOrganicMatter,isCultivated,cultivationDisturbance,labileCarbon,stableCarbon,organicNitrogen,microbialNitrogen,maomNitrogen,nitrogenContent,name,description,colorValue,nitrificationRate,denitrificationRate,const DeepCollectionEquality().hash(_traceElements),const DeepCollectionEquality().hash(_hotspots)]);
+int get hashCode {
+    return Object.hashAll([runtimeType,id,depth,thickness,kSat,porosity,thetaR,vgAlpha,vgN,vgL,bulkDensity,waterContent,previousWaterContent,verticalFlux,temperature,heatCapacity,ph,ec,redoxPotential,nitrateContent,ammoniumContent,phosphateContent,sorbedPhosphate,potassiumContent,exchangeablePotassium,solutionCalcium,exchangeableCalcium,solutionMagnesium,exchangeableMagnesium,exchangeableAluminium,cec,clayFraction,sandFraction,siltFraction,effectiveMacroPorosity,aggregateStability,oxygenContent,co2Content,methaneContent,nitrousOxideContent,thermalConductivity,microbialBiomass,epsContent,fungalHyphaeDensity,necromass,organicCarbon,particulateOrganicMatter,mineralAssociatedOrganicMatter,isCultivated,cultivationDisturbance,labileCarbon,stableCarbon,organicNitrogen,microbialNitrogen,maomNitrogen,nitrogenContent,name,description,colorValue,nitrificationRate,denitrificationRate,const DeepCollectionEquality().hash(_traceElements),const DeepCollectionEquality().hash(_hotspots)]);
+}
 
 @override
 String toString() {
-  return 'SoilLayer(id: $id, depth: $depth, thickness: $thickness, kSat: $kSat, porosity: $porosity, thetaR: $thetaR, vgAlpha: $vgAlpha, vgN: $vgN, vgL: $vgL, bulkDensity: $bulkDensity, waterContent: $waterContent, previousWaterContent: $previousWaterContent, verticalFlux: $verticalFlux, temperature: $temperature, heatCapacity: $heatCapacity, ph: $ph, ec: $ec, redoxPotential: $redoxPotential, nitrateContent: $nitrateContent, ammoniumContent: $ammoniumContent, phosphateContent: $phosphateContent, sorbedPhosphate: $sorbedPhosphate, potassiumContent: $potassiumContent, exchangeablePotassium: $exchangeablePotassium, solutionCalcium: $solutionCalcium, exchangeableCalcium: $exchangeableCalcium, solutionMagnesium: $solutionMagnesium, exchangeableMagnesium: $exchangeableMagnesium, exchangeableAluminium: $exchangeableAluminium, cec: $cec, clayFraction: $clayFraction, sandFraction: $sandFraction, siltFraction: $siltFraction, effectiveMacroPorosity: $effectiveMacroPorosity, aggregateStability: $aggregateStability, oxygenContent: $oxygenContent, co2Content: $co2Content, methaneContent: $methaneContent, nitrousOxideContent: $nitrousOxideContent, thermalConductivity: $thermalConductivity, microbialBiomass: $microbialBiomass, epsContent: $epsContent, fungalHyphaeDensity: $fungalHyphaeDensity, necromass: $necromass, organicCarbon: $organicCarbon, particulateOrganicMatter: $particulateOrganicMatter, mineralAssociatedOrganicMatter: $mineralAssociatedOrganicMatter, isCultivated: $isCultivated, cultivationDisturbance: $cultivationDisturbance, labileCarbon: $labileCarbon, stableCarbon: $stableCarbon, organicNitrogen: $organicNitrogen, microbialNitrogen: $microbialNitrogen, maomNitrogen: $maomNitrogen, nitrogenContent: $nitrogenContent, name: $name, description: $description, colorValue: $colorValue, nitrificationRate: $nitrificationRate, denitrificationRate: $denitrificationRate, traceElements: $traceElements, hotspots: $hotspots)';
+    return 'SoilLayer(id: $id, depth: $depth, thickness: $thickness, kSat: $kSat, porosity: $porosity, thetaR: $thetaR, vgAlpha: $vgAlpha, vgN: $vgN, vgL: $vgL, bulkDensity: $bulkDensity, waterContent: $waterContent, previousWaterContent: $previousWaterContent, verticalFlux: $verticalFlux, temperature: $temperature, heatCapacity: $heatCapacity, ph: $ph, ec: $ec, redoxPotential: $redoxPotential, nitrateContent: $nitrateContent, ammoniumContent: $ammoniumContent, phosphateContent: $phosphateContent, sorbedPhosphate: $sorbedPhosphate, potassiumContent: $potassiumContent, exchangeablePotassium: $exchangeablePotassium, solutionCalcium: $solutionCalcium, exchangeableCalcium: $exchangeableCalcium, solutionMagnesium: $solutionMagnesium, exchangeableMagnesium: $exchangeableMagnesium, exchangeableAluminium: $exchangeableAluminium, cec: $cec, clayFraction: $clayFraction, sandFraction: $sandFraction, siltFraction: $siltFraction, effectiveMacroPorosity: $effectiveMacroPorosity, aggregateStability: $aggregateStability, oxygenContent: $oxygenContent, co2Content: $co2Content, methaneContent: $methaneContent, nitrousOxideContent: $nitrousOxideContent, thermalConductivity: $thermalConductivity, microbialBiomass: $microbialBiomass, epsContent: $epsContent, fungalHyphaeDensity: $fungalHyphaeDensity, necromass: $necromass, organicCarbon: $organicCarbon, particulateOrganicMatter: $particulateOrganicMatter, mineralAssociatedOrganicMatter: $mineralAssociatedOrganicMatter, isCultivated: $isCultivated, cultivationDisturbance: $cultivationDisturbance, labileCarbon: $labileCarbon, stableCarbon: $stableCarbon, organicNitrogen: $organicNitrogen, microbialNitrogen: $microbialNitrogen, maomNitrogen: $maomNitrogen, nitrogenContent: $nitrogenContent, name: $name, description: $description, colorValue: $colorValue, nitrificationRate: $nitrificationRate, denitrificationRate: $denitrificationRate, traceElements: $traceElements, hotspots: $hotspots)';
 }
 
 
@@ -589,12 +481,7 @@ as List<RhizosphereHotspot>,
 /// @nodoc
 mixin _$RhizosphereHotspot {
 
- String get id; double get x;// Relative 0..1 in layer width
- double get z;// Relative 0..1 in layer thickness
- double get intensity;// 0..1 (Metabolic activity)
- double get radius;// m
- double get age;// s
- HotspotType get type;
+ String get id; double get x; double get z; double get intensity; double get radius; double get age; HotspotType get type;
 /// Create a copy of RhizosphereHotspot
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -607,16 +494,21 @@ $RhizosphereHotspotCopyWith<RhizosphereHotspot> get copyWith => _$RhizosphereHot
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RhizosphereHotspot&&(identical(other.id, id) || other.id == id)&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.age, age) || other.age == age)&&(identical(other.type, type) || other.type == type));
+  final _this = this as RhizosphereHotspot;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RhizosphereHotspot&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.x, _this.x) || other.x == _this.x)&&(identical(other.z, _this.z) || other.z == _this.z)&&(identical(other.intensity, _this.intensity) || other.intensity == _this.intensity)&&(identical(other.radius, _this.radius) || other.radius == _this.radius)&&(identical(other.age, _this.age) || other.age == _this.age)&&(identical(other.type, _this.type) || other.type == _this.type));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,x,z,intensity,radius,age,type);
+int get hashCode {
+  final _this = this as RhizosphereHotspot;
+  return Object.hash(runtimeType,_this.id,_this.x,_this.z,_this.intensity,_this.radius,_this.age,_this.type);
+}
 
 @override
 String toString() {
-  return 'RhizosphereHotspot(id: $id, x: $x, z: $z, intensity: $intensity, radius: $radius, age: $age, type: $type)';
+  final _this = this as RhizosphereHotspot;
+  return 'RhizosphereHotspot(id: ${_this.id}, x: ${_this.x}, z: ${_this.z}, intensity: ${_this.intensity}, radius: ${_this.radius}, age: ${_this.age}, type: ${_this.type})';
 }
 
 
@@ -645,7 +537,7 @@ class _$RhizosphereHotspotCopyWithImpl<$Res>
 /// Create a copy of RhizosphereHotspot
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? x = null,Object? z = null,Object? intensity = null,Object? radius = null,Object? age = null,Object? type = null,}) {
-  return _then(_self.copyWith(
+  return _then(RhizosphereHotspot(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,x: null == x ? _self.x : x // ignore: cast_nullable_to_non_nullable
 as double,z: null == z ? _self.z : z // ignore: cast_nullable_to_non_nullable
@@ -799,15 +691,10 @@ class _RhizosphereHotspot implements RhizosphereHotspot {
 
 @override final  String id;
 @override final  double x;
-// Relative 0..1 in layer width
 @override final  double z;
-// Relative 0..1 in layer thickness
 @override final  double intensity;
-// 0..1 (Metabolic activity)
 @override@JsonKey() final  double radius;
-// m
 @override@JsonKey() final  double age;
-// s
 @override@JsonKey() final  HotspotType type;
 
 /// Create a copy of RhizosphereHotspot
@@ -823,16 +710,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RhizosphereHotspot&&(identical(other.id, id) || other.id == id)&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.age, age) || other.age == age)&&(identical(other.type, type) || other.type == type));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RhizosphereHotspot&&(identical(other.id, id) || other.id == id)&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.intensity, intensity) || other.intensity == intensity)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.age, age) || other.age == age)&&(identical(other.type, type) || other.type == type));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,x,z,intensity,radius,age,type);
+int get hashCode {
+    return Object.hash(runtimeType,id,x,z,intensity,radius,age,type);
+}
 
 @override
 String toString() {
-  return 'RhizosphereHotspot(id: $id, x: $x, z: $z, intensity: $intensity, radius: $radius, age: $age, type: $type)';
+    return 'RhizosphereHotspot(id: $id, x: $x, z: $z, intensity: $intensity, radius: $radius, age: $age, type: $type)';
 }
 
 

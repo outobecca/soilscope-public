@@ -48,7 +48,7 @@ abstract class _$SoilScopeGameProvider extends $Notifier<SoilScopeGame?> {
   SoilScopeGame? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SoilScopeGame?, SoilScopeGame?>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$SoilScopeGameProvider extends $Notifier<SoilScopeGame?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

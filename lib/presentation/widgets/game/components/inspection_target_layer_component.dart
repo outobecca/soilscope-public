@@ -140,10 +140,10 @@ class InspectionTargetLayerComponent extends Component
               ? _deepestRootNode(plant.rootSystem)
               : (rootNodes.length >= 3
                     ? rootNodes[rootNodes.length ~/ 2]
-                    : rootNodes.last);
+                    : rootNodes.first);
 
           if (rhizosphereNode != null) {
-            target.position = Vector2(
+            final rootPosition = Vector2(
               SceneCoordinateMapper.mapRootX(
                     rhizosphereNode.x,
                     worldWidth,
@@ -156,6 +156,13 @@ class InspectionTargetLayerComponent extends Component
                 soilHeight,
               ),
             );
+            // The root and rhizosphere targets can land on the same root
+            // node (especially for young taproots), which would leave one of
+            // them unreachable by tapping. The rhizosphere is the soil zone
+            // beside the root, so keep the marker on that interface with a
+            // small lateral offset from the root centreline.
+            final side = rhizosphereNode.x >= 0.5 ? 1.0 : -1.0;
+            target.position = rootPosition + Vector2(20 * side, 0);
           } else {
             target.position = Vector2(plantBaseX, surfaceY + soilHeight * 0.12);
           }

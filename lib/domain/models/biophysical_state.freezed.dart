@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'biophysical_state.dart';
@@ -9,15 +9,17 @@ part of 'biophysical_state.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$BiophysicalState {
 
- SoilProfile get profile; List<Plant> get plants; double get timeElapsed; Scenario? get currentScenario; double get precipitation; double get soilEvaporation; double get airTemperature; double get relativeHumidity; double get atmCO2;// mol/m3 (approx 415 ppm)
- bool get autoWeather; double get timeScale; bool get hasCoverCrop; bool get isRunning; bool get isInitializing;@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> get history; SustainabilityScore get score; double? get solarRadiationOverride;/// Mycorrhizal symbiosis state tracking colonization and nutrient exchange
-@JsonKey(includeFromJson: false, includeToJson: false) MycorrhizaState? get mycorrhizaState;
+ SoilProfile get profile; List<Plant> get plants; double get timeElapsed; Scenario? get currentScenario; double get precipitation; double get soilEvaporation; double get airTemperature; double get relativeHumidity; double get atmCO2; bool get autoWeather; double get timeScale; bool get hasCoverCrop; bool get isRunning; bool get isInitializing;@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> get history; SustainabilityScore get score; double? get solarRadiationOverride;/// Mycorrhizal symbiosis state tracking colonization and nutrient exchange.
+/// Persisted so a resumed run does not reset colonisation while the carbon
+/// pools it fed continue from the saved values.
+ MycorrhizaState? get mycorrhizaState;
 /// Create a copy of BiophysicalState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +32,21 @@ $BiophysicalStateCopyWith<BiophysicalState> get copyWith => _$BiophysicalStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BiophysicalState&&(identical(other.profile, profile) || other.profile == profile)&&const DeepCollectionEquality().equals(other.plants, plants)&&(identical(other.timeElapsed, timeElapsed) || other.timeElapsed == timeElapsed)&&(identical(other.currentScenario, currentScenario) || other.currentScenario == currentScenario)&&(identical(other.precipitation, precipitation) || other.precipitation == precipitation)&&(identical(other.soilEvaporation, soilEvaporation) || other.soilEvaporation == soilEvaporation)&&(identical(other.airTemperature, airTemperature) || other.airTemperature == airTemperature)&&(identical(other.relativeHumidity, relativeHumidity) || other.relativeHumidity == relativeHumidity)&&(identical(other.atmCO2, atmCO2) || other.atmCO2 == atmCO2)&&(identical(other.autoWeather, autoWeather) || other.autoWeather == autoWeather)&&(identical(other.timeScale, timeScale) || other.timeScale == timeScale)&&(identical(other.hasCoverCrop, hasCoverCrop) || other.hasCoverCrop == hasCoverCrop)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.isInitializing, isInitializing) || other.isInitializing == isInitializing)&&const DeepCollectionEquality().equals(other.history, history)&&(identical(other.score, score) || other.score == score)&&(identical(other.solarRadiationOverride, solarRadiationOverride) || other.solarRadiationOverride == solarRadiationOverride)&&(identical(other.mycorrhizaState, mycorrhizaState) || other.mycorrhizaState == mycorrhizaState));
+  final _this = this as BiophysicalState;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BiophysicalState&&(identical(other.profile, _this.profile) || other.profile == _this.profile)&&const DeepCollectionEquality().equals(other.plants, _this.plants)&&(identical(other.timeElapsed, _this.timeElapsed) || other.timeElapsed == _this.timeElapsed)&&(identical(other.currentScenario, _this.currentScenario) || other.currentScenario == _this.currentScenario)&&(identical(other.precipitation, _this.precipitation) || other.precipitation == _this.precipitation)&&(identical(other.soilEvaporation, _this.soilEvaporation) || other.soilEvaporation == _this.soilEvaporation)&&(identical(other.airTemperature, _this.airTemperature) || other.airTemperature == _this.airTemperature)&&(identical(other.relativeHumidity, _this.relativeHumidity) || other.relativeHumidity == _this.relativeHumidity)&&(identical(other.atmCO2, _this.atmCO2) || other.atmCO2 == _this.atmCO2)&&(identical(other.autoWeather, _this.autoWeather) || other.autoWeather == _this.autoWeather)&&(identical(other.timeScale, _this.timeScale) || other.timeScale == _this.timeScale)&&(identical(other.hasCoverCrop, _this.hasCoverCrop) || other.hasCoverCrop == _this.hasCoverCrop)&&(identical(other.isRunning, _this.isRunning) || other.isRunning == _this.isRunning)&&(identical(other.isInitializing, _this.isInitializing) || other.isInitializing == _this.isInitializing)&&const DeepCollectionEquality().equals(other.history, _this.history)&&(identical(other.score, _this.score) || other.score == _this.score)&&(identical(other.solarRadiationOverride, _this.solarRadiationOverride) || other.solarRadiationOverride == _this.solarRadiationOverride)&&(identical(other.mycorrhizaState, _this.mycorrhizaState) || other.mycorrhizaState == _this.mycorrhizaState));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,profile,const DeepCollectionEquality().hash(plants),timeElapsed,currentScenario,precipitation,soilEvaporation,airTemperature,relativeHumidity,atmCO2,autoWeather,timeScale,hasCoverCrop,isRunning,isInitializing,const DeepCollectionEquality().hash(history),score,solarRadiationOverride,mycorrhizaState);
+int get hashCode {
+  final _this = this as BiophysicalState;
+  return Object.hash(runtimeType,_this.profile,const DeepCollectionEquality().hash(_this.plants),_this.timeElapsed,_this.currentScenario,_this.precipitation,_this.soilEvaporation,_this.airTemperature,_this.relativeHumidity,_this.atmCO2,_this.autoWeather,_this.timeScale,_this.hasCoverCrop,_this.isRunning,_this.isInitializing,const DeepCollectionEquality().hash(_this.history),_this.score,_this.solarRadiationOverride,_this.mycorrhizaState);
+}
 
 @override
 String toString() {
-  return 'BiophysicalState(profile: $profile, plants: $plants, timeElapsed: $timeElapsed, currentScenario: $currentScenario, precipitation: $precipitation, soilEvaporation: $soilEvaporation, airTemperature: $airTemperature, relativeHumidity: $relativeHumidity, atmCO2: $atmCO2, autoWeather: $autoWeather, timeScale: $timeScale, hasCoverCrop: $hasCoverCrop, isRunning: $isRunning, isInitializing: $isInitializing, history: $history, score: $score, solarRadiationOverride: $solarRadiationOverride, mycorrhizaState: $mycorrhizaState)';
+  final _this = this as BiophysicalState;
+  return 'BiophysicalState(profile: ${_this.profile}, plants: ${_this.plants}, timeElapsed: ${_this.timeElapsed}, currentScenario: ${_this.currentScenario}, precipitation: ${_this.precipitation}, soilEvaporation: ${_this.soilEvaporation}, airTemperature: ${_this.airTemperature}, relativeHumidity: ${_this.relativeHumidity}, atmCO2: ${_this.atmCO2}, autoWeather: ${_this.autoWeather}, timeScale: ${_this.timeScale}, hasCoverCrop: ${_this.hasCoverCrop}, isRunning: ${_this.isRunning}, isInitializing: ${_this.isInitializing}, history: ${_this.history}, score: ${_this.score}, solarRadiationOverride: ${_this.solarRadiationOverride}, mycorrhizaState: ${_this.mycorrhizaState})';
 }
 
 
@@ -50,7 +57,7 @@ abstract mixin class $BiophysicalStateCopyWith<$Res>  {
   factory $BiophysicalStateCopyWith(BiophysicalState value, $Res Function(BiophysicalState) _then) = _$BiophysicalStateCopyWithImpl;
 @useResult
 $Res call({
- SoilProfile profile, List<Plant> plants, double timeElapsed, Scenario? currentScenario, double precipitation, double soilEvaporation, double airTemperature, double relativeHumidity, double atmCO2, bool autoWeather, double timeScale, bool hasCoverCrop, bool isRunning, bool isInitializing,@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> history, SustainabilityScore score, double? solarRadiationOverride,@JsonKey(includeFromJson: false, includeToJson: false) MycorrhizaState? mycorrhizaState
+ SoilProfile profile, List<Plant> plants, double timeElapsed, Scenario? currentScenario, double precipitation, double soilEvaporation, double airTemperature, double relativeHumidity, double atmCO2, bool autoWeather, double timeScale, bool hasCoverCrop, bool isRunning, bool isInitializing,@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> history, SustainabilityScore score, double? solarRadiationOverride, MycorrhizaState? mycorrhizaState
 });
 
 
@@ -68,7 +75,7 @@ class _$BiophysicalStateCopyWithImpl<$Res>
 /// Create a copy of BiophysicalState
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? profile = null,Object? plants = null,Object? timeElapsed = null,Object? currentScenario = freezed,Object? precipitation = null,Object? soilEvaporation = null,Object? airTemperature = null,Object? relativeHumidity = null,Object? atmCO2 = null,Object? autoWeather = null,Object? timeScale = null,Object? hasCoverCrop = null,Object? isRunning = null,Object? isInitializing = null,Object? history = null,Object? score = null,Object? solarRadiationOverride = freezed,Object? mycorrhizaState = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(BiophysicalState(
 profile: null == profile ? _self.profile : profile // ignore: cast_nullable_to_non_nullable
 as SoilProfile,plants: null == plants ? _self.plants : plants // ignore: cast_nullable_to_non_nullable
 as List<Plant>,timeElapsed: null == timeElapsed ? _self.timeElapsed : timeElapsed // ignore: cast_nullable_to_non_nullable
@@ -202,7 +209,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride, @JsonKey(includeFromJson: false, includeToJson: false)  MycorrhizaState? mycorrhizaState)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride,  MycorrhizaState? mycorrhizaState)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BiophysicalState() when $default != null:
 return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenario,_that.precipitation,_that.soilEvaporation,_that.airTemperature,_that.relativeHumidity,_that.atmCO2,_that.autoWeather,_that.timeScale,_that.hasCoverCrop,_that.isRunning,_that.isInitializing,_that.history,_that.score,_that.solarRadiationOverride,_that.mycorrhizaState);case _:
@@ -223,7 +230,7 @@ return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenar
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride, @JsonKey(includeFromJson: false, includeToJson: false)  MycorrhizaState? mycorrhizaState)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride,  MycorrhizaState? mycorrhizaState)  $default,) {final _that = this;
 switch (_that) {
 case _BiophysicalState():
 return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenario,_that.precipitation,_that.soilEvaporation,_that.airTemperature,_that.relativeHumidity,_that.atmCO2,_that.autoWeather,_that.timeScale,_that.hasCoverCrop,_that.isRunning,_that.isInitializing,_that.history,_that.score,_that.solarRadiationOverride,_that.mycorrhizaState);case _:
@@ -243,7 +250,7 @@ return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenar
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride, @JsonKey(includeFromJson: false, includeToJson: false)  MycorrhizaState? mycorrhizaState)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( SoilProfile profile,  List<Plant> plants,  double timeElapsed,  Scenario? currentScenario,  double precipitation,  double soilEvaporation,  double airTemperature,  double relativeHumidity,  double atmCO2,  bool autoWeather,  double timeScale,  bool hasCoverCrop,  bool isRunning,  bool isInitializing, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history,  SustainabilityScore score,  double? solarRadiationOverride,  MycorrhizaState? mycorrhizaState)?  $default,) {final _that = this;
 switch (_that) {
 case _BiophysicalState() when $default != null:
 return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenario,_that.precipitation,_that.soilEvaporation,_that.airTemperature,_that.relativeHumidity,_that.atmCO2,_that.autoWeather,_that.timeScale,_that.hasCoverCrop,_that.isRunning,_that.isInitializing,_that.history,_that.score,_that.solarRadiationOverride,_that.mycorrhizaState);case _:
@@ -258,7 +265,7 @@ return $default(_that.profile,_that.plants,_that.timeElapsed,_that.currentScenar
 @JsonSerializable()
 
 class _BiophysicalState extends BiophysicalState {
-  const _BiophysicalState({required this.profile, required final  List<Plant> plants, required this.timeElapsed, this.currentScenario, this.precipitation = 0.0, this.soilEvaporation = 0.0, this.airTemperature = 293.15, this.relativeHumidity = 0.5, this.atmCO2 = 0.017, this.autoWeather = false, this.timeScale = 1.0, this.hasCoverCrop = false, this.isRunning = false, this.isInitializing = true, @JsonKey(includeFromJson: false, includeToJson: false) final  List<BiophysicalState> history = const [], this.score = const SustainabilityScore(), this.solarRadiationOverride, @JsonKey(includeFromJson: false, includeToJson: false) this.mycorrhizaState}): _plants = plants,_history = history,super._();
+  const _BiophysicalState({required this.profile, required  List<Plant> plants, required this.timeElapsed, this.currentScenario, this.precipitation = 0.0, this.soilEvaporation = 0.0, this.airTemperature = 293.15, this.relativeHumidity = 0.5, this.atmCO2 = 0.017, this.autoWeather = false, this.timeScale = 1.0, this.hasCoverCrop = false, this.isRunning = false, this.isInitializing = true, @JsonKey(includeFromJson: false, includeToJson: false)  List<BiophysicalState> history = const [], this.score = const SustainabilityScore(), this.solarRadiationOverride, this.mycorrhizaState}): _plants = plants,_history = history,super._();
   factory _BiophysicalState.fromJson(Map<String, dynamic> json) => _$BiophysicalStateFromJson(json);
 
 @override final  SoilProfile profile;
@@ -276,7 +283,6 @@ class _BiophysicalState extends BiophysicalState {
 @override@JsonKey() final  double airTemperature;
 @override@JsonKey() final  double relativeHumidity;
 @override@JsonKey() final  double atmCO2;
-// mol/m3 (approx 415 ppm)
 @override@JsonKey() final  bool autoWeather;
 @override@JsonKey() final  double timeScale;
 @override@JsonKey() final  bool hasCoverCrop;
@@ -291,8 +297,10 @@ class _BiophysicalState extends BiophysicalState {
 
 @override@JsonKey() final  SustainabilityScore score;
 @override final  double? solarRadiationOverride;
-/// Mycorrhizal symbiosis state tracking colonization and nutrient exchange
-@override@JsonKey(includeFromJson: false, includeToJson: false) final  MycorrhizaState? mycorrhizaState;
+/// Mycorrhizal symbiosis state tracking colonization and nutrient exchange.
+/// Persisted so a resumed run does not reset colonisation while the carbon
+/// pools it fed continue from the saved values.
+@override final  MycorrhizaState? mycorrhizaState;
 
 /// Create a copy of BiophysicalState
 /// with the given fields replaced by the non-null parameter values.
@@ -307,16 +315,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BiophysicalState&&(identical(other.profile, profile) || other.profile == profile)&&const DeepCollectionEquality().equals(other._plants, _plants)&&(identical(other.timeElapsed, timeElapsed) || other.timeElapsed == timeElapsed)&&(identical(other.currentScenario, currentScenario) || other.currentScenario == currentScenario)&&(identical(other.precipitation, precipitation) || other.precipitation == precipitation)&&(identical(other.soilEvaporation, soilEvaporation) || other.soilEvaporation == soilEvaporation)&&(identical(other.airTemperature, airTemperature) || other.airTemperature == airTemperature)&&(identical(other.relativeHumidity, relativeHumidity) || other.relativeHumidity == relativeHumidity)&&(identical(other.atmCO2, atmCO2) || other.atmCO2 == atmCO2)&&(identical(other.autoWeather, autoWeather) || other.autoWeather == autoWeather)&&(identical(other.timeScale, timeScale) || other.timeScale == timeScale)&&(identical(other.hasCoverCrop, hasCoverCrop) || other.hasCoverCrop == hasCoverCrop)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.isInitializing, isInitializing) || other.isInitializing == isInitializing)&&const DeepCollectionEquality().equals(other._history, _history)&&(identical(other.score, score) || other.score == score)&&(identical(other.solarRadiationOverride, solarRadiationOverride) || other.solarRadiationOverride == solarRadiationOverride)&&(identical(other.mycorrhizaState, mycorrhizaState) || other.mycorrhizaState == mycorrhizaState));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _BiophysicalState&&(identical(other.profile, profile) || other.profile == profile)&&const DeepCollectionEquality().equals(other.plants, _plants)&&(identical(other.timeElapsed, timeElapsed) || other.timeElapsed == timeElapsed)&&(identical(other.currentScenario, currentScenario) || other.currentScenario == currentScenario)&&(identical(other.precipitation, precipitation) || other.precipitation == precipitation)&&(identical(other.soilEvaporation, soilEvaporation) || other.soilEvaporation == soilEvaporation)&&(identical(other.airTemperature, airTemperature) || other.airTemperature == airTemperature)&&(identical(other.relativeHumidity, relativeHumidity) || other.relativeHumidity == relativeHumidity)&&(identical(other.atmCO2, atmCO2) || other.atmCO2 == atmCO2)&&(identical(other.autoWeather, autoWeather) || other.autoWeather == autoWeather)&&(identical(other.timeScale, timeScale) || other.timeScale == timeScale)&&(identical(other.hasCoverCrop, hasCoverCrop) || other.hasCoverCrop == hasCoverCrop)&&(identical(other.isRunning, isRunning) || other.isRunning == isRunning)&&(identical(other.isInitializing, isInitializing) || other.isInitializing == isInitializing)&&const DeepCollectionEquality().equals(other.history, _history)&&(identical(other.score, score) || other.score == score)&&(identical(other.solarRadiationOverride, solarRadiationOverride) || other.solarRadiationOverride == solarRadiationOverride)&&(identical(other.mycorrhizaState, mycorrhizaState) || other.mycorrhizaState == mycorrhizaState));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,profile,const DeepCollectionEquality().hash(_plants),timeElapsed,currentScenario,precipitation,soilEvaporation,airTemperature,relativeHumidity,atmCO2,autoWeather,timeScale,hasCoverCrop,isRunning,isInitializing,const DeepCollectionEquality().hash(_history),score,solarRadiationOverride,mycorrhizaState);
+int get hashCode {
+    return Object.hash(runtimeType,profile,const DeepCollectionEquality().hash(_plants),timeElapsed,currentScenario,precipitation,soilEvaporation,airTemperature,relativeHumidity,atmCO2,autoWeather,timeScale,hasCoverCrop,isRunning,isInitializing,const DeepCollectionEquality().hash(_history),score,solarRadiationOverride,mycorrhizaState);
+}
 
 @override
 String toString() {
-  return 'BiophysicalState(profile: $profile, plants: $plants, timeElapsed: $timeElapsed, currentScenario: $currentScenario, precipitation: $precipitation, soilEvaporation: $soilEvaporation, airTemperature: $airTemperature, relativeHumidity: $relativeHumidity, atmCO2: $atmCO2, autoWeather: $autoWeather, timeScale: $timeScale, hasCoverCrop: $hasCoverCrop, isRunning: $isRunning, isInitializing: $isInitializing, history: $history, score: $score, solarRadiationOverride: $solarRadiationOverride, mycorrhizaState: $mycorrhizaState)';
+    return 'BiophysicalState(profile: $profile, plants: $plants, timeElapsed: $timeElapsed, currentScenario: $currentScenario, precipitation: $precipitation, soilEvaporation: $soilEvaporation, airTemperature: $airTemperature, relativeHumidity: $relativeHumidity, atmCO2: $atmCO2, autoWeather: $autoWeather, timeScale: $timeScale, hasCoverCrop: $hasCoverCrop, isRunning: $isRunning, isInitializing: $isInitializing, history: $history, score: $score, solarRadiationOverride: $solarRadiationOverride, mycorrhizaState: $mycorrhizaState)';
 }
 
 
@@ -327,7 +337,7 @@ abstract mixin class _$BiophysicalStateCopyWith<$Res> implements $BiophysicalSta
   factory _$BiophysicalStateCopyWith(_BiophysicalState value, $Res Function(_BiophysicalState) _then) = __$BiophysicalStateCopyWithImpl;
 @override @useResult
 $Res call({
- SoilProfile profile, List<Plant> plants, double timeElapsed, Scenario? currentScenario, double precipitation, double soilEvaporation, double airTemperature, double relativeHumidity, double atmCO2, bool autoWeather, double timeScale, bool hasCoverCrop, bool isRunning, bool isInitializing,@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> history, SustainabilityScore score, double? solarRadiationOverride,@JsonKey(includeFromJson: false, includeToJson: false) MycorrhizaState? mycorrhizaState
+ SoilProfile profile, List<Plant> plants, double timeElapsed, Scenario? currentScenario, double precipitation, double soilEvaporation, double airTemperature, double relativeHumidity, double atmCO2, bool autoWeather, double timeScale, bool hasCoverCrop, bool isRunning, bool isInitializing,@JsonKey(includeFromJson: false, includeToJson: false) List<BiophysicalState> history, SustainabilityScore score, double? solarRadiationOverride, MycorrhizaState? mycorrhizaState
 });
 
 

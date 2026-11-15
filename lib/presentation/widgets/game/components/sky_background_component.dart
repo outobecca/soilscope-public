@@ -1,5 +1,5 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart' hide Image;
+import 'package:material_ui/material_ui.dart' hide Image;
 import '../soil_scope_game.dart';
 
 /// A screen-space background component that provides a dynamic sky gradient.

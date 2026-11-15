@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'scenario.dart';
@@ -9,14 +9,14 @@ part of 'scenario.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$MissionObjective {
 
- String get id; String get title; double get targetValue; String get type;// 'yield', 'carbon', 'structure', 'pollution'
- bool get isMet;
+ String get id; String get title; double get targetValue; String get type; bool get isMet;
 /// Create a copy of MissionObjective
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,21 @@ $MissionObjectiveCopyWith<MissionObjective> get copyWith => _$MissionObjectiveCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MissionObjective&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.targetValue, targetValue) || other.targetValue == targetValue)&&(identical(other.type, type) || other.type == type)&&(identical(other.isMet, isMet) || other.isMet == isMet));
+  final _this = this as MissionObjective;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MissionObjective&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.targetValue, _this.targetValue) || other.targetValue == _this.targetValue)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.isMet, _this.isMet) || other.isMet == _this.isMet));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,targetValue,type,isMet);
+int get hashCode {
+  final _this = this as MissionObjective;
+  return Object.hash(runtimeType,_this.id,_this.title,_this.targetValue,_this.type,_this.isMet);
+}
 
 @override
 String toString() {
-  return 'MissionObjective(id: $id, title: $title, targetValue: $targetValue, type: $type, isMet: $isMet)';
+  final _this = this as MissionObjective;
+  return 'MissionObjective(id: ${_this.id}, title: ${_this.title}, targetValue: ${_this.targetValue}, type: ${_this.type}, isMet: ${_this.isMet})';
 }
 
 
@@ -67,7 +72,7 @@ class _$MissionObjectiveCopyWithImpl<$Res>
 /// Create a copy of MissionObjective
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? targetValue = null,Object? type = null,Object? isMet = null,}) {
-  return _then(_self.copyWith(
+  return _then(MissionObjective(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,targetValue: null == targetValue ? _self.targetValue : targetValue // ignore: cast_nullable_to_non_nullable
@@ -221,7 +226,6 @@ class _MissionObjective implements MissionObjective {
 @override final  String title;
 @override final  double targetValue;
 @override final  String type;
-// 'yield', 'carbon', 'structure', 'pollution'
 @override@JsonKey() final  bool isMet;
 
 /// Create a copy of MissionObjective
@@ -237,16 +241,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MissionObjective&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.targetValue, targetValue) || other.targetValue == targetValue)&&(identical(other.type, type) || other.type == type)&&(identical(other.isMet, isMet) || other.isMet == isMet));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MissionObjective&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.targetValue, targetValue) || other.targetValue == targetValue)&&(identical(other.type, type) || other.type == type)&&(identical(other.isMet, isMet) || other.isMet == isMet));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,targetValue,type,isMet);
+int get hashCode {
+    return Object.hash(runtimeType,id,title,targetValue,type,isMet);
+}
 
 @override
 String toString() {
-  return 'MissionObjective(id: $id, title: $title, targetValue: $targetValue, type: $type, isMet: $isMet)';
+    return 'MissionObjective(id: $id, title: $title, targetValue: $targetValue, type: $type, isMet: $isMet)';
 }
 
 
@@ -292,9 +298,7 @@ as bool,
 /// @nodoc
 mixin _$ScenarioTutorialStep {
 
- double get triggerTime;// Seconds or simulated ticks
- String get targetId;// UI or Engine component to highlight
- String get title; String get description;
+ double get triggerTime; String get targetId; String get title; String get description;
 /// Create a copy of ScenarioTutorialStep
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -307,16 +311,21 @@ $ScenarioTutorialStepCopyWith<ScenarioTutorialStep> get copyWith => _$ScenarioTu
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScenarioTutorialStep&&(identical(other.triggerTime, triggerTime) || other.triggerTime == triggerTime)&&(identical(other.targetId, targetId) || other.targetId == targetId)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description));
+  final _this = this as ScenarioTutorialStep;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScenarioTutorialStep&&(identical(other.triggerTime, _this.triggerTime) || other.triggerTime == _this.triggerTime)&&(identical(other.targetId, _this.targetId) || other.targetId == _this.targetId)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.description, _this.description) || other.description == _this.description));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,triggerTime,targetId,title,description);
+int get hashCode {
+  final _this = this as ScenarioTutorialStep;
+  return Object.hash(runtimeType,_this.triggerTime,_this.targetId,_this.title,_this.description);
+}
 
 @override
 String toString() {
-  return 'ScenarioTutorialStep(triggerTime: $triggerTime, targetId: $targetId, title: $title, description: $description)';
+  final _this = this as ScenarioTutorialStep;
+  return 'ScenarioTutorialStep(triggerTime: ${_this.triggerTime}, targetId: ${_this.targetId}, title: ${_this.title}, description: ${_this.description})';
 }
 
 
@@ -345,7 +354,7 @@ class _$ScenarioTutorialStepCopyWithImpl<$Res>
 /// Create a copy of ScenarioTutorialStep
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? triggerTime = null,Object? targetId = null,Object? title = null,Object? description = null,}) {
-  return _then(_self.copyWith(
+  return _then(ScenarioTutorialStep(
 triggerTime: null == triggerTime ? _self.triggerTime : triggerTime // ignore: cast_nullable_to_non_nullable
 as double,targetId: null == targetId ? _self.targetId : targetId // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -495,9 +504,7 @@ class _ScenarioTutorialStep implements ScenarioTutorialStep {
   factory _ScenarioTutorialStep.fromJson(Map<String, dynamic> json) => _$ScenarioTutorialStepFromJson(json);
 
 @override final  double triggerTime;
-// Seconds or simulated ticks
 @override final  String targetId;
-// UI or Engine component to highlight
 @override final  String title;
 @override final  String description;
 
@@ -514,16 +521,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScenarioTutorialStep&&(identical(other.triggerTime, triggerTime) || other.triggerTime == triggerTime)&&(identical(other.targetId, targetId) || other.targetId == targetId)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScenarioTutorialStep&&(identical(other.triggerTime, triggerTime) || other.triggerTime == triggerTime)&&(identical(other.targetId, targetId) || other.targetId == targetId)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,triggerTime,targetId,title,description);
+int get hashCode {
+    return Object.hash(runtimeType,triggerTime,targetId,title,description);
+}
 
 @override
 String toString() {
-  return 'ScenarioTutorialStep(triggerTime: $triggerTime, targetId: $targetId, title: $title, description: $description)';
+    return 'ScenarioTutorialStep(triggerTime: $triggerTime, targetId: $targetId, title: $title, description: $description)';
 }
 
 
@@ -568,8 +577,7 @@ as String,
 /// @nodoc
 mixin _$CultivationEvent {
 
- double get executionTime; String get type;// 'fertilize', 'till', 'water'
- double get amount; String? get layerId; String? get extraData;
+ double get executionTime; String get type; double get amount; String? get layerId; String? get extraData;
 /// Create a copy of CultivationEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -582,16 +590,21 @@ $CultivationEventCopyWith<CultivationEvent> get copyWith => _$CultivationEventCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CultivationEvent&&(identical(other.executionTime, executionTime) || other.executionTime == executionTime)&&(identical(other.type, type) || other.type == type)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.layerId, layerId) || other.layerId == layerId)&&(identical(other.extraData, extraData) || other.extraData == extraData));
+  final _this = this as CultivationEvent;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CultivationEvent&&(identical(other.executionTime, _this.executionTime) || other.executionTime == _this.executionTime)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.amount, _this.amount) || other.amount == _this.amount)&&(identical(other.layerId, _this.layerId) || other.layerId == _this.layerId)&&(identical(other.extraData, _this.extraData) || other.extraData == _this.extraData));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,executionTime,type,amount,layerId,extraData);
+int get hashCode {
+  final _this = this as CultivationEvent;
+  return Object.hash(runtimeType,_this.executionTime,_this.type,_this.amount,_this.layerId,_this.extraData);
+}
 
 @override
 String toString() {
-  return 'CultivationEvent(executionTime: $executionTime, type: $type, amount: $amount, layerId: $layerId, extraData: $extraData)';
+  final _this = this as CultivationEvent;
+  return 'CultivationEvent(executionTime: ${_this.executionTime}, type: ${_this.type}, amount: ${_this.amount}, layerId: ${_this.layerId}, extraData: ${_this.extraData})';
 }
 
 
@@ -620,7 +633,7 @@ class _$CultivationEventCopyWithImpl<$Res>
 /// Create a copy of CultivationEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? executionTime = null,Object? type = null,Object? amount = null,Object? layerId = freezed,Object? extraData = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(CultivationEvent(
 executionTime: null == executionTime ? _self.executionTime : executionTime // ignore: cast_nullable_to_non_nullable
 as double,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -772,7 +785,6 @@ class _CultivationEvent implements CultivationEvent {
 
 @override final  double executionTime;
 @override final  String type;
-// 'fertilize', 'till', 'water'
 @override@JsonKey() final  double amount;
 @override final  String? layerId;
 @override final  String? extraData;
@@ -790,16 +802,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CultivationEvent&&(identical(other.executionTime, executionTime) || other.executionTime == executionTime)&&(identical(other.type, type) || other.type == type)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.layerId, layerId) || other.layerId == layerId)&&(identical(other.extraData, extraData) || other.extraData == extraData));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CultivationEvent&&(identical(other.executionTime, executionTime) || other.executionTime == executionTime)&&(identical(other.type, type) || other.type == type)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.layerId, layerId) || other.layerId == layerId)&&(identical(other.extraData, extraData) || other.extraData == extraData));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,executionTime,type,amount,layerId,extraData);
+int get hashCode {
+    return Object.hash(runtimeType,executionTime,type,amount,layerId,extraData);
+}
 
 @override
 String toString() {
-  return 'CultivationEvent(executionTime: $executionTime, type: $type, amount: $amount, layerId: $layerId, extraData: $extraData)';
+    return 'CultivationEvent(executionTime: $executionTime, type: $type, amount: $amount, layerId: $layerId, extraData: $extraData)';
 }
 
 
@@ -858,16 +872,21 @@ $ScenarioCopyWith<Scenario> get copyWith => _$ScenarioCopyWithImpl<Scenario>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Scenario&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.initialProfile, initialProfile) || other.initialProfile == initialProfile)&&const DeepCollectionEquality().equals(other.weatherData, weatherData)&&const DeepCollectionEquality().equals(other.objectives, objectives)&&const DeepCollectionEquality().equals(other.features, features)&&const DeepCollectionEquality().equals(other.tutorialSteps, tutorialSteps)&&const DeepCollectionEquality().equals(other.cultivationPlan, cultivationPlan));
+  final _this = this as Scenario;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Scenario&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.title, _this.title) || other.title == _this.title)&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.initialProfile, _this.initialProfile) || other.initialProfile == _this.initialProfile)&&const DeepCollectionEquality().equals(other.weatherData, _this.weatherData)&&const DeepCollectionEquality().equals(other.objectives, _this.objectives)&&const DeepCollectionEquality().equals(other.features, _this.features)&&const DeepCollectionEquality().equals(other.tutorialSteps, _this.tutorialSteps)&&const DeepCollectionEquality().equals(other.cultivationPlan, _this.cultivationPlan));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,initialProfile,const DeepCollectionEquality().hash(weatherData),const DeepCollectionEquality().hash(objectives),const DeepCollectionEquality().hash(features),const DeepCollectionEquality().hash(tutorialSteps),const DeepCollectionEquality().hash(cultivationPlan));
+int get hashCode {
+  final _this = this as Scenario;
+  return Object.hash(runtimeType,_this.id,_this.title,_this.description,_this.initialProfile,const DeepCollectionEquality().hash(_this.weatherData),const DeepCollectionEquality().hash(_this.objectives),const DeepCollectionEquality().hash(_this.features),const DeepCollectionEquality().hash(_this.tutorialSteps),const DeepCollectionEquality().hash(_this.cultivationPlan));
+}
 
 @override
 String toString() {
-  return 'Scenario(id: $id, title: $title, description: $description, initialProfile: $initialProfile, weatherData: $weatherData, objectives: $objectives, features: $features, tutorialSteps: $tutorialSteps, cultivationPlan: $cultivationPlan)';
+  final _this = this as Scenario;
+  return 'Scenario(id: ${_this.id}, title: ${_this.title}, description: ${_this.description}, initialProfile: ${_this.initialProfile}, weatherData: ${_this.weatherData}, objectives: ${_this.objectives}, features: ${_this.features}, tutorialSteps: ${_this.tutorialSteps}, cultivationPlan: ${_this.cultivationPlan})';
 }
 
 
@@ -896,7 +915,7 @@ class _$ScenarioCopyWithImpl<$Res>
 /// Create a copy of Scenario
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? initialProfile = null,Object? weatherData = null,Object? objectives = null,Object? features = null,Object? tutorialSteps = null,Object? cultivationPlan = null,}) {
-  return _then(_self.copyWith(
+  return _then(Scenario(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -1056,7 +1075,7 @@ return $default(_that.id,_that.title,_that.description,_that.initialProfile,_tha
 @JsonSerializable()
 
 class _Scenario implements Scenario {
-  const _Scenario({required this.id, required this.title, required this.description, required this.initialProfile, required final  Map<String, dynamic> weatherData, final  List<MissionObjective> objectives = const [], final  List<String> features = const [], final  List<ScenarioTutorialStep> tutorialSteps = const [], final  List<CultivationEvent> cultivationPlan = const []}): _weatherData = weatherData,_objectives = objectives,_features = features,_tutorialSteps = tutorialSteps,_cultivationPlan = cultivationPlan;
+  const _Scenario({required this.id, required this.title, required this.description, required this.initialProfile, required  Map<String, dynamic> weatherData,  List<MissionObjective> objectives = const [],  List<String> features = const [],  List<ScenarioTutorialStep> tutorialSteps = const [],  List<CultivationEvent> cultivationPlan = const []}): _weatherData = weatherData,_objectives = objectives,_features = features,_tutorialSteps = tutorialSteps,_cultivationPlan = cultivationPlan;
   factory _Scenario.fromJson(Map<String, dynamic> json) => _$ScenarioFromJson(json);
 
 @override final  String id;
@@ -1112,16 +1131,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Scenario&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.initialProfile, initialProfile) || other.initialProfile == initialProfile)&&const DeepCollectionEquality().equals(other._weatherData, _weatherData)&&const DeepCollectionEquality().equals(other._objectives, _objectives)&&const DeepCollectionEquality().equals(other._features, _features)&&const DeepCollectionEquality().equals(other._tutorialSteps, _tutorialSteps)&&const DeepCollectionEquality().equals(other._cultivationPlan, _cultivationPlan));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Scenario&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.initialProfile, initialProfile) || other.initialProfile == initialProfile)&&const DeepCollectionEquality().equals(other.weatherData, _weatherData)&&const DeepCollectionEquality().equals(other.objectives, _objectives)&&const DeepCollectionEquality().equals(other.features, _features)&&const DeepCollectionEquality().equals(other.tutorialSteps, _tutorialSteps)&&const DeepCollectionEquality().equals(other.cultivationPlan, _cultivationPlan));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,initialProfile,const DeepCollectionEquality().hash(_weatherData),const DeepCollectionEquality().hash(_objectives),const DeepCollectionEquality().hash(_features),const DeepCollectionEquality().hash(_tutorialSteps),const DeepCollectionEquality().hash(_cultivationPlan));
+int get hashCode {
+    return Object.hash(runtimeType,id,title,description,initialProfile,const DeepCollectionEquality().hash(_weatherData),const DeepCollectionEquality().hash(_objectives),const DeepCollectionEquality().hash(_features),const DeepCollectionEquality().hash(_tutorialSteps),const DeepCollectionEquality().hash(_cultivationPlan));
+}
 
 @override
 String toString() {
-  return 'Scenario(id: $id, title: $title, description: $description, initialProfile: $initialProfile, weatherData: $weatherData, objectives: $objectives, features: $features, tutorialSteps: $tutorialSteps, cultivationPlan: $cultivationPlan)';
+    return 'Scenario(id: $id, title: $title, description: $description, initialProfile: $initialProfile, weatherData: $weatherData, objectives: $objectives, features: $features, tutorialSteps: $tutorialSteps, cultivationPlan: $cultivationPlan)';
 }
 
 

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'plant.dart';
@@ -9,20 +9,14 @@ part of 'plant.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$Plant {
 
- String get id; String get species; double get age;// days
- double get height;// m
- double get lai;// Leaf Area Index
- double get turgorPressure;// MPa
- double get baseX; List<RootNode> get rootSystem; double get nitrogenUptake; double get waterUptake; double get phosphorusUptake; double get calciumUptake; double get magnesiumUptake; double get totalBiomass;// mg
- double get rootBiomass;// mg
-// === NEW SPAC FIELDS (Soil-Plant-Atmosphere Continuum) ===
-/// Leaf water potential [MPa] - key SPAC variable
+ String get id; String get species; double get age; double get height; double get lai; double get turgorPressure; double get baseX; List<RootNode> get rootSystem; double get nitrogenUptake; double get waterUptake; double get phosphorusUptake; double get calciumUptake; double get magnesiumUptake; double get totalBiomass; double get rootBiomass;/// Leaf water potential [MPa] - key SPAC variable
 /// Represents the water status of leaves, drives stomatal closure
 /// Typical range: 0 (fully hydrated) to -2.0 (severely stressed)
 /// Reference: Hsiao (1973)
@@ -36,9 +30,7 @@ mixin _$Plant {
 /// Useful for visualization of plant wilting
  double get relativeWaterContent;/// Actual transpiration rate [m³ H2O m⁻² leaf s⁻¹]
 /// Distinct from potential - limited by soil water availability
- double get actualTranspiration;// === DIAGNOSTIC LIGHT FIELDS ===
- double get absorbedPAR;// W/m²
- double get lightTransmission;
+ double get actualTranspiration; double get absorbedPAR; double get lightTransmission;
 /// Create a copy of Plant
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -51,16 +43,21 @@ $PlantCopyWith<Plant> get copyWith => _$PlantCopyWithImpl<Plant>(this as Plant, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Plant&&(identical(other.id, id) || other.id == id)&&(identical(other.species, species) || other.species == species)&&(identical(other.age, age) || other.age == age)&&(identical(other.height, height) || other.height == height)&&(identical(other.lai, lai) || other.lai == lai)&&(identical(other.turgorPressure, turgorPressure) || other.turgorPressure == turgorPressure)&&(identical(other.baseX, baseX) || other.baseX == baseX)&&const DeepCollectionEquality().equals(other.rootSystem, rootSystem)&&(identical(other.nitrogenUptake, nitrogenUptake) || other.nitrogenUptake == nitrogenUptake)&&(identical(other.waterUptake, waterUptake) || other.waterUptake == waterUptake)&&(identical(other.phosphorusUptake, phosphorusUptake) || other.phosphorusUptake == phosphorusUptake)&&(identical(other.calciumUptake, calciumUptake) || other.calciumUptake == calciumUptake)&&(identical(other.magnesiumUptake, magnesiumUptake) || other.magnesiumUptake == magnesiumUptake)&&(identical(other.totalBiomass, totalBiomass) || other.totalBiomass == totalBiomass)&&(identical(other.rootBiomass, rootBiomass) || other.rootBiomass == rootBiomass)&&(identical(other.psiLeaf, psiLeaf) || other.psiLeaf == psiLeaf)&&(identical(other.stomatalConductance, stomatalConductance) || other.stomatalConductance == stomatalConductance)&&(identical(other.waterStressIndex, waterStressIndex) || other.waterStressIndex == waterStressIndex)&&(identical(other.relativeWaterContent, relativeWaterContent) || other.relativeWaterContent == relativeWaterContent)&&(identical(other.actualTranspiration, actualTranspiration) || other.actualTranspiration == actualTranspiration)&&(identical(other.absorbedPAR, absorbedPAR) || other.absorbedPAR == absorbedPAR)&&(identical(other.lightTransmission, lightTransmission) || other.lightTransmission == lightTransmission));
+  final _this = this as Plant;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Plant&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.species, _this.species) || other.species == _this.species)&&(identical(other.age, _this.age) || other.age == _this.age)&&(identical(other.height, _this.height) || other.height == _this.height)&&(identical(other.lai, _this.lai) || other.lai == _this.lai)&&(identical(other.turgorPressure, _this.turgorPressure) || other.turgorPressure == _this.turgorPressure)&&(identical(other.baseX, _this.baseX) || other.baseX == _this.baseX)&&const DeepCollectionEquality().equals(other.rootSystem, _this.rootSystem)&&(identical(other.nitrogenUptake, _this.nitrogenUptake) || other.nitrogenUptake == _this.nitrogenUptake)&&(identical(other.waterUptake, _this.waterUptake) || other.waterUptake == _this.waterUptake)&&(identical(other.phosphorusUptake, _this.phosphorusUptake) || other.phosphorusUptake == _this.phosphorusUptake)&&(identical(other.calciumUptake, _this.calciumUptake) || other.calciumUptake == _this.calciumUptake)&&(identical(other.magnesiumUptake, _this.magnesiumUptake) || other.magnesiumUptake == _this.magnesiumUptake)&&(identical(other.totalBiomass, _this.totalBiomass) || other.totalBiomass == _this.totalBiomass)&&(identical(other.rootBiomass, _this.rootBiomass) || other.rootBiomass == _this.rootBiomass)&&(identical(other.psiLeaf, _this.psiLeaf) || other.psiLeaf == _this.psiLeaf)&&(identical(other.stomatalConductance, _this.stomatalConductance) || other.stomatalConductance == _this.stomatalConductance)&&(identical(other.waterStressIndex, _this.waterStressIndex) || other.waterStressIndex == _this.waterStressIndex)&&(identical(other.relativeWaterContent, _this.relativeWaterContent) || other.relativeWaterContent == _this.relativeWaterContent)&&(identical(other.actualTranspiration, _this.actualTranspiration) || other.actualTranspiration == _this.actualTranspiration)&&(identical(other.absorbedPAR, _this.absorbedPAR) || other.absorbedPAR == _this.absorbedPAR)&&(identical(other.lightTransmission, _this.lightTransmission) || other.lightTransmission == _this.lightTransmission));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,species,age,height,lai,turgorPressure,baseX,const DeepCollectionEquality().hash(rootSystem),nitrogenUptake,waterUptake,phosphorusUptake,calciumUptake,magnesiumUptake,totalBiomass,rootBiomass,psiLeaf,stomatalConductance,waterStressIndex,relativeWaterContent,actualTranspiration,absorbedPAR,lightTransmission]);
+int get hashCode {
+  final _this = this as Plant;
+  return Object.hashAll([runtimeType,_this.id,_this.species,_this.age,_this.height,_this.lai,_this.turgorPressure,_this.baseX,const DeepCollectionEquality().hash(_this.rootSystem),_this.nitrogenUptake,_this.waterUptake,_this.phosphorusUptake,_this.calciumUptake,_this.magnesiumUptake,_this.totalBiomass,_this.rootBiomass,_this.psiLeaf,_this.stomatalConductance,_this.waterStressIndex,_this.relativeWaterContent,_this.actualTranspiration,_this.absorbedPAR,_this.lightTransmission]);
+}
 
 @override
 String toString() {
-  return 'Plant(id: $id, species: $species, age: $age, height: $height, lai: $lai, turgorPressure: $turgorPressure, baseX: $baseX, rootSystem: $rootSystem, nitrogenUptake: $nitrogenUptake, waterUptake: $waterUptake, phosphorusUptake: $phosphorusUptake, calciumUptake: $calciumUptake, magnesiumUptake: $magnesiumUptake, totalBiomass: $totalBiomass, rootBiomass: $rootBiomass, psiLeaf: $psiLeaf, stomatalConductance: $stomatalConductance, waterStressIndex: $waterStressIndex, relativeWaterContent: $relativeWaterContent, actualTranspiration: $actualTranspiration, absorbedPAR: $absorbedPAR, lightTransmission: $lightTransmission)';
+  final _this = this as Plant;
+  return 'Plant(id: ${_this.id}, species: ${_this.species}, age: ${_this.age}, height: ${_this.height}, lai: ${_this.lai}, turgorPressure: ${_this.turgorPressure}, baseX: ${_this.baseX}, rootSystem: ${_this.rootSystem}, nitrogenUptake: ${_this.nitrogenUptake}, waterUptake: ${_this.waterUptake}, phosphorusUptake: ${_this.phosphorusUptake}, calciumUptake: ${_this.calciumUptake}, magnesiumUptake: ${_this.magnesiumUptake}, totalBiomass: ${_this.totalBiomass}, rootBiomass: ${_this.rootBiomass}, psiLeaf: ${_this.psiLeaf}, stomatalConductance: ${_this.stomatalConductance}, waterStressIndex: ${_this.waterStressIndex}, relativeWaterContent: ${_this.relativeWaterContent}, actualTranspiration: ${_this.actualTranspiration}, absorbedPAR: ${_this.absorbedPAR}, lightTransmission: ${_this.lightTransmission})';
 }
 
 
@@ -89,7 +86,7 @@ class _$PlantCopyWithImpl<$Res>
 /// Create a copy of Plant
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? species = null,Object? age = null,Object? height = null,Object? lai = null,Object? turgorPressure = null,Object? baseX = null,Object? rootSystem = null,Object? nitrogenUptake = null,Object? waterUptake = null,Object? phosphorusUptake = null,Object? calciumUptake = null,Object? magnesiumUptake = null,Object? totalBiomass = null,Object? rootBiomass = null,Object? psiLeaf = null,Object? stomatalConductance = null,Object? waterStressIndex = null,Object? relativeWaterContent = null,Object? actualTranspiration = null,Object? absorbedPAR = null,Object? lightTransmission = null,}) {
-  return _then(_self.copyWith(
+  return _then(Plant(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,species: null == species ? _self.species : species // ignore: cast_nullable_to_non_nullable
 as String,age: null == age ? _self.age : age // ignore: cast_nullable_to_non_nullable
@@ -253,19 +250,15 @@ return $default(_that.id,_that.species,_that.age,_that.height,_that.lai,_that.tu
 @JsonSerializable()
 
 class _Plant implements Plant {
-  const _Plant({required this.id, required this.species, required this.age, required this.height, required this.lai, required this.turgorPressure, this.baseX = 0.5, required final  List<RootNode> rootSystem, required this.nitrogenUptake, required this.waterUptake, this.phosphorusUptake = 0.0, this.calciumUptake = 0.0, this.magnesiumUptake = 0.0, this.totalBiomass = 100.0, this.rootBiomass = 50.0, this.psiLeaf = -0.3, this.stomatalConductance = 0.3, this.waterStressIndex = 0.0, this.relativeWaterContent = 0.9, this.actualTranspiration = 0.0, this.absorbedPAR = 0.0, this.lightTransmission = 1.0}): _rootSystem = rootSystem;
+  const _Plant({required this.id, required this.species, required this.age, required this.height, required this.lai, required this.turgorPressure, this.baseX = 0.5, required  List<RootNode> rootSystem, required this.nitrogenUptake, required this.waterUptake, this.phosphorusUptake = 0.0, this.calciumUptake = 0.0, this.magnesiumUptake = 0.0, this.totalBiomass = 100.0, this.rootBiomass = 50.0, this.psiLeaf = -0.3, this.stomatalConductance = 0.3, this.waterStressIndex = 0.0, this.relativeWaterContent = 0.9, this.actualTranspiration = 0.0, this.absorbedPAR = 0.0, this.lightTransmission = 1.0}): _rootSystem = rootSystem;
   factory _Plant.fromJson(Map<String, dynamic> json) => _$PlantFromJson(json);
 
 @override final  String id;
 @override final  String species;
 @override final  double age;
-// days
 @override final  double height;
-// m
 @override final  double lai;
-// Leaf Area Index
 @override final  double turgorPressure;
-// MPa
 @override@JsonKey() final  double baseX;
  final  List<RootNode> _rootSystem;
 @override List<RootNode> get rootSystem {
@@ -280,10 +273,7 @@ class _Plant implements Plant {
 @override@JsonKey() final  double calciumUptake;
 @override@JsonKey() final  double magnesiumUptake;
 @override@JsonKey() final  double totalBiomass;
-// mg
 @override@JsonKey() final  double rootBiomass;
-// mg
-// === NEW SPAC FIELDS (Soil-Plant-Atmosphere Continuum) ===
 /// Leaf water potential [MPa] - key SPAC variable
 /// Represents the water status of leaves, drives stomatal closure
 /// Typical range: 0 (fully hydrated) to -2.0 (severely stressed)
@@ -303,9 +293,7 @@ class _Plant implements Plant {
 /// Actual transpiration rate [m³ H2O m⁻² leaf s⁻¹]
 /// Distinct from potential - limited by soil water availability
 @override@JsonKey() final  double actualTranspiration;
-// === DIAGNOSTIC LIGHT FIELDS ===
 @override@JsonKey() final  double absorbedPAR;
-// W/m²
 @override@JsonKey() final  double lightTransmission;
 
 /// Create a copy of Plant
@@ -321,16 +309,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Plant&&(identical(other.id, id) || other.id == id)&&(identical(other.species, species) || other.species == species)&&(identical(other.age, age) || other.age == age)&&(identical(other.height, height) || other.height == height)&&(identical(other.lai, lai) || other.lai == lai)&&(identical(other.turgorPressure, turgorPressure) || other.turgorPressure == turgorPressure)&&(identical(other.baseX, baseX) || other.baseX == baseX)&&const DeepCollectionEquality().equals(other._rootSystem, _rootSystem)&&(identical(other.nitrogenUptake, nitrogenUptake) || other.nitrogenUptake == nitrogenUptake)&&(identical(other.waterUptake, waterUptake) || other.waterUptake == waterUptake)&&(identical(other.phosphorusUptake, phosphorusUptake) || other.phosphorusUptake == phosphorusUptake)&&(identical(other.calciumUptake, calciumUptake) || other.calciumUptake == calciumUptake)&&(identical(other.magnesiumUptake, magnesiumUptake) || other.magnesiumUptake == magnesiumUptake)&&(identical(other.totalBiomass, totalBiomass) || other.totalBiomass == totalBiomass)&&(identical(other.rootBiomass, rootBiomass) || other.rootBiomass == rootBiomass)&&(identical(other.psiLeaf, psiLeaf) || other.psiLeaf == psiLeaf)&&(identical(other.stomatalConductance, stomatalConductance) || other.stomatalConductance == stomatalConductance)&&(identical(other.waterStressIndex, waterStressIndex) || other.waterStressIndex == waterStressIndex)&&(identical(other.relativeWaterContent, relativeWaterContent) || other.relativeWaterContent == relativeWaterContent)&&(identical(other.actualTranspiration, actualTranspiration) || other.actualTranspiration == actualTranspiration)&&(identical(other.absorbedPAR, absorbedPAR) || other.absorbedPAR == absorbedPAR)&&(identical(other.lightTransmission, lightTransmission) || other.lightTransmission == lightTransmission));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Plant&&(identical(other.id, id) || other.id == id)&&(identical(other.species, species) || other.species == species)&&(identical(other.age, age) || other.age == age)&&(identical(other.height, height) || other.height == height)&&(identical(other.lai, lai) || other.lai == lai)&&(identical(other.turgorPressure, turgorPressure) || other.turgorPressure == turgorPressure)&&(identical(other.baseX, baseX) || other.baseX == baseX)&&const DeepCollectionEquality().equals(other.rootSystem, _rootSystem)&&(identical(other.nitrogenUptake, nitrogenUptake) || other.nitrogenUptake == nitrogenUptake)&&(identical(other.waterUptake, waterUptake) || other.waterUptake == waterUptake)&&(identical(other.phosphorusUptake, phosphorusUptake) || other.phosphorusUptake == phosphorusUptake)&&(identical(other.calciumUptake, calciumUptake) || other.calciumUptake == calciumUptake)&&(identical(other.magnesiumUptake, magnesiumUptake) || other.magnesiumUptake == magnesiumUptake)&&(identical(other.totalBiomass, totalBiomass) || other.totalBiomass == totalBiomass)&&(identical(other.rootBiomass, rootBiomass) || other.rootBiomass == rootBiomass)&&(identical(other.psiLeaf, psiLeaf) || other.psiLeaf == psiLeaf)&&(identical(other.stomatalConductance, stomatalConductance) || other.stomatalConductance == stomatalConductance)&&(identical(other.waterStressIndex, waterStressIndex) || other.waterStressIndex == waterStressIndex)&&(identical(other.relativeWaterContent, relativeWaterContent) || other.relativeWaterContent == relativeWaterContent)&&(identical(other.actualTranspiration, actualTranspiration) || other.actualTranspiration == actualTranspiration)&&(identical(other.absorbedPAR, absorbedPAR) || other.absorbedPAR == absorbedPAR)&&(identical(other.lightTransmission, lightTransmission) || other.lightTransmission == lightTransmission));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,species,age,height,lai,turgorPressure,baseX,const DeepCollectionEquality().hash(_rootSystem),nitrogenUptake,waterUptake,phosphorusUptake,calciumUptake,magnesiumUptake,totalBiomass,rootBiomass,psiLeaf,stomatalConductance,waterStressIndex,relativeWaterContent,actualTranspiration,absorbedPAR,lightTransmission]);
+int get hashCode {
+    return Object.hashAll([runtimeType,id,species,age,height,lai,turgorPressure,baseX,const DeepCollectionEquality().hash(_rootSystem),nitrogenUptake,waterUptake,phosphorusUptake,calciumUptake,magnesiumUptake,totalBiomass,rootBiomass,psiLeaf,stomatalConductance,waterStressIndex,relativeWaterContent,actualTranspiration,absorbedPAR,lightTransmission]);
+}
 
 @override
 String toString() {
-  return 'Plant(id: $id, species: $species, age: $age, height: $height, lai: $lai, turgorPressure: $turgorPressure, baseX: $baseX, rootSystem: $rootSystem, nitrogenUptake: $nitrogenUptake, waterUptake: $waterUptake, phosphorusUptake: $phosphorusUptake, calciumUptake: $calciumUptake, magnesiumUptake: $magnesiumUptake, totalBiomass: $totalBiomass, rootBiomass: $rootBiomass, psiLeaf: $psiLeaf, stomatalConductance: $stomatalConductance, waterStressIndex: $waterStressIndex, relativeWaterContent: $relativeWaterContent, actualTranspiration: $actualTranspiration, absorbedPAR: $absorbedPAR, lightTransmission: $lightTransmission)';
+    return 'Plant(id: $id, species: $species, age: $age, height: $height, lai: $lai, turgorPressure: $turgorPressure, baseX: $baseX, rootSystem: $rootSystem, nitrogenUptake: $nitrogenUptake, waterUptake: $waterUptake, phosphorusUptake: $phosphorusUptake, calciumUptake: $calciumUptake, magnesiumUptake: $magnesiumUptake, totalBiomass: $totalBiomass, rootBiomass: $rootBiomass, psiLeaf: $psiLeaf, stomatalConductance: $stomatalConductance, waterStressIndex: $waterStressIndex, relativeWaterContent: $relativeWaterContent, actualTranspiration: $actualTranspiration, absorbedPAR: $absorbedPAR, lightTransmission: $lightTransmission)';
 }
 
 
@@ -393,10 +383,7 @@ as double,
 /// @nodoc
 mixin _$RootNode {
 
- double get x; double get z;// depth
- double get radius; bool get isTip; int? get parentIndex;// Index in the rootSystem list
- int get branchLevel;// 0 = taproot, 1 = lateral, etc.
- int get branchSegmentCount;
+ double get x; double get z; double get radius; bool get isTip; int? get parentIndex; int get branchLevel; int get branchSegmentCount;
 /// Create a copy of RootNode
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -409,16 +396,21 @@ $RootNodeCopyWith<RootNode> get copyWith => _$RootNodeCopyWithImpl<RootNode>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RootNode&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.isTip, isTip) || other.isTip == isTip)&&(identical(other.parentIndex, parentIndex) || other.parentIndex == parentIndex)&&(identical(other.branchLevel, branchLevel) || other.branchLevel == branchLevel)&&(identical(other.branchSegmentCount, branchSegmentCount) || other.branchSegmentCount == branchSegmentCount));
+  final _this = this as RootNode;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RootNode&&(identical(other.x, _this.x) || other.x == _this.x)&&(identical(other.z, _this.z) || other.z == _this.z)&&(identical(other.radius, _this.radius) || other.radius == _this.radius)&&(identical(other.isTip, _this.isTip) || other.isTip == _this.isTip)&&(identical(other.parentIndex, _this.parentIndex) || other.parentIndex == _this.parentIndex)&&(identical(other.branchLevel, _this.branchLevel) || other.branchLevel == _this.branchLevel)&&(identical(other.branchSegmentCount, _this.branchSegmentCount) || other.branchSegmentCount == _this.branchSegmentCount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,x,z,radius,isTip,parentIndex,branchLevel,branchSegmentCount);
+int get hashCode {
+  final _this = this as RootNode;
+  return Object.hash(runtimeType,_this.x,_this.z,_this.radius,_this.isTip,_this.parentIndex,_this.branchLevel,_this.branchSegmentCount);
+}
 
 @override
 String toString() {
-  return 'RootNode(x: $x, z: $z, radius: $radius, isTip: $isTip, parentIndex: $parentIndex, branchLevel: $branchLevel, branchSegmentCount: $branchSegmentCount)';
+  final _this = this as RootNode;
+  return 'RootNode(x: ${_this.x}, z: ${_this.z}, radius: ${_this.radius}, isTip: ${_this.isTip}, parentIndex: ${_this.parentIndex}, branchLevel: ${_this.branchLevel}, branchSegmentCount: ${_this.branchSegmentCount})';
 }
 
 
@@ -447,7 +439,7 @@ class _$RootNodeCopyWithImpl<$Res>
 /// Create a copy of RootNode
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? x = null,Object? z = null,Object? radius = null,Object? isTip = null,Object? parentIndex = freezed,Object? branchLevel = null,Object? branchSegmentCount = null,}) {
-  return _then(_self.copyWith(
+  return _then(RootNode(
 x: null == x ? _self.x : x // ignore: cast_nullable_to_non_nullable
 as double,z: null == z ? _self.z : z // ignore: cast_nullable_to_non_nullable
 as double,radius: null == radius ? _self.radius : radius // ignore: cast_nullable_to_non_nullable
@@ -601,13 +593,10 @@ class _RootNode implements RootNode {
 
 @override final  double x;
 @override final  double z;
-// depth
 @override final  double radius;
 @override final  bool isTip;
 @override final  int? parentIndex;
-// Index in the rootSystem list
 @override@JsonKey() final  int branchLevel;
-// 0 = taproot, 1 = lateral, etc.
 @override@JsonKey() final  int branchSegmentCount;
 
 /// Create a copy of RootNode
@@ -623,16 +612,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RootNode&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.isTip, isTip) || other.isTip == isTip)&&(identical(other.parentIndex, parentIndex) || other.parentIndex == parentIndex)&&(identical(other.branchLevel, branchLevel) || other.branchLevel == branchLevel)&&(identical(other.branchSegmentCount, branchSegmentCount) || other.branchSegmentCount == branchSegmentCount));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RootNode&&(identical(other.x, x) || other.x == x)&&(identical(other.z, z) || other.z == z)&&(identical(other.radius, radius) || other.radius == radius)&&(identical(other.isTip, isTip) || other.isTip == isTip)&&(identical(other.parentIndex, parentIndex) || other.parentIndex == parentIndex)&&(identical(other.branchLevel, branchLevel) || other.branchLevel == branchLevel)&&(identical(other.branchSegmentCount, branchSegmentCount) || other.branchSegmentCount == branchSegmentCount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,x,z,radius,isTip,parentIndex,branchLevel,branchSegmentCount);
+int get hashCode {
+    return Object.hash(runtimeType,x,z,radius,isTip,parentIndex,branchLevel,branchSegmentCount);
+}
 
 @override
 String toString() {
-  return 'RootNode(x: $x, z: $z, radius: $radius, isTip: $isTip, parentIndex: $parentIndex, branchLevel: $branchLevel, branchSegmentCount: $branchSegmentCount)';
+    return 'RootNode(x: $x, z: $z, radius: $radius, isTip: $isTip, parentIndex: $parentIndex, branchLevel: $branchLevel, branchSegmentCount: $branchSegmentCount)';
 }
 
 

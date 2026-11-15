@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../providers/ui_state_provider.dart';
@@ -10,7 +10,7 @@ import 'process_magnifier_component.dart';
 
 
 class InspectionTargetComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+    with HasGameReference<SoilScopeGame>, HoverCallbacks {
   final MagnifierType type;
   final ProcessMagnifierComponent magnifier;
   double opacity = 1.0;
@@ -89,23 +89,46 @@ class InspectionTargetComponent extends PositionComponent
     }
   }
 
-  double get _hitRadius => CanvasHitTesting.worldRadius(
+  /// The router checks this before claiming a tap. A target that has been
+  /// faded out must not keep stealing taps from the soil underneath it.
+  bool get isInteractive => opacity > 0 && isMounted;
+
+  /// Radius used by the shared router when claiming a tap. Keep this close
+  /// to the drawn ring instead of the larger touch radius: a tap 20 px away
+  /// from a ring belongs to whatever is visibly drawn there (for example the
+  /// plant canopy), not to the tiny target beside it.
+  double get hitRadius => CanvasHitTesting.worldRadius(
         zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
+        screenRadius: 12,
         visualWorldRadius: 10,
-        minWorld: 6,
-        maxWorld: 40,
+        minWorld: 5,
+        maxWorld: 22,
       );
 
+  double distanceToWorldPoint(Vector2 worldPoint) {
+    final center = absolutePositionOf(size / 2);
+    return (center - worldPoint).length;
+  }
+
+  /// Hover keeps the previous, more forgiving radius; only taps use the
+  /// drawn-ring radius so nearby plant/soil taps keep their owners.
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    return point.distanceTo(center) <= _hitRadius;
+    final hoverRadius = CanvasHitTesting.worldRadius(
+      zoom: game.camera.viewfinder.zoom,
+      screenRadius: 24,
+      visualWorldRadius: 10,
+      minWorld: 6,
+      maxWorld: 40,
+    );
+    return point.distanceTo(center) <= hoverRadius;
   }
 
-  @override
-  void onTapUp(TapUpEvent event) {
-    if (opacity <= 0) return;
+  /// Opens or closes this target's microscope. Called by the shared tap
+  /// router so overlapping targets can be resolved in one place.
+  void activateFromTap() {
+    if (!isInteractive) return;
     final wasPinned = _isPinned;
     magnifier.isVisible = !wasPinned;
     if (!wasPinned) {
@@ -118,7 +141,6 @@ class InspectionTargetComponent extends PositionComponent
       game.ref.read(simulationSessionProvider.notifier).selectInspector(null);
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
     }
-    event.handled = true;
   }
 
   @override

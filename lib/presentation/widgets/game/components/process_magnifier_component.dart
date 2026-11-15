@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import '../../../providers/simulation_session_provider.dart';
 import '../../../../domain/models/biophysical_state.dart';
@@ -80,14 +80,13 @@ class ProcessMagnifierComponent extends PositionComponent
   double get opacity => _opacity;
   
   // Reference to the world hotspot for orientation
-  Vector2? _hotspotWorldPosition;
+  Vector2? hotspotWorldPosition;
 
   ProcessMagnifierComponent({
     required this.type,
     required Vector2 position,
-    Vector2? hotspotWorldPosition,
-  }) : _hotspotWorldPosition = hotspotWorldPosition,
-       super(
+    this.hotspotWorldPosition,
+  }) : super(
          position: position,
          size: Vector2.all(300.0),
          anchor: Anchor.center,
@@ -95,7 +94,7 @@ class ProcessMagnifierComponent extends PositionComponent
        );
 
   void setHotspot(Vector2 worldPosition) {
-    _hotspotWorldPosition = worldPosition;
+    hotspotWorldPosition = worldPosition;
   }
 
   @override
@@ -111,8 +110,8 @@ class ProcessMagnifierComponent extends PositionComponent
     final center = Offset(size.x / 2, size.y / 2);
 
     // 0. Projection Beam (Orientation Linkage)
-    if (_opacity > 0.1 && _hotspotWorldPosition != null) {
-      _drawProjectionBeam(canvas, center, _hotspotWorldPosition!);
+    if (_opacity > 0.1 && hotspotWorldPosition != null) {
+      _drawProjectionBeam(canvas, center, hotspotWorldPosition!);
     }
 
     // 1. Outer Glow
@@ -856,7 +855,7 @@ class ProcessMagnifierComponent extends PositionComponent
     final zoom = camera.viewfinder.zoom;
     final camPos = camera.viewfinder.position;
     final viewportSize = camera.viewport.size;
-    final hotspot = _hotspotWorldPosition;
+    final hotspot = hotspotWorldPosition;
     
     // World-to-Viewport transformation. Before targets are initialized, use a
     // safe upper-center anchor so the microscope is never drawn at (0, 0).

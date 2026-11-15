@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
@@ -16,7 +16,7 @@ enum SelectionNodeType {
 /// A specialized selection node that provides a clear, non-overlapping click target
 /// for large simulation areas like the atmosphere, soil layers, or biochemical processes.
 class SelectionNodeComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+    with HasGameReference<SoilScopeGame>, HoverCallbacks {
   final SelectionNodeType nodeType;
   final String? layerId;
   final String title;
@@ -160,8 +160,9 @@ class SelectionNodeComponent extends PositionComponent
     iconPainter.paint(canvas, center - Offset(iconPainter.width / 2, iconPainter.height / 2));
   }
 
-  @override
-  void onTapUp(TapUpEvent event) {
+  /// Opens or closes this anchor's inspection card. Routed by the shared tap
+  /// router so process overlays cannot steal the tap.
+  void activateFromTap() {
     if (_isPinned) {
       _isPinned = false;
       game.ref.read(uIStateProvider.notifier).setHoverInfo(null);
@@ -170,7 +171,6 @@ class SelectionNodeComponent extends PositionComponent
       _handleSelection();
       _showInfo(pinned: true);
     }
-    event.handled = true;
   }
 
   void _handleSelection() {
@@ -229,7 +229,7 @@ class SelectionNodeComponent extends PositionComponent
     );
   }
 
-  double get _hitRadius => CanvasHitTesting.worldRadius(
+  double get hitRadius => CanvasHitTesting.worldRadius(
         zoom: game.camera.viewfinder.zoom,
         screenRadius: 24,
         visualWorldRadius: 24,
@@ -237,9 +237,11 @@ class SelectionNodeComponent extends PositionComponent
         maxWorld: 40,
       );
 
+  /// Pointer hover keeps the circular hit area after tap handling moved to
+  /// the shared router.
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    return point.distanceToSquared(center) <= _hitRadius * _hitRadius;
+    return point.distanceToSquared(center) <= hitRadius * hitRadius;
   }
 }

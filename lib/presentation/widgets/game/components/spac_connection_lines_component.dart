@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import 'scene_coordinate_mapper.dart';
 import '../../../providers/ui_state_provider.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/data_hotspot_component.dart';
 import 'package:soilscope/domain/models/soil_layer.dart' hide HotspotType;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   test('Flame query performance benchmark: Query vs Cached', () {

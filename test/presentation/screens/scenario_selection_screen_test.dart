@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart'
+    show GlobalCupertinoLocalizations;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soilscope/presentation/screens/scenario_selection_screen.dart';
@@ -6,7 +8,8 @@ import 'package:soilscope/presentation/providers/scenarios_provider.dart';
 import 'package:soilscope/domain/models/scenario.dart';
 import 'package:soilscope/domain/models/soil_profile.dart';
 import 'package:soilscope/l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalWidgetsLocalizations;
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

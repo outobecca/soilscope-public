@@ -8,12 +8,39 @@ part of 'simulation_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// Owns the simulation's Riverpod-facing concerns: engine lifecycle, tick
+/// merging, session persistence, timeline entry points and the public
+/// intervention facades.
+///
+/// The transition rules live in [SimulationInterventions], snapshot storage in
+/// [SimulationTimeline], tick reconciliation in [SimulationTickProcessor],
+/// isolate and particle lifecycle in [SimulationRuntime], and the saved-session
+/// envelope in [SimulationPersistence]. This notifier coordinates them; it does
+/// not reimplement them.
 
 @ProviderFor(Simulation)
 final simulationProvider = SimulationProvider._();
 
+/// Owns the simulation's Riverpod-facing concerns: engine lifecycle, tick
+/// merging, session persistence, timeline entry points and the public
+/// intervention facades.
+///
+/// The transition rules live in [SimulationInterventions], snapshot storage in
+/// [SimulationTimeline], tick reconciliation in [SimulationTickProcessor],
+/// isolate and particle lifecycle in [SimulationRuntime], and the saved-session
+/// envelope in [SimulationPersistence]. This notifier coordinates them; it does
+/// not reimplement them.
 final class SimulationProvider
     extends $NotifierProvider<Simulation, BiophysicalState> {
+  /// Owns the simulation's Riverpod-facing concerns: engine lifecycle, tick
+  /// merging, session persistence, timeline entry points and the public
+  /// intervention facades.
+  ///
+  /// The transition rules live in [SimulationInterventions], snapshot storage in
+  /// [SimulationTimeline], tick reconciliation in [SimulationTickProcessor],
+  /// isolate and particle lifecycle in [SimulationRuntime], and the saved-session
+  /// envelope in [SimulationPersistence]. This notifier coordinates them; it does
+  /// not reimplement them.
   SimulationProvider._()
     : super(
         from: null,
@@ -41,13 +68,23 @@ final class SimulationProvider
   }
 }
 
-String _$simulationHash() => r'b8f6bbdd230bf4e71e4d1e2054fab5e490ec0061';
+String _$simulationHash() => r'576b753134c52a5c4eeef8677170bf0907d5f64d';
+
+/// Owns the simulation's Riverpod-facing concerns: engine lifecycle, tick
+/// merging, session persistence, timeline entry points and the public
+/// intervention facades.
+///
+/// The transition rules live in [SimulationInterventions], snapshot storage in
+/// [SimulationTimeline], tick reconciliation in [SimulationTickProcessor],
+/// isolate and particle lifecycle in [SimulationRuntime], and the saved-session
+/// envelope in [SimulationPersistence]. This notifier coordinates them; it does
+/// not reimplement them.
 
 abstract class _$Simulation extends $Notifier<BiophysicalState> {
   BiophysicalState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<BiophysicalState, BiophysicalState>;
     final element =
         ref.element
@@ -57,7 +94,7 @@ abstract class _$Simulation extends $Notifier<BiophysicalState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -106,4 +143,4 @@ final class DisplayedSimulationStateProvider
 }
 
 String _$displayedSimulationStateHash() =>
-    r'8874101c8e354d75c9b3b0e5f49f177f57fc549a';
+    r'ef90f186d434bcb463024f3e967fb631e7295a36';

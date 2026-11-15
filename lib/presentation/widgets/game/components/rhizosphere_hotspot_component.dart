@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../../domain/models/soil_layer.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../soil_scope_game.dart';
@@ -12,7 +12,7 @@ import 'visual_seed.dart';
 /// A dynamic visual representation of a rhizosphere hotspot.
 /// Shows metabolic activity (acidification and exudation) around root tips.
 class RhizosphereHotspotComponent extends PositionComponent
-    with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+    with HasGameReference<SoilScopeGame>, HoverCallbacks {
   final String hotspotId;
   final String layerId;
   double intensity;
@@ -128,7 +128,7 @@ class RhizosphereHotspotComponent extends PositionComponent
     canvas.drawCircle(Offset(size.x / 2, size.y / 2), 4, paint);
   }
 
-  double get _hitRadius => CanvasHitTesting.worldRadius(
+  double get hitRadius => CanvasHitTesting.worldRadius(
     zoom: game.camera.viewfinder.zoom,
     screenRadius: 24,
     visualWorldRadius: size.x / 2,
@@ -136,17 +136,19 @@ class RhizosphereHotspotComponent extends PositionComponent
     maxWorld: 36,
   );
 
+  /// Pointer hover keeps the circular hit area after tap handling moved to
+  /// the shared router.
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    return point.distanceTo(center) <= _hitRadius;
+    return point.distanceTo(center) <= hitRadius;
   }
 
-  @override
-  void onTapUp(TapUpEvent event) {
+  /// Opens or closes this hotspot's card. Routed by the shared tap router so
+  /// process overlays cannot steal the tap.
+  void activateFromTap() {
     _isPinned = !_isPinned;
     _showRhizosphereInfo(pinned: _isPinned);
-    event.handled = true;
   }
 
   @override

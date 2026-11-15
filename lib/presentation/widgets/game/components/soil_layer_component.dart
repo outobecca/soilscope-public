@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide Image, PointerMoveEvent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/models/soil_layer.dart';
 import '../../../providers/simulation_provider.dart';
@@ -34,7 +34,7 @@ class SoilLayerComponent extends PositionComponent
         TapCallbacks {
   final String layerId;
   SoilLayer _layer;
-  bool _isSelected;
+  bool isSelected;
 
   String get keyboardLabel => _layer.name.isNotEmpty ? _layer.name : layerId;
 
@@ -50,9 +50,8 @@ class SoilLayerComponent extends PositionComponent
     required this.layerId,
     required SoilLayer initialLayer,
     required Rect initialRect,
-    required bool isSelected,
+    required this.isSelected,
   }) : _layer = initialLayer,
-       _isSelected = isSelected,
        super(
          position: Vector2(initialRect.left, initialRect.top),
          size: Vector2(initialRect.width, initialRect.height),
@@ -83,8 +82,8 @@ class SoilLayerComponent extends PositionComponent
     listenProvider<bool>(
       simulationSessionProvider.select((s) => s.selectedLayerId == layerId),
       (prev, next) {
-        if (next != _isSelected) {
-          _isSelected = next;
+        if (next != isSelected) {
+          isSelected = next;
           _updatePaint();
         }
       },
@@ -375,7 +374,7 @@ class SoilLayerComponent extends PositionComponent
     }
 
     // 5. Selection highlight
-    if (_isSelected) {
+    if (isSelected) {
       final highlightPaint = Paint()
         ..color = Theme.of(
           game.buildContext!,

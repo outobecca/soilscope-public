@@ -41,13 +41,13 @@ final class SimulationSessionProvider
   }
 }
 
-String _$simulationSessionHash() => r'399f343057ccc612f91e85dc5c6a42dda65c9bfa';
+String _$simulationSessionHash() => r'93cc8bff6c37e81fed9c54ebec9a59c95522fe6c';
 
 abstract class _$SimulationSession extends $Notifier<SimulationSessionState> {
   SimulationSessionState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<SimulationSessionState, SimulationSessionState>;
     final element =
@@ -58,6 +58,6 @@ abstract class _$SimulationSession extends $Notifier<SimulationSessionState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

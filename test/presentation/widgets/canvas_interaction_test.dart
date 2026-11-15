@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +19,7 @@ import 'package:soilscope/presentation/providers/simulation_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
 import 'package:soilscope/presentation/providers/ui_state_provider.dart';
 import 'package:soilscope/presentation/widgets/game/components/animated_plant_component.dart';
+import 'package:soilscope/presentation/widgets/game/components/data_hotspot_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/expandable_hotspot_node.dart';
 import 'package:soilscope/presentation/widgets/game/components/inspection_target_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/process_magnifier_component.dart';
@@ -56,8 +57,9 @@ Future<_Harness> _pumpSimulation(
   WidgetTester tester, {
   bool withHotspot = false,
   bool reduceMotion = false,
+  Size viewport = const Size(1024, 900),
 }) async {
-  tester.view.physicalSize = const Size(1024, 900);
+  tester.view.physicalSize = viewport;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
   if (reduceMotion) {
@@ -372,6 +374,103 @@ void main() {
     }
   });
 
+  testWidgets('inspection taps route to the intended owner at every viewport', (
+    tester,
+  ) async {
+    const viewports = <_MatrixViewport>[
+      _MatrixViewport('wide', Size(1024, 900), edge: false),
+      _MatrixViewport('narrow', Size(430, 900), edge: false),
+      _MatrixViewport('edge-left', Size(1024, 900), edge: true),
+      _MatrixViewport(
+        'edge-right',
+        Size(1024, 900),
+        edge: true,
+        fromRight: true,
+      ),
+    ];
+
+    for (final viewport in viewports) {
+      final harness = await _pumpSimulation(
+        tester,
+        withHotspot: true,
+        viewport: viewport.size,
+      );
+      final cases = await _buildTapCases(tester, harness);
+
+      for (final tapCase in cases) {
+        await _resetInspection(tester, harness);
+        var point = tapCase.point();
+        await _focusCamera(
+          harness.game,
+          point,
+          edge: viewport.edge,
+          fromRight: viewport.fromRight,
+        );
+        await tester.pump();
+
+        // Targets ride the growing plant, so read their position after the
+        // camera pump instead of tapping a stale pre-pump coordinate.
+        point = tapCase.point();
+        final tap = harness.screenOfWorld(point);
+        expect(
+          tap.dx,
+          inInclusiveRange(
+            harness.topLeft.dx + 1,
+            harness.topLeft.dx + harness.game.size.x - 1,
+          ),
+          reason: '${viewport.name}/${tapCase.label} must be inside the canvas',
+        );
+        expect(
+          tap.dy,
+          inInclusiveRange(
+            harness.topLeft.dy + 1,
+            harness.topLeft.dy + harness.game.size.y - 1,
+          ),
+          reason: '${viewport.name}/${tapCase.label} must be inside the canvas',
+        );
+
+        await tester.tapAt(tap);
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final info = harness.container.read(uIStateProvider);
+        final reason = '${viewport.name}/${tapCase.label}';
+        if (tapCase.expectEmpty) {
+          expect(info, isNull, reason: '$reason should not open a card');
+          expect(
+            harness.container.read(simulationSessionProvider).selectedLayerId,
+            isNull,
+            reason: '$reason should leave no layer selected',
+          );
+          expect(
+            harness.container
+                .read(simulationSessionProvider)
+                .selectedInspectorType,
+            isNull,
+            reason: '$reason should leave no inspector selected',
+          );
+          continue;
+        }
+
+        expect(info, isNotNull, reason: '$reason should open a card');
+        expect(info!.isPinned, isTrue, reason: '$reason should pin its card');
+        expect(info.sourceId, tapCase.expectedSourceId, reason: reason);
+        expect(info.title, tapCase.expectedTitle, reason: reason);
+        if (tapCase.inspectorType != null) {
+          expect(
+            harness.container
+                .read(simulationSessionProvider)
+                .selectedInspectorType,
+            tapCase.inspectorType,
+            reason: '$reason should select its own microscope',
+          );
+        }
+      }
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+  });
+
   testWidgets('microscope target opens its matching magnifier and inspection', (
     tester,
   ) async {
@@ -453,17 +552,19 @@ void main() {
       reason: 'the rhizosphere target must be anchored to a root node',
     );
 
-    harness.container
-        .read(simulationSessionProvider.notifier)
-        .toggleMicroscope();
-    harness.container
-        .read(simulationSessionProvider.notifier)
-        .selectInspector(MagnifierType.rhizosphere.name);
+    // This must be reachable by a real pointer tap, not by selecting the
+    // inspector in the session: the target is drawn inside the soil under
+    // process overlays.
+    await _focusCamera(game, _centerOf(target), edge: false);
     await tester.pump();
+    await tester.tapAt(harness.screenOfWorld(_centerOf(target)));
+    await tester.pump(const Duration(milliseconds: 50));
     for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
+    final session = harness.container.read(simulationSessionProvider);
+    expect(session.selectedInspectorType, MagnifierType.rhizosphere.name);
     expect(target.magnifier.isVisible, isTrue);
     final targetOnScreen = game.worldToScreen(target.absolutePosition);
     expect(
@@ -624,6 +725,300 @@ void main() {
     expect(info?.title, l10n.rhizosphere.toUpperCase());
     expect(info?.sourceId, startsWith('rhizosphere-'));
   });
+}
+
+class _MatrixViewport {
+  const _MatrixViewport(
+    this.name,
+    this.size, {
+    required this.edge,
+    this.fromRight = false,
+  });
+
+  final String name;
+  final Size size;
+  final bool edge;
+  final bool fromRight;
+}
+
+class _TapCase {
+  _TapCase({
+    required this.label,
+    required this.point,
+    required this.expectedSourceId,
+    required this.expectedTitle,
+    this.inspectorType,
+    this.expectEmpty = false,
+  });
+
+  final String label;
+  final Vector2 Function() point;
+  final String expectedSourceId;
+  final String expectedTitle;
+  final String? inspectorType;
+  final bool expectEmpty;
+}
+
+Vector2 _centerOf(PositionComponent component) =>
+    component.absolutePositionOf(component.size / 2);
+
+double _minScreenDistance(
+  Vector2 point,
+  Iterable<Vector2> obstacles,
+  double zoom,
+) {
+  var minimum = double.infinity;
+  for (final obstacle in obstacles) {
+    final distance = (obstacle - point).length * zoom;
+    if (distance < minimum) minimum = distance;
+  }
+  return minimum;
+}
+
+Future<void> _focusCamera(
+  SoilScopeGame game,
+  Vector2 worldPoint, {
+  required bool edge,
+  bool fromRight = false,
+}) async {
+  final zoom = game.camera.viewfinder.zoom;
+  if (edge) {
+    // Put the point 32 screen px from the requested side without changing
+    // its vertical position. This exercises the real clamp/edge behaviour
+    // while keeping the pointer clear of the top bar and bottom controls.
+    final screenX = fromRight ? game.size.x - 32 : 32.0;
+    game.camera.viewfinder.position = Vector2(
+      worldPoint.x - (screenX - game.size.x / 2) / zoom,
+      worldPoint.y,
+    );
+  } else {
+    game.camera.viewfinder.position = worldPoint.clone();
+  }
+}
+
+Future<void> _resetInspection(WidgetTester tester, _Harness harness) async {
+  final container = harness.container;
+  container.read(uIStateProvider.notifier).setHoverInfo(null);
+  // Clear all view state between rows. This is teardown, not inspection
+  // selection; the next owner is chosen only by the pointer tap in the row.
+  container.read(simulationSessionProvider.notifier).resetForScenario();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
+Future<List<_TapCase>> _buildTapCases(
+  WidgetTester tester,
+  _Harness harness,
+) async {
+  final game = harness.game;
+  final l10n = lookupAppLocalizations(const Locale('en'));
+
+  await _pumpUntil(tester, () {
+    final targets = game.world
+        .descendants()
+        .whereType<InspectionTargetComponent>()
+        .length;
+    final rhizospheres = game.world
+        .descendants()
+        .whereType<RhizosphereHotspotComponent>()
+        .length;
+    final hotspots = game.technicalHotspotLayer.children
+        .whereType<ExpandableHotspotNode>()
+        .length;
+    return targets == MagnifierType.values.length &&
+        rhizospheres > 0 &&
+        hotspots > 0;
+  });
+
+  final layer = game.world.children.whereType<SoilLayerComponent>().firstWhere(
+    (layer) => layer.layerId == 'topsoil',
+  );
+  final targets = game.world
+      .descendants()
+      .whereType<InspectionTargetComponent>()
+      .toList();
+  final rhizosphere = game.world
+      .descendants()
+      .whereType<RhizosphereHotspotComponent>()
+      .first;
+  final selectionNodes = game.world
+      .descendants()
+      .whereType<SelectionNodeComponent>()
+      .toList();
+  final layerNode = layer.children.whereType<SelectionNodeComponent>().single;
+  final technicalNodes = game.technicalHotspotLayer.children
+      .whereType<ExpandableHotspotNode>()
+      .where((node) => node.layerId == layer.layerId)
+      .toList();
+
+  expect(targets, hasLength(MagnifierType.values.length));
+  expect(technicalNodes, isNotEmpty);
+
+  final targetCenters = targets.map(_centerOf).toList();
+  final selectionCenters = selectionNodes.map(_centerOf).toList();
+  final technicalCenters = technicalNodes.map(_centerOf).toList();
+  final zoom = game.camera.viewfinder.zoom;
+
+  // Expand a technical node that does not sit under a microscope target or
+  // another inspection target, then tap one of its metrics.
+  ExpandableHotspotNode? expandNode;
+  var expandDistance = -1.0;
+  for (final node in technicalNodes) {
+    final distance = _minScreenDistance(_centerOf(node), [
+      ...targetCenters,
+      _centerOf(rhizosphere),
+      ...selectionCenters,
+    ], zoom);
+    if (distance > expandDistance) {
+      expandDistance = distance;
+      expandNode = node;
+    }
+  }
+  expect(expandNode, isNotNull);
+  expect(
+    expandDistance,
+    greaterThan(20),
+    reason: 'the matrix needs a technical hotspot clear of targets',
+  );
+
+  await _focusCamera(game, _centerOf(expandNode!), edge: false);
+  await tester.pump();
+  await tester.tapAt(harness.screenOfWorld(_centerOf(expandNode)));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 600));
+
+  final dataHotspots = game.world
+      .descendants()
+      .whereType<DataHotspotComponent>()
+      .toList();
+  expect(dataHotspots, isNotEmpty);
+
+  DataHotspotComponent? dataHotspot;
+  var dataDistance = -1.0;
+  for (final hotspot in dataHotspots) {
+    final distance = _minScreenDistance(_centerOf(hotspot), [
+      ...targetCenters,
+      _centerOf(rhizosphere),
+      ...selectionCenters,
+      ...technicalCenters,
+      for (final other in dataHotspots)
+        if (other != hotspot) _centerOf(other),
+    ], zoom);
+    if (distance > dataDistance) {
+      dataDistance = distance;
+      dataHotspot = hotspot;
+    }
+  }
+  expect(dataHotspot, isNotNull);
+  expect(
+    dataDistance,
+    greaterThan(20),
+    reason: 'the matrix needs a data hotspot clear of targets',
+  );
+
+  final dataTitle = switch (dataHotspot!.type.name) {
+    'nutrient' => l10n.nutrient,
+    'cec' => 'CEC (Clay)',
+    _ => 'SENSOR',
+  };
+
+  // Pick a real layer-body point that is not under the plant, a target, an
+  // icon, a technical hotspot, a data hotspot or a rhizosphere hotspot.
+  final plant = game.world
+      .descendants()
+      .whereType<AnimatedPlantComponent>()
+      .first;
+  final layerObstacles = <Vector2>[
+    ...targetCenters,
+    ...selectionCenters,
+    ...technicalCenters,
+    for (final hotspot in dataHotspots) _centerOf(hotspot),
+    _centerOf(rhizosphere),
+    _centerOf(plant),
+  ];
+
+  Vector2? layerPoint;
+  var layerDistance = -1.0;
+  for (
+    var x = layer.position.x + 45;
+    x <= layer.position.x + layer.size.x - 45;
+    x += 30
+  ) {
+    for (
+      var y = layer.position.y + 30;
+      y <= layer.position.y + layer.size.y - 30;
+      y += 30
+    ) {
+      final candidate = Vector2(x, y);
+      final distance = _minScreenDistance(candidate, layerObstacles, zoom);
+      if (distance > layerDistance) {
+        layerDistance = distance;
+        layerPoint = candidate;
+      }
+    }
+  }
+  expect(layerPoint, isNotNull);
+  expect(
+    layerDistance,
+    greaterThan(20),
+    reason: 'the matrix needs an empty layer-body point',
+  );
+
+  final targetTitles = <MagnifierType, String>{
+    MagnifierType.apicalMeristem: l10n.apicalMeristem,
+    MagnifierType.leaf: l10n.plantCanopy.toUpperCase(),
+    MagnifierType.stem: l10n.stemCrossSection.toUpperCase(),
+    MagnifierType.root: l10n.rootTissue.toUpperCase(),
+    MagnifierType.rhizosphere: l10n.rhizosphere.toUpperCase(),
+    MagnifierType.microbe: l10n.microbialCell.toUpperCase(),
+    MagnifierType.soilStructure: l10n.soilStructure.toUpperCase(),
+  };
+
+  final cases = <_TapCase>[
+    _TapCase(
+      label: 'layer body',
+      point: () => layerPoint!,
+      expectedSourceId: 'soil-layer-topsoil',
+      expectedTitle: 'TOPSOIL',
+    ),
+    _TapCase(
+      label: 'layer icon',
+      point: () => _centerOf(layerNode),
+      expectedSourceId: 'selection-soilLayer-topsoil',
+      expectedTitle: 'TOPSOIL',
+    ),
+    _TapCase(
+      label: 'data hotspot',
+      point: () => _centerOf(dataHotspot!),
+      expectedSourceId:
+          'hotspot-topsoil-${dataHotspot.label}-'
+          '${identityHashCode(dataHotspot)}',
+      expectedTitle: '$dataTitle - ${dataHotspot.label}',
+    ),
+    _TapCase(
+      label: 'rhizosphere hotspot',
+      point: () => _centerOf(rhizosphere),
+      expectedSourceId: 'rhizosphere-${rhizosphere.hotspotId}',
+      expectedTitle: l10n.rhizosphere.toUpperCase(),
+    ),
+    for (final target in targets)
+      _TapCase(
+        label: 'target ${target.type.name}',
+        point: () => _centerOf(target),
+        expectedSourceId: 'inspection-${target.type.name}',
+        expectedTitle: targetTitles[target.type]!,
+        inspectorType: target.type.name,
+      ),
+    _TapCase(
+      label: 'background',
+      point: () => Vector2(game.soilLeftX + 1100, game.soilSurfaceY - 260),
+      expectedSourceId: '',
+      expectedTitle: '',
+      expectEmpty: true,
+    ),
+  ];
+
+  return cases;
 }
 
 Scenario _scenario({required bool withHotspot, String layerId = 'topsoil'}) {

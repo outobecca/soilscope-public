@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import 'animation_clock.dart';
 import 'animation_math.dart';

@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart' hide PointerMoveEvent;
+import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../providers/ui_state_provider.dart';

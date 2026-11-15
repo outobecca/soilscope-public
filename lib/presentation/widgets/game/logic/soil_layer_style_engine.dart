@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../../domain/models/soil_layer.dart';
 
 /// Logic for calculating soil layer visual styles based on biophysical state.

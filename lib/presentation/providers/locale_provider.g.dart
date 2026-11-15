@@ -40,13 +40,13 @@ final class AppLocaleProvider extends $NotifierProvider<AppLocale, Locale> {
   }
 }
 
-String _$appLocaleHash() => r'f0d705da561d2e86592f25d44475bfbe345a4498';
+String _$appLocaleHash() => r'4896b0b70039c6cb62b9825fc59597ae93f14c0b';
 
 abstract class _$AppLocale extends $Notifier<Locale> {
   Locale build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<Locale, Locale>;
     final element =
         ref.element
@@ -56,7 +56,7 @@ abstract class _$AppLocale extends $Notifier<Locale> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 

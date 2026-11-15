@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
-import 'package:flutter/material.dart' hide Image;
+import 'package:material_ui/material_ui.dart' hide Image;
 import '../../../../core/biophysics_utils.dart';
 import '../../../../domain/models/soil_layer.dart';
 

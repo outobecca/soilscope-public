@@ -40,13 +40,13 @@ final class UIStateProvider extends $NotifierProvider<UIState, HoverInfo?> {
   }
 }
 
-String _$uIStateHash() => r'00ef9abc7953e6269a59926713142b9a4ef30ee7';
+String _$uIStateHash() => r'686b3a0d5315bf689f5cd8dac3a0583b534a7a97';
 
 abstract class _$UIState extends $Notifier<HoverInfo?> {
   HoverInfo? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<HoverInfo?, HoverInfo?>;
     final element =
         ref.element
@@ -56,7 +56,7 @@ abstract class _$UIState extends $Notifier<HoverInfo?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -98,7 +98,7 @@ abstract class _$ActiveCycle extends $Notifier<ObservationCycle> {
   ObservationCycle build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ObservationCycle, ObservationCycle>;
     final element =
         ref.element
@@ -108,7 +108,7 @@ abstract class _$ActiveCycle extends $Notifier<ObservationCycle> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -150,7 +150,7 @@ abstract class _$ParticleFlowMode extends $Notifier<bool> {
   bool build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<bool, bool>;
     final element =
         ref.element
@@ -160,7 +160,7 @@ abstract class _$ParticleFlowMode extends $Notifier<bool> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -203,7 +203,7 @@ abstract class _$ActiveTutorialStep extends $Notifier<ScenarioTutorialStep?> {
   ScenarioTutorialStep? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ScenarioTutorialStep?, ScenarioTutorialStep?>;
     final element =
         ref.element
@@ -213,7 +213,7 @@ abstract class _$ActiveTutorialStep extends $Notifier<ScenarioTutorialStep?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -256,7 +256,7 @@ abstract class _$VisualLayoutModeState extends $Notifier<VisualLayoutMode> {
   VisualLayoutMode build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<VisualLayoutMode, VisualLayoutMode>;
     final element =
         ref.element
@@ -266,6 +266,6 @@ abstract class _$VisualLayoutModeState extends $Notifier<VisualLayoutMode> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
