@@ -26,6 +26,24 @@ class _QuickGuideDialogState extends ConsumerState<QuickGuideDialog>
     super.dispose();
   }
 
+  /// Closes both the guide state and, when the guide was opened with
+  /// [showDialog], its modal route.
+  ///
+  /// The overlay presentation is hosted inside the simulation page route, so
+  /// only pop when the current route is actually a popup/dialog route. Popping
+  /// unconditionally would leave the simulation screen.
+  void _dismissGuide({bool startTour = false}) {
+    ref.read(tutorialProvider.notifier).closeQuickGuide();
+    if (startTour) {
+      ref.read(tutorialProvider.notifier).startTutorial();
+    }
+
+    final route = ModalRoute.of(context);
+    if (route is PopupRoute) {
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -96,9 +114,8 @@ class _QuickGuideDialogState extends ConsumerState<QuickGuideDialog>
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                      onPressed: () {
-                        ref.read(tutorialProvider.notifier).closeQuickGuide();
-                      },
+                      tooltip: l10n.closeAction,
+                      onPressed: _dismissGuide,
                     ),
                   ],
                 ),
@@ -180,10 +197,7 @@ class _QuickGuideDialogState extends ConsumerState<QuickGuideDialog>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton.icon(
-                      onPressed: () {
-                        ref.read(tutorialProvider.notifier).closeQuickGuide();
-                        ref.read(tutorialProvider.notifier).startTutorial();
-                      },
+                      onPressed: () => _dismissGuide(startTour: true),
                       icon: const Icon(Icons.play_circle_outline_rounded),
                       label: Text(l10n.tutorialStartTour),
                       style: TextButton.styleFrom(
@@ -191,9 +205,7 @@ class _QuickGuideDialogState extends ConsumerState<QuickGuideDialog>
                       ),
                     ),
                     FilledButton(
-                      onPressed: () {
-                        ref.read(tutorialProvider.notifier).closeQuickGuide();
-                      },
+                      onPressed: _dismissGuide,
                       style: FilledButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.black,

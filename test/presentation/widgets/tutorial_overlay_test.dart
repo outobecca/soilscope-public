@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:soilscope/l10n/app_localizations.dart';
 import 'package:soilscope/presentation/providers/tutorial_provider.dart';
 import 'package:soilscope/presentation/providers/ui_state_provider.dart';
+import 'package:soilscope/presentation/widgets/tutorial/quick_guide_dialog.dart';
 import 'package:soilscope/presentation/widgets/tutorial_overlay_widget.dart';
 import 'package:soilscope/domain/models/scenario.dart';
 
@@ -190,6 +191,52 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('SoilScope-Pikaopas'), findsNothing);
+    });
+
+    testWidgets('dialog-hosted quick guide closes with X and footer button',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('fi'),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => const QuickGuideDialog(),
+                  ),
+                  child: const Text('Avaa opas'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      Future<void> openGuide() async {
+        await tester.tap(find.text('Avaa opas'));
+        await tester.pumpAndSettle();
+        expect(find.text('SoilScope-Pikaopas'), findsOneWidget);
+      }
+
+      await openGuide();
+      await tester.tap(find.byTooltip('Sulje'));
+      await tester.pumpAndSettle();
+      expect(find.text('SoilScope-Pikaopas'), findsNothing);
+      expect(find.text('Avaa opas'), findsOneWidget);
+
+      await openGuide();
+      await tester.tap(find.text('Sulje opas'));
+      await tester.pumpAndSettle();
+      expect(find.text('SoilScope-Pikaopas'), findsNothing);
+      expect(find.text('Avaa opas'), findsOneWidget);
     });
 
     testWidgets('displays scenario specific step if present',
