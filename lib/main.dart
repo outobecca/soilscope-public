@@ -195,8 +195,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           ),
         ),
       ),
-      child: OverflowBox(
-        alignment: Alignment.topLeft,
+      // Keep the dashboard out of the tree while the sidebar is closed; its
+      // consumers would otherwise rebuild analytics on every simulation tick.
+      child: isOpen
+          ? OverflowBox(
+              alignment: Alignment.topLeft,
         minWidth: sidebarWidth,
         maxWidth: sidebarWidth,
         child: SafeArea(
@@ -243,7 +246,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
             ),
           ),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -272,8 +276,11 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
           ),
         ),
       ),
-      child: OverflowBox(
-        alignment: Alignment.topRight,
+      // The control panel is expensive, so keep it out of the tree while the
+      // sidebar is closed.
+      child: isOpen
+          ? OverflowBox(
+              alignment: Alignment.topRight,
         minWidth: sidebarWidth,
         maxWidth: sidebarWidth,
         child: SafeArea(
@@ -339,7 +346,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
             ),
           ),
         ),
-      ),
+      )
+          : null,
     );
   }
 
@@ -454,8 +462,15 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (!isLeftSidebarOpen)
-                            Padding(
+                          // Reserve the toggle's space while its sidebar is
+                          // open. Otherwise the gamification strip expands and
+                          // visibly jumps to the left on every open/close.
+                          Visibility(
+                            visible: !isLeftSidebarOpen,
+                            maintainSize: true,
+                            maintainAnimation: true,
+                            maintainState: true,
+                            child: Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: useCompactTopBar
                                   ? IconButton.filledTonal(
@@ -469,11 +484,16 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                                       label: Text(l10n.dashboard.toUpperCase()),
                                     ),
                             ),
-                          if (!isLeftSidebarOpen) SizedBox(width: topBarGap),
+                          ),
+                          SizedBox(width: topBarGap),
                           const Expanded(child: GamificationBar()),
-                          if (!isRightSidebarOpen) SizedBox(width: topBarGap),
-                          if (!isRightSidebarOpen)
-                            Padding(
+                          SizedBox(width: topBarGap),
+                          Visibility(
+                            visible: !isRightSidebarOpen,
+                            maintainSize: true,
+                            maintainAnimation: true,
+                            maintainState: true,
+                            child: Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: useCompactTopBar
                                   ? IconButton.filledTonal(
@@ -487,6 +507,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
                                       label: Text(l10n.controls.toUpperCase()),
                                     ),
                             ),
+                          ),
                         ],
                       ),
                     ],
@@ -518,9 +539,12 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
               ),
 
             // 3. TIMELINE SLIDER
+            // These controls are chrome over the whole simulation canvas.
+            // Keep them screen-centred instead of re-centring them inside the
+            // space left by an open sidebar, which made them slide sideways.
             Positioned(
-              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
-              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
+              left: 16,
+              right: 16,
               bottom: 120, // Above quick actions
               child: const SafeArea(
                 top: false,
@@ -530,8 +554,8 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
 
             // 4. QUICK ACTIONS (BOTTOM)
             Positioned(
-              left: (isLeftSidebarOpen && isExpanded) ? 336 : 16,
-              right: (isRightSidebarOpen && isExpanded) ? 336 : 16,
+              left: 16,
+              right: 16,
               bottom: 16,
               child: const SafeArea(
                 top: false,

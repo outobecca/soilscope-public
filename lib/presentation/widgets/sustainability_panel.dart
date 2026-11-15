@@ -10,9 +10,11 @@ class SustainabilityPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Use the same history-aware state as the HUD and canvas so the score
-    // shown here matches the selected timeline snapshot.
-    final state = ref.watch(displayedSimulationStateProvider);
-    final score = state.score;
+    // shown here matches the selected timeline snapshot. Watching only the
+    // score keeps weather-only updates from rebuilding this whole panel.
+    final score = ref.watch(
+      displayedSimulationStateProvider.select((s) => s.score),
+    );
     // Simple reward proxy
     final rewardValue =
         (score.totalSoilHealth * 0.5 +
