@@ -6779,6 +6779,12 @@ abstract class AppLocalizations {
   /// **'Arrow keys pan. Plus and minus zoom. Use [ and ] to choose a target, Enter or Space to inspect it, and 0 to reset the view.'**
   String get canvasKeyboardHint;
 
+  /// No description provided for @canvasTargetFocused.
+  ///
+  /// In en, this message translates to:
+  /// **'Focused target: {target}'**
+  String canvasTargetFocused(String target);
+
   /// No description provided for @tutorialCanvasDesc.
   ///
   /// In en, this message translates to:

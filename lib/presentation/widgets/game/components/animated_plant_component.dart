@@ -32,6 +32,12 @@ class AnimatedPlantComponent extends PositionComponent
   final String plantId;
   late final math.Random _random = visualRandom(['plant', plantId]);
 
+  String get keyboardLabel {
+    final plant = _plantData;
+    if (plant == null || plant.species.isEmpty) return plantId;
+    return plant.species;
+  }
+
   // Physiological Smoothing State
   double _smoothTurgor = 1.0;
   double _smoothVitality = 1.0;

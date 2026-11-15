@@ -18,6 +18,8 @@ import 'package:soilscope/presentation/providers/simulation_session_provider.dar
 import 'package:soilscope/presentation/providers/ui_state_provider.dart';
 import 'package:soilscope/presentation/widgets/game/components/animated_plant_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/expandable_hotspot_node.dart';
+import 'package:soilscope/presentation/widgets/game/components/inspection_target_component.dart';
+import 'package:soilscope/presentation/widgets/game/components/process_magnifier_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/rhizosphere_hotspot_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/soil_scope_game.dart';
@@ -293,45 +295,109 @@ void main() {
   testWidgets('canvas keyboard shortcuts inspect targets and reset the view', (
     tester,
   ) async {
+    final semanticsHandle = tester.ensureSemantics();
+    try {
+      final harness = await _pumpSimulation(tester);
+      final game = harness.game;
+      await _pumpUntil(
+        tester,
+        () =>
+            game.world.descendants().whereType<SoilLayerComponent>().isNotEmpty,
+      );
+
+      final canvasFocus = tester
+          .widget<Focus>(find.byKey(const ValueKey('simulation-canvas-focus')))
+          .focusNode!;
+      canvasFocus.requestFocus();
+      await tester.pump();
+      expect(harness.container.read(uIStateProvider), isNull);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+      await tester.pump();
+      expect(game.keyboardTarget, isNotNull);
+      expect(game.keyboardFocusCueActive, isTrue);
+      expect(game.keyboardFocusCue.isMounted, isTrue);
+      final focusedTarget = game.keyboardTarget! as PositionComponent;
+      final focusedCenter = focusedTarget.absolutePositionOf(
+        focusedTarget.size / 2,
+      );
+      expect(game.keyboardFocusCuePosition, isNotNull);
+      expect(game.keyboardFocusCuePosition!.x, closeTo(focusedCenter.x, 0.001));
+      expect(game.keyboardFocusCuePosition!.y, closeTo(focusedCenter.y, 0.001));
+      expect(
+        harness.container.read(uIStateProvider),
+        isNull,
+        reason: 'cycling must only move focus, not open the inspection card',
+      );
+
+      final semanticsFinder = find.byKey(
+        const ValueKey('keyboard-target-semantics'),
+      );
+      expect(semanticsFinder, findsOneWidget);
+      final semanticsData = tester.getSemantics(semanticsFinder);
+      expect(semanticsData.label, contains(game.keyboardTargetLabel!));
+      expect(
+        semanticsData.getSemanticsData().flagsCollection.isLiveRegion,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(harness.container.read(uIStateProvider)?.isPinned, isTrue);
+
+      final beforePan = game.camera.viewfinder.position.clone();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(game.camera.viewfinder.position.x, greaterThan(beforePan.x));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.equal);
+      await tester.pump();
+      expect(game.camera.viewfinder.zoom, greaterThan(1.0));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
+      await tester.pump();
+      expect(game.camera.viewfinder.zoom, closeTo(1.35, 0.001));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(game.keyboardFocusCueActive, isFalse);
+      expect(semanticsFinder, findsNothing);
+    } finally {
+      semanticsHandle.dispose();
+    }
+  });
+
+  testWidgets('microscope target opens its matching magnifier and inspection', (
+    tester,
+  ) async {
     final harness = await _pumpSimulation(tester);
     final game = harness.game;
+
     await _pumpUntil(
       tester,
-      () => game.world.descendants().whereType<SoilLayerComponent>().isNotEmpty,
+      () => game.world
+          .descendants()
+          .whereType<InspectionTargetComponent>()
+          .isNotEmpty,
     );
+    final target = game.world
+        .descendants()
+        .whereType<InspectionTargetComponent>()
+        .firstWhere((candidate) => candidate.type == MagnifierType.stem);
 
-    final canvasFocus = tester
-        .widget<Focus>(find.byKey(const ValueKey('simulation-canvas-focus')))
-        .focusNode!;
-    canvasFocus.requestFocus();
+    await tester.tapAt(harness.screenOfWorld(target.absolutePosition));
     await tester.pump();
-    expect(harness.container.read(uIStateProvider), isNull);
+    await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
-    await tester.pump();
-    expect(game.keyboardTarget, isNotNull);
+    final session = harness.container.read(simulationSessionProvider);
+    expect(session.isMicroscopeEnabled, isTrue);
+    expect(session.selectedInspectorType, MagnifierType.stem.name);
     expect(
-      harness.container.read(uIStateProvider),
-      isNull,
-      reason: 'cycling must only move focus, not open the inspection card',
+      target.magnifier.isVisible,
+      isTrue,
+      reason: 'the tapped microscope target must reveal its magnifier',
     );
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pump();
     expect(harness.container.read(uIStateProvider)?.isPinned, isTrue);
-
-    final beforePan = game.camera.viewfinder.position.clone();
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await tester.pump();
-    expect(game.camera.viewfinder.position.x, greaterThan(beforePan.x));
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.equal);
-    await tester.pump();
-    expect(game.camera.viewfinder.zoom, greaterThan(1.0));
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.digit0);
-    await tester.pump();
-    expect(game.camera.viewfinder.zoom, closeTo(1.35, 0.001));
   });
 
   testWidgets('canvas honors the platform reduced-motion preference', (

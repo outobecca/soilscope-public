@@ -31,6 +31,7 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
     debugLabel: 'Flame input surface',
     skipTraversal: true,
   );
+  final ValueNotifier<String?> _focusedTargetLabel = ValueNotifier(null);
 
   @override
   void initState() {
@@ -54,7 +55,12 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   void dispose() {
     _canvasFocusNode.dispose();
     _gameWidgetFocusNode.dispose();
+    _focusedTargetLabel.dispose();
     super.dispose();
+  }
+
+  void _syncKeyboardTargetSemantics() {
+    _focusedTargetLabel.value = _game.keyboardTargetLabel;
   }
 
   KeyEventResult _handleCanvasKey(FocusNode node, KeyEvent event) {
@@ -94,10 +100,12 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
     }
     if (key == LogicalKeyboardKey.bracketLeft) {
       _game.focusNextInspectable(reverse: true);
+      _syncKeyboardTargetSemantics();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.bracketRight) {
       _game.focusNextInspectable();
+      _syncKeyboardTargetSemantics();
       return KeyEventResult.handled;
     }
     if (event is KeyRepeatEvent) return KeyEventResult.ignored;
@@ -105,10 +113,12 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
         key == LogicalKeyboardKey.numpadEnter ||
         key == LogicalKeyboardKey.space) {
       _game.activateKeyboardTarget();
+      _syncKeyboardTargetSemantics();
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.escape) {
       _game.clearKeyboardTarget();
+      _syncKeyboardTargetSemantics();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -252,6 +262,21 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
                           },
                         ),
                       ),
+                    ),
+                    ValueListenableBuilder<String?>(
+                      valueListenable: _focusedTargetLabel,
+                      builder: (context, target, child) {
+                        if (target == null) return const SizedBox.shrink();
+                        return Semantics(
+                          key: const ValueKey('keyboard-target-semantics'),
+                          container: true,
+                          liveRegion: true,
+                          label:
+                              l10n?.canvasTargetFocused(target) ??
+                              'Focused target: $target',
+                          child: const SizedBox(width: 1, height: 1),
+                        );
+                      },
                     ),
                   ],
                 ),

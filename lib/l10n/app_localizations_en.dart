@@ -3413,6 +3413,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get canvasKeyboardHint => 'Arrow keys pan. Plus and minus zoom. Use [ and ] to choose a target, Enter or Space to inspect it, and 0 to reset the view.';
 
   @override
+  String canvasTargetFocused(String target) {
+    return 'Focused target: $target';
+  }
+
+  @override
   String get tutorialCanvasDesc => 'In the main view you observe a 2D physical world: shoot and root development, soil strata, and dynamic nutrient particle fluxes.';
 
   @override

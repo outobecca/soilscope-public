@@ -1345,6 +1345,14 @@
   "tutorialWelcomePoint3": "Soil microbes and mycorrhizal fungi convert organic matter into plant-available nutrients.",
   "tutorialCanvasTitle": "Simulation Canvas & Inspection Points",
   "canvasKeyboardHint": "Arrow keys pan. Plus and minus zoom. Use [ and ] to choose a target, Enter or Space to inspect it, and 0 to reset the view.",
+  "canvasTargetFocused": "Focused target: {target}",
+  "@canvasTargetFocused": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
   "tutorialCanvasDesc": "In the main view you observe a 2D physical world: shoot and root development, soil strata, and dynamic nutrient particle fluxes.",
   "tutorialCanvasPoint1": "Click on glowing hotspots on soil and plant to launch microscopic cross-sectional analysis.",
   "tutorialCanvasPoint2": "Hover over any component to inspect real-time scientific telemetry and chemical equations.",

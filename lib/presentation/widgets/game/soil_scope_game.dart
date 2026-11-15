@@ -28,6 +28,7 @@ import 'components/expandable_hotspot_node.dart';
 import 'components/sky_background_component.dart';
 import 'components/soil_symbiosis_network_component.dart';
 import 'components/animation_clock.dart';
+import 'components/keyboard_focus_cue_component.dart';
 import 'components/visual_state_interpolator.dart';
 
 /// Main Flame game for SoilScope simulation visualization.
@@ -39,6 +40,7 @@ class SoilScopeGame extends FlameGame
   SoilScopeGame(this.ref) {
     debugLog('[SoilScopeGame] Constructor called');
     technicalHotspotLayer = Component()..priority = 2500;
+    keyboardFocusCue = KeyboardFocusCueComponent();
   }
 
   /// Reference logical size for coordinate calculations.
@@ -92,6 +94,7 @@ class SoilScopeGame extends FlameGame
   }
 
   late final Component technicalHotspotLayer;
+  late final KeyboardFocusCueComponent keyboardFocusCue;
   final Map<String, SoilLayerComponent> _layerComponents = {};
   MoleculeParticlePool? moleculePool;
 
@@ -294,6 +297,9 @@ class SoilScopeGame extends FlameGame
     // TECHNICAL OVERLAY (Always on top of world components)
     world.add(technicalHotspotLayer);
 
+    // Keyboard target reticle; kept in the world so camera changes track it.
+    world.add(keyboardFocusCue);
+
     // Background tap fallback for deselecting layers/inspectors
     world.add(BackgroundTapComponent()..priority = -50);
 
@@ -362,6 +368,19 @@ class SoilScopeGame extends FlameGame
 
   Component? get keyboardTarget => _keyboardTarget;
 
+  /// Human-readable label used by the canvas semantics live region.
+  String? get keyboardTargetLabel {
+    final target = _keyboardTarget;
+    if (target is SoilLayerComponent) return target.keyboardLabel;
+    if (target is AnimatedPlantComponent) return target.keyboardLabel;
+    return null;
+  }
+
+  bool get keyboardFocusCueActive => keyboardFocusCue.isActive;
+
+  Vector2? get keyboardFocusCuePosition =>
+      keyboardFocusCue.isActive ? keyboardFocusCue.position.clone() : null;
+
   void setReducedMotion(bool value) {
     if (_reducedMotion == value) return;
     _reducedMotion = value;
@@ -396,6 +415,7 @@ class SoilScopeGame extends FlameGame
     final targets = _keyboardTargets();
     if (targets.isEmpty) {
       _keyboardTarget = null;
+      keyboardFocusCue.clear();
       return;
     }
     final currentIndex = _keyboardTarget == null
@@ -407,8 +427,12 @@ class SoilScopeGame extends FlameGame
     final target = targets[nextIndex];
     _keyboardTarget = target;
     if (target is PositionComponent) {
-      camera.viewfinder.position = target.absolutePositionOf(target.size / 2);
+      final targetCenter = target.absolutePositionOf(target.size / 2);
+      camera.viewfinder.position = targetCenter;
       _clampCamera();
+      keyboardFocusCue.focusAt(targetCenter);
+    } else {
+      keyboardFocusCue.clear();
     }
   }
 
@@ -418,6 +442,7 @@ class SoilScopeGame extends FlameGame
     if (target == null) return;
     if (!target.isMounted) {
       _keyboardTarget = null;
+      keyboardFocusCue.clear();
       return;
     }
     _activateKeyboardTarget(target);
@@ -425,6 +450,7 @@ class SoilScopeGame extends FlameGame
 
   void clearKeyboardTarget() {
     _keyboardTarget = null;
+    keyboardFocusCue.clear();
   }
 
   void _activateKeyboardTarget(Component target) {

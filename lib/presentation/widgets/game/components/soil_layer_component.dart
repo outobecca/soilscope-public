@@ -36,6 +36,8 @@ class SoilLayerComponent extends PositionComponent
   SoilLayer _layer;
   bool _isSelected;
 
+  String get keyboardLabel => _layer.name.isNotEmpty ? _layer.name : layerId;
+
   late Paint _layerPaint;
   Picture? _noisePicture;
   SoilLayer? _noiseSourceLayer;
