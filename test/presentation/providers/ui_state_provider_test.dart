@@ -55,9 +55,14 @@ void main() {
     var dismissed = 0;
 
     notifier.setHoverInfo(
-      info('ROOT', pinned: true, sourceId: 'root-1', onDismiss: () {
-        dismissed++;
-      }),
+      info(
+        'ROOT',
+        pinned: true,
+        sourceId: 'root-1',
+        onDismiss: () {
+          dismissed++;
+        },
+      ),
     );
     await flush();
     expect(container.read(uIStateProvider)?.title, 'ROOT');
@@ -74,16 +79,26 @@ void main() {
     var secondDismissed = 0;
 
     notifier.setHoverInfo(
-      info('SUN', pinned: true, sourceId: 'sun', onDismiss: () {
-        firstDismissed++;
-      }),
+      info(
+        'SUN',
+        pinned: true,
+        sourceId: 'sun',
+        onDismiss: () {
+          firstDismissed++;
+        },
+      ),
     );
     await flush();
 
     notifier.setHoverInfo(
-      info('ROOT', pinned: true, sourceId: 'root', onDismiss: () {
-        secondDismissed++;
-      }),
+      info(
+        'ROOT',
+        pinned: true,
+        sourceId: 'root',
+        onDismiss: () {
+          secondDismissed++;
+        },
+      ),
     );
     await flush();
 
@@ -97,39 +112,57 @@ void main() {
     var dismissed = 0;
 
     notifier.setHoverInfo(
-      info('PARTICLE', pinned: true, sourceId: 'particle-7', onDismiss: () {
-        dismissed++;
-      }),
+      info(
+        'PARTICLE',
+        pinned: true,
+        sourceId: 'particle-7',
+        onDismiss: () {
+          dismissed++;
+        },
+      ),
     );
     await flush();
 
     notifier.setHoverInfo(
-      info('PARTICLE', pinned: true, sourceId: 'particle-7', onDismiss: () {
-        dismissed++;
-      }),
+      info(
+        'PARTICLE',
+        pinned: true,
+        sourceId: 'particle-7',
+        onDismiss: () {
+          dismissed++;
+        },
+      ),
     );
     await flush();
 
     expect(dismissed, 0);
   });
 
-  test('a stale hover exit does not dismiss a pinned card from elsewhere', () async {
-    final notifier = container.read(uIStateProvider.notifier);
-    var dismissed = 0;
+  test(
+    'a stale hover exit does not dismiss a pinned card from elsewhere',
+    () async {
+      final notifier = container.read(uIStateProvider.notifier);
+      var dismissed = 0;
 
-    notifier.setHoverInfo(
-      info('LEAF', pinned: true, sourceId: 'inspection-leaf', onDismiss: () {
-        dismissed++;
-      }),
-    );
-    await flush();
+      notifier.setHoverInfo(
+        info(
+          'LEAF',
+          pinned: true,
+          sourceId: 'inspection-leaf',
+          onDismiss: () {
+            dismissed++;
+          },
+        ),
+      );
+      await flush();
 
-    notifier.clearUnpinnedHover();
-    await flush();
+      notifier.clearUnpinnedHover();
+      await flush();
 
-    expect(container.read(uIStateProvider)?.title, 'LEAF');
-    expect(dismissed, 0);
-  });
+      expect(container.read(uIStateProvider)?.title, 'LEAF');
+      expect(dismissed, 0);
+    },
+  );
 
   test('a hover exit clears an unpinned card', () async {
     final notifier = container.read(uIStateProvider.notifier);

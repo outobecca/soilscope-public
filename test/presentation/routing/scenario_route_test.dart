@@ -7,10 +7,7 @@ void main() {
       scenarioIdFromRouteName('/simulation/nitrate_leaching'),
       'nitrate_leaching',
     );
-    expect(
-      scenarioIdFromRouteName('/simulation/my%20scenario'),
-      'my scenario',
-    );
+    expect(scenarioIdFromRouteName('/simulation/my%20scenario'), 'my scenario');
   });
 
   test('non-scenario routes do not expose an id', () {

@@ -17,9 +17,7 @@ void main() {
     testWidgets('scenario selection golden at ${size.width.toInt()}', (
       WidgetTester tester,
     ) async {
-      SharedPreferences.setMockInitialValues({
-        'gesture_intro_seen_v1': true,
-      });
+      SharedPreferences.setMockInitialValues({'gesture_intro_seen_v1': true});
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

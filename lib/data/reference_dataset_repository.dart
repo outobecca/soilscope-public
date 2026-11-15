@@ -17,9 +17,11 @@ class ReferenceDatasetRepository {
   static Future<ReferenceDataset> loadDefault({AssetBundle? bundle}) {
     return _cached ??= (bundle ?? rootBundle)
         .loadString(defaultAsset)
-        .then((raw) => ReferenceDataset.fromJson(
-              jsonDecode(raw) as Map<String, dynamic>,
-            ));
+        .then(
+          (raw) => ReferenceDataset.fromJson(
+            jsonDecode(raw) as Map<String, dynamic>,
+          ),
+        );
   }
 
   /// Test hook: forget the cached asset so a different bundle can be used.

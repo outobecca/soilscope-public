@@ -13,9 +13,7 @@ import '../solvers/simulation_isolate.dart';
 /// The notifier supplies callbacks for state reads and failure reporting; the
 /// runtime owns everything with a lifetime, so the provider no longer has to.
 class SimulationRuntime {
-  SimulationRuntime({
-    this.initializationTimeout = const Duration(seconds: 10),
-  });
+  SimulationRuntime({this.initializationTimeout = const Duration(seconds: 10)});
 
   final SimulationIsolateManager engine = SimulationIsolateManager();
   final ParticlePhysicsIsolateManager particles =
@@ -87,7 +85,10 @@ class SimulationRuntime {
   /// Pushes UI-owned controls to a running engine.
   void sync(BiophysicalState state) {
     if (state.isRunning) {
-      engine.updateState(state.copyWith(history: const []), state.precipitation);
+      engine.updateState(
+        state.copyWith(history: const []),
+        state.precipitation,
+      );
     }
   }
 

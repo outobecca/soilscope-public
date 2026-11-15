@@ -8,8 +8,9 @@ import 'package:soilscope/presentation/widgets/science/science_validation_tab.da
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('illustrative reference is labeled and makes no field claim',
-      (tester) async {
+  testWidgets('illustrative reference is labeled and makes no field claim', (
+    tester,
+  ) async {
     ReferenceDatasetRepository.resetCache();
     final history = ValidationReferenceRun.run(hours: 8);
     final state = history.last.copyWith(history: history);

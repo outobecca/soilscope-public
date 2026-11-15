@@ -71,7 +71,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [scenariosProvider.overrideWith((ref) => [scenario])],
+          overrides: [
+            scenariosProvider.overrideWith((ref) => [scenario]),
+          ],
           child: Consumer(
             builder: (context, ref, child) {
               // Keep the auto-disposed game provider alive while the widget

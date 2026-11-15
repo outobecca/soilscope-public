@@ -47,10 +47,7 @@ void main() {
       profile: SoilProfile(
         id: 'stability',
         name: 'stability',
-        layers: [
-          _layer('A1', 0.0, 0.3),
-          _layer('B1', 0.3, 0.5, kSat: 5e-6),
-        ],
+        layers: [_layer('A1', 0.0, 0.3), _layer('B1', 0.3, 0.5, kSat: 5e-6)],
         surfaceAlbedo: 0.2,
         slope: 0.02,
       ),
@@ -63,8 +60,11 @@ void main() {
     }
 
     for (final layer in state.profile.layers) {
-      expect(layer.waterContent.isFinite, isTrue,
-          reason: '${layer.id} water became non-finite');
+      expect(
+        layer.waterContent.isFinite,
+        isTrue,
+        reason: '${layer.id} water became non-finite',
+      );
       expect(layer.waterContent, greaterThanOrEqualTo(0.0));
       // A tiny numerical overshoot above saturation is tolerated; a large one
       // means the adaptive sub-step is not doing its job.

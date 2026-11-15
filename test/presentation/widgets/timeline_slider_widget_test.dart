@@ -84,8 +84,9 @@ void main() {
     expect(find.text('Day 1 · 08:15'), findsOneWidget);
   });
 
-  testWidgets('short timelines show seconds so early scrubbing is visible',
-      (tester) async {
+  testWidgets('short timelines show seconds so early scrubbing is visible', (
+    tester,
+  ) async {
     await pumpTimeline(
       tester,
       width: 520,
@@ -97,14 +98,10 @@ void main() {
     expect(tester.widget<Slider>(find.byType(Slider)).onChanged, isNotNull);
   });
 
-  testWidgets('timeline view opens at the starting snapshot without a range',
-      (tester) async {
-    await pumpTimeline(
-      tester,
-      width: 520,
-      viewTime: 0,
-      snapshots: [_state(0)],
-    );
+  testWidgets('timeline view opens at the starting snapshot without a range', (
+    tester,
+  ) async {
+    await pumpTimeline(tester, width: 520, viewTime: 0, snapshots: [_state(0)]);
 
     expect(find.text('Day 1 · 00:00:00'), findsOneWidget);
     final slider = tester.widget<Slider>(find.byType(Slider));

@@ -37,9 +37,7 @@ void main() {
       final profile = SoilProfile(
         id: 'high-k',
         name: 'High conductivity',
-        layers: [
-          _createLayer('L1', 0.0, thickness, 1e-4, 0.45, initialWater),
-        ],
+        layers: [_createLayer('L1', 0.0, thickness, 1e-4, 0.45, initialWater)],
         surfaceAlbedo: 0.2,
         slope: 0.0,
       );
@@ -50,12 +48,14 @@ void main() {
         airTemperature: 273.15,
       );
       final updated = result.profile.layers.first;
-      final deltaStorage =
-          (updated.waterContent - initialWater) * thickness;
+      final deltaStorage = (updated.waterContent - initialWater) * thickness;
       final drained = result.averageFluxes.last * 3600.0;
 
       expect(updated.waterContent.isFinite, isTrue);
-      expect(updated.waterContent, inInclusiveRange(updated.thetaR, updated.porosity));
+      expect(
+        updated.waterContent,
+        inInclusiveRange(updated.thetaR, updated.porosity),
+      );
       expect(result.averageFluxes.every((flux) => flux.isFinite), isTrue);
       expect(
         deltaStorage,

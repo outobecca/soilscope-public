@@ -55,12 +55,12 @@ SoilProfile _profile(String id) {
 }
 
 Scenario _scenario(String id) => Scenario(
-      id: id,
-      title: id,
-      description: id,
-      initialProfile: _profile(id),
-      weatherData: const {},
-    );
+  id: id,
+  title: id,
+  description: id,
+  initialProfile: _profile(id),
+  weatherData: const {},
+);
 
 Future<bool> _waitUntil(
   bool Function() condition, {
@@ -89,15 +89,21 @@ void main() {
       final advanced = await _waitUntil(
         () => container.read(simulationProvider).timeElapsed > 0,
       );
-      expect(advanced, isTrue,
-          reason: 'the simulation isolate should deliver a tick');
+      expect(
+        advanced,
+        isTrue,
+        reason: 'the simulation isolate should deliver a tick',
+      );
       notifier.stop();
 
       notifier.loadScenario(_scenario('second'));
 
       final state = container.read(simulationProvider);
-      expect(state.timeElapsed, 0,
-          reason: 'the clock must not carry over between scenarios');
+      expect(
+        state.timeElapsed,
+        0,
+        reason: 'the clock must not carry over between scenarios',
+      );
       expect(state.currentScenario?.id, 'second');
       expect(state.profile.id, 'second');
       expect(state.plants, hasLength(1));
@@ -113,10 +119,7 @@ void main() {
 
       notifier.loadScenario(_scenario('first'));
       await notifier.preCalculateTimeline(1);
-      expect(
-        container.read(simulationProvider).history.length,
-        greaterThan(1),
-      );
+      expect(container.read(simulationProvider).history.length, greaterThan(1));
 
       notifier.loadScenario(_scenario('second'));
 
@@ -126,38 +129,41 @@ void main() {
       expect(state.currentScenario?.id, 'second');
     });
 
-    test('loading a scenario clears inspection and HUD selection state', () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(simulationProvider.notifier);
-      final session = container.read(simulationSessionProvider.notifier);
-      final ui = container.read(uIStateProvider.notifier);
+    test(
+      'loading a scenario clears inspection and HUD selection state',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(simulationProvider.notifier);
+        final session = container.read(simulationSessionProvider.notifier);
+        final ui = container.read(uIStateProvider.notifier);
 
-      notifier.loadScenario(_scenario('first'));
-      session.selectLayer('A1');
-      session.selectInspector('leaf');
-      session.selectElement('N');
-      ui.setHoverInfo(
-        HoverInfo(
-          title: 'LEAF',
-          description: 'Pinned inspection',
-          isPinned: true,
-          sourceId: 'inspection-leaf',
-        ),
-      );
-      await Future<void>.delayed(Duration.zero);
+        notifier.loadScenario(_scenario('first'));
+        session.selectLayer('A1');
+        session.selectInspector('leaf');
+        session.selectElement('N');
+        ui.setHoverInfo(
+          HoverInfo(
+            title: 'LEAF',
+            description: 'Pinned inspection',
+            isPinned: true,
+            sourceId: 'inspection-leaf',
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      notifier.loadScenario(_scenario('second'));
+        notifier.loadScenario(_scenario('second'));
 
-      final state = container.read(simulationSessionProvider);
-      expect(state.selectedLayerId, isNull);
-      expect(state.selectedInspectorType, isNull);
-      expect(state.selectedElementSymbol, isNull);
-      expect(state.isMicroscopeEnabled, isFalse);
-      expect(state.isScrubbing, isFalse);
-      expect(state.viewTime, 0);
-      expect(container.read(uIStateProvider), isNull);
-    });
+        final state = container.read(simulationSessionProvider);
+        expect(state.selectedLayerId, isNull);
+        expect(state.selectedInspectorType, isNull);
+        expect(state.selectedElementSymbol, isNull);
+        expect(state.isMicroscopeEnabled, isFalse);
+        expect(state.isScrubbing, isFalse);
+        expect(state.viewTime, 0);
+        expect(container.read(uIStateProvider), isNull);
+      },
+    );
   });
 
   group('resume availability', () {
@@ -183,21 +189,23 @@ void main() {
       expect(await notifier.hasSavedState(), isTrue);
     });
 
-    test('a live run is resumable even before the first periodic save',
-        () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(simulationProvider.notifier);
+    test(
+      'a live run is resumable even before the first periodic save',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(simulationProvider.notifier);
 
-      notifier.loadScenario(_scenario('live'));
-      await notifier.preCalculateTimeline(1);
-      expect(
-        container.read(simulationProvider).history.length,
-        greaterThan(1),
-      );
+        notifier.loadScenario(_scenario('live'));
+        await notifier.preCalculateTimeline(1);
+        expect(
+          container.read(simulationProvider).history.length,
+          greaterThan(1),
+        );
 
-      expect(await notifier.hasSavedState(), isTrue);
-    });
+        expect(await notifier.hasSavedState(), isTrue);
+      },
+    );
   });
 
   group('pre-calculation cancellation', () {
@@ -216,41 +224,40 @@ void main() {
 
       expect(completed, isFalse);
       expect(container.read(simulationProvider).history.length, before);
-      expect(
-        container.read(simulationSessionProvider).isScrubbing,
-        isFalse,
-      );
+      expect(container.read(simulationSessionProvider).isScrubbing, isFalse);
     });
   });
 
   group('pre-calculation snapshots', () {
-    test('three days produce the start plus twelve six-hourly snapshots',
-        () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(simulationProvider.notifier);
+    test(
+      'three days produce the start plus twelve six-hourly snapshots',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(simulationProvider.notifier);
 
-      notifier.loadScenario(_scenario('snapshots'));
-      final completed = await notifier.preCalculateTimeline(3);
+        notifier.loadScenario(_scenario('snapshots'));
+        final completed = await notifier.preCalculateTimeline(3);
 
-      expect(completed, isTrue);
-      expect(
-        container.read(simulationSessionProvider).isScrubbing,
-        isFalse,
-        reason: 'a completed pre-calculation must leave history mode',
-      );
-      final history = container.read(simulationProvider).history;
-      expect(history, hasLength(13));
-      expect(history.first.timeElapsed, 0);
-      expect(history[1].timeElapsed, closeTo(3600, 1));
-      for (var i = 2; i < history.length; i++) {
+        expect(completed, isTrue);
         expect(
-          history[i].timeElapsed - history[i - 1].timeElapsed,
-          closeTo(21600, 1),
-          reason: 'snapshots must stay six simulated hours apart',
+          container.read(simulationSessionProvider).isScrubbing,
+          isFalse,
+          reason: 'a completed pre-calculation must leave history mode',
         );
-      }
-    });
+        final history = container.read(simulationProvider).history;
+        expect(history, hasLength(13));
+        expect(history.first.timeElapsed, 0);
+        expect(history[1].timeElapsed, closeTo(3600, 1));
+        for (var i = 2; i < history.length; i++) {
+          expect(
+            history[i].timeElapsed - history[i - 1].timeElapsed,
+            closeTo(21600, 1),
+            reason: 'snapshots must stay six simulated hours apart',
+          );
+        }
+      },
+    );
   });
 
   group('timeline display state', () {
@@ -279,10 +286,7 @@ void main() {
       addTearDown(container.dispose);
       final state = container.read(simulationProvider);
       final initial = [state.copyWith(timeElapsed: 0)];
-      final withRange = [
-        ...initial,
-        state.copyWith(timeElapsed: 600),
-      ];
+      final withRange = [...initial, state.copyWith(timeElapsed: 600)];
 
       expect(hasTimelineHistory(initial), isTrue);
       expect(hasTimelineHistory(const []), isFalse);
@@ -290,31 +294,34 @@ void main() {
       expect(hasTimelineRange(withRange), isTrue);
     });
 
-    test('scrubbing shows a snapshot that still carries the full run history',
-        () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(simulationProvider.notifier);
+    test(
+      'scrubbing shows a snapshot that still carries the full run history',
+      () async {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(simulationProvider.notifier);
 
-      notifier.loadScenario(_scenario('displayed'));
-      await notifier.preCalculateTimeline(1);
-      final history = container.read(simulationProvider).history;
-      expect(history.length, greaterThan(2));
+        notifier.loadScenario(_scenario('displayed'));
+        await notifier.preCalculateTimeline(1);
+        final history = container.read(simulationProvider).history;
+        expect(history.length, greaterThan(2));
 
-      notifier.startScrubbing();
-      final target = history[history.length ~/ 2].timeElapsed;
-      notifier.scrubTo(target);
-      await Future<void>.delayed(Duration.zero);
+        notifier.startScrubbing();
+        final target = history[history.length ~/ 2].timeElapsed;
+        notifier.scrubTo(target);
+        await Future<void>.delayed(Duration.zero);
 
-      final displayed = container.read(displayedSimulationStateProvider);
-      expect(displayed.timeElapsed, closeTo(target, 1));
-      expect(displayed.profile.id, 'displayed');
-      expect(
-        displayed.history,
-        hasLength(history.length),
-        reason: 'report widgets need the run timeline while values are historical',
-      );
-    });
+        final displayed = container.read(displayedSimulationStateProvider);
+        expect(displayed.timeElapsed, closeTo(target, 1));
+        expect(displayed.profile.id, 'displayed');
+        expect(
+          displayed.history,
+          hasLength(history.length),
+          reason:
+              'report widgets need the run timeline while values are historical',
+        );
+      },
+    );
 
     test('editing a live value leaves history mode', () async {
       final container = ProviderContainer();
@@ -324,7 +331,12 @@ void main() {
       notifier.loadScenario(_scenario('edit'));
       await notifier.preCalculateTimeline(1);
       notifier.startScrubbing();
-      final layerId = container.read(simulationProvider).profile.layers.first.id;
+      final layerId = container
+          .read(simulationProvider)
+          .profile
+          .layers
+          .first
+          .id;
 
       notifier.updateLayer(layerId, (layer) => layer.copyWith(ph: 6.4));
 
@@ -333,10 +345,7 @@ void main() {
         isFalse,
         reason: 'an edit must not be applied behind a historical display',
       );
-      expect(
-        container.read(simulationProvider).profile.layers.first.ph,
-        6.4,
-      );
+      expect(container.read(simulationProvider).profile.layers.first.ph, 6.4);
     });
 
     test('starting a run leaves history mode', () async {
@@ -347,10 +356,7 @@ void main() {
       notifier.loadScenario(_scenario('resume'));
       await notifier.preCalculateTimeline(1);
       notifier.startScrubbing();
-      expect(
-        container.read(simulationSessionProvider).isScrubbing,
-        isTrue,
-      );
+      expect(container.read(simulationSessionProvider).isScrubbing, isTrue);
 
       notifier.start();
       expect(
@@ -363,32 +369,31 @@ void main() {
   });
 
   group('state ownership', () {
-    test('every BiophysicalState field is classified as UI- or engine-owned',
-        () {
-      final state = BiophysicalState(
-        profile: _profile('classification'),
-        plants: const [],
-        timeElapsed: 0,
-      );
+    test(
+      'every BiophysicalState field is classified as UI- or engine-owned',
+      () {
+        final state = BiophysicalState(
+          profile: _profile('classification'),
+          plants: const [],
+          timeElapsed: 0,
+        );
 
-      // `history` is excluded from JSON to avoid recursive nesting.
-      final fields = state.toJson().keys.toSet()..add('history');
-      final classified = {
-        ...Simulation.uiFields,
-        ...Simulation.engineFields,
-      };
+        // `history` is excluded from JSON to avoid recursive nesting.
+        final fields = state.toJson().keys.toSet()..add('history');
+        final classified = {...Simulation.uiFields, ...Simulation.engineFields};
 
-      expect(
-        fields.difference(classified),
-        isEmpty,
-        reason: 'new state fields must be added to the UI or engine set',
-      );
-      expect(
-        classified.difference(fields),
-        isEmpty,
-        reason: 'classifier names that no longer exist',
-      );
-    });
+        expect(
+          fields.difference(classified),
+          isEmpty,
+          reason: 'new state fields must be added to the UI or engine set',
+        );
+        expect(
+          classified.difference(fields),
+          isEmpty,
+          reason: 'classifier names that no longer exist',
+        );
+      },
+    );
 
     test('mycorrhiza state survives a JSON round trip', () {
       final state = BiophysicalState(

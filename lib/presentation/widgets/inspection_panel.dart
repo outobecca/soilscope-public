@@ -142,13 +142,22 @@ class InspectionPanel extends ConsumerWidget {
                 IconButton(
                   onPressed: () {
                     ref.read(uIStateProvider.notifier).clearPinnedInfo();
-                    ref.read(simulationSessionProvider.notifier).selectLayer(null);
-                    ref.read(simulationSessionProvider.notifier).selectInspector(null);
-                    ref.read(simulationSessionProvider.notifier).selectElement(null);
+                    ref
+                        .read(simulationSessionProvider.notifier)
+                        .selectLayer(null);
+                    ref
+                        .read(simulationSessionProvider.notifier)
+                        .selectInspector(null);
+                    ref
+                        .read(simulationSessionProvider.notifier)
+                        .selectElement(null);
                   },
                   icon: const Icon(Icons.close, size: 16),
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
                   visualDensity: VisualDensity.compact,
                   color: theme.colorScheme.error.withValues(alpha: 0.7),
                 ),

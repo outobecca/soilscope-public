@@ -41,11 +41,11 @@ const Map<String, _EnglishCopy> _englishCopy = {
     'Temperature coefficient for biological activity',
     ['Temperature (°C)', 'Q10 value'],
   ),
-  'MM': _EnglishCopy(
-    'Michaelis-Menten',
-    'Enzyme kinetics',
-    ['Substrate [S]', 'Vmax', 'Km'],
-  ),
+  'MM': _EnglishCopy('Michaelis-Menten', 'Enzyme kinetics', [
+    'Substrate [S]',
+    'Vmax',
+    'Km',
+  ]),
   'Chemotaxis': _EnglishCopy(
     'Chemotaxis (Fick)',
     'Chemotaxis and diffusion (Fick\'s law)',
@@ -56,21 +56,26 @@ const Map<String, _EnglishCopy> _englishCopy = {
     'Energy efficiency (principle of least energy)',
     ['Concentration C', 'Distance D', 'Penalty P'],
   ),
-  'VG': _EnglishCopy(
-    'van Genuchten',
-    'Soil water retention',
-    ['Matric head h (m)', 'θr', 'θs', 'α', 'n'],
-  ),
-  'Farq': _EnglishCopy(
-    'Farquhar C3',
-    'C3 photosynthesis (Rubisco-limited)',
-    ['Ci (µmol/mol)', 'Vcmax', 'Γ*', 'Kc', 'Ko'],
-  ),
-  'Redox': _EnglishCopy(
-    'Nernst/Redox',
-    'Redox potential calculation',
-    ['pe0', 'n (electrons)', '[red]', '[ox]'],
-  ),
+  'VG': _EnglishCopy('van Genuchten', 'Soil water retention', [
+    'Matric head h (m)',
+    'θr',
+    'θs',
+    'α',
+    'n',
+  ]),
+  'Farq': _EnglishCopy('Farquhar C3', 'C3 photosynthesis (Rubisco-limited)', [
+    'Ci (µmol/mol)',
+    'Vcmax',
+    'Γ*',
+    'Kc',
+    'Ko',
+  ]),
+  'Redox': _EnglishCopy('Nernst/Redox', 'Redox potential calculation', [
+    'pe0',
+    'n (electrons)',
+    '[red]',
+    '[ox]',
+  ]),
   '+': _EnglishCopy('Addition', 'Sum of two values', ['A', 'B']),
   '-': _EnglishCopy('Subtraction', 'Difference', ['A', 'B']),
   '*': _EnglishCopy('Multiplication', 'Product of two values', ['A', 'B']),
@@ -82,7 +87,11 @@ const Map<String, _EnglishCopy> _englishCopy = {
   'log10': _EnglishCopy('Log₁₀', 'Base-10 logarithm', ['A']),
   'min': _EnglishCopy('Minimum', 'Smaller of two values', ['A', 'B']),
   'max': _EnglishCopy('Maximum', 'Larger of two values', ['A', 'B']),
-  'clamp': _EnglishCopy('Clamp', 'Limit a value to a range', ['Value A', 'Min', 'Max']),
+  'clamp': _EnglishCopy('Clamp', 'Limit a value to a range', [
+    'Value A',
+    'Min',
+    'Max',
+  ]),
   'abs': _EnglishCopy('Absolute value', 'Absolute value', ['A']),
   'output': _EnglishCopy('Result', 'Shows the final result', ['Input']),
   'const': _EnglishCopy('Constant', 'Fixed numeric value', []),
@@ -109,8 +118,9 @@ extension FunctionDefinitionL10n on FunctionDefinition {
   String labelFor(bool isFi) =>
       isFi ? label : (_englishCopy[operation]?.label ?? label);
 
-  String descriptionFor(bool isFi) =>
-      isFi ? description : (_englishCopy[operation]?.description ?? description);
+  String descriptionFor(bool isFi) => isFi
+      ? description
+      : (_englishCopy[operation]?.description ?? description);
 
   List<String> inputsFor(bool isFi) =>
       isFi ? inputLabels : (_englishCopy[operation]?.inputs ?? inputLabels);
@@ -458,13 +468,8 @@ class _FunctionPaletteState extends State<FunctionPalette> {
               decoration: InputDecoration(
                 hintText:
                     l10n?.logicLabSearch ?? (isFi ? 'Hae...' : 'Search...'),
-                hintStyle: TextStyle(
-                  color: Colors.white70,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.white70,
-                ),
+                hintStyle: TextStyle(color: Colors.white70),
+                prefixIcon: Icon(Icons.search, color: Colors.white70),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
@@ -595,10 +600,7 @@ class _FunctionPaletteState extends State<FunctionPalette> {
                   (isFi
                       ? '${functionCategories.values.expand((e) => e).length} funktiota käytettävissä'
                       : '${functionCategories.values.expand((e) => e).length} functions available'),
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.white70, fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ),
@@ -717,7 +719,8 @@ class _FunctionTile extends StatelessWidget {
                   Wrap(
                     spacing: 4,
                     runSpacing: 2,
-                    children: func.inputsFor(isFi)
+                    children: func
+                        .inputsFor(isFi)
                         .map(
                           (label) => Container(
                             padding: const EdgeInsets.symmetric(

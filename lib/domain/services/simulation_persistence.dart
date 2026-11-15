@@ -20,9 +20,9 @@ class SimulationPersistence {
   SimulationPersistence({
     FlutterSecureStorage? storage,
     Future<SharedPreferences> Function()? preferences,
-  })  : _storage =
-            storage ?? const FlutterSecureStorage(aOptions: AndroidOptions()),
-        _preferences = preferences ?? SharedPreferences.getInstance;
+  }) : _storage =
+           storage ?? const FlutterSecureStorage(aOptions: AndroidOptions()),
+       _preferences = preferences ?? SharedPreferences.getInstance;
 
   Future<void> save(BiophysicalState state) async {
     try {

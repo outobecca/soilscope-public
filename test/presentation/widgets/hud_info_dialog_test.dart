@@ -16,9 +16,7 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: Locale('en'),
-          home: Scaffold(
-            body: SingleChildScrollView(child: HUDDashboard()),
-          ),
+          home: Scaffold(body: SingleChildScrollView(child: HUDDashboard())),
         ),
       ),
     );

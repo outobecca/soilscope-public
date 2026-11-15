@@ -761,8 +761,13 @@ extension _PlantVisuals on AnimatedPlantComponent {
           vitality;
 
       if (activity > 0.1) {
-        final rPos = _mapRootToLocal(node, i, baseX, worldWidth, soilHeight)
-            .toOffset();
+        final rPos = _mapRootToLocal(
+          node,
+          i,
+          baseX,
+          worldWidth,
+          soilHeight,
+        ).toOffset();
         // Reach depends on water content (capillary movement) - TIGHTENED for decluttering
         final reachBase = 8.0 + waterContent * 10.0; // Further tightened
 

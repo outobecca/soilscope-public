@@ -14,7 +14,9 @@ import 'package:soilscope/domain/solvers/validation_framework.dart';
 /// measured observations is documented in docs/validation/README.md.
 void main() {
   test('illustrative reference profiles stay within the accuracy gate', () {
-    final raw = File(ReferenceDatasetRepository.defaultAsset).readAsStringSync();
+    final raw = File(
+      ReferenceDatasetRepository.defaultAsset,
+    ).readAsStringSync();
     final dataset = ReferenceDataset.fromJson(
       jsonDecode(raw) as Map<String, dynamic>,
     );

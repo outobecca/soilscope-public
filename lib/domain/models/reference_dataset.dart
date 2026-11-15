@@ -42,10 +42,10 @@ class ReferenceDataset {
       if (timesSeconds!.any((time) => time < 0)) {
         throw const FormatException('Absolute sample times cannot be negative');
       }
-    } else if (relativeTimes!.any((fraction) => fraction <= 0 || fraction > 1)) {
-      throw const FormatException(
-        'Relative sample times must be in (0, 1]',
-      );
+    } else if (relativeTimes!.any(
+      (fraction) => fraction <= 0 || fraction > 1,
+    )) {
+      throw const FormatException('Relative sample times must be in (0, 1]');
     }
     for (var i = 1; i < times.length; i++) {
       if (times[i] <= times[i - 1]) {
@@ -53,7 +53,9 @@ class ReferenceDataset {
       }
     }
     if (series.isEmpty) {
-      throw const FormatException('Reference dataset needs at least one series');
+      throw const FormatException(
+        'Reference dataset needs at least one series',
+      );
     }
     final keys = <String>{};
     for (final profile in series) {
@@ -120,33 +122,35 @@ class ReferenceDataset {
     if (rawSeries is! List || rawSeries.isEmpty) {
       throw const FormatException('Reference dataset is missing "series"');
     }
-    final series = rawSeries.map((raw) {
-      if (raw is! Map) {
-        throw const FormatException('Reference series must be objects');
-      }
-      final values = (raw['values'] as List? ?? const [])
-          .map((point) => (point as num).toDouble())
-          .toList(growable: false);
-      final threshold = raw['threshold'];
-      if (threshold is! Map) {
-        throw const FormatException('Reference series needs a threshold');
-      }
-      final nse = (threshold['nse'] as num?)?.toDouble();
-      final rmse = (threshold['rmse'] as num?)?.toDouble();
-      if (nse == null || rmse == null) {
-        throw const FormatException(
-          'Reference threshold needs nse and rmse',
-        );
-      }
-      return ReferenceSeries(
-        variable: raw['variable'] as String? ?? '',
-        layerIndex: (raw['layerIndex'] as num?)?.toInt() ?? 0,
-        layerId: raw['layerId'] as String?,
-        unit: raw['unit'] as String? ?? '',
-        values: values,
-        threshold: ReferenceThreshold(nse: nse, rmse: rmse),
-      );
-    }).toList(growable: false);
+    final series = rawSeries
+        .map((raw) {
+          if (raw is! Map) {
+            throw const FormatException('Reference series must be objects');
+          }
+          final values = (raw['values'] as List? ?? const [])
+              .map((point) => (point as num).toDouble())
+              .toList(growable: false);
+          final threshold = raw['threshold'];
+          if (threshold is! Map) {
+            throw const FormatException('Reference series needs a threshold');
+          }
+          final nse = (threshold['nse'] as num?)?.toDouble();
+          final rmse = (threshold['rmse'] as num?)?.toDouble();
+          if (nse == null || rmse == null) {
+            throw const FormatException(
+              'Reference threshold needs nse and rmse',
+            );
+          }
+          return ReferenceSeries(
+            variable: raw['variable'] as String? ?? '',
+            layerIndex: (raw['layerIndex'] as num?)?.toInt() ?? 0,
+            layerId: raw['layerId'] as String?,
+            unit: raw['unit'] as String? ?? '',
+            values: values,
+            threshold: ReferenceThreshold(nse: nse, rmse: rmse),
+          );
+        })
+        .toList(growable: false);
 
     return ReferenceDataset(
       id: readString('id'),

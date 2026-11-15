@@ -113,8 +113,8 @@ void main() {
       tester.element(find.byType(FlameSimulationView)),
       listen: false,
     );
-    final game = tester.widget<GameWidget>(gameWidgetFinder).game
-        as SoilScopeGame;
+    final game =
+        tester.widget<GameWidget>(gameWidgetFinder).game as SoilScopeGame;
     final topLeft = tester.getTopLeft(gameWidgetFinder);
 
     final nodes = game.world

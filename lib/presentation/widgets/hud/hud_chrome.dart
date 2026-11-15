@@ -65,8 +65,9 @@ class _HUDHeader extends ConsumerWidget {
     // contains rows with Expanded children, and a ListView/PageView cannot
     // provide an intrinsic width, which used to abort layout and leave the HUD
     // untappable. A concrete content width keeps the dialog measurable.
-    final contentWidth =
-        (MediaQuery.sizeOf(context).width - 80).clamp(280.0, 500.0).toDouble();
+    final contentWidth = (MediaQuery.sizeOf(context).width - 80)
+        .clamp(280.0, 500.0)
+        .toDouble();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -155,7 +156,8 @@ class _HUDScrubber extends ConsumerWidget {
     // end, matching TimelineSliderWidget and the displayed snapshot.
     final maxTime = ref.watch(
       simulationProvider.select(
-        (s) => s.history.isNotEmpty ? s.history.last.timeElapsed : s.timeElapsed,
+        (s) =>
+            s.history.isNotEmpty ? s.history.last.timeElapsed : s.timeElapsed,
       ),
     );
 
@@ -197,12 +199,12 @@ class _HUDScrubber extends ConsumerWidget {
                   onPressed: !hasTimeline && !isScrubbing
                       ? null
                       : () => isScrubbing
-                          ? ref
-                              .read(simulationProvider.notifier)
-                              .stopScrubbing()
-                          : ref
-                              .read(simulationProvider.notifier)
-                              .startScrubbing(),
+                            ? ref
+                                  .read(simulationProvider.notifier)
+                                  .stopScrubbing()
+                            : ref
+                                  .read(simulationProvider.notifier)
+                                  .startScrubbing(),
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                 ),
@@ -216,8 +218,9 @@ class _HUDScrubber extends ConsumerWidget {
             min: minTime,
             max: maxTime > minTime ? maxTime : minTime + 1.0,
             onChanged: maxTime > minTime
-                ? (value) =>
-                      ref.read(simulationSessionProvider.notifier).scrubTo(value)
+                ? (value) => ref
+                      .read(simulationSessionProvider.notifier)
+                      .scrubTo(value)
                 : null,
           ),
       ],

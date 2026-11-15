@@ -12,7 +12,9 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    container.read(uIStateProvider.notifier).setHoverInfo(
+    container
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
           HoverInfo(
             title: 'TOPSOIL',
             description: 'Selected layer',
@@ -20,16 +22,12 @@ void main() {
             sourceId: 'soil-layer-topsoil',
           ),
         );
-    container
-        .read(simulationSessionProvider.notifier)
-        .selectLayer('topsoil');
+    container.read(simulationSessionProvider.notifier).selectLayer('topsoil');
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          home: Scaffold(body: HoverTooltip()),
-        ),
+        child: const MaterialApp(home: Scaffold(body: HoverTooltip())),
       ),
     );
     await tester.pump();

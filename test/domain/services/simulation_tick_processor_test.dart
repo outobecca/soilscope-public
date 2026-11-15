@@ -5,58 +5,57 @@ import 'package:soilscope/domain/models/soil_profile.dart';
 import 'package:soilscope/domain/services/simulation_tick_processor.dart';
 
 SoilProfile _profile() => const SoilProfile(
-      id: 'p',
-      name: 'p',
-      layers: [
-        SoilLayer(
-          id: 'A1',
-          depth: 0,
-          thickness: 0.3,
-          kSat: 1e-6,
-          porosity: 0.45,
-          thetaR: 0.05,
-          vgAlpha: 1.5,
-          vgN: 1.5,
-          bulkDensity: 1400,
-          waterContent: 0.25,
-          temperature: 293.15,
-          heatCapacity: 800,
-          ph: 6.5,
-          ec: 0.2,
-          redoxPotential: 500,
-          nitrateContent: 15,
-          ammoniumContent: 5,
-          phosphateContent: 5,
-          potassiumContent: 25,
-          aggregateStability: 0.5,
-          microbialBiomass: 40,
-          epsContent: 0,
-          fungalHyphaeDensity: 0,
-          necromass: 0,
-          organicCarbon: 10,
-          mineralAssociatedOrganicMatter: 10,
-          particulateOrganicMatter: 0.5,
-          nitrogenContent: 0.2,
-        ),
-      ],
-      surfaceAlbedo: 0.2,
-      slope: 0,
-    );
+  id: 'p',
+  name: 'p',
+  layers: [
+    SoilLayer(
+      id: 'A1',
+      depth: 0,
+      thickness: 0.3,
+      kSat: 1e-6,
+      porosity: 0.45,
+      thetaR: 0.05,
+      vgAlpha: 1.5,
+      vgN: 1.5,
+      bulkDensity: 1400,
+      waterContent: 0.25,
+      temperature: 293.15,
+      heatCapacity: 800,
+      ph: 6.5,
+      ec: 0.2,
+      redoxPotential: 500,
+      nitrateContent: 15,
+      ammoniumContent: 5,
+      phosphateContent: 5,
+      potassiumContent: 25,
+      aggregateStability: 0.5,
+      microbialBiomass: 40,
+      epsContent: 0,
+      fungalHyphaeDensity: 0,
+      necromass: 0,
+      organicCarbon: 10,
+      mineralAssociatedOrganicMatter: 10,
+      particulateOrganicMatter: 0.5,
+      nitrogenContent: 0.2,
+    ),
+  ],
+  surfaceAlbedo: 0.2,
+  slope: 0,
+);
 
 BiophysicalState _state({
   required double time,
   double airTemperature = 293.15,
   bool autoWeather = false,
   bool isRunning = true,
-}) =>
-    BiophysicalState(
-      profile: _profile(),
-      plants: const [],
-      timeElapsed: time,
-      airTemperature: airTemperature,
-      autoWeather: autoWeather,
-      isRunning: isRunning,
-    );
+}) => BiophysicalState(
+  profile: _profile(),
+  plants: const [],
+  timeElapsed: time,
+  airTemperature: airTemperature,
+  autoWeather: autoWeather,
+  isRunning: isRunning,
+);
 
 void main() {
   group('SimulationTickProcessor', () {
