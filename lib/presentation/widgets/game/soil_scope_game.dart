@@ -3,9 +3,9 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/events.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart' hide Image, PointerMoveEvent;
 import '../../../core/debug_log.dart';
+import '../../providers/game_provider_reader.dart';
 import '../../providers/simulation_provider.dart';
 import '../../providers/simulation_session_provider.dart';
 import '../../../domain/models/biophysical_state.dart';
@@ -35,7 +35,9 @@ import 'components/visual_state_interpolator.dart';
 /// Enforces a unified central simulation column for sky and soil.
 class SoilScopeGame extends FlameGame
     with ScrollDetector, ScaleDetector, HasCollisionDetection {
-  final WidgetRef ref;
+  /// Snapshot-only provider access. Flame objects outlive widgets, so they
+  /// must not hold a lifecycle-bound [WidgetRef].
+  final GameProviderReader ref;
 
   SoilScopeGame(this.ref) {
     debugLog('[SoilScopeGame] Constructor called');

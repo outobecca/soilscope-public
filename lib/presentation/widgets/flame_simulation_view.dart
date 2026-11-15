@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/debug_log.dart';
 import 'game/soil_scope_game.dart';
 import '../providers/game_provider.dart';
+import '../providers/game_provider_reader.dart';
 import '../providers/simulation_provider.dart';
 import '../providers/simulation_session_provider.dart';
 import '../providers/locale_provider.dart';
@@ -37,7 +38,7 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   void initState() {
     super.initState();
     debugLog('[FlameSimulationView] initState: Creating SoilScopeGame');
-    _game = SoilScopeGame(ref);
+    _game = SoilScopeGame(GameProviderReader.fromRef(ref));
 
     // Auto-register the game instance when it's created
     WidgetsBinding.instance.addPostFrameCallback((_) {

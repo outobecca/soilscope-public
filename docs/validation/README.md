@@ -224,6 +224,21 @@ When data arrives, follow
 and keep a `model` block in the new file so the comparison is tied to the
 parameterisation that produced it.
 
+## Phase 5 status and release gate
+
+- The model parameter set is versioned and pinned; `reference.json` records
+  the fingerprint it was generated with.
+- `conservation_test.dart` covers water, mineral nitrogen and slow carbon
+  across the reference run, interventions, scenario switches, pause/resume and
+  persistence. `sensitivity_test.dart` checks directional responses to
+  conductivity, temperature, initial water and initial nitrate.
+- Measured observations remain an external blocker (see the section below).
+- `tool/release_check.sh` runs the whole release path: model identity,
+  analyzer, locale guards, full tests, validation gates, Phase 4 benchmarks and
+  the web build. `SKIP_WEB=1` skips only the web build. The full suite includes
+  the semantics and keyboard interaction tests, so the accessibility checks run
+  on every release too.
+
 ## What this does not establish
 
 This gate does not establish that SoilScope is validated against field

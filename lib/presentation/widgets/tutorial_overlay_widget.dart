@@ -162,12 +162,14 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.15),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.3),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                             child: Text(
@@ -224,8 +226,9 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.2),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.2,
+                              ),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
@@ -253,7 +256,8 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: (tutorialState.currentStepIndex + 1) /
+                          value:
+                              (tutorialState.currentStepIndex + 1) /
                               steps.length,
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
                           color: theme.colorScheme.primary,
@@ -277,16 +281,24 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                                 ),
                               ),
                               const SizedBox(height: 14),
-                              ...currentStep.getPoints(l10n).map(
+                              ...currentStep
+                                  .getPoints(l10n)
+                                  .map(
                                     (point) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 8.0),
+                                      padding: const EdgeInsets.only(
+                                        bottom: 8.0,
+                                      ),
                                       child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 2.0),
+                                            padding: const EdgeInsets.only(
+                                              top: 2.0,
+                                            ),
                                             child: Icon(
-                                              Icons.check_circle_outline_rounded,
+                                              Icons
+                                                  .check_circle_outline_rounded,
                                               size: 16,
                                               color: theme.colorScheme.primary,
                                             ),
@@ -295,10 +307,12 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                                           Expanded(
                                             child: Text(
                                               point,
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: Colors.white.withValues(alpha: 0.8),
-                                                height: 1.4,
-                                              ),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: Colors.white
+                                                        .withValues(alpha: 0.8),
+                                                    height: 1.4,
+                                                  ),
                                             ),
                                           ),
                                         ],
@@ -317,12 +331,14 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.12),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.35),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.35,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -396,8 +412,9 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.white70,
                                     side: BorderSide(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.2),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -456,8 +473,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
     );
   }
 
-  Widget _buildScenarioStepOverlay(
-      BuildContext context, dynamic step) {
+  Widget _buildScenarioStepOverlay(BuildContext context, dynamic step) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
@@ -469,44 +485,56 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
     if (stepTitle.contains('kyntöantura') || stepTitle.contains('Plow Pan')) {
       title = l10n.stepCompactedClay1Title;
       description = l10n.stepCompactedClay1Desc;
-    } else if (stepTitle.contains('kuohkeutus') || stepTitle.contains('Loosening')) {
+    } else if (stepTitle.contains('kuohkeutus') ||
+        stepTitle.contains('Loosening')) {
       title = l10n.stepCompactedClay2Title;
       description = l10n.stepCompactedClay2Desc;
-    } else if (stepTitle.contains('tunkeutumista') || stepTitle.contains('Root Penetration')) {
+    } else if (stepTitle.contains('tunkeutumista') ||
+        stepTitle.contains('Root Penetration')) {
       title = l10n.stepCompactedClay3Title;
       description = l10n.stepCompactedClay3Desc;
-    } else if (stepTitle.contains('nitraattipitoisuus') || stepTitle.contains('Nitrate Leaching')) {
+    } else if (stepTitle.contains('nitraattipitoisuus') ||
+        stepTitle.contains('Nitrate Leaching')) {
       title = l10n.stepNitrateLeach1Title;
       description = l10n.stepNitrateLeach1Desc;
-    } else if (stepTitle.contains('kerääjäkasveja') || stepTitle.contains('Catch Crops')) {
+    } else if (stepTitle.contains('kerääjäkasveja') ||
+        stepTitle.contains('Catch Crops')) {
       title = l10n.stepNitrateLeach2Title;
       description = l10n.stepNitrateLeach2Desc;
-    } else if (stepTitle.contains('lehdistössä') || stepTitle.contains('Canopy Nutrient')) {
+    } else if (stepTitle.contains('lehdistössä') ||
+        stepTitle.contains('Canopy Nutrient')) {
       title = l10n.stepNitrateLeach3Title;
       description = l10n.stepNitrateLeach3Desc;
-    } else if (stepTitle.contains('typpilukko') || stepTitle.contains('Immobilization')) {
+    } else if (stepTitle.contains('typpilukko') ||
+        stepTitle.contains('Immobilization')) {
       title = l10n.stepNitrogenLock1Title;
       description = l10n.stepNitrogenLock1Desc;
-    } else if (stepTitle.contains('Täydennyslannoitus') || stepTitle.contains('Amendment')) {
+    } else if (stepTitle.contains('Täydennyslannoitus') ||
+        stepTitle.contains('Amendment')) {
       title = l10n.stepNitrogenLock2Title;
       description = l10n.stepNitrogenLock2Desc;
-    } else if (stepTitle.contains('mineralisaation') || stepTitle.contains('Remineralization')) {
+    } else if (stepTitle.contains('mineralisaation') ||
+        stepTitle.contains('Remineralization')) {
       title = l10n.stepNitrogenLock3Title;
       description = l10n.stepNitrogenLock3Desc;
-    } else if (stepTitle.contains('hapenpuute') || stepTitle.contains('Waterlogging')) {
+    } else if (stepTitle.contains('hapenpuute') ||
+        stepTitle.contains('Waterlogging')) {
       title = l10n.stepWaterlogging1Title;
       description = l10n.stepWaterlogging1Desc;
-    } else if (stepTitle.contains('Hapettomat') || stepTitle.contains('Hypoxia')) {
+    } else if (stepTitle.contains('Hapettomat') ||
+        stepTitle.contains('Hypoxia')) {
       title = l10n.stepWaterlogging2Title;
       description = l10n.stepWaterlogging2Desc;
-    } else if (stepTitle.contains('ojitusta') || stepTitle.contains('Drainage')) {
+    } else if (stepTitle.contains('ojitusta') ||
+        stepTitle.contains('Drainage')) {
       title = l10n.stepWaterlogging3Title;
       description = l10n.stepWaterlogging3Desc;
     }
 
     // Target information mapping
     final targetId = step.targetId.toString().toLowerCase();
-    String targetLabel = '${l10n.tutTargetLabel}: ${step.targetId.toUpperCase()}';
+    String targetLabel =
+        '${l10n.tutTargetLabel}: ${step.targetId.toUpperCase()}';
     IconData targetIcon = Icons.biotech_rounded;
     String? actionLabel;
     VoidCallback? onAction;
@@ -538,9 +566,9 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
-              onTap: () {},
-            ),
+            // Intentional modal barrier: consuming taps keeps the canvas and
+            // HUD inert while the tutorial step is open.
+            child: GestureDetector(onTap: () {}),
           ),
           Center(
             child: Container(
@@ -550,10 +578,7 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: theme.colorScheme.primary,
-                  width: 2,
-                ),
+                border: Border.all(color: theme.colorScheme.primary, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.5),
@@ -571,7 +596,9 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -676,11 +703,15 @@ class _TutorialOverlayWidgetState extends ConsumerState<TutorialOverlayWidget>
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: theme.colorScheme.primary,
                                 side: BorderSide(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.5),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.5,
+                                  ),
                                 ),
                               ),
-                              icon: const Icon(Icons.touch_app_rounded, size: 18),
+                              icon: const Icon(
+                                Icons.touch_app_rounded,
+                                size: 18,
+                              ),
                               label: Text(actionLabel),
                             ),
                             const SizedBox(width: 8),

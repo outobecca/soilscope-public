@@ -18,6 +18,8 @@ class PlantDataComponent extends ecs.Component<Plant> {
     if (data != null) this.data = data;
   }
 
+  // Required by Oxygen's PoolObject contract. Reuse always re-runs init with
+  // fresh data, so there is no transient field to clear here.
   @override
   void reset() {}
 }
@@ -36,6 +38,8 @@ class MicrobeDataComponent extends ecs.Component<Map<String, dynamic>> {
     }
   }
 
+  // Required by Oxygen's PoolObject contract; init supplies fresh values on
+  // reuse, so no transient field needs clearing.
   @override
   void reset() {}
 }

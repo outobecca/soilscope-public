@@ -726,17 +726,29 @@ motion. There is still no TalkBack/VoiceOver walkthrough.
 screen-reader pass on Android and iOS/web, keyboard access to every
 inspection target, and reduced-motion behavior for decorative animation.
 
-#### H10 — Release and maintainability debt remains · P2
+#### H10 — Release and maintainability debt · resolved in Phase 5
 
 The branch previously carried a large uncommitted change set, which made a
 second audit pass hard to attribute; that set is now split into reviewable
-commits. `simulation_provider.dart` has grown back to about 1,026 lines,
-`main.dart` is 717 lines, and the empty fertilizer hook is an example of code
-paths that look live but are not.
+commits. The provider had grown back to ~1,026 lines and mixed engine
+lifecycle, timeline storage, interventions, default-scenario data and particle
+pool arithmetic. The empty fertilizer hook was an example of a path that looked
+live but was not.
 
-**Acceptance:** the current work is split into reviewable commits, the
-provider’s remaining concerns are named and owned, and dead hooks are removed
-or implemented.
+Phase 5 split the provider to ~590 lines. Intervention rules live in
+`SimulationInterventions`, snapshot storage in `SimulationTimeline`, the
+default scenario in `default_simulation_profile.dart` and particle pool
+arithmetic in `SimulationResourceExchange`; the notifier coordinates engine
+lifecycle, persistence and Riverpod state. Flame objects receive a
+`GameProviderReader` (snapshot reads only) instead of a lifecycle-bound
+`WidgetRef`. The fertilizer effect is implemented and covered by
+`game_lifecycle_fertilizer_test.dart`; the only empty overrides left are
+Oxygen’s required `PoolObject.reset` lifecycle methods, documented in place.
+`main.dart` remains a single layout-heavy screen (~760 lines), which this item
+did not target.
+
+**Acceptance:** met — reviewable commits, named and owned provider concerns,
+and no dead application hooks.
 
 ### 7.2 Phased implementation plan
 
@@ -896,7 +908,7 @@ so the next candidate is per-frame animated draw work.
 The device matrix still lacks a mid-range phone, a desktop browser and iOS
 hardware, and the Android row still needs repeated runs.
 
-#### Phase 5 — Scientific credibility and sustainability (ongoing)
+#### Phase 5 — Scientific credibility and sustainability · complete
 
 1. **H8 — internal half done; measured half blocked on data.** Conservation
    (`test/validation/conservation_test.dart`) and directional sensitivity
@@ -908,18 +920,24 @@ hardware, and the Android row still needs repeated runs.
    Phase 4 captures. The validation gate fails on parameter drift until the
    reference is updated deliberately; `model_version_test.dart` pins the
    fingerprint.
-3. **Open — H10 remains incremental.** `simulation_provider.dart` still carries
-   the intervention wrappers, autosave and isolate sync (~1,026 lines), and the
-   game widgets still read through `WidgetRef`. This pass deliberately did not
-   attempt the provider split, to keep the scientific change reviewable; the
-   next slice is moving the intervention commands behind a narrow controller.
+3. **Done — H10.** `simulation_provider.dart` fell from ~1,026 to ~590 lines:
+   intervention rules moved to `SimulationInterventions`, timeline storage to
+   `SimulationTimeline`, the default scenario to
+   `default_simulation_profile.dart` and particle pool arithmetic to
+   `SimulationResourceExchange`. Flame objects now receive
+   `GameProviderReader`, a snapshot-only adapter, instead of `WidgetRef`. The
+   fertilizer hook is live and tested; remaining empty overrides are Oxygen’s
+   required `PoolObject.reset` hooks, documented in place. `main.dart` stays a
+   single layout-heavy screen, which this item did not target.
 4. **Done.** `tool/release_check.sh` runs the model printout, analyzer, locale
    guards, full tests, validation gates, benchmarks and (unless `SKIP_WEB=1`)
    the web build.
 
-**Exit:** the project can state exactly what is validated, what is
-illustrative and what remains unmeasured; the release path is repeatable.
-Phase 5 meets that exit except for the ongoing H10 split (item 3).
+**Exit:** met. The project can state exactly what is validated, what is
+illustrative and what remains unmeasured, and the release path is repeatable.
+The only open Phase 5 item is the external measured dataset: without a
+`kind: "measured"` fixture with observations at known depths and times, field
+accuracy cannot be claimed.
 
 ### 7.3 Mission exit criteria
 

@@ -5,14 +5,16 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/debug_log.dart';
 import '../../domain/models/biophysical_state.dart';
+import '../../domain/models/default_simulation_profile.dart';
 import '../../domain/models/soil_profile.dart';
 import '../../domain/models/soil_layer.dart';
-import '../../domain/models/plant.dart';
-import '../../domain/actions/simulation_actions.dart';
 import '../../domain/models/scenario.dart';
 import '../../domain/solvers/particle_physics_isolate.dart';
+import '../../domain/services/simulation_interventions.dart';
 import '../../domain/services/simulation_persistence.dart';
+import '../../domain/services/simulation_resource_exchange.dart';
 import '../../domain/services/simulation_runtime.dart';
+import '../../domain/services/simulation_timeline.dart';
 import '../../domain/services/simulation_tick_processor.dart';
 import '../../domain/services/timeline_precalculation.dart';
 
@@ -32,6 +34,15 @@ bool hasTimelineHistory(List<BiophysicalState> history) => history.isNotEmpty;
 bool hasTimelineRange(List<BiophysicalState> history) =>
     history.length > 1 && history.last.timeElapsed > history.first.timeElapsed;
 
+/// Owns the simulation's Riverpod-facing concerns: engine lifecycle, tick
+/// merging, session persistence, timeline entry points and the public
+/// intervention facades.
+///
+/// The transition rules live in [SimulationInterventions], snapshot storage in
+/// [SimulationTimeline], tick reconciliation in [SimulationTickProcessor],
+/// isolate and particle lifecycle in [SimulationRuntime], and the saved-session
+/// envelope in [SimulationPersistence]. This notifier coordinates them; it does
+/// not reimplement them.
 @Riverpod(keepAlive: true)
 class Simulation extends _$Simulation {
   final SimulationPersistence _persistence = SimulationPersistence();
@@ -72,18 +83,35 @@ class Simulation extends _$Simulation {
     'score',
     'mycorrhizaState',
   };
-  // Timeline for scrubbing (entries must have `history: []` to avoid nesting).
-  final List<BiophysicalState> _history = [];
 
-  /// Immutable view handed to widgets, rebuilt only when _history changes.
-  List<BiophysicalState> _historyView = const [];
+  /// Snapshots for scrubbing; owned by [SimulationTimeline].
+  final SimulationTimeline _timeline = SimulationTimeline();
 
-  void _rebuildHistoryView() {
-    _historyView = List.unmodifiable(_history);
-  }
+  /// User-triggered interventions. The provider supplies state access, event
+  /// logging and engine sync; the transition rules live in the service.
+  late final SimulationInterventions _interventions = SimulationInterventions(
+    readState: () => state,
+    apply: (next) {
+      state = next;
+      _syncIsolate();
+    },
+    log: (message, time) =>
+        ref.read(eventLogProvider.notifier).addEvent(message, time),
+    leaveHistoryMode: _leaveHistoryMode,
+    selectedLayerId: () => ref.read(simulationSessionProvider).selectedLayerId,
+    isDisposed: () => _disposed,
+  );
 
-  BiophysicalState _stripHistory(BiophysicalState s) =>
-      s.copyWith(history: const []);
+  /// Particle-driven pool changes. Deferred writes keep collision callbacks
+  /// out of the frame and out of a disposed provider.
+  late final SimulationResourceExchange _resources = SimulationResourceExchange(
+    readState: () => state,
+    apply: (next) => state = next,
+    sync: _syncIsolate,
+    defer: (action) => Future.microtask(() {
+      if (!_disposed) action();
+    }),
+  );
 
   bool _disposed = false;
   BiophysicalState? _pendingState;
@@ -99,7 +127,7 @@ class Simulation extends _$Simulation {
     _pendingState = null;
 
     _runtime = SimulationRuntime();
-    _tickProcessor = SimulationTickProcessor(history: _history);
+    _tickProcessor = SimulationTickProcessor(history: _timeline.entries);
     _initializeRuntime();
 
     ref.onDispose(() {
@@ -107,151 +135,13 @@ class Simulation extends _$Simulation {
       _runtime.dispose();
     });
 
-    final defaultProfile = SoilProfile(
-      id: "default",
-      name: "Default Profile",
-      layers: [
-        SoilLayer(
-          id: "A1",
-          depth: 0.0,
-          thickness: 0.2,
-          kSat: 1e-6,
-          porosity: 0.45,
-          thetaR: 0.05,
-          vgAlpha: 2.0,
-          vgN: 1.4,
-          vgL: 0.5,
-          bulkDensity: 1400.0,
-          waterContent: 0.25,
-          temperature: 293.15,
-          heatCapacity: 800.0,
-          ph: 6.5,
-          ec: 0.2,
-          redoxPotential: 500.0,
-          nitrateContent: 15.0,
-          ammoniumContent: 5.0,
-          phosphateContent: 10.0,
-          potassiumContent: 25.0,
-          microbialBiomass: 40.0,
-          epsContent: 2.0,
-          fungalHyphaeDensity: 0.1,
-          necromass: 1.0,
-          organicCarbon: 25.5,
-          particulateOrganicMatter: 0.5,
-          mineralAssociatedOrganicMatter: 25.0,
-          labileCarbon: 0.5,
-          stableCarbon: 25.0,
-          nitrogenContent: 0.2,
-        ),
-        SoilLayer(
-          id: "B1",
-          depth: 0.2,
-          thickness: 0.4,
-          kSat: 5e-7,
-          porosity: 0.4,
-          thetaR: 0.06,
-          vgAlpha: 1.5,
-          vgN: 1.3,
-          vgL: 0.5,
-          bulkDensity: 1600.0,
-          waterContent: 0.3,
-          temperature: 290.15,
-          heatCapacity: 850.0,
-          ph: 7.0,
-          ec: 0.1,
-          redoxPotential: 400.0,
-          nitrateContent: 5.0,
-          ammoniumContent: 2.0,
-          phosphateContent: 5.0,
-          potassiumContent: 15.0,
-          microbialBiomass: 15.0,
-          epsContent: 0.5,
-          fungalHyphaeDensity: 0.05,
-          necromass: 0.2,
-          organicCarbon: 10.1,
-          particulateOrganicMatter: 0.1,
-          mineralAssociatedOrganicMatter: 10.0,
-          labileCarbon: 0.1,
-          stableCarbon: 10.0,
-          nitrogenContent: 0.1,
-        ),
-        SoilLayer(
-          id: "C1",
-          depth: 0.6,
-          thickness: 0.4,
-          kSat: 1e-7,
-          porosity: 0.35,
-          thetaR: 0.08,
-          vgAlpha: 1.0,
-          vgN: 1.2,
-          vgL: 0.5,
-          bulkDensity: 1800.0,
-          waterContent: 0.32,
-          temperature: 288.15,
-          heatCapacity: 900.0,
-          ph: 7.5,
-          ec: 0.1,
-          redoxPotential: 350.0,
-          nitrateContent: 1.0,
-          ammoniumContent: 1.0,
-          phosphateContent: 2.0,
-          potassiumContent: 10.0,
-          microbialBiomass: 5.0,
-          epsContent: 0.0,
-          fungalHyphaeDensity: 0.0,
-          necromass: 0.05,
-          organicCarbon: 5.02,
-          particulateOrganicMatter: 0.02,
-          mineralAssociatedOrganicMatter: 5.0,
-          labileCarbon: 0.02,
-          stableCarbon: 5.0,
-          nitrogenContent: 0.05,
-        ),
-      ],
-      surfaceAlbedo: 0.2,
-      slope: 0.0,
-    );
+    final defaultProfile = defaultSoilProfile();
     final defaultState = _initialState(defaultProfile, isInitializing: true);
 
-    final defaultEntry = _stripHistory(defaultState);
-    _history
-      ..clear()
-      ..add(defaultEntry);
-    _rebuildHistoryView();
+    final defaultEntry = SimulationTimeline.strip(defaultState);
+    _timeline.clearAndAdd(defaultEntry);
 
-    return defaultEntry.copyWith(history: _historyView);
-  }
-
-  Plant _seedPlant() {
-    return Plant(
-      id: "plant_1",
-      species: "Wheat",
-      age: 1.0,
-      height: 0.1,
-      lai: 0.1,
-      turgorPressure: 0.8,
-      rootSystem: [
-        const RootNode(x: 0.5, z: 0, radius: 0.002, isTip: false),
-        const RootNode(
-          x: 0.5,
-          z: 0.05,
-          radius: 0.0018,
-          isTip: false,
-          parentIndex: 0,
-        ),
-        const RootNode(
-          x: 0.5,
-          z: 0.12,
-          radius: 0.0015,
-          isTip: true,
-          parentIndex: 1,
-        ),
-      ],
-      nitrogenUptake: 0.0,
-      waterUptake: 0.0,
-      totalBiomass: 150.0,
-      rootBiomass: 60.0,
-    );
+    return defaultEntry.copyWith(history: _timeline.view);
   }
 
   /// Builds a clean state for [profile] at t=0 with a single seedling.
@@ -267,7 +157,7 @@ class Simulation extends _$Simulation {
   }) {
     return BiophysicalState(
       profile: profile,
-      plants: [_seedPlant().copyWith(baseX: 0.5)],
+      plants: [seedPlant().copyWith(baseX: 0.5)],
       timeElapsed: 0,
       precipitation: 0.0,
       airTemperature: 293.15,
@@ -329,13 +219,13 @@ class Simulation extends _$Simulation {
       _runtime.updateEngineState(result.eventState);
     }
     if (result.snapshotAdded) {
-      _rebuildHistoryView();
+      _timeline.refresh();
     }
 
     _pendingState = result.entry;
     Future.microtask(() {
       if (!_disposed && _pendingState != null) {
-        state = _pendingState!.copyWith(history: _historyView);
+        state = _pendingState!.copyWith(history: _timeline.view);
         _pendingState = null;
       }
     });
@@ -399,428 +289,108 @@ class Simulation extends _$Simulation {
     stop();
   }
 
-  void setSpeed(double speed) {
-    state = state.copyWith(timeScale: speed);
-    _syncIsolate();
-  }
+  void setSpeed(double speed) => _interventions.setSpeed(speed);
 
-  void setPrecipitation(double p) {
-    _leaveHistoryMode();
-    state = state.copyWith(precipitation: p);
-    _syncIsolate();
-  }
+  void setPrecipitation(double p) => _interventions.setPrecipitation(p);
 
-  void toggleAutoWeather() {
-    _leaveHistoryMode();
-    state = SimulationActions.updateWeather(
-      state,
-      state.airTemperature,
-      state.relativeHumidity,
-    ).copyWith(autoWeather: !state.autoWeather);
-    _syncIsolate();
-  }
+  void toggleAutoWeather() => _interventions.toggleAutoWeather();
 
   /// Sets the auto-weather mode explicitly so a control shown from a historical
   /// snapshot can apply the state the user actually saw.
-  void setAutoWeather(bool enabled) {
-    _leaveHistoryMode();
-    state = SimulationActions.updateWeather(
-      state,
-      state.airTemperature,
-      state.relativeHumidity,
-    ).copyWith(autoWeather: enabled);
-    _syncIsolate();
-  }
+  void setAutoWeather(bool enabled) => _interventions.setAutoWeather(enabled);
 
-  void applyCoverCrop() {
-    _leaveHistoryMode();
-    state = SimulationActions.toggleCoverCrop(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent(
-          'Cover crop ${state.hasCoverCrop ? "planted" : "removed"}.',
-          state.timeElapsed,
-        );
-    _syncIsolate();
-  }
+  void applyCoverCrop() => _interventions.applyCoverCrop();
 
   /// Sets the cover-crop state explicitly for controls that may be showing a
   /// historical snapshot rather than the live engine.
-  void setCoverCrop(bool planted) {
-    _leaveHistoryMode();
-    if (state.hasCoverCrop == planted) return;
-    state = SimulationActions.toggleCoverCrop(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent(
-          'Cover crop ${state.hasCoverCrop ? "planted" : "removed"}.',
-          state.timeElapsed,
-        );
-    _syncIsolate();
-  }
+  void setCoverCrop(bool planted) => _interventions.setCoverCrop(planted);
 
-  void applyNutrients(Map<String, double> pendingNutrients) {
-    _leaveHistoryMode();
-    final session = ref.read(simulationSessionProvider);
-    if (session.selectedLayerId == null) return;
+  void applyNutrients(Map<String, double> pendingNutrients) =>
+      _interventions.applyNutrients(pendingNutrients);
 
-    BiophysicalState newState = state;
-    pendingNutrients.forEach((symbol, amount) {
-      newState = SimulationActions.applyNutrients(
-        newState,
-        session.selectedLayerId!,
-        symbol,
-        amount,
-      );
-    });
-    state = newState;
-    _syncIsolate();
-  }
+  void triggerHeatWave() => _interventions.triggerHeatWave();
 
-  void triggerHeatWave() {
-    _leaveHistoryMode();
-    state = SimulationActions.triggerHeatWave(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('Heat wave!', state.timeElapsed);
-    _syncIsolate();
-  }
+  void triggerFlashFlood() => _interventions.triggerFlashFlood();
 
-  void triggerFlashFlood() {
-    _leaveHistoryMode();
-    state = SimulationActions.triggerFlashFlood(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('Flash flood!', state.timeElapsed);
-    _syncIsolate();
-  }
+  void updateWeather(double temperature, double humidity) =>
+      _interventions.updateWeather(temperature, humidity);
 
-  void updateWeather(double temperature, double humidity) {
-    _leaveHistoryMode();
-    state = SimulationActions.updateWeather(state, temperature, humidity);
-    _syncIsolate();
-  }
+  void updateNutrient(String layerId, String symbol, double value) =>
+      _interventions.updateNutrient(layerId, symbol, value);
 
-  void updateNutrient(String layerId, String symbol, double value) {
-    _leaveHistoryMode();
-    state = SimulationActions.applyNutrients(state, layerId, symbol, value);
-    _syncIsolate();
-  }
+  void updateSolarRadiation(double value) =>
+      _interventions.updateSolarRadiation(value);
 
-  void updateSolarRadiation(double value) {
-    _leaveHistoryMode();
-    state = state.copyWith(solarRadiationOverride: value);
-    _syncIsolate();
-  }
-
-  void updatePAR(double value) {
-    _leaveHistoryMode();
-    state = state.copyWith(solarRadiationOverride: value / 2.1);
-    _syncIsolate();
-  }
+  void updatePAR(double value) => _interventions.updatePAR(value);
 
   void updateAtmosphere({
     double? temperature,
     double? humidity,
     double? precipitation,
     double? co2,
-  }) {
-    _leaveHistoryMode();
-    state = state.copyWith(
-      airTemperature: temperature ?? state.airTemperature,
-      relativeHumidity: humidity ?? state.relativeHumidity,
-      precipitation: precipitation ?? state.precipitation,
-      atmCO2: co2 ?? state.atmCO2,
-    );
-    _syncIsolate();
-  }
+  }) => _interventions.updateAtmosphere(
+    temperature: temperature,
+    humidity: humidity,
+    precipitation: precipitation,
+    co2: co2,
+  );
 
-  bool applyTillage() {
-    _leaveHistoryMode();
-    state = SimulationActions.applyTillage(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('Soil tilled.', state.timeElapsed);
-    _syncIsolate();
-    return true;
-  }
+  bool applyTillage() => _interventions.applyTillage();
 
-  void applyIrrigation({double amountMm = 10.0}) {
-    _leaveHistoryMode();
-    state = SimulationActions.applyIrrigation(state, amountMm: amountMm);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent(
-          'Irrigation applied (${amountMm.toStringAsFixed(0)} mm).',
-          state.timeElapsed,
-        );
-    _syncIsolate();
-  }
+  void applyIrrigation({double amountMm = 10.0}) =>
+      _interventions.applyIrrigation(amountMm: amountMm);
 
-  void applyOrganicMatter() {
-    _leaveHistoryMode();
-    state = SimulationActions.applyOrganicMatter(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('Organic matter incorporated.', state.timeElapsed);
-    _syncIsolate();
-  }
+  void applyOrganicMatter() => _interventions.applyOrganicMatter();
 
-  void applyDrainage() {
-    _leaveHistoryMode();
-    state = SimulationActions.applyDrainage(state);
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('Soil drained and re-aerated.', state.timeElapsed);
-    _syncIsolate();
-  }
+  void applyDrainage() => _interventions.applyDrainage();
 
   /// Applies a one-tap fertilizer dose to the selected layer, falling back to
   /// the topsoil when the user has not selected a layer.
-  void applyQuickNutrient(String symbol, {double amount = 20.0}) {
-    _leaveHistoryMode();
-    if (state.profile.layers.isEmpty) return;
-
-    final selectedLayer = ref.read(simulationSessionProvider).selectedLayerId;
-    final targetLayer = selectedLayer != null && selectedLayer != 'atmosphere'
-        ? selectedLayer
-        : state.profile.layers.first.id;
-    state = SimulationActions.applyNutrients(
-      state,
-      targetLayer,
-      symbol,
-      amount,
-    );
-    ref
-        .read(eventLogProvider.notifier)
-        .addEvent('$symbol applied to $targetLayer.', state.timeElapsed);
-    _syncIsolate();
-  }
+  void applyQuickNutrient(String symbol, {double amount = 20.0}) =>
+      _interventions.applyQuickNutrient(symbol, amount: amount);
 
   /// Functional update pattern for soil layers.
   /// Decouples the UI from the internal structure of the SoilLayer.
-  void updateLayer(String layerId, SoilLayer Function(SoilLayer) transform) {
-    final List<SoilLayer> newLayers = state.profile.layers.map<SoilLayer>((l) {
-      if (l.id == layerId) {
-        return transform(l);
-      }
-      return l;
-    }).toList();
+  void updateLayer(String layerId, SoilLayer Function(SoilLayer) transform) =>
+      _interventions.updateLayer(layerId, transform);
 
-    if (_disposed) return;
-    _leaveHistoryMode();
-    // Apply synchronously so a dragged slider never lags a frame behind.
-    state = state.copyWith(profile: state.profile.copyWith(layers: newLayers));
-    _syncIsolate();
-  }
+  /// Convenience wrapper for updating a single soil layer parameter by string
+  /// name.
+  void updateLayerParameter(String layerId, String param, double value) =>
+      _interventions.updateLayerParameter(layerId, param, value);
 
-  /// Convenience wrapper for updating a single soil layer parameter by string name.
-  void updateLayerParameter(String layerId, String param, double value) {
-    updateLayer(layerId, (l) {
-      switch (param) {
-        case 'kSat':
-          return l.copyWith(kSat: value);
-        case 'vgAlpha':
-          return l.copyWith(vgAlpha: value);
-        case 'vgN':
-          return l.copyWith(vgN: value);
-        case 'sandFraction':
-          return l.copyWith(sandFraction: value);
-        case 'siltFraction':
-          return l.copyWith(siltFraction: value);
-        case 'clayFraction':
-          return l.copyWith(clayFraction: value);
-        case 'organicCarbon':
-          return l.copyWith(organicCarbon: value);
-        case 'bulkDensity':
-          return l.copyWith(bulkDensity: value);
-        case 'porosity':
-          return l.copyWith(porosity: value);
-        case 'nitrateContent':
-          return l.copyWith(nitrateContent: value);
-        case 'phosphateContent':
-          return l.copyWith(phosphateContent: value);
-        case 'potassiumContent':
-          return l.copyWith(potassiumContent: value);
-        default:
-          return l;
-      }
-    });
-  }
+  /// Particle-layer resource exchange. The provider owns state and engine
+  /// sync; [SimulationResourceExchange] owns the pool arithmetic.
+  void absorbNutrient(String plantId, String symbol, double amount) =>
+      _resources.absorbNutrient(plantId, symbol, amount);
 
-  /// Updates plant state by absorbing a nutrient amount.
-  /// Triggered by Flame collision events between roots and nutrient particles.
-  void absorbNutrient(String plantId, String symbol, double amount) {
-    final List<Plant> updatedPlants = state.plants.map((p) {
-      if (p.id == plantId) {
-        switch (symbol) {
-          case 'Ca':
-            return p.copyWith(calciumUptake: p.calciumUptake + amount);
-          case 'Mg':
-            return p.copyWith(magnesiumUptake: p.magnesiumUptake + amount);
-          case 'N':
-            return p.copyWith(nitrogenUptake: p.nitrogenUptake + amount);
-          case 'P':
-            return p.copyWith(phosphorusUptake: p.phosphorusUptake + amount);
-          default:
-            return p;
-        }
-      }
-      return p;
-    }).toList();
+  bool consumePotassium(String layerId, double amount) =>
+      _resources.consumePotassium(layerId, amount);
 
-    Future.microtask(() {
-      if (!_disposed) state = state.copyWith(plants: updatedPlants);
-    });
-  }
+  bool consumeResource(String layerId, String resourceType, double amount) =>
+      _resources.consumeResource(layerId, resourceType, amount);
 
-  /// Consumes potassium from the soil pool (e.g., when spawning particles).
-  bool consumePotassium(String layerId, double amount) {
-    final List<SoilLayer> newLayers = state.profile.layers.map<SoilLayer>((l) {
-      if (l.id == layerId && l.potassiumContent >= amount) {
-        return l.copyWith(potassiumContent: l.potassiumContent - amount);
-      }
-      return l;
-    }).toList();
-
-    bool changed = false;
-    for (int i = 0; i < state.profile.layers.length; i++) {
-      if (state.profile.layers[i].potassiumContent !=
-          newLayers[i].potassiumContent) {
-        changed = true;
-        break;
-      }
-    }
-
-    if (changed) {
-      Future.microtask(() {
-        if (!_disposed) {
-          state = state.copyWith(
-            profile: state.profile.copyWith(layers: newLayers),
-          );
-          _syncIsolate();
-        }
-      });
-      return true;
-    }
-    return false;
-  }
-
-  /// Generic resource consumption for visual synchronization.
-  bool consumeResource(String layerId, String resourceType, double amount) {
-    final List<SoilLayer> newLayers = state.profile.layers.map<SoilLayer>((l) {
-      if (l.id == layerId) {
-        switch (resourceType) {
-          case 'labileCarbon':
-            if (l.labileCarbon >= amount) {
-              return l.copyWith(labileCarbon: l.labileCarbon - amount);
-            }
-            break;
-          case 'nitrate':
-            if (l.nitrateContent >= amount) {
-              return l.copyWith(nitrateContent: l.nitrateContent - amount);
-            }
-            break;
-          case 'ammonium':
-            if (l.ammoniumContent >= amount) {
-              return l.copyWith(ammoniumContent: l.ammoniumContent - amount);
-            }
-            break;
-        }
-      }
-      return l;
-    }).toList();
-
-    Future.microtask(() {
-      if (!_disposed) {
-        state = state.copyWith(
-          profile: state.profile.copyWith(layers: newLayers),
-        );
-        _syncIsolate();
-      }
-    });
-    return true;
-  }
-
-  /// Consumes a small amount of gas from the soil pool.
-  /// Used by visual bubble emitters to maintain mass conservation.
-  bool consumeGas(String layerId, String gasSymbol, double amount) {
-    final List<SoilLayer> newLayers = state.profile.layers.map<SoilLayer>((l) {
-      if (l.id == layerId) {
-        switch (gasSymbol) {
-          case 'CO2':
-            if (l.co2Content >= amount) {
-              return l.copyWith(co2Content: l.co2Content - amount);
-            }
-            break;
-          case 'CH4':
-            if (l.methaneContent >= amount) {
-              return l.copyWith(methaneContent: l.methaneContent - amount);
-            }
-            break;
-          case 'N2O':
-            if (l.nitrousOxideContent >= amount) {
-              return l.copyWith(
-                nitrousOxideContent: l.nitrousOxideContent - amount,
-              );
-            }
-            break;
-          case 'O2':
-            // Oxygen actually increases when bubbles diffuse in
-            return l.copyWith(oxygenContent: l.oxygenContent + amount);
-        }
-      }
-      return l;
-    }).toList();
-
-    bool changed = false;
-    for (int i = 0; i < state.profile.layers.length; i++) {
-      final oldL = state.profile.layers[i];
-      final newL = newLayers[i];
-      if (oldL.co2Content != newL.co2Content ||
-          oldL.methaneContent != newL.methaneContent ||
-          oldL.nitrousOxideContent != newL.nitrousOxideContent ||
-          oldL.oxygenContent != newL.oxygenContent) {
-        changed = true;
-        break;
-      }
-    }
-
-    if (changed) {
-      Future.microtask(() {
-        if (!_disposed) {
-          state = state.copyWith(
-            profile: state.profile.copyWith(layers: newLayers),
-          );
-          _syncIsolate();
-        }
-      });
-      return true;
-    }
-    return false;
-  }
+  bool consumeGas(String layerId, String gasSymbol, double amount) =>
+      _resources.consumeGas(layerId, gasSymbol, amount);
 
   Future<void> _saveState() => _persistence.save(state);
 
   Future<bool> hasSavedState() => _persistence.hasSavedState(
     // A run that has started but has not reached the periodic save yet.
     // A pristine provider only has the default entry, not a session.
-    hasLiveRun: _history.length > 1,
+    hasLiveRun: _timeline.length > 1,
   );
 
   Future<bool> loadLastState() async {
     final loadedState = await _persistence.load();
     if (loadedState != null) {
-      _history
-        ..clear()
-        ..add(_stripHistory(loadedState));
-      _rebuildHistoryView();
-      state = loadedState.copyWith(history: _historyView);
+      _timeline.clearAndAdd(SimulationTimeline.strip(loadedState));
+      state = loadedState.copyWith(history: _timeline.view);
       _syncIsolate();
       return true;
     }
-    if (_history.length > 1) {
-      state = _history.last.copyWith(history: _historyView);
+    if (_timeline.length > 1) {
+      state = _timeline.last.copyWith(history: _timeline.view);
       return true;
     }
     return false;
@@ -830,12 +400,12 @@ class Simulation extends _$Simulation {
     // The starting snapshot is enough to enter the timeline view. There is no
     // range to scrub until a second snapshot exists, but the view itself is
     // available from launch and can show where the run began.
-    if (_history.isEmpty) return;
+    if (_timeline.isEmpty) return;
     stop(); // Pause simulation while scrubbing
     ref.read(simulationSessionProvider.notifier).setScrubbing(true);
     ref
         .read(simulationSessionProvider.notifier)
-        .setViewTime(_history.last.timeElapsed);
+        .setViewTime(_timeline.last.timeElapsed);
   }
 
   void stopScrubbing() {
@@ -862,7 +432,7 @@ class Simulation extends _$Simulation {
     // previous scenario into the fresh one.
     _runtime.stop();
 
-    final initial = _stripHistory(
+    final initial = SimulationTimeline.strip(
       _initialState(
         scenario.initialProfile,
         scenario: scenario,
@@ -870,12 +440,9 @@ class Simulation extends _$Simulation {
       ),
     );
 
-    _history
-      ..clear()
-      ..add(initial);
-    _rebuildHistoryView();
+    _timeline.clearAndAdd(initial);
 
-    state = initial.copyWith(history: _historyView, isInitializing: false);
+    state = initial.copyWith(history: _timeline.view, isInitializing: false);
 
     // Selection, microscope and inspection state belong to the run being
     // replaced. Leaving them behind makes a new scenario open with a stale
@@ -904,7 +471,7 @@ class Simulation extends _$Simulation {
     state = state.copyWith(isRunning: false);
     _runtime.stop();
 
-    final startState = _stripHistory(state);
+    final startState = SimulationTimeline.strip(state);
     final computedHistory = <BiophysicalState>[startState];
     var cursor = startState;
     var processedDays = 0;
@@ -934,13 +501,10 @@ class Simulation extends _$Simulation {
       await Future<void>.delayed(Duration.zero);
     }
 
-    _history
-      ..clear()
-      ..addAll(computedHistory);
-    _rebuildHistoryView();
+    _timeline.clearAndAddAll(computedHistory);
 
     state = computedHistory.first.copyWith(
-      history: _historyView,
+      history: _timeline.view,
       isInitializing: false,
     );
     ref
@@ -990,7 +554,7 @@ BiophysicalState displayedSimulationState(Ref ref) {
     final index = nearestHistorySnapshotIndex(history, session.viewTime);
     // Keep the run's timeline on the displayed snapshot. Report and validation
     // widgets need the full run history even while the visible values come
-    // from a historical snapshot; the actual _history entries stay stripped.
+    // from a historical snapshot; the stored timeline entries stay stripped.
     return history[index].copyWith(history: history);
   }
   return simState;
