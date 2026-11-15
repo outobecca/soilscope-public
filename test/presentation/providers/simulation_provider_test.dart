@@ -130,6 +130,26 @@ void main() {
       expect(state.currentScenario?.id, 'second');
     });
 
+    test('repeated scenario loads keep resetting the session', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+      final session = container.read(simulationSessionProvider.notifier);
+
+      for (final id in ['first', 'second', 'third']) {
+        notifier.loadScenario(_scenario(id));
+        session.selectLayer('A1');
+        await Future<void>.delayed(Duration.zero);
+
+        final state = container.read(simulationProvider);
+        expect(state.currentScenario?.id, id);
+        expect(state.timeElapsed, 0);
+        expect(state.history, hasLength(1));
+        expect(state.isRunning, isFalse);
+        expect(container.read(simulationSessionProvider).selectedLayerId, 'A1');
+      }
+    });
+
     test(
       'loading a scenario clears inspection and HUD selection state',
       () async {

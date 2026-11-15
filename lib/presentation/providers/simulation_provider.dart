@@ -392,6 +392,13 @@ class Simulation extends _$Simulation {
     _saveState();
   }
 
+  /// Stops without touching a provider that is already being torn down.
+  /// Used by route disposal, which can run after the provider scope closes.
+  void stopIfMounted() {
+    if (!ref.mounted) return;
+    stop();
+  }
+
   void setSpeed(double speed) {
     state = state.copyWith(timeScale: speed);
     _syncIsolate();

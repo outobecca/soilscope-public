@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Simulation;
 import 'core/debug_log.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,13 +93,18 @@ class MainSimulationScreen extends ConsumerStatefulWidget {
       _MainSimulationScreenState();
 }
 
-class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
+class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
+    with WidgetsBindingObserver {
   bool _initialized = false;
   bool _initializing = false;
+  bool _resumeAfterBackground = false;
+  late final Simulation _simulation;
 
   @override
   void initState() {
     super.initState();
+    _simulation = ref.read(simulationProvider.notifier);
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final screenWidth = MediaQuery.of(context).size.width;
       if (screenWidth >= AppTheme.expandedBreakpoint) {
@@ -108,6 +113,42 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen> {
       }
       ref.read(tutorialProvider.notifier).checkFirstTimeOnboarding();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // The simulation provider is keep-alive. Leaving this route must stop the
+    // engine and persist the current session instead of leaving it running
+    // behind the selection screen.
+    if (_initialized) {
+      // Provider state cannot be modified during dispose(); defer the stop
+      // until the current frame has finished unwinding the route.
+      Future.microtask(_simulation.stopIfMounted);
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final isBackground = state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached;
+    if (isBackground) {
+      if (!_initialized || _resumeAfterBackground) return;
+      _resumeAfterBackground = ref.read(simulationProvider).isRunning;
+      // A paused run still needs a final save before the process is suspended.
+      _simulation.stop();
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed &&
+        _resumeAfterBackground &&
+        _initialized &&
+        mounted) {
+      _resumeAfterBackground = false;
+      _simulation.start();
+    }
   }
 
   void _initSimulation() {
