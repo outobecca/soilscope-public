@@ -55,8 +55,21 @@ jobs:
       - name: Check Hardcoded Finnish
         run: python3 tool/check_hardcoded_finnish.py
 
+      - name: Check Localization
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$base" ]; then
+            base="HEAD^"
+          else
+            base="$(git merge-base "$base" HEAD)"
+          fi
+          python3 tool/check_l10n.py --base "$base"
+
       - name: Run Tests
-        run: flutter test --no-pub
+        run: flutter test --no-pub --coverage
+
+      - name: Check Domain Coverage
+        run: python3 tool/check_coverage.py
 
       - name: Build Flutter Web
         run: flutter build web --release --base-href /soilscope-public/

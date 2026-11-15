@@ -4329,7 +4329,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'SENSOR: {id}'**
-  String sensorTitle(Object id);
+  String sensorTitle(String id);
 
   /// No description provided for @sensorDesc.
   ///
@@ -4359,7 +4359,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{id}-Horizon'**
-  String horizonLabel(Object id);
+  String horizonLabel(String id);
 
   /// No description provided for @phDependence.
   ///
@@ -5151,7 +5151,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Nutrients for {id}'**
-  String nutrientsForLayer(Object id);
+  String nutrientsForLayer(String id);
 
   /// No description provided for @nitrateN.
   ///

@@ -826,11 +826,25 @@
   "saturationLabel": "Kyllästysaste",
   "wiltingPointLabel": "Lakastumispiste",
   "sensorTitle": "ANTURI: {id}",
+  "@sensorTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "sensorDesc": "Reaaliaikainen mittaus maaprofiilista.",
   "bindingIonsLabel": "Sitoutuneet ionit",
   "activeUptake": "Aktiivinen (ATP)",
   "passiveUptake": "Passiivinen (massavirta)",
   "horizonLabel": "{id}-horisontti",
+  "@horizonLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "phDependence": "pH-riippuvuus",
   "transpirationSuction": "Haihdutusimu",
   "negativePotential": "Negatiivinen vesipotentiaali (Ψ)",
@@ -964,6 +978,13 @@
   "spacDescription": "Maaperä-Kasvi-Ilmakehä-jatkumo (SPAC) kuvaa veden jatkuvaa virtausta maasta juurten ja ksyleemin kautta lehtiin, josta se haihtuu ilmaan.",
   "layerControls": "Kerroskohtaiset säädöt",
   "nutrientsForLayer": "Ravinteet kerrokselle {id}",
+  "@nutrientsForLayer": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "nitrateN": "Nitraatti (N)",
   "phosphateP": "Fosfaatti (P)",
   "potassiumK": "Kalium (K)",

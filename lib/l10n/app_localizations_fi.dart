@@ -2160,7 +2160,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get wiltingPointLabel => 'Lakastumispiste';
 
   @override
-  String sensorTitle(Object id) {
+  String sensorTitle(String id) {
     return 'ANTURI: $id';
   }
 
@@ -2177,7 +2177,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get passiveUptake => 'Passiivinen (massavirta)';
 
   @override
-  String horizonLabel(Object id) {
+  String horizonLabel(String id) {
     return '$id-horisontti';
   }
 
@@ -2575,7 +2575,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get layerControls => 'Kerroskohtaiset säädöt';
 
   @override
-  String nutrientsForLayer(Object id) {
+  String nutrientsForLayer(String id) {
     return 'Ravinteet kerrokselle $id';
   }
 

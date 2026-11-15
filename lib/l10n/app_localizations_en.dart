@@ -2160,7 +2160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wiltingPointLabel => 'Wilting Point';
 
   @override
-  String sensorTitle(Object id) {
+  String sensorTitle(String id) {
     return 'SENSOR: $id';
   }
 
@@ -2177,7 +2177,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passiveUptake => 'Passive (Mass flow)';
 
   @override
-  String horizonLabel(Object id) {
+  String horizonLabel(String id) {
     return '$id-Horizon';
   }
 
@@ -2575,7 +2575,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get layerControls => 'Layer Controls';
 
   @override
-  String nutrientsForLayer(Object id) {
+  String nutrientsForLayer(String id) {
     return 'Nutrients for $id';
   }
 

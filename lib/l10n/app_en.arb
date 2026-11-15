@@ -837,11 +837,25 @@
   "saturationLabel": "Saturation Degree",
   "wiltingPointLabel": "Wilting Point",
   "sensorTitle": "SENSOR: {id}",
+  "@sensorTitle": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "sensorDesc": "Real-time measurement from the soil profile.",
   "bindingIonsLabel": "Binding Ions",
   "activeUptake": "Active (ATP)",
   "passiveUptake": "Passive (Mass flow)",
   "horizonLabel": "{id}-Horizon",
+  "@horizonLabel": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "phDependence": "pH Dependence",
   "transpirationSuction": "Transpiration suction",
   "negativePotential": "Negative water potential (Ψ)",
@@ -974,6 +988,13 @@
   "spacDescription": "The Soil-Plant-Atmosphere Continuum (SPAC) describes the continuous water flow from soil through roots and xylem to leaves, where it evaporates into the air.",
   "layerControls": "Layer Controls",
   "nutrientsForLayer": "Nutrients for {id}",
+  "@nutrientsForLayer": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
   "nitrateN": "Nitrate (N)",
   "phosphateP": "Phosphate (P)",
   "potassiumK": "Potassium (K)",
