@@ -536,9 +536,10 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub`: 175 tests passing across 47 test files.
-- Working tree: 23 tracked files modified (about 1,270 insertions) plus three
-  new test paths; the changes are not yet committed.
+- `flutter test --no-pub`: 177 tests passing across 48 test files.
+- Working tree: clean; the previous change set is split into reviewable
+  commits, followed by the lifecycle/fertilizer regression coverage.
+- `flutter build web --release --base-href /soilscope-public/`: succeeds.
 - Latest local desktop frame profile from the pinned-inspection work: build
   ~11 ms, raster ~25 ms, total ~38 ms (~27 FPS). This is a desktop snapshot,
   not a release-device matrix; raster remains the bottleneck.
@@ -563,6 +564,12 @@ effect can be skipped with no error.
 loads the screen, reads the provider after the post-frame callback and
 asserts a non-null game; leaving the route clears the reference.
 
+**Resolved (Phase 0):** `FlameSimulationView` watches
+`soilScopeGameProviderProvider` for the lifetime of the route, keeping the
+auto-dispose provider alive. `game_lifecycle_fertilizer_test` asserts the
+provider returns the same live game as the `GameWidget` and returns `null`
+after the view is removed.
+
 #### H2 — The fertilizer visual effect is a no-op · P2
 
 `SoilScopeGame.triggerFertilizerEffect` has an empty body
@@ -574,6 +581,11 @@ the user never sees the promised canvas response.
 **Acceptance:** either implement a bounded, pooled particle/soil response, or
 remove the call and the unused colors map. The chosen behavior is covered by
 a widget or game test.
+
+**Resolved (Phase 0):** `triggerFertilizerEffect` now adds a bounded
+`FertilizerEffectComponent` at the root zone, draws the applied nutrient
+colours, and removes itself after 1.4 s. The regression test applies a
+fertilizer mix and asserts that the canvas world gains a visual response.
 
 #### H3 — Session persistence uses the wrong tier and hides corruption · P2
 
@@ -599,6 +611,16 @@ build.
 **Acceptance:** a separate PR/push workflow runs analyzer, formatting, tests,
 the Finnish-string guard and a web build on every pull request; heavy
 device/browser checks are allowed to be scheduled jobs rather than blockers.
+
+**Resolved (Phase 0):** `.github/workflows/pr_quality.yml` gates every pull
+request and non-`master` branch push on formatting, analysis, the Finnish
+string guard, the full test suite and a release web build. The formatter is a
+ratchet (`tool/check_dart_format.py`): new files and files already formatted
+at the comparison base must stay formatted, while pre-existing formatting
+debt does not force a giant unrelated rewrite. Deploy remains in
+`deploy_web.yml`. The workflow must be marked as a required status check in
+GitHub branch protection to block merges; that repository setting is not
+stored in the tree.
 
 #### H5 — Canvas interaction coverage is still thin · P2
 
@@ -688,6 +710,16 @@ Phase 1 and Phase 2 can run in parallel once the tree is stable.
 
 **Exit:** clean, reviewable commits; all checks green; H1/H2 failures are
 reproducible in tests rather than only in prose.
+
+**Status (2026-11-15): complete.** Six reviewable commits split the prior
+work (interventions/scoring, chrome, rendering performance, paused
+inspection, quick guide, audit record). The new H1/H2 tests failed with
+`Actual: <null>` and an unchanged world child count, then passed after the
+provider subscription and bounded fertilizer pulse were added. Final local
+checks: `flutter analyze --no-pub --fatal-infos` clean, `flutter test --no-pub`
+177/177 passing across 48 files, the Finnish guard and formatting ratchet
+passing, and `flutter build web --release --base-href /soilscope-public/`
+succeeding. The PR gate is separate from the Pages deployment.
 
 #### Phase 1 — Runtime ownership and persistence (2–4 days)
 
