@@ -47,8 +47,9 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     final int numNodesToSpawn = 2 + _random.nextInt(3); // Spawn 2 to 4 nodes
     const double hotspotRadius = 24.0;
     const double expansionRadius = 60.0;
-    // Minimum gap must accommodate two fully-expanded nodes (radius + expansion
-    // on each side) so they never overlap when both are opened simultaneously.
+    // A tap is routed to the topmost TapCallbacks component at the point.
+    // Keep expanded clusters separated so the winner is unambiguous; the gap
+    // accommodates two fully-expanded nodes (radius + expansion on each side).
     final double minCenterToCenterDistance =
         (hotspotRadius + expansionRadius) * 2;
     final double minDistanceSq =

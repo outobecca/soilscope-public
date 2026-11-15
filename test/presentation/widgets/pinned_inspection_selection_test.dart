@@ -12,6 +12,7 @@ import 'package:soilscope/presentation/providers/ui_state_provider.dart';
 import 'package:soilscope/presentation/widgets/flame_simulation_view.dart';
 import 'package:soilscope/presentation/widgets/game/components/data_hotspot_component.dart';
 import 'package:soilscope/presentation/widgets/game/components/expandable_hotspot_node.dart';
+import 'package:soilscope/presentation/widgets/game/components/soil_layer_component.dart';
 import 'package:soilscope/presentation/widgets/game/soil_scope_game.dart';
 
 void main() {
@@ -117,11 +118,26 @@ void main() {
         tester.widget<GameWidget>(gameWidgetFinder).game as SoilScopeGame;
     final topLeft = tester.getTopLeft(gameWidgetFinder);
 
+    final layers = game.world.children.whereType<SoilLayerComponent>().toList();
+    expect(layers.length, 1, reason: 'one layer must have one scene component');
+
     final nodes = game.world
         .descendants()
         .whereType<ExpandableHotspotNode>()
         .toList();
     expect(nodes.length, greaterThanOrEqualTo(2));
+    final nodePositions = nodes
+        .map(
+          (node) =>
+              '${node.layerId}:${node.position.x.toStringAsFixed(1)}:'
+              '${node.position.y.toStringAsFixed(1)}',
+        )
+        .toSet();
+    expect(
+      nodePositions.length,
+      nodes.length,
+      reason: 'each expandable hotspot must have a unique position',
+    );
 
     Offset screenOf(PositionComponent component) {
       final pos = game.worldToScreen(

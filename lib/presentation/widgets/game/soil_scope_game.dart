@@ -89,6 +89,7 @@ class SoilScopeGame extends FlameGame
   }
 
   late final Component technicalHotspotLayer;
+  final Map<String, SoilLayerComponent> _layerComponents = {};
   MoleculeParticlePool? moleculePool;
 
   @override
@@ -469,6 +470,7 @@ class SoilScopeGame extends FlameGame
   void onRemove() {
     debugLog('[SoilScopeGame] onRemove');
     _animationClock.reset();
+    _layerComponents.clear();
     super.onRemove();
   }
 
@@ -519,11 +521,6 @@ class SoilScopeGame extends FlameGame
 
   void _updateScene(BiophysicalState state, SimulationSessionState session) {
     _scenarioProcessProfile = ScenarioProcessProfile.fromState(state);
-    final currentLayers = world.children.query<SoilLayerComponent>();
-    final Map<String, SoilLayerComponent> layerMap = {
-      for (var l in currentLayers) l.layerId: l,
-    };
-
     final double soilAreaY = soilSurfaceY;
     final double soilAreaHeight = soilColumnHeight;
     final double soilX = soilLeftX;
@@ -533,10 +530,9 @@ class SoilScopeGame extends FlameGame
     final activeLayers = state.profile.layers;
     final activeIds = activeLayers.map((l) => l.id).toSet();
 
-    for (var layerId in layerMap.keys.toList()) {
+    for (var layerId in _layerComponents.keys.toList()) {
       if (!activeIds.contains(layerId)) {
-        layerMap[layerId]?.removeFromParent();
-        layerMap.remove(layerId);
+        _layerComponents.remove(layerId)?.removeFromParent();
       }
     }
 
@@ -557,7 +553,7 @@ class SoilScopeGame extends FlameGame
       );
       final bool isSelected = session.selectedLayerId == layer.id;
 
-      final existing = layerMap[layer.id];
+      final existing = _layerComponents[layer.id];
       final SoilLayerComponent layerComp;
       if (existing != null) {
         layerComp = existing;
@@ -568,6 +564,10 @@ class SoilScopeGame extends FlameGame
           initialRect: layerRect,
           isSelected: isSelected,
         );
+        // Keep the reference before Flame mounts the component. A second scene
+        // update in the same frame would otherwise miss the pending layer and
+        // add a duplicate (and duplicate hotspot nodes).
+        _layerComponents[layer.id] = layerComp;
         world.add(layerComp);
       }
 
