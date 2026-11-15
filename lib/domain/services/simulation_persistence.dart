@@ -1,32 +1,34 @@
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/debug_log.dart';
 import '../models/biophysical_state.dart';
 
-/// Reads and writes the resumable session, including the one-way migration
-/// from SharedPreferences to secure storage.
+/// Reads and writes the resumable session in platform preferences.
 ///
-/// Keeping this out of the notifier leaves the provider to own the runtime and
-/// command flow, which is what makes the save/load path testable in isolation.
+/// Session state is not a secret. Keeping it out of secure storage avoids the
+/// platform and web failure modes of that plugin while still using an
+/// on-device, non-sensitive store. Saves carry a small version envelope so a
+/// future format can be migrated or rejected deliberately instead of being
+/// mistaken for a valid session.
 class SimulationPersistence {
-  static const String stateKey = 'last_biophysical_state';
+  static const String stateKey = 'simulation_session';
+  static const String legacyStateKey = 'last_biophysical_state';
+  static const int formatVersion = 1;
 
-  final FlutterSecureStorage _storage;
   final Future<SharedPreferences> Function() _preferences;
 
-  SimulationPersistence({
-    FlutterSecureStorage? storage,
-    Future<SharedPreferences> Function()? preferences,
-  }) : _storage =
-           storage ?? const FlutterSecureStorage(aOptions: AndroidOptions()),
-       _preferences = preferences ?? SharedPreferences.getInstance;
+  SimulationPersistence({Future<SharedPreferences> Function()? preferences})
+    : _preferences = preferences ?? SharedPreferences.getInstance;
 
   Future<void> save(BiophysicalState state) async {
     try {
-      await _storage.write(key: stateKey, value: jsonEncode(state.toJson()));
+      final prefs = await _preferences();
+      final written = await prefs.setString(stateKey, _encode(state));
+      if (written) {
+        await prefs.remove(legacyStateKey);
+      }
     } catch (error) {
       debugLog('Error saving state: $error');
     }
@@ -34,54 +36,83 @@ class SimulationPersistence {
 
   Future<bool> hasSavedState({required bool hasLiveRun}) async {
     try {
-      if (await _storage.containsKey(key: stateKey)) return true;
-    } catch (error) {
-      debugLog('Error checking secure storage for saved state: $error');
-    }
-
-    try {
       final prefs = await _preferences();
-      if (prefs.containsKey(stateKey)) return true;
+      return prefs.containsKey(stateKey) ||
+          prefs.containsKey(legacyStateKey) ||
+          hasLiveRun;
     } catch (error) {
-      debugLog('Error checking saved state in preferences: $error');
+      debugLog('Error checking saved state: $error');
+      return hasLiveRun;
     }
-
-    return hasLiveRun;
   }
 
   Future<BiophysicalState?> load() async {
-    String? jsonStr;
+    final SharedPreferences prefs;
     try {
-      jsonStr = await _storage.read(key: stateKey);
+      prefs = await _preferences();
     } catch (error) {
-      debugLog('Error reading secure storage for saved state: $error');
+      debugLog('Error opening saved state: $error');
+      return null;
     }
 
-    if (jsonStr == null) {
-      try {
-        final prefs = await _preferences();
-        jsonStr = prefs.getString(stateKey);
-        if (jsonStr != null) {
-          try {
-            await _storage.write(key: stateKey, value: jsonStr);
-            await prefs.remove(stateKey);
-          } catch (error) {
-            debugLog('Error migrating saved state: $error');
-          }
-        }
-      } catch (error) {
-        debugLog('Error reading saved state from preferences: $error');
+    final encoded = prefs.getString(stateKey);
+    if (encoded != null) {
+      final state = _decodeVersioned(encoded);
+      if (state == null) {
+        await _discard(prefs, stateKey);
       }
+      return state;
     }
 
-    if (jsonStr == null) return null;
+    final legacy = prefs.getString(legacyStateKey);
+    if (legacy == null) return null;
+
+    final state = _decodeLegacy(legacy);
+    if (state == null) {
+      await _discard(prefs, legacyStateKey);
+      return null;
+    }
+
+    // Upgrade the pre-versioned raw JSON. save() removes the legacy key only
+    // after the versioned value has been written successfully.
+    await save(state);
+    return state;
+  }
+
+  String _encode(BiophysicalState state) =>
+      jsonEncode({'version': formatVersion, 'state': state.toJson()});
+
+  BiophysicalState? _decodeVersioned(String encoded) {
     try {
-      return BiophysicalState.fromJson(
-        jsonDecode(jsonStr) as Map<String, dynamic>,
-      );
+      final envelope = jsonDecode(encoded);
+      if (envelope is! Map<String, dynamic>) return null;
+      if (envelope['version'] != formatVersion) return null;
+      final data = envelope['state'];
+      if (data is! Map<String, dynamic>) return null;
+      return BiophysicalState.fromJson(data);
     } catch (error) {
       debugLog('Error loading saved state: $error');
       return null;
+    }
+  }
+
+  BiophysicalState? _decodeLegacy(String encoded) {
+    try {
+      final data = jsonDecode(encoded);
+      if (data is! Map<String, dynamic>) return null;
+      return BiophysicalState.fromJson(data);
+    } catch (error) {
+      debugLog('Error loading legacy saved state: $error');
+      return null;
+    }
+  }
+
+  Future<void> _discard(SharedPreferences prefs, String key) async {
+    debugLog('Discarding unreadable saved state at $key');
+    try {
+      await prefs.remove(key);
+    } catch (error) {
+      debugLog('Error clearing unreadable saved state: $error');
     }
   }
 }

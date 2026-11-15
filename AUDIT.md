@@ -307,7 +307,7 @@ Some may be referenced dynamically through provider names, but `soil_solver` (a 
 #### F2 — Three files carry a disproportionate share · P2
 At audit time: `animated_plant_component.dart` 2,405 lines, `hud_dashboard.dart` 918, `simulation_provider.dart` 832, `logic_lab_screen.dart` 812. The plant component mixed growth, rendering, morphing and root drawing; the provider mixed isolate lifecycle, persistence, simulation actions and UI merging.
 
-**Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (secure storage/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
+**Fix:** extract the provider's concerns into `SimulationRuntime` (isolate lifecycle), `SimulationPersistence` (preferences/migration) and `SimulationCommands` (user actions). Extract the plant painter from its animation logic.
 
 **Resolved:** `SimulationPersistence` owns storage, migration and load/save; `SimulationRuntime` owns the isolate lifecycle, initialization watchdog, tick subscription and particle dispatch (`lib/domain/services/simulation_runtime.dart`); `SimulationTickProcessor` owns merge rules, cultivation events and history snapshots (`lib/domain/services/simulation_tick_processor.dart`); pre-calculation moved to `lib/domain/services/timeline_precalculation.dart`; 1,334 lines of drawing code moved to `animated_plant_component_painting.dart` (1,390 lines including its extension wrapper). The provider is 853 lines, `hud_dashboard.dart` is 520 lines with four focused parts under `widgets/hud/`, and `logic_lab_screen.dart` is 371 lines with graph examples and the grid in `screens/logic_lab/`. The public provider API (`start`, `stop`, `loadScenario`, `particleIsolate`, and the command methods) is unchanged.
 
@@ -536,7 +536,7 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub`: 177 tests passing across 48 test files.
+- `flutter test --no-pub`: 185 tests passing across 49 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - `flutter build web --release --base-href /soilscope-public/`: succeeds.
@@ -600,6 +600,17 @@ corrupt save looks like “no saved session.”
 secure storage is reserved for credentials, corrupted saves surface a
 recoverable message, and a migration test covers old and new formats.
 
+**Resolved (Phase 1):** `SimulationPersistence` now uses SharedPreferences
+only. Saves live under `simulation_session` in a `{version: 1, state: ...}`
+envelope; the pre-versioned raw `last_biophysical_state` value is migrated on
+first load and removed only after the new value is written. Unreadable
+payloads and unsupported versions are deleted instead of being treated as a
+valid session, so the existing `resumeFailed` snackbar is shown and the
+resume card refreshes to its locked state. `flutter_secure_storage` and its
+platform plugins are removed. Tests cover versioned save/load, legacy
+migration, corrupt versioned and legacy payloads, an unsupported version and
+resume availability; a provider test covers the corrupt-session path.
+
 #### H4 — CI validates only pushes to `master`, not pull requests · P2
 
 `.github/workflows/deploy_web.yml` runs analyzer, tests and a web build, but
@@ -612,15 +623,16 @@ build.
 the Finnish-string guard and a web build on every pull request; heavy
 device/browser checks are allowed to be scheduled jobs rather than blockers.
 
-**Resolved (Phase 0):** `.github/workflows/pr_quality.yml` gates every pull
-request and non-`master` branch push on formatting, analysis, the Finnish
-string guard, the full test suite and a release web build. The formatter is a
-ratchet (`tool/check_dart_format.py`): new files and files already formatted
-at the comparison base must stay formatted, while pre-existing formatting
-debt does not force a giant unrelated rewrite. Deploy remains in
-`deploy_web.yml`. The workflow must be marked as a required status check in
-GitHub branch protection to block merges; that repository setting is not
-stored in the tree.
+**Resolved (Phase 0, simplified):** `.github/workflows/pr_quality.yml` now
+runs once per pull request (plus manual dispatch), not on both `pull_request`
+and branch `push`. It gates analysis, the Finnish string guard, the full test
+suite and a release web build. The custom 138-line formatter ratchet is gone;
+the gate checks changed whitespace and requires newly added Dart files to be
+formatted, which keeps the one-time formatting cleanup from growing without
+forcing a repository-wide reformat. Deploy remains in `deploy_web.yml`. The
+workflow must still be marked as a required status check in GitHub branch
+protection to block merges; that repository setting is not stored in the
+tree.
 
 #### H5 — Canvas interaction coverage is still thin · P2
 
@@ -711,14 +723,14 @@ Phase 1 and Phase 2 can run in parallel once the tree is stable.
 **Exit:** clean, reviewable commits; all checks green; H1/H2 failures are
 reproducible in tests rather than only in prose.
 
-**Status (2026-11-15): complete.** Six reviewable commits split the prior
+**Status (2026-11-15): complete.** Eleven reviewable commits split the prior
 work (interventions/scoring, chrome, rendering performance, paused
-inspection, quick guide, audit record). The new H1/H2 tests failed with
-`Actual: <null>` and an unchanged world child count, then passed after the
-provider subscription and bounded fertilizer pulse were added. Final local
-checks: `flutter analyze --no-pub --fatal-infos` clean, `flutter test --no-pub`
-177/177 passing across 48 files, the Finnish guard and formatting ratchet
-passing, and `flutter build web --release --base-href /soilscope-public/`
+inspection, quick guide, audit record) and the lifecycle/fertilizer fixes.
+The new H1/H2 tests failed with `Actual: <null>` and an unchanged world child
+count, then passed after the provider subscription and bounded fertilizer
+pulse were added. Final local checks: `flutter analyze --no-pub --fatal-infos`
+clean, `flutter test --no-pub` 185/185 passing across 49 files, the Finnish
+guard passing, and `flutter build web --release --base-href /soilscope-public/`
 succeeding. The PR gate is separate from the Pages deployment.
 
 #### Phase 1 — Runtime ownership and persistence (2–4 days)
@@ -734,6 +746,12 @@ succeeding. The PR gate is separate from the Pages deployment.
 
 **Exit:** no stale game reference, no silently skipped fertilizer action, no
 silent save loss, and route/lifecycle tests pass.
+
+**Progress (2026-11-15):** H1/H2 completed in Phase 0. H3 completed: the
+versioned SharedPreferences store replaces secure storage, legacy saves
+migrate, corrupt and unsupported saves are removed, and the resume card
+refreshes after a failed load. Background/resume and repeated-entry
+lifecycle tests remain.
 
 #### Phase 2 — Quality gate and regression evidence (2–3 days)
 

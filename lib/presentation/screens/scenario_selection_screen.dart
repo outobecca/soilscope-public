@@ -88,10 +88,10 @@ class _ScenarioSelectionScreenState
   }
 
   Future<void> _openSimulation({String? scenarioId}) => _openRoute(
-        scenarioId == null
-            ? '/simulation'
-            : '/simulation/${Uri.encodeComponent(scenarioId)}',
-      );
+    scenarioId == null
+        ? '/simulation'
+        : '/simulation/${Uri.encodeComponent(scenarioId)}',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -362,10 +362,17 @@ class _ScenarioSelectionScreenState
                     await _openSimulation();
                   } else {
                     _showSnack(context, l10n.resumeFailed);
+                    // A corrupt save is cleared by the persistence layer.
+                    // Refresh so the resume card reflects that it is gone.
+                    await _refreshSavedStateStatus();
                   }
                 } catch (e, stack) {
                   if (!context.mounted) return;
-                  _showSnack(context, 'Error resuming simulation: $e', background: Colors.red);
+                  _showSnack(
+                    context,
+                    'Error resuming simulation: $e',
+                    background: Colors.red,
+                  );
                   debugLog('Error resuming simulation: $e');
                   debugPrintStack(stackTrace: stack);
                 }
@@ -576,7 +583,11 @@ class _ScenarioSelectionScreenState
             await _openSimulation(scenarioId: scenario.id);
           } catch (e, stack) {
             if (!context.mounted) return;
-            _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
+            _showSnack(
+              context,
+              'Error starting simulation: $e',
+              background: Colors.red,
+            );
             debugLog('Error starting simulation: $e');
             debugPrintStack(stackTrace: stack);
           }
@@ -664,7 +675,11 @@ class _ScenarioSelectionScreenState
                         await _openSimulation(scenarioId: scenario.id);
                       } catch (e, stack) {
                         if (!context.mounted) return;
-                        _showSnack(context, 'Error starting simulation: $e', background: Colors.red);
+                        _showSnack(
+                          context,
+                          'Error starting simulation: $e',
+                          background: Colors.red,
+                        );
                         debugLog('Error starting simulation: $e');
                         debugPrintStack(stackTrace: stack);
                       }

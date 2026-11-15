@@ -8,6 +8,7 @@ import 'package:soilscope/domain/models/biophysical_state.dart';
 import 'package:soilscope/domain/models/scenario.dart';
 import 'package:soilscope/domain/models/soil_layer.dart';
 import 'package:soilscope/domain/models/soil_profile.dart';
+import 'package:soilscope/domain/services/simulation_persistence.dart';
 import 'package:soilscope/domain/solvers/mycorrhiza_solver.dart';
 import 'package:soilscope/presentation/providers/simulation_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_session_provider.dart';
@@ -179,7 +180,7 @@ void main() {
 
     test('a stored snapshot makes the session resumable', () async {
       SharedPreferences.setMockInitialValues({
-        'last_biophysical_state': '{"timeElapsed": 10}',
+        SimulationPersistence.legacyStateKey: '{"timeElapsed": 10}',
       });
 
       final container = ProviderContainer();
@@ -187,6 +188,22 @@ void main() {
       final notifier = container.read(simulationProvider.notifier);
 
       expect(await notifier.hasSavedState(), isTrue);
+    });
+
+    test('a corrupt stored session is cleared instead of resumed', () async {
+      SharedPreferences.setMockInitialValues({
+        SimulationPersistence.stateKey: 'not-json',
+      });
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(simulationProvider.notifier);
+
+      expect(await notifier.hasSavedState(), isTrue);
+      expect(await notifier.loadLastState(), isFalse);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.containsKey(SimulationPersistence.stateKey), isFalse);
     });
 
     test(
