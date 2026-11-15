@@ -1,0 +1,52 @@
+name: Pull request quality gate
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Check Dart Formatting
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 tool/check_dart_format.py
+
+      - name: Run Analyzer
+        run: flutter analyze --no-pub --fatal-infos
+
+      - name: Check Hardcoded Finnish
+        run: python3 tool/check_hardcoded_finnish.py
+
+      - name: Run Tests
+        run: flutter test --no-pub
+
+      - name: Build Flutter Web
+        run: flutter build web --release --base-href /soilscope-public/
