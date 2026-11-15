@@ -300,15 +300,21 @@ void main() {
       () => game.world.descendants().whereType<SoilLayerComponent>().isNotEmpty,
     );
 
-    await tester.tapAt(
-      harness.topLeft + Offset(game.size.x / 2, game.size.y * 0.3),
-    );
-    await tester.pump(const Duration(milliseconds: 50));
+    final canvasFocus = tester
+        .widget<Focus>(find.byKey(const ValueKey('simulation-canvas-focus')))
+        .focusNode!;
+    canvasFocus.requestFocus();
+    await tester.pump();
+    expect(harness.container.read(uIStateProvider), isNull);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
     await tester.pump();
     expect(game.keyboardTarget, isNotNull);
-    expect(harness.container.read(uIStateProvider), isNotNull);
+    expect(
+      harness.container.read(uIStateProvider),
+      isNull,
+      reason: 'cycling must only move focus, not open the inspection card',
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();

@@ -390,8 +390,8 @@ class SoilScopeGame extends FlameGame
   /// Selects and centers the next keyboard-inspectable canvas target.
   ///
   /// Soil layers and plants are the stable, visible targets shared by touch
-  /// and keyboard users. Activating the target also opens its inspection card
-  /// so focus changes are observable without a pointer hover.
+  /// and keyboard users. Cycling only moves focus; activation through Enter or
+  /// Space opens the inspection card.
   void focusNextInspectable({bool reverse = false}) {
     final targets = _keyboardTargets();
     if (targets.isEmpty) {
@@ -410,7 +410,6 @@ class SoilScopeGame extends FlameGame
       camera.viewfinder.position = target.absolutePositionOf(target.size / 2);
       _clampCamera();
     }
-    _activateKeyboardTarget(target);
   }
 
   /// Activates the current keyboard target, if any.
