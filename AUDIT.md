@@ -536,7 +536,8 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub`: 204 tests passing across 52 test files.
+- `flutter test --no-pub`: 207 tests passing across 53 test files; one
+  environment-gated memory benchmark is skipped by default.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
@@ -641,7 +642,7 @@ is not stored in the tree.
 
 #### H5 — Canvas interaction coverage is still thin · P2
 
-The suite has 52 test files, but most coverage is unit-level.
+The suite has 53 test files, but most coverage is unit-level.
 `pinned_inspection_selection_test` covers expandable/data hotspots, and
 `canvas_interaction_test` covers a soil layer, plant shoot, root,
 rhizosphere target, drag-panning and pointer-anchored wheel zoom. Microscope
@@ -847,6 +848,13 @@ and plants to every inspection hotspot.
 **Target:** steady-state frame time comfortably under the chosen budget on the
 lowest supported device; the exact target and device are recorded with the
 measurement. Do not trade scientific correctness or accessibility for FPS.
+
+**Progress (2026-11-15):** added `test/performance/phase4_benchmark_test.dart`
+with engine-tick, timeline pre-calculation and history-lookup benchmarks plus
+an environment-gated repeated-scenario-load RSS sample. Added `PERFORMANCE.md`
+with the H7 device-matrix template, provisional frame budget, profile-capture
+protocol and the local host measurements. Device captures, raster attribution
+and any optimization remain pending; no FPS claim is based on the host samples.
 
 #### Phase 5 — Scientific credibility and sustainability (ongoing)
 
