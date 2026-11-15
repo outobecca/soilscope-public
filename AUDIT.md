@@ -519,3 +519,263 @@ With `dt = 3600` (pre-calculation) and a wet, conductive soil, `subStep` can leg
 ---
 
 *Method note:* findings come from source reading, `flutter analyze`, the full test suite, ARB diffing, a temporary probe test for payload/tick timing (removed), and a reference scan for semantics, imports and hardcoded strings. No on-device FPS profiling, no browser run, and no accessibility audit with a screen reader were performed — C4, C6 and D5 should be confirmed on real hardware before being scheduled as certainties.
+
+---
+
+## 7. Mission — post-close-out hardening (2026-11-15)
+
+> This section is additive. Sections 1–6 remain the historical audit and
+> close-out record; the findings below are new observations made while fixing
+> the pinned-inspection interaction, not a re-opening of the closed items.
+
+**Mission.** Make the simulation surface trustworthy under real device use:
+no silently missing actions, no stale route-scoped state, no interaction
+regressions hidden behind the canvas, and performance and scientific claims
+backed by measurements rather than local assumptions.
+
+**Current baseline (2026-11-15).**
+
+- `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
+- `flutter test --no-pub`: 175 tests passing across 47 test files.
+- Working tree: 23 tracked files modified (about 1,270 insertions) plus three
+  new test paths; the changes are not yet committed.
+- Latest local desktop frame profile from the pinned-inspection work: build
+  ~11 ms, raster ~25 ms, total ~38 ms (~27 FPS). This is a desktop snapshot,
+  not a release-device matrix; raster remains the bottleneck.
+
+### 7.1 New findings
+
+#### H1 — The route-scoped game provider can silently disappear · P1
+
+`lib/presentation/providers/game_provider.dart` is an auto-dispose
+`@riverpod` provider. `FlameSimulationView` registers the game with a
+one-way `ref.read(...notifier).setGame(_game)` call, and no widget watches
+the provider. When the provider loses its last listener it may dispose and
+return to `null`.
+
+The pinned-inspection regression test work confirmed the failure mode: a
+direct read of `soilScopeGameProviderProvider` after the simulation loaded
+returned `null` while the game itself was mounted. `FertilizerModal` reads
+this provider only when the user presses Apply, so the fertilizer canvas
+effect can be skipped with no error.
+
+**Acceptance:** the game registration survives the simulation route; a test
+loads the screen, reads the provider after the post-frame callback and
+asserts a non-null game; leaving the route clears the reference.
+
+#### H2 — The fertilizer visual effect is a no-op · P2
+
+`SoilScopeGame.triggerFertilizerEffect` has an empty body
+(`lib/presentation/widgets/game/soil_scope_game.dart:620`), while
+`FertilizerModal` builds a color map and calls it
+(`fertilizer_modal.dart:80-88`). The nutrient state change is applied, but
+the user never sees the promised canvas response.
+
+**Acceptance:** either implement a bounded, pooled particle/soil response, or
+remove the call and the unused colors map. The chosen behavior is covered by
+a widget or game test.
+
+#### H3 — Session persistence uses the wrong tier and hides corruption · P2
+
+`SimulationPersistence` stores the complete simulation JSON in
+`FlutterSecureStorage`, with a SharedPreferences migration fallback. The
+state is not a secret and can grow; secure storage adds platform-specific
+failure modes (especially on web) without protecting anything meaningful.
+Reads and parse failures are caught, logged and converted to `null`, so a
+corrupt save looks like “no saved session.”
+
+**Acceptance:** non-sensitive session state uses a versioned local store,
+secure storage is reserved for credentials, corrupted saves surface a
+recoverable message, and a migration test covers old and new formats.
+
+#### H4 — CI validates only pushes to `master`, not pull requests · P2
+
+`.github/workflows/deploy_web.yml` runs analyzer, tests and a web build, but
+only on pushes to `master` and manual dispatch. A feature branch can merge
+without ever running the quality gate. There is no formatter check, no
+coverage report, no simulation-screen golden check and no Linux/Android
+build.
+
+**Acceptance:** a separate PR/push workflow runs analyzer, formatting, tests,
+the Finnish-string guard and a web build on every pull request; heavy
+device/browser checks are allowed to be scheduled jobs rather than blockers.
+
+#### H5 — Canvas interaction coverage is still thin · P2
+
+The suite has 47 test files, but most coverage is unit-level. The new
+`pinned_inspection_selection_test` is the main canvas-selection regression
+test; layer, plant, root, rhizosphere, microscope, pan/zoom and duplicate
+component behavior remain largely untested. The only golden currently covers
+the scenario selection screen, not the simulation HUD or its dialogs.
+
+**Acceptance:** one interaction test per selectable canvas family, plus
+goldens or semantics assertions for the simulation HUD at 390×844 and
+1024×768 and a 200% text pass.
+
+#### H6 — Flame tap arbitration and duplicate hotspots need confirmation · P2
+
+Flame delivers tap-up events with `deliverToAll: true`, so overlapping
+components can all react to one tap; selection depends on hit-test order and
+local `_isPinned` flags. During the pinned-inspection test, four
+`ExpandableHotspotNode` instances were found at only two unique positions.
+That may be intentional scene layering or stale rebuild duplication, but it
+has not been proven either way.
+
+**Acceptance:** document the intended winner for overlapping targets, add a
+test for each overlap pair, and verify whether duplicate nodes are expected;
+if not, remove them and assert unique positions after a scene rebuild.
+
+#### H7 — Performance evidence is still local and raster-bound · P2
+
+The latest local profile is roughly 27 FPS with raster at ~25 ms. That is a
+useful desktop signal, but it says nothing about a low-end Android phone, an
+installed PWA or a thermally throttled device. The app also uses
+`BackdropFilter`, large soil textures, particles and a wide visual background;
+these are plausible raster costs, not proven causes.
+
+**Acceptance:** a documented device matrix (low-end Android, mid-range
+Android, Chrome/desktop, iPhone if available), profile-mode captures before
+and after, and a steady-state budget with a stated target. No optimization is
+accepted without a before/after measurement.
+
+#### H8 — Scientific validation is still illustrative · P2
+
+The validation gate is honest about being synthetic, which is the right
+baseline. It is not field evidence. The next step is an external, provenance-
+stamped measured dataset plus conservation invariants and sensitivity checks,
+not a stronger claim on the existing fixture.
+
+**Acceptance:** either a `kind: "measured"` drop-in fixture with documented
+depths/times/units, or an explicit external-data blocker in the release notes;
+water, nitrogen and carbon conservation tests pass across scenario switches,
+interventions and pause/resume.
+
+#### H9 — Accessibility has code-level coverage, not device verification · P2
+
+Semantics exist for the HUD, health meters and quick actions, and the data
+table is a good canvas alternative. There is still no TalkBack/VoiceOver
+walkthrough, no keyboard-only canvas path, no reduced-motion handling and no
+automated semantics test.
+
+**Acceptance:** a semantics test for the HUD and inspection card, a
+screen-reader pass on Android and iOS/web, keyboard access to every
+inspection target, and reduced-motion behavior for decorative animation.
+
+#### H10 — Release and maintainability debt remains · P2
+
+The current branch carries a large uncommitted change set, which makes a
+second audit pass hard to attribute. `simulation_provider.dart` has grown
+back to about 1,019 lines, `main.dart` is 676 lines, and the empty fertilizer
+hook is an example of code paths that look live but are not.
+
+**Acceptance:** the current work is split into reviewable commits, the
+provider’s remaining concerns are named and owned, and dead hooks are removed
+or implemented.
+
+### 7.2 Phased implementation plan
+
+Phases are ordered by dependency. Phase 0 must finish before the others;
+Phase 1 and Phase 2 can run in parallel once the tree is stable.
+
+#### Phase 0 — Stabilize the tree (0.5–1 day)
+
+1. Split the current 23-file change set into logical commits: pinned
+   interaction fix, performance work, UI/localization work and their tests.
+2. Run `flutter analyze --no-pub --fatal-infos`, `flutter test --no-pub` and
+   the web build; record the results in this mission.
+3. Add failing tests for H1 (game provider read after load) and H2
+   (fertilizer effect path) before fixing them.
+
+**Exit:** clean, reviewable commits; all checks green; H1/H2 failures are
+reproducible in tests rather than only in prose.
+
+#### Phase 1 — Runtime ownership and persistence (2–4 days)
+
+1. Fix H1: make the game registration explicitly route-scoped, keep it alive
+   while the simulation is mounted, clear it on disposal and test the route
+   enter/leave cycle.
+2. Fix or remove H2; add the missing visual response or delete the dead call.
+3. Replace H3’s secure-storage session path with a versioned, non-sensitive
+   store; add corruption recovery and migration tests.
+4. Add lifecycle tests for background/resume, repeated scenario loads and a
+   second simulation entry.
+
+**Exit:** no stale game reference, no silently skipped fertilizer action, no
+silent save loss, and route/lifecycle tests pass.
+
+#### Phase 2 — Quality gate and regression evidence (2–3 days)
+
+1. H4: add a PR workflow for format, analyze, tests, the Finnish guard and a
+   web build; keep deployment separate.
+2. Add coverage reporting with a baseline (start with `domain/` and services,
+   not an arbitrary whole-repo percentage).
+3. Add ARB key/placeholder parity checks and unused-key detection.
+4. Add simulation-screen goldens and a semantics smoke test; keep the
+   selection-screen goldens already in the tree.
+
+**Exit:** every pull request is gated; localization and visual regressions are
+detected before merge; coverage trend is visible.
+
+#### Phase 3 — Interaction and accessibility (4–6 days)
+
+1. Resolve H6: document and test Flame tap arbitration; confirm or remove
+   duplicate hotspot nodes.
+2. Add interaction tests for layers, plants, roots, rhizospheres, microscope
+   targets, pan/zoom and pinned/resumed states.
+3. Complete H9: keyboard path, semantics tree assertions, reduced motion and
+   screen-reader walkthroughs.
+4. Run the full pass on a real phone, a tablet and a desktop browser,
+   including safe areas, orientation changes and a 200% text scale.
+
+**Exit:** every inspectable object has a tested pointer path and an accessible
+equivalent; no known tap-order ambiguity remains.
+
+#### Phase 4 — Performance on target devices (3–5 days)
+
+1. Establish the H7 device matrix and capture profile-mode baselines.
+2. Measure raster separately from build: blurs, overdraw, soil textures,
+   particles, background width and `saveLayer` usage.
+3. Optimize only the measured bottlenecks; keep a changelog of before/after.
+4. Add non-GPU benchmarks for engine ticks, pre-calculation and history
+   lookup; record memory after repeated scenario loads.
+
+**Target:** steady-state frame time comfortably under the chosen budget on the
+lowest supported device; the exact target and device are recorded with the
+measurement. Do not trade scientific correctness or accessibility for FPS.
+
+#### Phase 5 — Scientific credibility and sustainability (ongoing)
+
+1. H8: add a measured validation drop-in when data is available; add
+   conservation and sensitivity tests now.
+2. Version the model/parameter set and record it with saved runs and
+   validation reports.
+3. Continue H10 refactoring: split the remaining provider responsibilities,
+   narrow the game’s `WidgetRef` dependency and remove dead hooks.
+4. Re-run the localization, accessibility and performance checks each release.
+
+**Exit:** the project can state exactly what is validated, what is
+illustrative and what remains unmeasured; the release path is repeatable.
+
+### 7.3 Mission exit criteria
+
+| Area | Evidence required before calling the mission complete |
+|---|---|
+| Runtime | Game provider lifecycle test passes; route enter/leave/background tests pass. |
+| Actions | Fertilizer feedback is implemented and tested, or its dead hook is gone. |
+| Persistence | Versioned save/load, corruption recovery and migration tests pass. |
+| CI | Analyzer, formatter, tests and web build run on every PR. |
+| Interaction | Selection tests cover every canvas object family and overlap case. |
+| Accessibility | Semantics test, keyboard path, reduced motion and screen-reader walkthrough recorded. |
+| Performance | Before/after profiles on a documented device matrix; steady-state budget met. |
+| Science | Measured-data status explicit; conservation tests pass; model version recorded. |
+| Hygiene | No unexplained uncommitted work; dead paths removed or documented. |
+
+### 7.4 Guardrails
+
+- Keep the solver boundaries and bilingual ARB system intact.
+- Do not fabricate measured validation data; an honest illustrative gate is
+  better than a false field-accuracy claim.
+- Do not optimize from desktop intuition; profile the target device first.
+- Do not add a Worker, backend or new dependency unless a measured need and a
+  clear maintenance owner exist.
+- Every phase leaves the app shippable and the full existing suite passing.
