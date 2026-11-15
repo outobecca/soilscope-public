@@ -98,11 +98,18 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
   bool _initialized = false;
   bool _initializing = false;
   bool _resumeAfterBackground = false;
+  bool _isAppPaused = false;
   late final Simulation _simulation;
+
+  static bool _isBackgroundState(AppLifecycleState? state) =>
+      state == AppLifecycleState.paused ||
+      state == AppLifecycleState.hidden ||
+      state == AppLifecycleState.detached;
 
   @override
   void initState() {
     super.initState();
+    _isAppPaused = _isBackgroundState(WidgetsBinding.instance.lifecycleState);
     _simulation = ref.read(simulationProvider.notifier);
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -131,10 +138,10 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final isBackground = state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.detached;
-    if (isBackground) {
+    if (_isBackgroundState(state)) {
+      _isAppPaused = true;
+      // Initialization checks this flag before starting, so a backgrounded
+      // screen never starts a run behind a suspended app.
       if (!_initialized || _resumeAfterBackground) return;
       _resumeAfterBackground = ref.read(simulationProvider).isRunning;
       // A paused run still needs a final save before the process is suspended.
@@ -142,12 +149,12 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
       return;
     }
 
-    if (state == AppLifecycleState.resumed &&
-        _resumeAfterBackground &&
-        _initialized &&
-        mounted) {
-      _resumeAfterBackground = false;
-      _simulation.start();
+    if (state == AppLifecycleState.resumed) {
+      _isAppPaused = false;
+      if (_resumeAfterBackground && _initialized && mounted) {
+        _resumeAfterBackground = false;
+        _simulation.start();
+      }
     }
   }
 
@@ -185,8 +192,17 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
           debugLog('[MainSimulationScreen] _initSimulation (microtask): reading provider notifier');
           final notifier = ref.read(simulationProvider.notifier);
 
-          debugLog('[MainSimulationScreen] _initSimulation (microtask): calling start()');
-          notifier.start();
+          if (_isAppPaused) {
+            // Keep the run deferred until the app is foregrounded again. The
+            // screen is marked initialized so resume can start it once.
+            _resumeAfterBackground = true;
+            debugLog(
+              '[MainSimulationScreen] _initSimulation deferred: app is paused',
+            );
+          } else {
+            debugLog('[MainSimulationScreen] _initSimulation (microtask): calling start()');
+            notifier.start();
+          }
         }
 
         _initialized = true;

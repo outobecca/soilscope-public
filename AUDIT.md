@@ -536,7 +536,7 @@ backed by measurements rather than local assumptions.
 **Current baseline (2026-11-15).**
 
 - `flutter analyze --no-pub --fatal-infos`: clean on the changed files.
-- `flutter test --no-pub --coverage`: 192 tests passing across 51 test files.
+- `flutter test --no-pub --coverage`: 193 tests passing across 51 test files.
 - Working tree: clean; the previous change set is split into reviewable
   commits, followed by the lifecycle/fertilizer regression coverage.
 - Coverage baseline: domain 67.35% (1,947/2,891 lines), services 71.18%
@@ -760,8 +760,9 @@ silent save loss, and route/lifecycle tests pass.
 the versioned SharedPreferences store replaces secure storage, legacy saves
 migrate, corrupt and unsupported saves are removed, and the resume card
 refreshes after a failed load. `simulation_lifecycle_test` covers
-background pause/resume, a paused run saving on background, and route
-exit/re-entry; `simulation_provider_test` covers repeated scenario loads.
+background pause/resume, a paused run saving on background, startup deferring
+while the app is paused, and route exit/re-entry; `simulation_provider_test`
+covers repeated scenario loads.
 The simulation route now stops the keep-alive engine on disposal and
 lifecycle events instead of running behind the menu.
 

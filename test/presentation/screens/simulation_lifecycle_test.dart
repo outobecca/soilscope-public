@@ -1,11 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soilscope/data/scenario_repository.dart';
+import 'package:soilscope/domain/models/scenario.dart';
 import 'package:soilscope/domain/services/simulation_persistence.dart';
 import 'package:soilscope/l10n/app_localizations.dart';
 import 'package:soilscope/main.dart';
 import 'package:soilscope/presentation/providers/game_provider.dart';
+import 'package:soilscope/presentation/providers/scenarios_provider.dart';
 import 'package:soilscope/presentation/providers/simulation_provider.dart';
 
 class _SimulationHost extends StatelessWidget {
@@ -27,8 +33,11 @@ class _SimulationHost extends StatelessWidget {
 
 Future<ProviderContainer> _pumpSimulation(
   WidgetTester tester,
-  ValueNotifier<bool> visible,
-) async {
+  ValueNotifier<bool> visible, {
+  String? scenarioId,
+  List<Override> overrides = const [],
+  bool waitForRunning = true,
+}) async {
   tester.view.physicalSize = const Size(1280, 720);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -36,13 +45,14 @@ Future<ProviderContainer> _pumpSimulation(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: overrides,
       child: MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en'),
         home: _SimulationHost(
           visible: visible,
-          child: const MainSimulationScreen(),
+          child: MainSimulationScreen(scenarioId: scenarioId),
         ),
       ),
     ),
@@ -53,7 +63,12 @@ Future<ProviderContainer> _pumpSimulation(
     tester.element(find.byType(MainSimulationScreen)),
     listen: false,
   );
-  await _pumpUntil(tester, () => container.read(simulationProvider).isRunning);
+  if (waitForRunning) {
+    await _pumpUntil(
+      tester,
+      () => container.read(simulationProvider).isRunning,
+    );
+  }
   return container;
 }
 
@@ -140,6 +155,62 @@ void main() {
       container.read(simulationProvider).isRunning,
       isFalse,
       reason: 'a run paused by the user must stay paused after resuming',
+    );
+  });
+
+  testWidgets('backgrounding during startup defers the run until resume', (
+    tester,
+  ) async {
+    final visible = ValueNotifier<bool>(true);
+    addTearDown(visible.dispose);
+    addTearDown(
+      () => tester.binding.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      ),
+    );
+
+    final scenarios = await ScenarioRepository.getScenarios();
+    final scenario = scenarios.first;
+    final scenarioGate = Completer<List<Scenario>>();
+    final container = await _pumpSimulation(
+      tester,
+      visible,
+      scenarioId: scenario.id,
+      overrides: [scenariosProvider.overrideWith((ref) => scenarioGate.future)],
+      waitForRunning: false,
+    );
+
+    expect(
+      container.read(simulationProvider).isRunning,
+      isFalse,
+      reason: 'the gated scenario must not have started a run yet',
+    );
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    scenarioGate.complete(scenarios);
+
+    await _pumpUntil(tester, () {
+      final state = container.read(simulationProvider);
+      return !state.isInitializing && state.currentScenario?.id == scenario.id;
+    });
+    expect(
+      container.read(simulationProvider).isRunning,
+      isFalse,
+      reason: 'startup must not start the engine while the app is paused',
+    );
+
+    // Give a late start a few frames to surface before resuming.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pump();
+    expect(container.read(simulationProvider).isRunning, isFalse);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await _pumpUntil(
+      tester,
+      () => container.read(simulationProvider).isRunning,
     );
   });
 
