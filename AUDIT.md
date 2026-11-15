@@ -853,8 +853,32 @@ measurement. Do not trade scientific correctness or accessibility for FPS.
 with engine-tick, timeline pre-calculation and history-lookup benchmarks plus
 an environment-gated repeated-scenario-load RSS sample. Added `PERFORMANCE.md`
 with the H7 device-matrix template, provisional frame budget, profile-capture
-protocol and the local host measurements. Device captures, raster attribution
-and any optimization remain pending; no FPS claim is based on the host samples.
+protocol and the local host measurements.
+
+A first real device capture now exists. `integration_test/performance_profile_test.dart`
+loads the `compacted_clay` scenario through the real app, warms up for 20 s and
+records `FrameTiming` build/raster percentiles for the four protocol phases; it
+runs with `flutter drive --profile` against any attached device and asserts only
+that profile mode reported frames.
+
+The connected low-end Android target (4K Hybrid STB, Amlogic HY46B / Mali-G31,
+Android 14 / API 34, 1920×1080 at dpr 2.0) runs the steady scenario at
+**5.4–5.8 FPS** with build **100–106 ms** and raster **182 ms** at p50 — about
+an order of magnitude above the 33.3 ms budget, raster-bound in every window.
+Pinned inspection, microscope and pan/zoom each add measurable raster time.
+
+That capture also exposed a measurement hazard: the passively cooled box
+throttles within a session, and an identical steady control at the end was 2.5×
+slower than the opening baseline (raster 182 → 455 ms). Sequential phase
+comparisons on this device are therefore invalid; before/after work must
+interleave conditions or cool between runs. Only order-independent conclusions
+are recorded: the device is far below budget, raster dominates build, and
+pausing the simulation lowers build (per-tick work is real but secondary to
+scene recording).
+
+The device matrix still lacks a mid-range phone, a desktop browser and iOS
+hardware, and the three-run median. No optimization has been accepted yet; the
+low-end capture is its before-profile.
 
 #### Phase 5 — Scientific credibility and sustainability (ongoing)
 
