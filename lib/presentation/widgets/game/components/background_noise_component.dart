@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -31,24 +32,31 @@ class BackgroundNoiseComponent extends PositionComponent
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
     final random = math.Random(42); // Fixed seed for stability
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.04);
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.04)
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
 
+    // Record one drawRawPoints command instead of ~36k drawRect commands.
+    // The cached picture is replayed every frame, so the command count matters
+    // even though the noise itself is generated only once.
+    final points = <double>[];
     final step = 3.0;
     for (double x = 0; x < size.x; x += step) {
       for (double y = 0; y < size.y; y += step) {
         if (random.nextDouble() < 0.12) {
-          final dotSize = 0.5 + random.nextDouble() * 1.0;
-          canvas.drawRect(
-            Rect.fromLTWH(
-              x + random.nextDouble() * step,
-              y + random.nextDouble() * step,
-              dotSize,
-              dotSize,
-            ),
-            paint,
-          );
+          points
+            ..add(x + random.nextDouble() * step)
+            ..add(y + random.nextDouble() * step);
         }
       }
+    }
+    if (points.isNotEmpty) {
+      canvas.drawRawPoints(
+        PointMode.points,
+        Float32List.fromList(points),
+        paint,
+      );
     }
     return recorder.endRecording();
   }
