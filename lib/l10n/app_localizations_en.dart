@@ -3437,13 +3437,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tutorialControlsTitle => 'Control Panel & Interventions';
 
   @override
-  String get tutorialControlsDesc => 'Use the right control panel to adjust atmospheric drivers and apply agricultural management.';
+  String get tutorialControlsDesc => 'Use the right control panel for weather, and the bottom Quick actions button to apply field interventions.';
 
   @override
   String get tutorialControlsPoint1 => 'Adjust weather: photosynthetic solar radiation (PAR), precipitation, air temperature, and CO₂.';
 
   @override
-  String get tutorialControlsPoint2 => 'Interventions: irrigation, mineral or organic fertilization, cover cropping, and soil tillage.';
+  String get tutorialControlsPoint2 => 'Interventions: tillage, irrigation, mineral or organic fertilization, cover cropping, organic matter, and drainage live in Quick actions → Actions.';
 
   @override
   String get tutorialControlsPoint3 => 'Note: Excessive tillage fractures mycorrhizal hyphal networks and over-fertilizing causes nitrate leaching.';
@@ -3488,7 +3488,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tutorialGamificationPoint1 => 'Monitor soil health index, water saturation, microbial flux, and plant vitality.';
 
   @override
-  String get tutorialGamificationPoint2 => 'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) to gain score.';
+  String get tutorialGamificationPoint2 => 'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) with Quick actions; completed objectives stay achieved and add to your score.';
 
   @override
   String get tutorialGamificationPoint3 => 'Level up by managing the agroecosystem according to sound ecophysiological principles.';
@@ -3866,10 +3866,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickGuideUiDashboardBody => 'Access layer-specific soil metrics: water content (θ), temperature, pH, electrical conductivity (EC), and redox potential (Eh). Also includes the Soil Texture Triangle.';
 
   @override
-  String get quickGuideUiControlsTitle => 'Control Panel & Interventions (Right Sidebar)';
+  String get quickGuideUiControlsTitle => 'Control Panel & Interventions (Right Sidebar + Quick Actions)';
 
   @override
-  String get quickGuideUiControlsBody => 'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) and agricultural management such as irrigation, N and P fertilization, cover crops, and soil tillage.';
+  String get quickGuideUiControlsBody => 'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) in the right control panel. Apply field interventions—tillage, irrigation, N and P fertilization, cover crops, organic matter, and drainage—from the bottom Quick actions button.';
 
   @override
   String get quickGuideUiTimelineTitle => 'Timeline & Speed Control (Bottom)';
@@ -3923,19 +3923,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickGuideTipCompactionTitle => 'Compacted Clay Management';
 
   @override
-  String get quickGuideTipCompactionBody => 'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter.';
+  String get quickGuideTipCompactionBody => 'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter from Quick actions → Actions.';
 
   @override
   String get quickGuideTipLeachingTitle => 'Nitrate Leaching Prevention';
 
   @override
-  String get quickGuideTipLeachingBody => 'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues and deploy cover or catch crops to capture excess nitrate in the root zone.';
+  String get quickGuideTipLeachingBody => 'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues in Quick actions → Actions and deploy cover or catch crops to capture excess nitrate in the root zone.';
 
   @override
   String get quickGuideTipLogicLabTitle => 'Logic Lab & Scientific Equations';
 
   @override
-  String get quickGuideTipLogicLabBody => 'Test biophysical equations and parameter sensitivities by opening the Logic Lab menu from the top bar. Inspect Michaelis-Menten kinetics and the Nernst equation live!';
+  String get quickGuideTipLogicLabBody => 'Test biophysical equations and parameter sensitivities from Quick actions → More actions → Navigate → Logic Lab. Inspect Michaelis-Menten kinetics and the Nernst equation live!';
 
   @override
   String get quickGuideGlosThetaTitle => 'θ — Volumetric Water Content (m³/m³)';
@@ -4071,6 +4071,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navigateSection => 'NAVIGATE';
+
+  @override
+  String get allCategories => 'All';
+
+  @override
+  String get environmentSection => 'ENVIRONMENT';
+
+  @override
+  String get applyNitrogen => 'Apply Nitrogen';
+
+  @override
+  String get addOrganicMatter => 'Add Organic Matter';
+
+  @override
+  String get drainSoil => 'Drain Soil';
 
   @override
   String get introTitle1 => 'Welcome to SoilScope';

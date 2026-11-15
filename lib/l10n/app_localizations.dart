@@ -6830,7 +6830,7 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialControlsDesc.
   ///
   /// In en, this message translates to:
-  /// **'Use the right control panel to adjust atmospheric drivers and apply agricultural management.'**
+  /// **'Use the right control panel for weather, and the bottom Quick actions button to apply field interventions.'**
   String get tutorialControlsDesc;
 
   /// No description provided for @tutorialControlsPoint1.
@@ -6842,7 +6842,7 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialControlsPoint2.
   ///
   /// In en, this message translates to:
-  /// **'Interventions: irrigation, mineral or organic fertilization, cover cropping, and soil tillage.'**
+  /// **'Interventions: tillage, irrigation, mineral or organic fertilization, cover cropping, organic matter, and drainage live in Quick actions → Actions.'**
   String get tutorialControlsPoint2;
 
   /// No description provided for @tutorialControlsPoint3.
@@ -6932,7 +6932,7 @@ abstract class AppLocalizations {
   /// No description provided for @tutorialGamificationPoint2.
   ///
   /// In en, this message translates to:
-  /// **'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) to gain score.'**
+  /// **'Achieve scenario objectives (such as carbon sequestration or minimizing leaching) with Quick actions; completed objectives stay achieved and add to your score.'**
   String get tutorialGamificationPoint2;
 
   /// No description provided for @tutorialGamificationPoint3.
@@ -7688,13 +7688,13 @@ abstract class AppLocalizations {
   /// No description provided for @quickGuideUiControlsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Control Panel & Interventions (Right Sidebar)'**
+  /// **'Control Panel & Interventions (Right Sidebar + Quick Actions)'**
   String get quickGuideUiControlsTitle;
 
   /// No description provided for @quickGuideUiControlsBody.
   ///
   /// In en, this message translates to:
-  /// **'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) and agricultural management such as irrigation, N and P fertilization, cover crops, and soil tillage.'**
+  /// **'Adjust weather conditions (rain, PAR solar radiation, temperature, CO₂) in the right control panel. Apply field interventions—tillage, irrigation, N and P fertilization, cover crops, organic matter, and drainage—from the bottom Quick actions button.'**
   String get quickGuideUiControlsBody;
 
   /// No description provided for @quickGuideUiTimelineTitle.
@@ -7802,7 +7802,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickGuideTipCompactionBody.
   ///
   /// In en, this message translates to:
-  /// **'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter.'**
+  /// **'Apply shallow cultivation to loosen the surface crusted pan and sow deep-rooted cover crops. Avoid heavy machinery on wet soil and nourish soil biota with organic matter from Quick actions → Actions.'**
   String get quickGuideTipCompactionBody;
 
   /// No description provided for @quickGuideTipLeachingTitle.
@@ -7814,7 +7814,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickGuideTipLeachingBody.
   ///
   /// In en, this message translates to:
-  /// **'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues and deploy cover or catch crops to capture excess nitrate in the root zone.'**
+  /// **'Avoid high single-dose fertilization before forecasted rain. Integrate mineral N with organic residues in Quick actions → Actions and deploy cover or catch crops to capture excess nitrate in the root zone.'**
   String get quickGuideTipLeachingBody;
 
   /// No description provided for @quickGuideTipLogicLabTitle.
@@ -7826,7 +7826,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickGuideTipLogicLabBody.
   ///
   /// In en, this message translates to:
-  /// **'Test biophysical equations and parameter sensitivities by opening the Logic Lab menu from the top bar. Inspect Michaelis-Menten kinetics and the Nernst equation live!'**
+  /// **'Test biophysical equations and parameter sensitivities from Quick actions → More actions → Navigate → Logic Lab. Inspect Michaelis-Menten kinetics and the Nernst equation live!'**
   String get quickGuideTipLogicLabBody;
 
   /// No description provided for @quickGuideGlosThetaTitle.
@@ -8098,6 +8098,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'NAVIGATE'**
   String get navigateSection;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allCategories;
+
+  /// No description provided for @environmentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'ENVIRONMENT'**
+  String get environmentSection;
+
+  /// No description provided for @applyNitrogen.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Nitrogen'**
+  String get applyNitrogen;
+
+  /// No description provided for @addOrganicMatter.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Organic Matter'**
+  String get addOrganicMatter;
+
+  /// No description provided for @drainSoil.
+  ///
+  /// In en, this message translates to:
+  /// **'Drain Soil'**
+  String get drainSoil;
 
   /// No description provided for @introTitle1.
   ///

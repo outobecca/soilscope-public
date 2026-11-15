@@ -30,8 +30,7 @@ bool hasTimelineHistory(List<BiophysicalState> history) => history.isNotEmpty;
 /// Whether history contains a range that can actually be scrubbed. A single
 /// snapshot is a valid timeline view but has no range to move through yet.
 bool hasTimelineRange(List<BiophysicalState> history) =>
-    history.length > 1 &&
-    history.last.timeElapsed > history.first.timeElapsed;
+    history.length > 1 && history.last.timeElapsed > history.first.timeElapsed;
 
 @Riverpod(keepAlive: true)
 class Simulation extends _$Simulation {
@@ -537,6 +536,58 @@ class Simulation extends _$Simulation {
         .addEvent('Soil tilled.', state.timeElapsed);
     _syncIsolate();
     return true;
+  }
+
+  void applyIrrigation({double amountMm = 10.0}) {
+    _leaveHistoryMode();
+    state = SimulationActions.applyIrrigation(state, amountMm: amountMm);
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent(
+          'Irrigation applied (${amountMm.toStringAsFixed(0)} mm).',
+          state.timeElapsed,
+        );
+    _syncIsolate();
+  }
+
+  void applyOrganicMatter() {
+    _leaveHistoryMode();
+    state = SimulationActions.applyOrganicMatter(state);
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent('Organic matter incorporated.', state.timeElapsed);
+    _syncIsolate();
+  }
+
+  void applyDrainage() {
+    _leaveHistoryMode();
+    state = SimulationActions.applyDrainage(state);
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent('Soil drained and re-aerated.', state.timeElapsed);
+    _syncIsolate();
+  }
+
+  /// Applies a one-tap fertilizer dose to the selected layer, falling back to
+  /// the topsoil when the user has not selected a layer.
+  void applyQuickNutrient(String symbol, {double amount = 20.0}) {
+    _leaveHistoryMode();
+    if (state.profile.layers.isEmpty) return;
+
+    final selectedLayer = ref.read(simulationSessionProvider).selectedLayerId;
+    final targetLayer = selectedLayer != null && selectedLayer != 'atmosphere'
+        ? selectedLayer
+        : state.profile.layers.first.id;
+    state = SimulationActions.applyNutrients(
+      state,
+      targetLayer,
+      symbol,
+      amount,
+    );
+    ref
+        .read(eventLogProvider.notifier)
+        .addEvent('$symbol applied to $targetLayer.', state.timeElapsed);
+    _syncIsolate();
   }
 
   /// Functional update pattern for soil layers.

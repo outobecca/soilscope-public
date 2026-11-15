@@ -30,13 +30,15 @@ class SimulationActions {
       );
     }
 
-    var updatedState = state.copyWith(profile: state.profile.copyWith(layers: layers));
+    var updatedState = state.copyWith(
+      profile: state.profile.copyWith(layers: layers),
+    );
 
     // Isaac (1992): Tillage disrupts the extraradical mycelial network
     if (state.mycorrhizaState != null) {
       final ms = state.mycorrhizaState!;
       final updatedDensities = List<double>.from(ms.layerHyphalDensities);
-      
+
       // Disrupt hyphae in the top affected layers
       for (int i = 0; i < math.min(2, updatedDensities.length); i++) {
         updatedDensities[i] *= 0.2; // 80% reduction
@@ -46,12 +48,84 @@ class SimulationActions {
         mycorrhizaState: ms.copyWith(
           rootColonization: ms.rootColonization * 0.2,
           layerHyphalDensities: updatedDensities,
-          totalHyphalLength: ms.totalHyphalLength * 0.3, // Significant reduction
+          totalHyphalLength:
+              ms.totalHyphalLength * 0.3, // Significant reduction
         ),
       );
     }
 
     return updatedState;
+  }
+
+  /// Applies irrigation water to the topsoil.
+  ///
+  /// [amountMm] is the water depth applied in millimetres. The corresponding
+  /// volumetric water-content increase is derived from the top layer's
+  /// thickness, so a 10 mm irrigation means the same physical input regardless
+  /// of how the profile is discretized.
+  static BiophysicalState applyIrrigation(
+    BiophysicalState state, {
+    double amountMm = 10.0,
+  }) {
+    if (state.profile.layers.isEmpty || !amountMm.isFinite || amountMm <= 0) {
+      return state;
+    }
+
+    final layers = List<SoilLayer>.from(state.profile.layers);
+    final top = layers.first;
+    final thicknessMm = math.max(1.0, top.thickness * 1000.0);
+    final deltaTheta = (amountMm / thicknessMm).clamp(0.0, 0.25);
+    final nextWater = math.min(
+      top.porosity * 0.98,
+      top.waterContent + deltaTheta,
+    );
+
+    layers[0] = top.copyWith(
+      previousWaterContent: top.waterContent,
+      waterContent: nextWater,
+    );
+    return state.copyWith(profile: state.profile.copyWith(layers: layers));
+  }
+
+  /// Adds an organic amendment to the topsoil.
+  ///
+  /// This is the quick-action equivalent of incorporating compost or crop
+  /// residue: particulate and labile carbon feed the microbial pool, and
+  /// aggregate stability and microbial biomass get an immediate boost while
+  /// the slower solver response develops.
+  static BiophysicalState applyOrganicMatter(BiophysicalState state) {
+    if (state.profile.layers.isEmpty) return state;
+
+    final layers = List<SoilLayer>.from(state.profile.layers);
+    final top = layers.first;
+    layers[0] = top.copyWith(
+      labileCarbon: top.labileCarbon + 5.0,
+      particulateOrganicMatter: top.particulateOrganicMatter + 5.0,
+      organicCarbon: top.organicCarbon + 5.0,
+      microbialBiomass: top.microbialBiomass + 10.0,
+      aggregateStability: math.min(1.0, top.aggregateStability + 0.05),
+    );
+    return state.copyWith(profile: state.profile.copyWith(layers: layers));
+  }
+
+  /// Removes excess water from the upper profile and re-aerates it.
+  ///
+  /// This models a drainage intervention, not evaporation: it lowers the
+  /// water content toward residual water, restores some pore oxygen, and
+  /// raises redox potential in the drained layers.
+  static BiophysicalState applyDrainage(BiophysicalState state) {
+    if (state.profile.layers.isEmpty) return state;
+
+    final layers = List<SoilLayer>.from(state.profile.layers);
+    for (int i = 0; i < math.min(2, layers.length); i++) {
+      final l = layers[i];
+      layers[i] = l.copyWith(
+        waterContent: math.max(l.thetaR, l.waterContent - 0.03),
+        oxygenContent: math.min(10.0, l.oxygenContent + 1.0),
+        redoxPotential: math.min(600.0, l.redoxPotential + 75.0),
+      );
+    }
+    return state.copyWith(profile: state.profile.copyWith(layers: layers));
   }
 
   /// Applies Fertilizers (Lannoitus) to a specific layer.
@@ -147,12 +221,16 @@ class SimulationActions {
       for (int i = 0; i < layers.length; i++) {
         final l = layers[i];
         final isTopLayer = i == 0;
-        
+
         layers[i] = l.copyWith(
           aggregateStability: math.min(1.0, l.aggregateStability * 1.05),
           // Living roots and residues increase microbial and organic pools
-          microbialBiomass: isTopLayer ? l.microbialBiomass + 2.0 : l.microbialBiomass + 0.5,
-          particulateOrganicMatter: isTopLayer ? l.particulateOrganicMatter + 0.1 : l.particulateOrganicMatter,
+          microbialBiomass: isTopLayer
+              ? l.microbialBiomass + 2.0
+              : l.microbialBiomass + 0.5,
+          particulateOrganicMatter: isTopLayer
+              ? l.particulateOrganicMatter + 0.1
+              : l.particulateOrganicMatter,
         );
       }
       return newState.copyWith(

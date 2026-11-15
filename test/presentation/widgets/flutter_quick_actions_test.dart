@@ -124,11 +124,79 @@ void main() {
       findsNothing,
       reason: 'the historical cover-crop state is off, not the live on state',
     );
-    expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.water_drop_rounded), findsNothing);
+    final rainTile = find.ancestor(
+      of: find.text('Rain'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(
+        of: rainTile,
+        matching: find.byIcon(Icons.water_drop_outlined),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: rainTile,
+        matching: find.byIcon(Icons.water_drop_rounded),
+      ),
+      findsNothing,
+    );
   });
 
-  testWidgets('all five primary actions are available from the start',
+  testWidgets('quick actions opens field interventions without the More menu',
+      (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    const base = BiophysicalState(
+      profile: SoilProfile(
+        id: 'toolbar',
+        name: 'Toolbar',
+        layers: [],
+        surfaceAlbedo: 0.2,
+        slope: 0.0,
+      ),
+      plants: [],
+      timeElapsed: 0,
+    );
+    final initial = base.copyWith(history: [base]);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [simulationProvider.overrideWithValue(initial)],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: Locale('en'),
+          home: Scaffold(body: FlutterQuickActions()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.bolt_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Apply Nitrogen'), findsOneWidget);
+    expect(find.text('Irrigate'), findsOneWidget);
+    expect(find.text('Add Organic Matter'), findsOneWidget);
+    expect(find.text('Drain Soil'), findsOneWidget);
+    expect(find.text('Tillage'), findsOneWidget);
+    expect(find.text('Cover Crop'), findsOneWidget);
+    expect(find.text('Auto Weather'), findsNothing);
+
+    await tester.tap(find.text('ENVIRONMENT'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Auto Weather'), findsOneWidget);
+    expect(find.text('Heat Wave'), findsOneWidget);
+    expect(find.text('Flash Flood'), findsOneWidget);
+    expect(find.text('Apply Nitrogen'), findsNothing);
+  });
+
+  testWidgets('all six primary actions are available from the start',
       (tester) async {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;
@@ -163,6 +231,7 @@ void main() {
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     expect(find.byIcon(Icons.speed_rounded), findsOneWidget);
     expect(find.byIcon(Icons.linear_scale_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.bolt_rounded), findsOneWidget);
     expect(find.byIcon(Icons.biotech_outlined), findsOneWidget);
     expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
 

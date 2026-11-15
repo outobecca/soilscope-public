@@ -12,8 +12,11 @@ import '../../../../core/periodic_table.dart';
 import 'components/process_magnifier_component.dart';
 import 'logic/microscope_info_helper.dart';
 
-/// Five primary controls stay on the canvas; everything else lives in a
-/// grouped sheet so the toolbar is thumb-reachable on a phone.
+enum _QuickActionCategory { all, actions, environment, view, elements, navigate }
+
+/// Core playback and observation controls stay on the canvas. Field actions
+/// open in a categorised sheet so the toolbar remains thumb-reachable on a
+/// phone without hiding scenario-critical interventions behind a flat list.
 class FlutterQuickActions extends ConsumerWidget {
   const FlutterQuickActions({super.key});
 
@@ -89,6 +92,18 @@ class FlutterQuickActions extends ConsumerWidget {
           ),
           _buildActionButton(
             context: context,
+            icon: Icons.bolt_rounded,
+            label: l10n.quickActions,
+            isActive: false,
+            onTap: () => _showActionMenu(
+              context,
+              ref,
+              l10n,
+              initialCategory: _QuickActionCategory.actions,
+            ),
+          ),
+          _buildActionButton(
+            context: context,
             icon: session.isMicroscopeEnabled
                 ? Icons.biotech_rounded
                 : Icons.biotech_outlined,
@@ -101,7 +116,7 @@ class FlutterQuickActions extends ConsumerWidget {
             icon: Icons.more_horiz_rounded,
             label: l10n.moreActions,
             isActive: false,
-            onTap: () => _showMoreSheet(context, ref, l10n),
+            onTap: () => _showActionMenu(context, ref, l10n),
           ),
         ],
       ),
@@ -177,12 +192,15 @@ class FlutterQuickActions extends ConsumerWidget {
     );
   }
 
-  void _showMoreSheet(
+  void _showActionMenu(
     BuildContext context,
     WidgetRef ref,
-    AppLocalizations l10n,
-  ) {
+    AppLocalizations l10n, {
+    _QuickActionCategory initialCategory = _QuickActionCategory.all,
+  }) {
     final parentContext = context;
+    var selectedCategory = initialCategory;
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -190,219 +208,370 @@ class FlutterQuickActions extends ConsumerWidget {
       showDragHandle: true,
       builder: (sheetContext) {
         void close() => Navigator.of(sheetContext).pop();
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.62,
-          minChildSize: 0.35,
-          maxChildSize: 0.92,
-          builder: (context, controller) {
-            // The manage sheet is part of the read-only presentation of the
-            // current snapshot, so its active states must follow the timeline
-            // while scrubbing just like the HUD and canvas.
-            final autoWeather = ref.watch(
-              displayedSimulationStateProvider.select((s) => s.autoWeather),
-            );
-            final precipitation = ref.watch(
-              displayedSimulationStateProvider.select((s) => s.precipitation),
-            );
-            final hasCoverCrop = ref.watch(
-              displayedSimulationStateProvider.select((s) => s.hasCoverCrop),
-            );
-            final session = ref.watch(simulationSessionProvider);
-            final cycle = ref.watch(activeCycleProvider);
-            final flowOn = ref.watch(particleFlowModeProvider);
-            final schematic =
-                ref.watch(visualLayoutModeStateProvider) ==
-                    VisualLayoutMode.schematic;
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.62,
+              minChildSize: 0.35,
+              maxChildSize: 0.92,
+              builder: (context, controller) {
+                // The sheet is part of the read-only presentation of the
+                // current snapshot, so active states must follow the timeline
+                // while scrubbing just like the HUD and canvas.
+                final autoWeather = ref.watch(
+                  displayedSimulationStateProvider.select((s) => s.autoWeather),
+                );
+                final precipitation = ref.watch(
+                  displayedSimulationStateProvider
+                      .select((s) => s.precipitation),
+                );
+                final hasCoverCrop = ref.watch(
+                  displayedSimulationStateProvider.select((s) => s.hasCoverCrop),
+                );
+                final session = ref.watch(simulationSessionProvider);
+                final cycle = ref.watch(activeCycleProvider);
+                final flowOn = ref.watch(particleFlowModeProvider);
+                final schematic =
+                    ref.watch(visualLayoutModeStateProvider) ==
+                        VisualLayoutMode.schematic;
 
-            return ListView(
-              controller: controller,
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-              children: [
-                _sectionTitle(l10n.manageSection, context),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.cloudy_snowing,
-                  label: l10n.autoWeather,
-                  isActive: autoWeather,
-                  onTap: () {
-                    // Apply the state the user saw, not the opposite of whatever
-                    // the live engine happens to hold behind the timeline.
-                    ref
-                        .read(simulationProvider.notifier)
-                        .setAutoWeather(!autoWeather);
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: precipitation > 0
-                      ? Icons.water_drop_rounded
-                      : Icons.water_drop_outlined,
-                  label: l10n.rain,
-                  isActive: precipitation > 0,
-                  onTap: () {
-                    ref
-                        .read(simulationProvider.notifier)
-                        .setPrecipitation(precipitation > 0 ? 0.0 : 10.0);
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.agriculture_rounded,
-                  label: l10n.tillage,
-                  isActive: false,
-                  onTap: () {
-                    ref.read(simulationProvider.notifier).applyTillage();
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.eco_rounded,
-                  label: l10n.coverCrop,
-                  isActive: hasCoverCrop,
-                  onTap: () {
-                    if (!hasCoverCrop) {
-                      ref.read(simulationProvider.notifier).setCoverCrop(true);
-                    }
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.science_rounded,
-                  label: l10n.fertilize,
-                  isActive: false,
-                  onTap: () {
-                    close();
-                    showDialog(
-                      context: parentContext,
-                      builder: (_) => const FertilizerModal(),
-                    );
-                  },
-                ),
+                final showActions =
+                    selectedCategory == _QuickActionCategory.all ||
+                        selectedCategory == _QuickActionCategory.actions;
+                final showEnvironment =
+                    selectedCategory == _QuickActionCategory.all ||
+                        selectedCategory == _QuickActionCategory.environment;
+                final showView =
+                    selectedCategory == _QuickActionCategory.all ||
+                        selectedCategory == _QuickActionCategory.view;
+                final showElements =
+                    selectedCategory == _QuickActionCategory.all ||
+                        selectedCategory == _QuickActionCategory.elements;
+                final showNavigate =
+                    selectedCategory == _QuickActionCategory.all ||
+                        selectedCategory == _QuickActionCategory.navigate;
 
-                const SizedBox(height: 8),
-                _sectionTitle(l10n.viewSection, context),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.history_rounded,
-                  label: l10n.eventLog,
-                  isActive: false,
-                  onTap: () {
-                    close();
-                    _showEventLog(parentContext, ref, l10n);
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: Icons.published_with_changes,
-                  label: cycle == ObservationCycle.none
-                      ? l10n.observation.toUpperCase()
-                      : cycle.name.toUpperCase(),
-                  isActive: cycle != ObservationCycle.none,
-                  onTap: () {
-                    final values = ObservationCycle.values;
-                    final next =
-                        (values.indexOf(cycle) + 1) % values.length;
-                    ref.read(activeCycleProvider.notifier).setCycle(
-                          values[next],
-                        );
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: flowOn
-                      ? Icons.device_hub_rounded
-                      : Icons.device_hub_outlined,
-                  label: l10n.flows,
-                  isActive: flowOn,
-                  onTap: () {
-                    ref.read(particleFlowModeProvider.notifier).toggle();
-                    close();
-                  },
-                ),
-                _buildActionTile(
-                  context: context,
-                  icon: schematic
-                      ? Icons.account_tree_rounded
-                      : Icons.account_tree_outlined,
-                  label: l10n.schematic.toUpperCase(),
-                  isActive: schematic,
-                  onTap: () {
-                    ref.read(visualLayoutModeStateProvider.notifier).toggle();
-                    close();
-                  },
-                ),
-
-                const SizedBox(height: 8),
-                _sectionTitle(l10n.elementsSection, context),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                return ListView(
+                  controller: controller,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                   children: [
-                    ..._quickElements.map(
-                      (symbol) => _buildElementButton(
-                        context: context,
-                        ref: ref,
-                        symbol: symbol,
-                        isSelected: session.selectedElementSymbol == symbol,
-                        onChanged: close,
-                      ),
-                    ),
-                    if (session.selectedElementSymbol != null &&
-                        session.selectedElementSymbol!.isNotEmpty &&
-                        !_quickElements.contains(session.selectedElementSymbol))
-                      _buildElementButton(
-                        context: context,
-                        ref: ref,
-                        symbol: session.selectedElementSymbol!,
-                        isSelected: true,
-                        onChanged: close,
-                      ),
-                    _buildPeriodicTableLauncher(
+                    _buildCategoryChips(
                       context,
                       l10n,
-                      onOpen: () {
-                        close();
-                        ElementSelectionModal.show(parentContext);
-                      },
+                      selectedCategory,
+                      (next) => setSheetState(() => selectedCategory = next),
                     ),
+                    if (showActions) ...[
+                      _sectionTitle(l10n.quickActions.toUpperCase(), context),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.agriculture_rounded,
+                        label: l10n.tillage,
+                        isActive: false,
+                        onTap: () {
+                          ref.read(simulationProvider.notifier).applyTillage();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.eco_rounded,
+                        label: l10n.coverCrop,
+                        isActive: hasCoverCrop,
+                        onTap: () {
+                          if (!hasCoverCrop) {
+                            ref
+                                .read(simulationProvider.notifier)
+                                .setCoverCrop(true);
+                          }
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.water_drop_rounded,
+                        label: l10n.irrigate,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .applyIrrigation();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.grass_rounded,
+                        label: l10n.applyNitrogen,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .applyQuickNutrient('N');
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.compost_rounded,
+                        label: l10n.addOrganicMatter,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .applyOrganicMatter();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.water_damage_rounded,
+                        label: l10n.drainSoil,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .applyDrainage();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.science_rounded,
+                        label: l10n.fertilize,
+                        isActive: false,
+                        onTap: () {
+                          close();
+                          showDialog(
+                            context: parentContext,
+                            builder: (_) => const FertilizerModal(),
+                          );
+                        },
+                      ),
+                    ],
+                    if (showEnvironment) ...[
+                      const SizedBox(height: 8),
+                      _sectionTitle(l10n.environmentSection, context),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.cloudy_snowing,
+                        label: l10n.autoWeather,
+                        isActive: autoWeather,
+                        onTap: () {
+                          // Apply the state the user saw, not the opposite of
+                          // whatever the live engine holds behind the timeline.
+                          ref
+                              .read(simulationProvider.notifier)
+                              .setAutoWeather(!autoWeather);
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: precipitation > 0
+                            ? Icons.water_drop_rounded
+                            : Icons.water_drop_outlined,
+                        label: l10n.rain,
+                        isActive: precipitation > 0,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .setPrecipitation(precipitation > 0 ? 0.0 : 10.0);
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.wb_sunny_rounded,
+                        label: l10n.heatWave,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .triggerHeatWave();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.flood_rounded,
+                        label: l10n.flashFlood,
+                        isActive: false,
+                        onTap: () {
+                          ref
+                              .read(simulationProvider.notifier)
+                              .triggerFlashFlood();
+                          close();
+                        },
+                      ),
+                    ],
+                    if (showView) ...[
+                      const SizedBox(height: 8),
+                      _sectionTitle(l10n.viewSection, context),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.history_rounded,
+                        label: l10n.eventLog,
+                        isActive: false,
+                        onTap: () {
+                          close();
+                          _showEventLog(parentContext, ref, l10n);
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: Icons.published_with_changes,
+                        label: cycle == ObservationCycle.none
+                            ? l10n.observation.toUpperCase()
+                            : cycle.name.toUpperCase(),
+                        isActive: cycle != ObservationCycle.none,
+                        onTap: () {
+                          final values = ObservationCycle.values;
+                          final next =
+                              (values.indexOf(cycle) + 1) % values.length;
+                          ref
+                              .read(activeCycleProvider.notifier)
+                              .setCycle(values[next]);
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: flowOn
+                            ? Icons.device_hub_rounded
+                            : Icons.device_hub_outlined,
+                        label: l10n.flows,
+                        isActive: flowOn,
+                        onTap: () {
+                          ref
+                              .read(particleFlowModeProvider.notifier)
+                              .toggle();
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
+                        icon: schematic
+                            ? Icons.account_tree_rounded
+                            : Icons.account_tree_outlined,
+                        label: l10n.schematic.toUpperCase(),
+                        isActive: schematic,
+                        onTap: () {
+                          ref
+                              .read(visualLayoutModeStateProvider.notifier)
+                              .toggle();
+                          close();
+                        },
+                      ),
+                    ],
+                    if (showElements) ...[
+                      const SizedBox(height: 8),
+                      _sectionTitle(l10n.elementsSection, context),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ..._quickElements.map(
+                            (symbol) => _buildElementButton(
+                              context: context,
+                              ref: ref,
+                              symbol: symbol,
+                              isSelected:
+                                  session.selectedElementSymbol == symbol,
+                              onChanged: close,
+                            ),
+                          ),
+                          if (session.selectedElementSymbol != null &&
+                              session.selectedElementSymbol!.isNotEmpty &&
+                              !_quickElements
+                                  .contains(session.selectedElementSymbol))
+                            _buildElementButton(
+                              context: context,
+                              ref: ref,
+                              symbol: session.selectedElementSymbol!,
+                              isSelected: true,
+                              onChanged: close,
+                            ),
+                          _buildPeriodicTableLauncher(
+                            context,
+                            l10n,
+                            onOpen: () {
+                              close();
+                              ElementSelectionModal.show(parentContext);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (showNavigate) ...[
+                      const SizedBox(height: 8),
+                      _sectionTitle(l10n.navigateSection, context),
+                      _buildNavigationTile(
+                        context: context,
+                        parentContext: parentContext,
+                        icon: Icons.menu_book_rounded,
+                        label: l10n.scienceReference,
+                        route: '/science_reference',
+                      ),
+                      _buildNavigationTile(
+                        context: context,
+                        parentContext: parentContext,
+                        icon: Icons.science_outlined,
+                        label: l10n.logicLab,
+                        route: '/logic_lab',
+                      ),
+                      _buildNavigationTile(
+                        context: context,
+                        parentContext: parentContext,
+                        icon: Icons.edit_rounded,
+                        label: l10n.modify,
+                        route: '/scenario_builder',
+                      ),
+                    ],
                   ],
-                ),
-
-                const SizedBox(height: 8),
-                _sectionTitle(l10n.navigateSection, context),
-                _buildNavigationTile(
-                  context: context,
-                  parentContext: parentContext,
-                  icon: Icons.menu_book_rounded,
-                  label: l10n.scienceReference,
-                  route: '/science_reference',
-                ),
-                _buildNavigationTile(
-                  context: context,
-                  parentContext: parentContext,
-                  icon: Icons.science_outlined,
-                  label: l10n.logicLab,
-                  route: '/logic_lab',
-                ),
-                _buildNavigationTile(
-                  context: context,
-                  parentContext: parentContext,
-                  icon: Icons.edit_rounded,
-                  label: l10n.modify,
-                  route: '/scenario_builder',
-                ),
-              ],
+                );
+              },
             );
           },
         );
       },
     );
+  }
+
+  Widget _buildCategoryChips(
+    BuildContext context,
+    AppLocalizations l10n,
+    _QuickActionCategory selected,
+    ValueChanged<_QuickActionCategory> onSelected,
+  ) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final category in _QuickActionCategory.values)
+          ChoiceChip(
+            label: Text(_categoryLabel(category, l10n)),
+            selected: selected == category,
+            onSelected: (_) => onSelected(category),
+            visualDensity: VisualDensity.compact,
+          ),
+      ],
+    );
+  }
+
+  String _categoryLabel(
+    _QuickActionCategory category,
+    AppLocalizations l10n,
+  ) {
+    return switch (category) {
+      _QuickActionCategory.all => l10n.allCategories,
+      _QuickActionCategory.actions => l10n.quickActions,
+      _QuickActionCategory.environment => l10n.environmentSection,
+      _QuickActionCategory.view => l10n.viewSection,
+      _QuickActionCategory.elements => l10n.elementsSection,
+      _QuickActionCategory.navigate => l10n.navigateSection,
+    };
   }
 
   Widget _sectionTitle(String title, BuildContext context) {

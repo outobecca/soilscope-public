@@ -369,7 +369,10 @@ class _GamificationUIState {
     AppLocalizations? l10n,
   ) {
     // 1. Soil Health Calculation
-    final double soilHealth = (state.score.totalSoilHealth).clamp(0.0, 100.0);
+    // ScoringSolver stores normalized health (0..1); the HUD meters use
+    // percentages. Keep the objective threshold and meter on the same scale.
+    final double soilHealth =
+        (state.score.totalSoilHealth * 100.0).clamp(0.0, 100.0);
 
     // 2. Plant Health Calculation
     double plantHealth = 100.0;

@@ -3437,13 +3437,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get tutorialControlsTitle => 'Hallintapaneeli & Toimenpiteet';
 
   @override
-  String get tutorialControlsDesc => 'Oikean reunan hallintapaneelista säädät ympäristöä ja suoritat viljelytoimenpiteitä.';
+  String get tutorialControlsDesc => 'Säädä säätilaa oikeasta hallintapaneelista ja tee viljelytoimenpiteet alapalkin Pikatoiminnot-painikkeesta.';
 
   @override
   String get tutorialControlsPoint1 => 'Säädä säätilaa: auringon PAR-valosäteily, sade, ilman lämpötila ja CO₂-pitoisuus.';
 
   @override
-  String get tutorialControlsPoint2 => 'Viljelytoimenpiteet: kastelu, typpi- ja fosforilannoitus, kerääjäkasvit sekä maan muokkaus (kyntö).';
+  String get tutorialControlsPoint2 => 'Viljelytoimenpiteet: muokkaus, kastelu, typpi- ja fosforilannoitus, kerääjäkasvit, orgaaninen aines ja salaojitus löytyvät Pikatoiminnot → Toiminnot -valikosta.';
 
   @override
   String get tutorialControlsPoint3 => 'Huomioi: Liiallinen muokkaus tuhoaa sienirihmastoja ja ylilannoitus voi aiheuttaa nitraattihuuhtoutumaa.';
@@ -3488,7 +3488,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get tutorialGamificationPoint1 => 'Seuraa maan terveysindeksiä, vesikyllästeisyyttä, mikrobiston tilaa ja kasvin vitaliteettia.';
 
   @override
-  String get tutorialGamificationPoint2 => 'Suorita skenaarion tavoitteet (esim. hiilensidonta tai ravinnehukkien minimointi) ansaitaksesi pisteitä.';
+  String get tutorialGamificationPoint2 => 'Suorita skenaarion tavoitteet (esim. hiilensidonta tai ravinnehukkien minimointi) Pikatoimintojen avulla; saavutetut tavoitteet pysyvät suoritettuina ja kasvattavat pistemäärää.';
 
   @override
   String get tutorialGamificationPoint3 => 'Saavuta uusia tasoja toimimalla kestävän viljelyn ja ekofysiologian periaatteiden mukaisesti.';
@@ -3866,10 +3866,10 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickGuideUiDashboardBody => 'Avaa maaperän kerroskohtaiset mittarit: vesipitoisuus (θ), lämpötila, pH, sähkönjohtavuus (EC) ja redokspotentiaali (Eh). Sisältää myös maalajikolmion (Texture Triangle), jolla näet maannoksen koostumuksen.';
 
   @override
-  String get quickGuideUiControlsTitle => 'Hallintapaneeli & Viljely (Oikea palkki)';
+  String get quickGuideUiControlsTitle => 'Hallintapaneeli & Viljely (Oikea palkki + Pikatoiminnot)';
 
   @override
-  String get quickGuideUiControlsBody => 'Säädä sääolosuhteita (sade, auringonpaiste PAR, lämpötila, CO₂) sekä viljelytoimenpiteitä kuten kastelu, typpi- ja fosforilannoitus, kerääjäkasvit ja maan muokkaus.';
+  String get quickGuideUiControlsBody => 'Säädä sääolosuhteita (sade, auringonpaiste PAR, lämpötila, CO₂) oikeasta hallintapaneelista. Tee viljelytoimenpiteet – muokkaus, kastelu, typpi- ja fosforilannoitus, kerääjäkasvit, orgaaninen aines ja salaojitus – alapalkin Pikatoiminnot-painikkeesta.';
 
   @override
   String get quickGuideUiTimelineTitle => 'Aikajana & Nopeudensäätö (Alhaalla)';
@@ -3923,19 +3923,19 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickGuideTipCompactionTitle => 'Tiivistyneen savimaan hoito';
 
   @override
-  String get quickGuideTipCompactionBody => 'Käytä kevyttä muokkausta pintakerroksen avaamiseen ja kylvä syväjuurinen kerääjäkasvi. Vältä raskaiden koneiden käyttöä märällä maalla ja tue mikrobistoa orgaanisella aineksella.';
+  String get quickGuideTipCompactionBody => 'Käytä kevyttä muokkausta pintakerroksen avaamiseen ja kylvä syväjuurinen kerääjäkasvi. Vältä raskaiden koneiden käyttöä märällä maalla ja tue mikrobistoa orgaanisella aineksella Pikatoiminnot → Toiminnot -valikosta.';
 
   @override
   String get quickGuideTipLeachingTitle => 'Nitraatin huuhtoutumisen esto';
 
   @override
-  String get quickGuideTipLeachingBody => 'Vältä suuria kertalannoituksia ennen ennustettua sadetta. Yhdistä mineraalityppi orgaaniseen ainekseen ja käytä syyskasveja tai aluskasveja sitomaan ylimääräinen typpi juuristovyöhykkeeseen.';
+  String get quickGuideTipLeachingBody => 'Vältä suuria kertalannoituksia ennen ennustettua sadetta. Yhdistä mineraalityppi orgaaniseen ainekseen Pikatoiminnot → Toiminnot -valikosta ja käytä syyskasveja tai aluskasveja sitomaan ylimääräinen typpi juuristovyöhykkeeseen.';
 
   @override
   String get quickGuideTipLogicLabTitle => 'Logic Lab & Tieteelliset kaavat';
 
   @override
-  String get quickGuideTipLogicLabBody => 'Voit kokeilla matemaattisia kaavoja ja biofysiikan riippuvuuksia avaamalla Logic Lab -valikon yläreunan valikosta. Siellä näet mm. Michaelis-Menten -kinetiikan ja Nernst-yhtälön livenä!';
+  String get quickGuideTipLogicLabBody => 'Voit kokeilla matemaattisia kaavoja ja biofysiikan riippuvuuksia valitsemalla Pikatoiminnot → Lisää toimintoja → Siirtyminen → Logiikkalabra. Siellä näet mm. Michaelis-Menten -kinetiikan ja Nernst-yhtälön livenä!';
 
   @override
   String get quickGuideGlosThetaTitle => 'θ — Maaveden tilavuuspitoisuus (m³/m³)';
@@ -4071,6 +4071,21 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get navigateSection => 'SIIRTYMINEN';
+
+  @override
+  String get allCategories => 'Kaikki';
+
+  @override
+  String get environmentSection => 'YMPÄRISTÖ';
+
+  @override
+  String get applyNitrogen => 'Lisää typpeä';
+
+  @override
+  String get addOrganicMatter => 'Lisää orgaanista ainesta';
+
+  @override
+  String get drainSoil => 'Salaojita maa';
 
   @override
   String get introTitle1 => 'Tervetuloa SoilScopeen';

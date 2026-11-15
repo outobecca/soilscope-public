@@ -39,12 +39,12 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Elements now live in the grouped "more" sheet; the primary bar keeps
-      // only the five high-frequency controls.
+      // Elements live in the grouped "more" sheet and have their own
+      // category so they are one tap away.
       expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
       await tester.tap(find.byIcon(Icons.more_horiz_rounded));
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+      await tester.tap(find.text('ALKUAINEET'));
       await tester.pumpAndSettle();
 
       // Verify essential nutrient buttons are present: N, P, K, Ca, Mg, S, C, O, Fe
@@ -84,7 +84,7 @@ void main() {
       // Reopen the sheet and tap 'P' again to deselect.
       await tester.tap(find.byIcon(Icons.more_horiz_rounded));
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView).last, const Offset(0, -400));
+      await tester.tap(find.text('ALKUAINEET'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('P'));
       await tester.pumpAndSettle();
