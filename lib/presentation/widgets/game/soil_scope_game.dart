@@ -23,6 +23,7 @@ import 'components/weather_component.dart';
 import 'components/scene_coordinate_mapper.dart';
 import 'components/magnifier_group_component.dart';
 import 'components/molecule_particle_pool.dart';
+import 'components/fertilizer_effect_component.dart';
 import 'components/sky_background_component.dart';
 import 'components/soil_symbiosis_network_component.dart';
 import 'components/animation_clock.dart';
@@ -617,7 +618,19 @@ class SoilScopeGame extends FlameGame
     _foliageWorldPositions = foliage;
   }
 
-  void triggerFertilizerEffect(Map<String, Color> colors) {}
+  void triggerFertilizerEffect(Map<String, Color> colors) {
+    if (colors.isEmpty) return;
+
+    final roots = _rootTipWorldPositions;
+    final anchor = roots.isNotEmpty
+        ? roots.first.clone()
+        : Vector2(soilLeftX + simulationWidth / 2, soilSurfaceY + 70.0);
+
+    world.add(
+      FertilizerEffectComponent(position: anchor, nutrientColors: colors),
+    );
+    triggerPlantGrowth();
+  }
 
   void triggerPlantGrowth() {
     final animLayer = world.children

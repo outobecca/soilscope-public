@@ -28,10 +28,13 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
     super.initState();
     debugLog('[FlameSimulationView] initState: Creating SoilScopeGame');
     _game = SoilScopeGame(ref);
-    
+
     // Auto-register the game instance when it's created
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      debugLog('[FlameSimulationView] PostFrameCallback: Registering game in provider');
+      if (!mounted) return;
+      debugLog(
+        '[FlameSimulationView] PostFrameCallback: Registering game in provider',
+      );
       ref.read(soilScopeGameProviderProvider.notifier).setGame(_game);
       debugLog('[FlameSimulationView] PostFrameCallback: Calling onGameReady');
       widget.onGameReady?.call(_game);
@@ -42,48 +45,53 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
   Widget build(BuildContext context) {
     debugLog('[FlameSimulationView] build: Registering listeners');
 
+    // The provider is auto-disposed. Keep a listener alive for the lifetime of
+    // this view so controls can always retrieve the mounted game instance.
+    ref.watch(soilScopeGameProviderProvider);
+
     // Reactively update the game from Riverpod
     ref.listen(appLocalizationsProvider, (previous, next) {
       _game.updateL10n(next);
     });
 
-    ref.listen(simulationSessionProvider.select((s) => (
-      s.selectedLayerId,
-      s.selectedInspectorType,
-    )), (previous, next) {
+    ref.listen(
+      simulationSessionProvider.select(
+        (s) => (s.selectedLayerId, s.selectedInspectorType),
+      ),
+      (previous, next) {
+        final state = ref.read(displayedSimulationStateProvider);
+        final session = ref.read(simulationSessionProvider);
+        _game.updateSession(state, session);
+      },
+    );
+
+    ref.listen<bool>(simulationProvider.select((s) => s.isRunning), (
+      previous,
+      next,
+    ) {
       final state = ref.read(displayedSimulationStateProvider);
-      final session = ref.read(simulationSessionProvider);
-      _game.updateSession(state, session);
+      _game.updateIsRunning(next, state);
     });
 
-    ref.listen<bool>(
-      simulationProvider.select((s) => s.isRunning),
-      (previous, next) {
-        final state = ref.read(displayedSimulationStateProvider);
-        _game.updateIsRunning(next, state);
-      },
-    );
+    ref.listen<BiophysicalState>(displayedSimulationStateProvider, (
+      previous,
+      next,
+    ) {
+      _game.updateBiophysicalState(next);
+    });
 
-    ref.listen<BiophysicalState>(
-      displayedSimulationStateProvider,
-      (previous, next) {
-        _game.updateBiophysicalState(next);
-      },
-    );
-
-    ref.listen<double>(
-      simulationProvider.select((s) => s.timeScale),
-      (previous, next) {
-        final state = ref.read(displayedSimulationStateProvider);
-        _game.updateTimeScale(next, state);
-      },
-    );
+    ref.listen<double>(simulationProvider.select((s) => s.timeScale), (
+      previous,
+      next,
+    ) {
+      final state = ref.read(displayedSimulationStateProvider);
+      _game.updateTimeScale(next, state);
+    });
 
     ref.listen(
-      displayedSimulationStateProvider.select((s) => (
-        s.profile.layers.length,
-        s.plants.length,
-      )),
+      displayedSimulationStateProvider.select(
+        (s) => (s.profile.layers.length, s.plants.length),
+      ),
       (previous, next) {
         final state = ref.read(displayedSimulationStateProvider);
         final session = ref.read(simulationSessionProvider);
@@ -94,10 +102,12 @@ class _FlameSimulationViewState extends ConsumerState<FlameSimulationView> {
     debugLog('[FlameSimulationView] build: Returning GameWidget');
 
     return Container(
-      color: const Color(0xFF1A1A1A), 
+      color: const Color(0xFF1A1A1A),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          debugLog('[FlameSimulationView] Layout constraints: ${constraints.maxWidth}x${constraints.maxHeight}');
+          debugLog(
+            '[FlameSimulationView] Layout constraints: ${constraints.maxWidth}x${constraints.maxHeight}',
+          );
           return GameWidget(
             key: const ValueKey('soil_scope_game_main'),
             game: _game,
