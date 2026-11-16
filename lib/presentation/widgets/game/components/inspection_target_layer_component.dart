@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../domain/models/plant.dart';
+import '../../../../domain/models/simulation_plot.dart';
 import 'inspection_target_component.dart';
 import 'magnifier_group_component.dart';
 import 'process_magnifier_component.dart';
@@ -66,8 +67,7 @@ class InspectionTargetLayerComponent extends Component
       final topX = math.sin(totalAngle) * currentHeight * 0.4;
       final topY = -currentHeight;
       final plantBaseX =
-          SceneCoordinateMapper.mapRootX(0.5, worldWidth) +
-          soilX;
+          SceneCoordinateMapper.plotCenterX(worldWidth) + soilX;
       final plantBaseY = surfaceY;
 
       switch (target.type) {
@@ -159,7 +159,10 @@ class InspectionTargetLayerComponent extends Component
             // them unreachable by tapping. The rhizosphere is the soil zone
             // beside the root, so keep the marker on that interface with a
             // small lateral offset from the root centreline.
-            final side = rhizosphereNode.x >= 0.5 ? 1.0 : -1.0;
+            final side = rhizosphereNode.x >=
+                    SimulationPlot.centerNormalizedX
+                ? 1.0
+                : -1.0;
             target.position = rootPosition + Vector2(20 * side, 0);
           } else {
             target.position = Vector2(plantBaseX, surfaceY + soilHeight * 0.12);
@@ -169,7 +172,7 @@ class InspectionTargetLayerComponent extends Component
           // Soil micro-zone near the top layer
           target.position = Vector2(
             SceneCoordinateMapper.mapRootX(
-                  0.2,
+                  SimulationPlot.centerNormalizedX - 0.3,
                   worldWidth,
                 ) +
                 soilX,

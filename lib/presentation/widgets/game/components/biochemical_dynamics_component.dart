@@ -568,8 +568,7 @@ class BiochemicalDynamicsComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final plant = state.plants.first;
     final plantWorldX =
-        SceneCoordinateMapper.mapRootX(0.5, worldWidth) +
-        game.soilLeftX;
+        SceneCoordinateMapper.plotCenterX(worldWidth) + game.soilLeftX;
 
     final photosynthesisRate = (_solarRadiation / 1000.0).clamp(0.1, 1.0);
     // CO2 Flow: Bias start position towards the plant to represent local atmospheric drawdown

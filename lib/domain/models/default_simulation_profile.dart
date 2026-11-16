@@ -1,4 +1,5 @@
 import 'plant.dart';
+import 'simulation_plot.dart';
 import 'soil_layer.dart';
 import 'soil_profile.dart';
 
@@ -120,16 +121,21 @@ Plant seedPlant() => Plant(
   lai: 0.1,
   turgorPressure: 0.8,
   rootSystem: [
-    const RootNode(x: 0.5, z: 0, radius: 0.002, isTip: false),
     const RootNode(
-      x: 0.5,
+      x: SimulationPlot.centerNormalizedX,
+      z: 0,
+      radius: 0.002,
+      isTip: false,
+    ),
+    const RootNode(
+      x: SimulationPlot.centerNormalizedX,
       z: 0.05,
       radius: 0.0018,
       isTip: false,
       parentIndex: 0,
     ),
     const RootNode(
-      x: 0.5,
+      x: SimulationPlot.centerNormalizedX,
       z: 0.12,
       radius: 0.0015,
       isTip: true,

@@ -9,8 +9,9 @@ import '../../../../domain/models/simulation_plot.dart';
 /// collar, 1 = right edge), so the solver and every visual component use the
 /// same extent and centre.
 class SceneCoordinateMapper {
-  /// Fraction of the simulation column occupied by the 1 m² plot. The
-  /// remaining margin keeps the plot readable inside the wider visual column.
+  /// Rendering-only fraction of the simulation column occupied by the plot.
+  /// Physical extent and normalized coordinates live in [SimulationPlot]; this
+  /// value only chooses how much of the wider visual column the plot fills.
   static const double plotWidthFraction = 0.45;
 
   /// World-space width of the 1 m² plot [px].
@@ -23,9 +24,9 @@ class SceneCoordinateMapper {
 
   /// Maps a plot-normalized root x position to the simulation column [px].
   static double mapRootX(double rootX, double worldWidth) {
-    final plotLeft = plotCenterX(worldWidth) - plotWidth(worldWidth) / 2.0;
-    return plotLeft +
-        SimulationPlot.clampNormalizedX(rootX) * plotWidth(worldWidth);
+    final offset = SimulationPlot.clampNormalizedX(rootX) -
+        SimulationPlot.centerNormalizedX;
+    return plotCenterX(worldWidth) + offset * plotWidth(worldWidth);
   }
 
   /// Horizontal offset of a root node from the plant collar [px].

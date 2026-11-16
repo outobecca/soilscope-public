@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:soilscope/domain/models/simulation_plot.dart';
 import 'package:soilscope/presentation/widgets/game/components/scene_coordinate_mapper.dart';
 
 void main() {
@@ -6,17 +7,22 @@ void main() {
     const worldWidth = 1200.0;
 
     test('maps the plot centre to the scene centre', () {
+      final expectedCenter =
+          worldWidth * SimulationPlot.centerNormalizedX;
       expect(
         SceneCoordinateMapper.plotCenterX(worldWidth),
-        closeTo(worldWidth / 2, 1e-12),
+        closeTo(expectedCenter, 1e-12),
       );
       expect(
-        SceneCoordinateMapper.mapRootX(0.5, worldWidth),
-        closeTo(worldWidth / 2, 1e-12),
+        SceneCoordinateMapper.mapRootX(
+          SimulationPlot.centerNormalizedX,
+          worldWidth,
+        ),
+        closeTo(expectedCenter, 1e-12),
       );
       expect(
         SceneCoordinateMapper.mapShootPosition(worldWidth, 300).x,
-        closeTo(worldWidth / 2, 1e-12),
+        closeTo(expectedCenter, 1e-12),
       );
     });
 
@@ -37,7 +43,13 @@ void main() {
 
       expect(
         shoot.x,
-        closeTo(SceneCoordinateMapper.mapRootX(0.5, worldWidth), 1e-12),
+        closeTo(
+          SceneCoordinateMapper.mapRootX(
+            SimulationPlot.centerNormalizedX,
+            worldWidth,
+          ),
+          1e-12,
+        ),
       );
       expect(shoot.y, 300);
     });

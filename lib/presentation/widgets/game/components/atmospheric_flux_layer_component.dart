@@ -22,13 +22,18 @@ class AtmosphericFluxLayerComponent extends Component
     final soilX = game.soilLeftX;
     final desiredKeys = <String>{};
 
-    for (final plant in state.plants) {
+    for (var i = 0; i < state.plants.length; i++) {
+      final plant = state.plants[i];
       final plantBase = SceneCoordinateMapper.mapShootPosition(
         soilColumnWidth,
         surfaceY,
       );
       plantBase.x += soilX;
 
+      // baseX is retained in saved plant JSON for compatibility, but it no
+      // longer places the plant: every plant is drawn on the plot centre.
+      // Alternate sides so overlapping flux curves stay legible.
+      final side = i.isEven ? 1.0 : -1.0;
       final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
       final canopyY = surfaceY - (visualHeight * 0.8);
       final canopyPos = Vector2(plantBase.x, canopyY);
@@ -39,7 +44,7 @@ class AtmosphericFluxLayerComponent extends Component
         '$keyPrefix:co2-in',
         type: FluxType.co2Uptake,
         isCurved: true,
-        startOffset: Offset(plant.baseX > 0.5 ? 180 : -180, -60),
+        startOffset: Offset(180 * side, -60),
         endOffset: Offset.zero,
         position: canopyPos,
         size: Vector2(180, 80),
@@ -52,7 +57,7 @@ class AtmosphericFluxLayerComponent extends Component
         type: FluxType.h2oTranspiration,
         isCurved: true,
         startOffset: Offset.zero,
-        endOffset: Offset(plant.baseX > 0.5 ? 120 : -120, -120),
+        endOffset: Offset(120 * side, -120),
         position: canopyPos,
         size: Vector2(180, 80),
         fluxValue: plant.actualTranspiration * 1e6,
@@ -64,7 +69,7 @@ class AtmosphericFluxLayerComponent extends Component
         type: FluxType.co2Emission,
         isCurved: true,
         startOffset: Offset.zero,
-        endOffset: Offset(plant.baseX > 0.5 ? -120 : 120, -100),
+        endOffset: Offset(-120 * side, -100),
         position: canopyPos,
         size: Vector2(180, 80),
         fluxValue: plant.stomatalConductance * 0.4,
@@ -103,7 +108,10 @@ class AtmosphericFluxLayerComponent extends Component
       isCurved: true,
       startOffset: Offset.zero,
       endOffset: const Offset(40, -140),
-      position: Vector2(soilX + soilColumnWidth * 0.50, surfaceY),
+      position: Vector2(
+        soilX + SceneCoordinateMapper.plotCenterX(soilColumnWidth),
+        surfaceY,
+      ),
       size: Vector2(100, 140),
       fluxValue: 0.5,
       priority: 25,

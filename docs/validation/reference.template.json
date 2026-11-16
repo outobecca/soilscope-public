@@ -7,8 +7,8 @@
   "generatedBy": "REPLACE: measurement programme and the script/person that converted it to this file.",
   "model": {
     "id": "soilscope-core",
-    "version": 1,
-    "fingerprint": "8712a30f"
+    "version": 2,
+    "fingerprint": "a456e3ab"
   },
   "timesSeconds": [0.0, 86400.0],
   "series": [

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../core/simulation_constants.dart';
+import 'simulation_plot.dart';
 
 /// The simulation parameter set a run was produced with.
 ///
@@ -16,7 +17,7 @@ import '../../core/simulation_constants.dart';
 /// regenerated with provenance.
 class ModelParameterSet {
   static const String currentId = 'soilscope-core';
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
 
   /// Every constant that changes simulated values. Order is irrelevant;
   /// [fingerprint] sorts the keys first.
@@ -25,6 +26,14 @@ class ModelParameterSet {
     'baseTickDelta': SimulationConstants.baseTickDelta,
     'maxSubStep': SimulationConstants.maxSubStep,
     'maxSubStepsPerTick': SimulationConstants.maxSubStepsPerTick.toDouble(),
+    // One-square-metre plot geometry. Root-domain bounds, distance
+    // conversions and irrigation volumes all resolve through these values, so
+    // resizing the plot is a model change, not a rendering change.
+    'plotAreaM2': SimulationPlot.areaM2,
+    'plotCenterNormalizedX': SimulationPlot.centerNormalizedX,
+    'plotMaxNormalizedX': SimulationPlot.maxNormalizedX,
+    'plotMinNormalizedX': SimulationPlot.minNormalizedX,
+    'plotSideM': SimulationPlot.sideM,
     // Boundaries.
     'nitrateMax': SimulationConstants.nitrateMax,
     'ammoniumMax': SimulationConstants.ammoniumMax,

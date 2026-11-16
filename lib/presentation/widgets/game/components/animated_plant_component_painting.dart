@@ -1003,7 +1003,7 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final collarNode = (p != null && p.rootSystem.isNotEmpty)
         ? p.rootSystem.first
         : null;
-    final collarX = collarNode?.x ?? 0.5;
+    final collarX = collarNode?.x ?? SimulationPlot.centerNormalizedX;
     final collarZ = collarNode?.z ?? 0.0;
 
     // Organic world position. The plot mapper is shared with world-space

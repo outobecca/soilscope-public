@@ -52,7 +52,7 @@ class RootArchitectureSolver {
     if (newRoots.isEmpty && actualGrowthRate > 1e-9) {
       newRoots.add(
         const RootNode(
-          x: 0.5,
+          x: SimulationPlot.centerNormalizedX,
           z: 0.0,
           radius: 0.025,
           isTip: true,
@@ -93,7 +93,9 @@ class RootArchitectureSolver {
         
         // APICAL DOMINANCE: Branching probability decreases exponentially with depth
         final baseBranchProb = 0.35 * math.exp(-depthFactor * 3.5); 
-        final isPrimary = (tip.x - 0.5).abs() < 0.12 && (tip.parentIndex == null || tip.parentIndex! < 80);
+        final isPrimary =
+            (tip.x - SimulationPlot.centerNormalizedX).abs() < 0.12 &&
+            (tip.parentIndex == null || tip.parentIndex! < 80);
         
         // Growth extension probability also tapers for lateral roots. Compacted
         // layers reduce both extension and branching, so roots stay shallower

@@ -6,6 +6,7 @@ import 'package:flame/collisions.dart';
 import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../domain/models/plant.dart';
+import '../../../../domain/models/simulation_plot.dart';
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../providers/simulation_provider.dart';
@@ -354,7 +355,7 @@ class AnimatedPlantComponent extends PositionComponent
     final collarNode = plant.rootSystem.isNotEmpty
         ? plant.rootSystem.first
         : null;
-    final collarX = collarNode?.x ?? 0.5;
+    final collarX = collarNode?.x ?? SimulationPlot.centerNormalizedX;
     final collarZ = collarNode?.z ?? 0.0;
 
     final collarWorldX =

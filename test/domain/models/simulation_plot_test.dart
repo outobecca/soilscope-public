@@ -7,6 +7,8 @@ void main() {
       expect(SimulationPlot.sideM, 1.0);
       expect(SimulationPlot.areaM2, 1.0);
       expect(SimulationPlot.centerNormalizedX, 0.5);
+      expect(SimulationPlot.minNormalizedX, 0.0);
+      expect(SimulationPlot.maxNormalizedX, 1.0);
     });
 
     test('normalized x spans half a metre either side of the plant', () {

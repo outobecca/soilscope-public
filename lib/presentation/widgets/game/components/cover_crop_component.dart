@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import 'animation_clock.dart';
 import 'animation_math.dart';
+import 'scene_coordinate_mapper.dart';
 
 /// Visualizes the surface greenery of a cover crop (e.g. clover, rye).
 /// Appears when state.hasCoverCrop is true.
@@ -51,20 +52,17 @@ class CoverCropComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final soilX = game.soilLeftX;
     final worldWidth = SoilScopeGame.soilColumnWidth;
+    final mainPlantX =
+        soilX + SceneCoordinateMapper.plotCenterX(worldWidth);
+    final hasMainPlant = state.plants.isNotEmpty;
 
     for (final plant in _plants) {
-      final x = soilX + plant.relativeX * worldWidth;
+      final x =
+          soilX + SceneCoordinateMapper.mapRootX(plant.plotX, worldWidth);
 
-      // Skip area near the main plants (assuming they are centered)
-      // Actually, we can check state.plants baseX
-      bool nearMainPlant = false;
-      for (final p in state.plants) {
-        if ((x - (soilX + p.baseX * worldWidth)).abs() < 40) {
-          nearMainPlant = true;
-          break;
-        }
-      }
-      if (nearMainPlant) continue;
+      // Leave the plot centre clear for the main plant; all main plants are
+      // rendered on the same one-square-metre plot centre now.
+      if (hasMainPlant && (x - mainPlantX).abs() < 40) continue;
 
       _drawCoverPlant(canvas, x, surfaceY, plant, time, zoom, _growth);
     }
@@ -76,7 +74,7 @@ class CoverCropComponent extends Component
     for (int i = 0; i < count; i++) {
       _plants.add(
         _CoverPlant(
-          relativeX: _random.nextDouble(),
+          plotX: _random.nextDouble(),
           height: 12 + _random.nextDouble() * 15,
           type: _random.nextInt(2), // 0: clover, 1: rye/grass
           phase: _random.nextDouble() * math.pi * 2,
@@ -157,14 +155,15 @@ class CoverCropComponent extends Component
 }
 
 class _CoverPlant {
-  final double relativeX;
+  /// Plot-normalized x in [0, 1], mapped through the shared plot mapper.
+  final double plotX;
   final double height;
   final int type;
   final double phase;
   final Color color;
 
   _CoverPlant({
-    required this.relativeX,
+    required this.plotX,
     required this.height,
     required this.type,
     required this.phase,

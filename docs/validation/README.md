@@ -50,7 +50,8 @@ water NSE to 0.999923 and RMSE to 2.6e-4, which fails these tolerances. They are
 
 ## Model parameter fingerprint
 
-The model-affecting constants in `lib/core/simulation_constants.dart` are
+The model-affecting constants in `lib/core/simulation_constants.dart` and the
+one-square-metre plot geometry in `lib/domain/models/simulation_plot.dart` are
 versioned by `ModelParameterSet`
 (`lib/domain/models/model_parameter_set.dart`) as an `id`, a `version` and an
 8-character fingerprint. Rendering and component-layout constants are
@@ -73,8 +74,8 @@ When a listed constant changes:
 
 1. bump `ModelParameterSet.currentVersion`,
 2. update the pinned fingerprint in `test/validation/model_version_test.dart`,
-3. regenerate the illustrative values and update the `model` block in
-   `reference.json`,
+3. update the `model` block in `reference.json`; regenerate the illustrative
+   values when the numerical output changed,
 4. update the capture expectations in `PERFORMANCE.md`.
 
 A save produced by a different parameter set still loads, but the mismatch is
@@ -94,8 +95,8 @@ The fixture is one JSON object. Provenance lives beside the numbers.
   "generatedBy": "Instrument/process and the script or person that produced it.",
   "model": {
     "id": "soilscope-core",
-    "version": 1,
-    "fingerprint": "8712a30f"
+    "version": 2,
+    "fingerprint": "a456e3ab"
   },
   "relativeTimes": [0.125, 0.25, 0.5, 1.0],
   "series": [

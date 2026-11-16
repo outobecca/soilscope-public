@@ -20,8 +20,8 @@ void main() {
       // ModelParameterSet.currentVersion, update this pin and regenerate the
       // validation reference deliberately; do not edit it to silence a drift.
       expect(ModelParameterSet.current.id, 'soilscope-core');
-      expect(ModelParameterSet.current.version, 1);
-      expect(ModelParameterSet.current.fingerprint, '8712a30f');
+      expect(ModelParameterSet.current.version, 2);
+      expect(ModelParameterSet.current.fingerprint, 'a456e3ab');
       expect(ModelParameterSet.current.parameters, isNotEmpty);
       expect(
         ModelParameterSet.current.parameters.values.every((v) => v.isFinite),
@@ -52,10 +52,11 @@ void main() {
       expect(changed.fingerprint, isNot(ModelParameterSet.current.fingerprint));
     });
 
-    test('every model-affecting SimulationConstant is fingerprinted', () {
+    test('every model-affecting constant is fingerprinted', () {
       // Keep this list limited to values that only affect rendering or
-      // component layout. Everything else in SimulationConstants changes a
-      // simulated value and must be part of the model identity.
+      // component layout. Everything else in SimulationConstants or the
+      // SimulationPlot geometry changes a simulated value and must be part of
+      // the model identity.
       const renderingOnly = {
         'massFlowVisualDensity',
         'nitrificationVisualDensity',
@@ -70,13 +71,25 @@ void main() {
         'interactionDistance',
         'physicsTickMs',
       };
-      final declared = RegExp(r'static const \w+ (\w+) =')
-          .allMatches(
-            File('lib/core/simulation_constants.dart').readAsStringSync(),
-          )
+      Set<String> declaredIn(String path) => RegExp(
+        r'static const \w+ (\w+) =',
+      )
+          .allMatches(File(path).readAsStringSync())
           .map((match) => match.group(1)!)
           .where((name) => !renderingOnly.contains(name))
           .toSet();
+
+      // Plot geometry is namespaced in the fingerprint so it cannot collide
+      // with a simulation constant of the same bare name.
+      final plotParameters = declaredIn(
+        'lib/domain/models/simulation_plot.dart',
+      ).map(
+        (name) => 'plot${name[0].toUpperCase()}${name.substring(1)}',
+      );
+      final declared = {
+        ...declaredIn('lib/core/simulation_constants.dart'),
+        ...plotParameters,
+      };
 
       expect(
         ModelParameterSet.current.parameters.keys.toSet(),

@@ -3,6 +3,7 @@ import '../../core/simulation_constants.dart';
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
 import '../models/plant.dart';
+import '../models/simulation_plot.dart';
 import 'hydrology_solver.dart';
 import 'chemistry_solver.dart';
 import 'aggregation_solver.dart';
@@ -267,7 +268,12 @@ class SimulationEngine {
         // Roots are distributed across top layers
         rootSystem: [
           const RootNode(x: 0.2, z: 0.05, radius: 0.001, isTip: true),
-          const RootNode(x: 0.5, z: 0.10, radius: 0.001, isTip: true),
+          const RootNode(
+            x: SimulationPlot.centerNormalizedX,
+            z: 0.10,
+            radius: 0.001,
+            isTip: true,
+          ),
           const RootNode(x: 0.8, z: 0.05, radius: 0.001, isTip: true),
         ],
       );

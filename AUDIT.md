@@ -918,12 +918,13 @@ hardware, and the Android row still needs repeated runs.
    drop-in must now carry the `model` parameter block, and a measured series at
    a depth or variable the scenario does not expose is reported as a coverage
    gap instead of crashing the Reference Check tab; both paths are tested.
-2. **Done.** `ModelParameterSet` versions the model-affecting constants and
-   records `{id, version, fingerprint}` in saved sessions, `reference.json` and
-   Phase 4 captures. The validation gate fails on parameter drift until the
-   reference is updated deliberately; `model_version_test.dart` pins the
-   fingerprint and scans `SimulationConstants` so a model-affecting constant
-   cannot be added without joining the fingerprint.
+2. **Done.** `ModelParameterSet` versions the model-affecting constants,
+   including the one-square-metre plot geometry, and records
+   `{id, version, fingerprint}` in saved sessions, `reference.json` and Phase 4
+   captures. The validation gate fails on parameter drift until the reference
+   is updated deliberately; `model_version_test.dart` pins the fingerprint and
+   scans `SimulationConstants` and `SimulationPlot` so a model-affecting
+   constant cannot be added without joining the fingerprint.
 3. **Done — H10.** `simulation_provider.dart` fell from ~1,026 to ~590 lines:
    intervention rules moved to `SimulationInterventions`, timeline storage to
    `SimulationTimeline`, the default scenario to
