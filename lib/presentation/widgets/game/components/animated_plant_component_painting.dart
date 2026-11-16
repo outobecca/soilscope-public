@@ -468,37 +468,27 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final soilHeight = game.soilColumnHeight;
     final time = game.currentTime();
 
+    _ensureRootTopology(nodes);
+    final taprootNodeIndices = _taprootNodeIndices;
+    final childCount = _rootChildCounts;
+    final hairPath = Path();
+    var hasRootHairs = false;
+    // At the normal scene scale each root is only a few pixels wide. Batched
+    // centreline strokes preserve the measured architecture while avoiding
+    // hundreds of tapered-fill paths and hair curves per frame. The full
+    // anatomical rendering returns as soon as the user zooms in.
+    final batchedRoots = zoom < 1.25;
+    final batchedTaproot = Path();
+    final batchedLaterals = Path();
+    // Hair detail is only resolvable up close. At normal zoom a sparse,
+    // batched set keeps the root texture without thousands of draw calls.
+    final detailedHairs = zoom >= 1.8;
+    final taperSegments = detailedHairs ? 10 : 6;
+
     Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
-    // --- 1. Identify taproot chain (the most vertical descendant at each node) ---
-    final Set<int> taprootNodeIndices = {};
-    int? currentIdx = 0;
-    while (currentIdx != null && currentIdx < nodes.length) {
-      taprootNodeIndices.add(currentIdx);
-      int? bestChild;
-      double minXDiff = 999.0;
-      for (int i = 0; i < nodes.length; i++) {
-        if (nodes[i].parentIndex == currentIdx) {
-          final diff = (nodes[i].x - nodes[currentIdx].x).abs();
-          if (diff < minXDiff) {
-            minXDiff = diff;
-            bestChild = i;
-          }
-        }
-      }
-      currentIdx = bestChild;
-    }
-
-    // --- 2. Pre-compute child count per node for width calculation ---
-    final List<int> childCount = List.filled(nodes.length, 0);
-    for (final node in nodes) {
-      if (node.parentIndex != null && node.parentIndex! < nodes.length) {
-        childCount[node.parentIndex!]++;
-      }
-    }
-
-    // --- 3. Draw each root segment as a filled tapered shape ---
+    // --- Draw each root segment as a filled tapered shape ---
     for (int i = 0; i < nodes.length; i++) {
       final node = nodes[i];
       if (node.parentIndex == null || node.parentIndex! >= nodes.length) {
@@ -546,6 +536,18 @@ extension _PlantVisuals on AnimatedPlantComponent {
         );
       }
 
+      // Growth age is needed for both LOD paths. Mature segments can be
+      // collected without computing metrics or tapered edges.
+      final birthTime = _nodeBirthTimes[i] ?? 0.0;
+      final growthAge = (time - birthTime).clamp(0.0, 1.0);
+      if (batchedRoots && growthAge >= 1.0) {
+        (isTaproot ? batchedTaproot : batchedLaterals).addPath(
+          spine,
+          Offset.zero,
+        );
+        continue;
+      }
+
       // --- Width tapering ---
       // Parent width: feeds from the stem base (which is 13.2 * scale)
       // At the surface (z=0), we match the stem base exactly.
@@ -575,14 +577,10 @@ extension _PlantVisuals on AnimatedPlantComponent {
       final metric = metrics.first;
       final mLen = metric.length;
 
-      // --- Growth Interpolation ---
-      final birthTime = _nodeBirthTimes[i] ?? 0.0;
-      final growthAge = (time - birthTime).clamp(0.0, 1.0);
       // Smoothly interpolate the length of the segment for newly grown nodes
       final activeLen = mLen * growthAge;
       if (activeLen < 0.1) continue;
 
-      const int taperSegments = 10;
       final List<Offset> leftEdge = [];
       final List<Offset> rightEdge = [];
 
@@ -629,13 +627,15 @@ extension _PlantVisuals on AnimatedPlantComponent {
 
       // Smooth fade-in for newly grown segments (based on node index as proxy for age)
       final double fadeIn = (time - (i * 0.02)).clamp(0.0, 1.0);
-      final fillPaint = Paint()
-        ..color = branchColor.withValues(alpha: fadeIn)
-        ..style = PaintingStyle.fill;
-      canvas.drawPath(taperedPath, fillPaint);
+      canvas.drawPath(
+        taperedPath,
+        _rootFillPaint..color = branchColor.withValues(alpha: fadeIn),
+      );
 
       // --- Specular highlight for 3D volume illusion ---
-      if (wStart > 2.0 / zoom) {
+      // Lateral highlights are sub-pixel at normal zoom; the taproot keeps its
+      // volume cue because it anchors the silhouette.
+      if (wStart > 2.0 / zoom && (isTaproot || zoom >= 1.2)) {
         final highlightPath = Path()
           ..moveTo(leftEdge.first.dx, leftEdge.first.dy);
         for (int s = 1; s < leftEdge.length; s++) {
@@ -643,16 +643,28 @@ extension _PlantVisuals on AnimatedPlantComponent {
         }
         canvas.drawPath(
           highlightPath,
-          Paint()
+          _rootHighlightPaint
             ..color = Colors.white.withValues(alpha: 0.12 * fadeIn)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = math.max(0.5, (wStart * 0.2))
-            ..strokeCap = StrokeCap.round,
+            ..strokeWidth = math.max(0.5, (wStart * 0.2)),
         );
       }
-      // --- Root hairs on lateral roots (Using existing method) ---
-      if (!isTaproot && node.z > 0.08 && zoom > 0.8) {
-        _drawRootHairs(canvas, metric, activeLen, wEnd, zoom, time, node.z, i);
+      // --- Root hairs on lateral roots ---
+      if (!isTaproot &&
+          node.z > 0.08 &&
+          zoom > 0.8 &&
+          (detailedHairs || i.isEven)) {
+        _appendRootHairs(
+          hairPath,
+          metric,
+          activeLen,
+          wEnd,
+          zoom,
+          time,
+          node.z,
+          i,
+          detailedHairs: detailedHairs,
+        );
+        hasRootHairs = true;
       }
 
       // --- Inspector highlight ---
@@ -668,27 +680,66 @@ extension _PlantVisuals on AnimatedPlantComponent {
         );
       }
     }
+
+    if (hasRootHairs) {
+      canvas.drawPath(
+        hairPath,
+        _rootHairPaint
+          ..color = const Color(0xFFFEF3C7).withValues(alpha: 0.22)
+          ..strokeWidth = 0.4 / zoom,
+      );
+    }
+
+    if (batchedRoots) {
+      final taprootPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFFDE68A);
+      final lateralPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFFEF3C7);
+      if (highlighted) {
+        final pulse = 0.5 + 0.5 * math.sin(time * 8);
+        taprootPaint.color = Colors.white.withValues(alpha: 0.45 * pulse);
+        lateralPaint.color = Colors.white.withValues(alpha: 0.35 * pulse);
+      }
+      if (batchedLaterals.getBounds().isEmpty == false) {
+        canvas.drawPath(
+          batchedLaterals,
+          lateralPaint..strokeWidth = 4.0 / zoom,
+        );
+      }
+      if (batchedTaproot.getBounds().isEmpty == false) {
+        canvas.drawPath(
+          batchedTaproot,
+          taprootPaint
+            ..strokeWidth = (8.5 * shootScale).clamp(2.0, 14.0),
+        );
+      }
+    }
   }
 
-  /// Draws organic, curved root hairs along a root segment.
-  /// Hair density and length scale with depth and zoom.
-  void _drawRootHairs(
-    Canvas canvas,
+  /// Appends organic, curved root hairs to [hairPath].
+  ///
+  /// The caller batches every hair into one path, so the detail survives even
+  /// when the root system holds hundreds of nodes.
+  void _appendRootHairs(
+    Path hairPath,
     PathMetric metric,
     double metricLength,
     double rootTipWidth,
     double zoom,
     double time,
     double depth,
-    int nodeIndex,
-  ) {
-    // More hairs deeper in soil (absorption zone), fewer at surface
-    final int hairCount = (4 + depth * 8).toInt().clamp(3, 10);
-
-    final paint = Paint()
-      ..color = const Color(0xFFFEF3C7).withValues(alpha: 0.22)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.4 / zoom;
+    int nodeIndex, {
+    required bool detailedHairs,
+  }) {
+    // More hairs deeper in soil (absorption zone), fewer at surface.
+    final rawHairCount = (4 + depth * 8).toInt();
+    final int hairCount = detailedHairs
+        ? rawHairCount.clamp(3, 10)
+        : rawHairCount.clamp(2, 4);
 
     for (int i = 1; i <= hairCount; i++) {
       final t = i / (hairCount + 1);
@@ -705,23 +756,22 @@ extension _PlantVisuals on AnimatedPlantComponent {
       final wiggle = math.sin(time * 1.8 + i * 1.1 + nodeIndex * 0.3) * 0.4;
       final hairLen = baseLen * (0.7 + 0.3 * math.sin(i * 2.3 + nodeIndex));
 
-      // Draw as curved quadratic bezier for organic waviness
-      final hairPath = Path()..moveTo(pos.dx, pos.dy);
+      // Append both sides as curved quadratic beziers for organic waviness.
       final tipL = pos + normal * hairLen;
       final cpL =
           pos + normal * (hairLen * 0.6) + Offset(wiggle / zoom, wiggle / zoom);
-      hairPath.quadraticBezierTo(cpL.dx, cpL.dy, tipL.dx, tipL.dy);
-      canvas.drawPath(hairPath, paint);
+      hairPath
+        ..moveTo(pos.dx, pos.dy)
+        ..quadraticBezierTo(cpL.dx, cpL.dy, tipL.dx, tipL.dy);
 
-      // Other side
-      final hairPathR = Path()..moveTo(pos.dx, pos.dy);
       final tipR = pos - normal * hairLen;
       final cpR =
           pos -
           normal * (hairLen * 0.6) +
           Offset(-wiggle / zoom, wiggle / zoom);
-      hairPathR.quadraticBezierTo(cpR.dx, cpR.dy, tipR.dx, tipR.dy);
-      canvas.drawPath(hairPathR, paint);
+      hairPath
+        ..moveTo(pos.dx, pos.dy)
+        ..quadraticBezierTo(cpR.dx, cpR.dy, tipR.dx, tipR.dy);
     }
   }
 
@@ -748,37 +798,42 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final pulseSpeed = 1.5 + vitality * 3.0;
     final pulse = 0.5 + 0.5 * math.sin(time * pulseSpeed);
 
+    // LOD: fade the effect out when zoomed far out.
+    final zoomLOD = (zoom - 0.4).clamp(0.0, 1.0);
+    if (zoomLOD <= 0) return;
+
     Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
-    // Rhizosphere glow using multi-layered RadialGradients
-    for (int i = 0; i < nodes.length; i++) {
+    // A rhizosphere is continuous along the root system. Drawing a gradient
+    // for every one of hundreds of nodes produced nearly identical,
+    // overlapping glows and dominated raster time. A representative sample
+    // preserves the continuous haze while keeping the effect bounded.
+    final glowBudget = highlighted ? 32 : (zoom >= 1.8 ? 24 : 12);
+    final glowCount = math.min(nodes.length, glowBudget);
+    final reachBase = 8.0 + waterContent * 10.0;
+    final alphaFactor = (highlighted ? 0.25 : 0.08) * zoomLOD;
+
+    for (int g = 0; g < glowCount; g++) {
+      final i = glowCount == nodes.length
+          ? g
+          : (g * nodes.length / glowCount)
+                .floor()
+                .clamp(0, nodes.length - 1)
+                .toInt();
       final node = nodes[i];
-      // Activity based on tip status and plant vitality
       final activity =
           (1.0 - (node.z * 0.4).clamp(0.0, 1.0)) *
           (node.isTip ? 1.6 : 1.0) *
           vitality;
+      if (activity <= 0.1) continue;
 
-      if (activity > 0.1) {
-        final rPos = _mapRootToLocal(
-          node,
-          i,
-          baseX,
-          worldWidth,
-          soilHeight,
-        ).toOffset();
-        // Reach depends on water content (capillary movement) - TIGHTENED for decluttering
-        final reachBase = 8.0 + waterContent * 10.0; // Further tightened
+      final rPos = map(node, i).toOffset();
+      final glowRadius = (reachBase + 6.0 * pulse * activity) * 0.5;
 
-        // LOD: Fade out based on zoom level
-        final zoomLOD = (zoom - 0.4).clamp(0.0, 1.0);
-        if (zoomLOD <= 0) continue;
-
-        final glowRadius = (reachBase + 6.0 * pulse * activity) * 0.5;
-        final alphaFactor = (highlighted ? 0.25 : 0.08) * zoomLOD;
-
-        // 1. Inner Active Core (Enzymatic concentration)
+      // 1. Inner Active Core (enzymatic concentration). At normal zoom this
+      // sits inside the outer gradient and is not resolvable.
+      if (zoom >= 1.2) {
         canvas.drawCircle(
           rPos,
           glowRadius * 0.4,
@@ -796,9 +851,13 @@ extension _PlantVisuals on AnimatedPlantComponent {
                 )
             ..blendMode = BlendMode.screen,
         );
+      }
 
-        // 2. Outer Rhizosphere Influence
-        final radPaint = Paint()
+      // 2. Outer rhizosphere influence
+      canvas.drawCircle(
+        rPos,
+        glowRadius,
+        Paint()
           ..shader = RadialGradient(
             colors: [
               const Color(0xFF84CC16).withValues(
@@ -808,32 +867,50 @@ extension _PlantVisuals on AnimatedPlantComponent {
             ],
             stops: const [0.3, 1.0],
           ).createShader(Rect.fromCircle(center: rPos, radius: glowRadius))
-          ..blendMode = BlendMode.screen;
+          ..blendMode = BlendMode.screen,
+      );
 
-        canvas.drawCircle(rPos, glowRadius, radPaint);
-
-        // 3. Enzymatic Mining Particles (Representing symbiosis/nutrient release)
-        if (node.isTip && activity > 0.6 && i % 4 == 0) {
-          // Reduced frequency
-          _drawMiningParticles(canvas, rPos, time + i, activity);
-        }
+      // 3. Enzymatic mining particles are only legible up close.
+      if (zoom >= 1.5 && node.isTip && activity > 0.6 && i.isEven) {
+        _drawMiningParticles(canvas, rPos, time + i, activity);
       }
     }
 
-    // Still draw extra glow at tips for "activity" feel
-    final tipPaint = Paint()
-      ..color = const Color(0xFFBEF264).withValues(alpha: 0.05 + pulse * 0.03)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 / zoom);
-
+    // Batch every tip halo into one blurred path. A few hundred individual
+    // blurred circles were a major raster cost; one path is visually
+    // equivalent at these sub-pixel radii.
+    final tipHaloPath = Path();
+    final tipCorePath = Path();
+    var hasTips = false;
     for (int i = 0; i < nodes.length; i++) {
-      final n = nodes[i];
-      if (n.isTip) {
-        canvas.drawCircle(
-          map(n, i).toOffset(),
-          (6 + pulse * 3) / zoom,
-          tipPaint,
+      final node = nodes[i];
+      if (!node.isTip) continue;
+      hasTips = true;
+      final pos = map(node, i).toOffset();
+      tipHaloPath.addOval(
+        Rect.fromCircle(center: pos, radius: (9 + pulse * 4) / zoom),
+      );
+      tipCorePath.addOval(
+        Rect.fromCircle(center: pos, radius: (6 + pulse * 3) / zoom),
+      );
+    }
+    if (hasTips) {
+      if (zoom >= 1.2) {
+        canvas.drawPath(
+          tipHaloPath,
+          Paint()
+            ..color = const Color(
+              0xFFBEF264,
+            ).withValues(alpha: 0.025 + pulse * 0.012),
         );
       }
+      canvas.drawPath(
+        tipCorePath,
+        Paint()
+          ..color = const Color(
+            0xFFBEF264,
+          ).withValues(alpha: 0.04 + pulse * 0.02),
+      );
     }
   }
 
@@ -925,29 +1002,41 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final zoom = game.camera.viewfinder.zoom;
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.04)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 20 / zoom);
+      ..strokeJoin = StrokeJoin.round;
 
     Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
 
+    // The depletion zone is a continuous field around the root system, not a
+    // separate blur per segment. Collecting the segments into one path avoids
+    // hundreds of blurred offscreen passes per frame.
+    final zonePath = Path();
     for (int i = 0; i < nodes.length; i++) {
       final node = nodes[i];
       if (node.parentIndex == null || node.parentIndex! >= nodes.length) {
         continue;
       }
 
-      final parentNode = nodes[node.parentIndex!];
-      final o1 = map(parentNode, node.parentIndex!);
-      final o2 = map(node, i);
+      final o1 = map(nodes[node.parentIndex!], node.parentIndex!).toOffset();
+      final o2 = map(node, i).toOffset();
+      zonePath
+        ..moveTo(o1.dx, o1.dy)
+        ..lineTo(o2.dx, o2.dy);
+    }
 
-      canvas.drawLine(
-        o1.toOffset(),
-        o2.toOffset(),
-        shadowPaint..strokeWidth = 45 / zoom,
+    // A screen-sized 20 px Gaussian blur per frame was one of the most
+    // expensive raster operations in the scene. Layered translucent strokes
+    // create the same soft depletion halo without an offscreen blur pass.
+    const widths = [68.0, 56.0, 45.0];
+    const alphas = [0.010, 0.015, 0.024];
+    for (int i = 0; i < widths.length; i++) {
+      canvas.drawPath(
+        zonePath,
+        shadowPaint
+          ..strokeWidth = widths[i] / zoom
+          ..color = Colors.black.withValues(alpha: alphas[i]),
       );
     }
   }
@@ -971,7 +1060,8 @@ extension _PlantVisuals on AnimatedPlantComponent {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    final branches = _groupNodesIntoBranches(nodes);
+    _ensureRootTopology(nodes);
+    final branches = _rootBranchIndices;
 
     Vector2 map(RootNode n, int index) =>
         _mapRootToLocal(n, index, baseX, worldWidth, soilHeight);
@@ -979,14 +1069,19 @@ extension _PlantVisuals on AnimatedPlantComponent {
     for (final branch in branches.values) {
       if (branch.length < 5) continue;
 
-      // Calculate pulse position along the branch (upward)
-      final progress = (time * 0.8 + branch.hashCode % 10 / 10.0) % 1.0;
+      // Calculate pulse position along the branch (upward). The tip index is
+      // stable across list rebuilds, so the pulse does not jump when roots
+      // grow.
+      final phase = (branch.last * 0.61803398875) % 1.0;
+      final progress = (time * 0.8 + phase) % 1.0;
       final reversedProgress = 1.0 - progress;
-      final i = (reversedProgress * (branch.length - 1)).floor();
+      final position = (reversedProgress * (branch.length - 1)).floor();
 
-      if (i > 0 && i < branch.length) {
-        final p1 = map(branch[i - 1], i - 1).toOffset();
-        final p2 = map(branch[i], i).toOffset();
+      if (position > 0 && position < branch.length) {
+        final parentIndex = branch[position - 1];
+        final nodeIndex = branch[position];
+        final p1 = map(nodes[parentIndex], parentIndex).toOffset();
+        final p2 = map(nodes[nodeIndex], nodeIndex).toOffset();
         canvas.drawLine(p1, p2, pathPaint..strokeWidth = 3.0 / zoom);
       }
     }
@@ -1083,20 +1178,53 @@ extension _PlantVisuals on AnimatedPlantComponent {
     assignPos(0, 0, 0);
   }
 
-  Map<int, List<RootNode>> _groupNodesIntoBranches(List<RootNode> nodes) {
-    final Map<int, List<RootNode>> branches = {};
-    for (final node in nodes) {
-      if (node.isTip) {
-        final List<RootNode> branch = [node];
-        RootNode? curr = node;
-        while (curr?.parentIndex != null && curr!.parentIndex! < nodes.length) {
-          curr = nodes[curr.parentIndex!];
-          branch.insert(0, curr);
+  /// Rebuilds root topology only when the root system grows.
+  ///
+  /// All three products are derived entirely from immutable [RootNode]s, so a
+  /// length check is enough to detect change (growth appends nodes).
+  void _ensureRootTopology(List<RootNode> nodes) {
+    if (_rootTopologyLength == nodes.length) return;
+    _rootTopologyLength = nodes.length;
+
+    // Taproot: follow the most vertical child from the collar.
+    final taproot = <int>{};
+    int? current = nodes.isEmpty ? null : 0;
+    while (current != null && current < nodes.length) {
+      taproot.add(current);
+      int? bestChild;
+      double minXDiff = double.infinity;
+      for (int i = 0; i < nodes.length; i++) {
+        if (nodes[i].parentIndex == current) {
+          final diff = (nodes[i].x - nodes[current].x).abs();
+          if (diff < minXDiff) {
+            minXDiff = diff;
+            bestChild = i;
+          }
         }
-        branches[node.hashCode] = branch;
       }
+      current = bestChild;
     }
-    return branches;
+    _taprootNodeIndices = taproot;
+
+    final childCount = List<int>.filled(nodes.length, 0);
+    for (final node in nodes) {
+      final parent = node.parentIndex;
+      if (parent != null && parent < nodes.length) childCount[parent]++;
+    }
+    _rootChildCounts = childCount;
+
+    final branches = <int, List<int>>{};
+    for (int tip = 0; tip < nodes.length; tip++) {
+      if (!nodes[tip].isTip) continue;
+      final reversed = <int>[];
+      int? currentIndex = tip;
+      while (currentIndex != null && currentIndex < nodes.length) {
+        reversed.add(currentIndex);
+        currentIndex = nodes[currentIndex].parentIndex;
+      }
+      branches[tip] = reversed.reversed.toList(growable: false);
+    }
+    _rootBranchIndices = branches;
   }
 
   void _drawTipAnimations(Canvas canvas) {

@@ -33,11 +33,16 @@ class SoilEvaporationComponent extends Component
       final radius = 8 + phase * 12;
       final alpha = (1.0 - phase);
 
-      // 1. Vapor Shadow/Glow (Complying with max 0.15 opacity)
+      // 1. Vapour halo: two translucent fills instead of a blurred layer.
+      canvas.drawCircle(
+        pos,
+        radius * 1.35,
+        Paint()..color = Colors.white.withValues(alpha: 0.035 * alpha),
+      );
       canvas.drawCircle(
         pos,
         radius,
-        Paint()..color = Colors.white.withValues(alpha: 0.1 * alpha)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+        Paint()..color = Colors.white.withValues(alpha: 0.07 * alpha),
       );
       
       // 2. Core (Shaded look)

@@ -39,7 +39,7 @@ class SoilLayerComponent extends PositionComponent
   String get keyboardLabel => _layer.name.isNotEmpty ? _layer.name : layerId;
 
   late Paint _layerPaint;
-  Picture? _noisePicture;
+  Image? _noiseImage;
   SoilLayer? _noiseSourceLayer;
   SoilLayer? _paintSourceLayer;
   Size _paintedSize = Size.zero;
@@ -293,7 +293,14 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _preRenderNoise() {
-    _noisePicture = SoilLayerNoiseEngine.generateNoisePicture(_layer, layerId);
+    _noiseImage?.dispose();
+    _noiseImage = SoilLayerNoiseEngine.generateNoiseImage(_layer, layerId);
+  }
+
+  @override
+  void onRemove() {
+    _noiseImage?.dispose();
+    super.onRemove();
   }
 
   @override
@@ -326,10 +333,15 @@ class SoilLayerComponent extends PositionComponent
     }
 
     // 3. Draw noise and textures
-    if (_noisePicture != null) {
+    final noiseImage = _noiseImage;
+    if (noiseImage != null) {
       canvas.save();
       canvas.clipRect(size.toRect());
-      canvas.drawPicture(_noisePicture!);
+      canvas.drawImage(
+        noiseImage,
+        Offset.zero,
+        Paint()..filterQuality = FilterQuality.low,
+      );
       canvas.restore();
     }
 

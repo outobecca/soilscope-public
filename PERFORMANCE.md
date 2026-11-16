@@ -263,34 +263,107 @@ negative delta after garbage collection and is not evidence of a leak. Re-run
 the memory probe after repeated scenario loads and with the app backgrounded
 before drawing any retention conclusion.
 
+### Capture: animation rendering pass, 2026-11-16
+
+Same Linux desktop reference (AMD Radeon 760M / Mesa radeonsi, 1280×720 at
+dpr 1.0, Flutter 3.47.9 profile build), same `compacted_clay` scenario, seed
+101 and the fixed protocol order (pinned inspection, microscope, pan + zoom,
+steady). Each capture is a fresh process with the same deterministic seed and
+model fingerprint `a456e3ab`. Both are single runs, so the drift caveat above
+still applies; the comparison is directional, not a device guarantee.
+
+| Phase | Raster p50 / p95 before (ms) | Raster p50 / p95 after (ms) | FPS before | FPS after | Raster p50 change |
+|---|---|---|---|---|---|
+| Steady simulation | 69.87 / 78.91 | 28.22 / 31.37 | 14.45 | 33.59 | −59.6% |
+| Pinned inspection | 30.80 / 34.26 | 16.99 / 19.27 | 31.46 | 53.91 | −44.8% |
+| Microscope open | 38.52 / 42.65 | 16.63 / 18.84 | 25.75 | 55.13 | −56.8% |
+| Pan + zoom | 43.53 / 54.13 | 28.84 / 32.99 | 21.95 | 32.51 | −33.7% |
+
+Steady build p50/p95 fell from 16.85/43.28 ms to 10.12/25.06 ms. Pinned and
+microscope raster work now sits at roughly the 16.7 ms 60 FPS budget. Their
+raster-janky frames fell from 315/315 and 262/262 (every frame) to 331/549 and
+268/555, even though total jank stays 100% because build plus raster still
+misses the vsync budget. Steady and pan/zoom remain about 1.7–2× over the
+raster budget, so the scene is still GPU-bound at those camera states.
+
+The pass changed rendering only; the model fingerprint is unchanged. What it
+does:
+
+- Caches root topology once and uses branch indices for pressure sampling, so
+  the pressure gradient no longer depends on a rebuilt root list order.
+- Batches root centre lines, root hairs, tip halos and rhizosphere glows into a
+  few paths, and drops the finest root anatomy below 1.25× zoom. The full
+  tapered anatomy returns when the camera is close enough to see it.
+- Rasterizes the procedural soil texture, layer noise and background noise into
+  cached `ui.Image`s. The texture keeps drawing its previous raster while a
+  throttled refresh is prepared, instead of redrawing hundreds of paths during
+  a physical-property change.
+- Batches the symbiosis network into scene-wide bundles at low zoom, draws a
+  stratified subset of root tips there, and replaces node/edge glow blurs with
+  layered translucent fills.
+- Removes the remaining per-frame screen-sized `MaskFilter.blur` passes from
+  weather, the wetting front, evaporation, photosynthesis, selection nodes,
+  process labels, SPAC lines and the process magnifier. They use layered
+  strokes/fills instead.
+- Uses one full-column gradient for the horizon, redox and pH overlays instead
+  of one shader and path per layer. The R horizon's end stop was `100.0` as a
+  fraction of the column, so its path and gradient extended 100× below the
+  soil; it is now `1.0`, matching the column bottom.
+- Raises `AnimationClock.maxFrameDelta` from 0.05 s to 0.1 s so a 10–20 FPS
+  frame advances the visual animation by elapsed time instead of playing it in
+  slow motion.
+
+What this capture does not establish: no low-end Android rerun was made after
+these changes, so the box's 5.8 FPS row remains the pre-pass lower bound. The
+single-run, fixed-order protocol and the 30 s steady window still carry the
+session/scene drift described above. A defensible release claim still needs
+the interleaved A/B protocol on the target device.
+
 ## Optimization log
 
 | Date | Change | Before | After | Device | Result |
 |---|---|---|---|---|---|
 | 2026-11-15 | `BlurSurface` backdrop blur removed (panel-only) | Microscope raster 59.8 ms desktop, 185.7 ms box | 59.9 ms desktop, 192.4 ms box | Linux desktop, low-end Android | **Rejected:** paired deltas inside drift bias, no measured win; default restored to blurred |
+| 2026-11-16 | Animation render pass: root/hair/tip batching and LOD, cached soil texture and noise images, batched symbiosis bundles, blur removal | Steady 69.87 ms / 14.45 FPS; pinned 30.80 ms; microscope 38.52 ms; pan 43.53 ms | Steady 28.22 ms / 33.59 FPS; pinned 16.99 ms; microscope 16.63 ms; pan 28.84 ms | Linux desktop, seed 101, single fresh run each | **Accepted:** steady raster −59.6% and FPS +132%; pinned/microscope near the 60 FPS raster budget; Android not re-run |
+| 2026-11-16 | One gradient per soil column for horizon/redox/pH overlays; R-horizon depth stop corrected from 100.0 to 1.0 | Pinned 18.27 ms, microscope 17.61 ms, steady 28.32 ms raster | Pinned 16.99 ms, microscope 16.63 ms, steady 28.22 ms raster | Same Linux desktop and protocol | **Accepted:** overlay-heavy phases reach ~60 FPS raster; steady unchanged within run noise |
 
 ## Status
 
-Two matrix rows are captured. The Linux desktop reference now has the
+Two matrix rows are captured. The Linux desktop baseline remains the
 three-run median with rotated phase order: steady 9.9 FPS at 1280×720, build
 17.6 ms p50 against raster 98.7 ms p50, and 72–99 ms raster across the four
 phases. The low-end Android box is a single-run lower bound at ~5.4–5.8 FPS.
 Both are raster-bound, so the bottleneck is GPU draw work, not Dart or the
 solver.
 
-Rotation also corrected the phase picture: the earlier fixed-order capture
-measured steady first every time and microscope second every time, which made
-steady look 1.6× better and the microscope 1.5× worse than the rotated
-medians. Three windows per run still leave a large spread (49.8–140.7 ms on
-the microscope), so the phase medians are directional only; a change must be
-verified with the interleaved A/B.
+The 2026-11-16 animation pass addressed that bottleneck. On the same desktop,
+steady raster fell from 69.87 ms to 28.22 ms (14.45 → 33.59 FPS), pan/zoom from
+43.53 ms to 28.84 ms, and pinned/microscope from 30.80/38.52 ms to
+16.99/16.63 ms. The model fingerprint is unchanged, and the root-pressure
+sampling and R-horizon depth bugs found during the pass are fixed. Steady and
+pan/zoom are still roughly 1.7–2× over the 16.7 ms raster budget; the remaining
+cost is the full animated scene painted every frame, not the HUD or the solver.
 
-The first candidate, removing the HUD backdrop blur, failed that test: paired
-deltas were −2.4 ms on desktop and −7.5 ms on the box, both in the drift-bias
-direction against the panel variant, so there was no measured win and the
-blurred default was restored. Pausing the simulation cuts the microscope state
-from ~60 ms to ~34 ms raster on desktop, so the cost is per-frame animated
-draw work, not panel compositing. That is the next candidate class.
+Rotation corrected the earlier phase picture: the fixed-order capture measured
+steady first every time and microscope second every time, which made steady
+look 1.6× better and the microscope 1.5× worse than the rotated medians. Three
+windows per run still leave a large spread (49.8–140.7 ms on the microscope),
+so phase medians are directional only. The 2026-11-16 numbers are also one
+fresh fixed-order run each; they show a large, consistent effect but are not a
+release-device baseline.
+
+The first candidate, removing the HUD backdrop blur, failed the interleaved
+test: paired deltas were −2.4 ms on desktop and −7.5 ms on the box, both in the
+drift-bias direction against the panel variant, so there was no measured win
+and the blurred default was restored. Pausing the simulation cuts the
+microscope state from ~60 ms to ~34 ms raster on desktop, which pointed at
+per-frame animated draw work. The 2026-11-16 pass followed that evidence.
+
+The next candidates, in order, are baking the per-layer soil body/noise/shadows
+into a cached visible-slice image, reducing the remaining root and symbiosis
+stroke tessellation, and lowering the cosmetic update cadence for effects that
+cannot be cached. None should be accepted without the interleaved A/B on the
+reference desktop and a post-pass low-end Android capture.
 
 The matrix still needs a mid-range phone, a desktop browser and (if available)
 an iOS device, and the Android row still needs repeated runs.

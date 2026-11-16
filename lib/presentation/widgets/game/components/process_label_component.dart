@@ -133,15 +133,23 @@ class ProcessLabel extends PositionComponent
     canvas.scale(1 / zoom);
     final localCenter = Offset.zero;
 
-    // Core glow effect
+    // Layered translucent rings read as a glow without a per-label blur.
+    final glowRadius = isHighlighted ? 16.0 : 12.0;
     canvas.drawCircle(
       localCenter,
-      isHighlighted ? 16.0 : 12.0,
+      glowRadius * 1.45,
       Paint()
         ..color = color.withValues(
-          alpha: (isHighlighted ? 0.4 : 0.25) * opacity,
-        )
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+          alpha: (isHighlighted ? 0.10 : 0.06) * opacity,
+        ),
+    );
+    canvas.drawCircle(
+      localCenter,
+      glowRadius,
+      Paint()
+        ..color = color.withValues(
+          alpha: (isHighlighted ? 0.18 : 0.11) * opacity,
+        ),
     );
 
     final framePaint = Paint()

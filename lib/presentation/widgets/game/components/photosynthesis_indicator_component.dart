@@ -109,12 +109,24 @@ class PhotosynthesisIndicatorComponent extends Component
       final rayStart = sunPos + (dir / dist) * 80;
       canvas.drawLine(rayStart, leaf, rayPaint);
 
-      final glowPaint = Paint()
-        ..color = const Color(
-          0xFF22C55E,
-        ).withValues(alpha: 0.25 * intensity * flicker)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.drawCircle(leaf, 10 / zoom, glowPaint);
+      // Two concentric fills read as a leaf glow without a blurred pass for
+      // every leaf on every frame.
+      canvas.drawCircle(
+        leaf,
+        16 / zoom,
+        Paint()
+          ..color = const Color(
+            0xFF22C55E,
+          ).withValues(alpha: 0.07 * intensity * flicker),
+      );
+      canvas.drawCircle(
+        leaf,
+        10 / zoom,
+        Paint()
+          ..color = const Color(
+            0xFF22C55E,
+          ).withValues(alpha: 0.15 * intensity * flicker),
+      );
 
       if (intensity > 0.4) {
         _drawCO2Absorption(canvas, zoom, time, leaf, flicker);

@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
@@ -52,7 +51,7 @@ class HorizonColorBandsComponent extends Component
     {
       'id': 'R',
       'start': 0.90,
-      'end': 100.0,
+      'end': 1.0,
       'color1': Color(0xFF455A64),
       'color2': Color(0xFF37474F),
     },
@@ -60,83 +59,36 @@ class HorizonColorBandsComponent extends Component
 
   @override
   void render(Canvas canvas) {
-    final double zoom = game.camera.viewfinder.zoom;
+    if (soilHeight <= 0) return;
 
-    for (int i = 0; i < _horizons.length; i++) {
-      final h = _horizons[i];
-      final startY = surfaceY + (h['start'] as double) * soilHeight;
-      final endY = surfaceY + (h['end'] as double) * soilHeight;
-      final color1 = h['color1'] as Color;
-      final color2 = h['color2'] as Color;
-
-      final path = Path();
-      if (i == 0) {
-        path.moveTo(backgroundX, startY);
-        path.lineTo(backgroundX + backgroundWidth, startY);
-      } else {
-        _addWavyLine(
-          path,
-          startY,
-          backgroundX,
-          backgroundWidth,
-          zoom,
-          isMoveTo: true,
-          seed: i,
-        );
-      }
-      path.lineTo(backgroundX + backgroundWidth, endY);
-      _addWavyLine(
-        path,
-        endY,
-        backgroundX,
-        backgroundWidth,
-        zoom,
-        isMoveTo: false,
-        reverse: true,
-        seed: i + 1,
-      );
-      path.lineTo(backgroundX, startY);
-      path.close();
-
-      final gradient =
-          LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              color1.withValues(alpha: 0.3),
-              color2.withValues(alpha: 0.3),
-            ],
-          ).createShader(
-            Rect.fromLTWH(backgroundX, startY, backgroundWidth, endY - startY),
-          );
-
-      canvas.drawPath(path, Paint()..shader = gradient);
+    // One full-column gradient with a stop pair per horizon replaces six
+    // full-width wavy paths and six separate shaders per frame. The horizon
+    // depths are exact fractions of the column, so the simplified boundary is
+    // also more faithful to the profile than the decorative waves were.
+    final colors = <Color>[];
+    final stops = <double>[];
+    for (final h in _horizons) {
+      colors
+        ..add((h['color1'] as Color).withValues(alpha: 0.3))
+        ..add((h['color2'] as Color).withValues(alpha: 0.3));
+      stops
+        ..add((h['start'] as double).clamp(0.0, 1.0))
+        ..add((h['end'] as double).clamp(0.0, 1.0));
     }
-  }
 
-  void _addWavyLine(
-    Path path,
-    double y,
-    double xStart,
-    double width,
-    double zoom, {
-    bool isMoveTo = false,
-    bool reverse = false,
-    int seed = 0,
-  }) {
-    final steps = (width / 20).toInt();
-    for (int i = 0; i <= steps; i++) {
-      final t = reverse ? (1.0 - i / steps) : (i / steps);
-      final x = xStart + t * width;
-      final wave =
-          math.sin(x * 0.02 + seed * 1.5) * 5.0 +
-          math.sin(x * 0.05 - seed * 0.8) * 2.0;
-      final targetY = y + wave / zoom;
-      if (i == 0 && isMoveTo) {
-        path.moveTo(x, targetY);
-      } else {
-        path.lineTo(x, targetY);
-      }
-    }
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: colors,
+      stops: stops,
+    ).createShader(
+      Rect.fromLTWH(backgroundX, surfaceY, backgroundWidth, soilHeight),
+    );
+
+    drawFullWidthSoilRect(
+      canvas,
+      Rect.fromLTWH(0, surfaceY, 0, soilHeight),
+      Paint()..shader = gradient,
+    );
   }
 }

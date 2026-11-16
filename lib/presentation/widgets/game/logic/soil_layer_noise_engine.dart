@@ -6,6 +6,16 @@ import '../../../../domain/models/soil_layer.dart';
 
 /// Logic for generating soil texture noise and grain patterns.
 class SoilLayerNoiseEngine {
+  /// Rasterizes the static grain field once. Drawing the retained picture each
+  /// frame still re-tessellated thousands of tiny paths; sampling an image is
+  /// the same texture for a fraction of the raster cost.
+  static Image generateNoiseImage(SoilLayer layer, String layerId) {
+    final picture = generateNoisePicture(layer, layerId);
+    final image = picture.toImageSync(1000, 500);
+    picture.dispose();
+    return image;
+  }
+
   static Picture generateNoisePicture(SoilLayer layer, String layerId) {
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);

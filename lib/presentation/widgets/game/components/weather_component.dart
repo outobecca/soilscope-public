@@ -156,13 +156,43 @@ class WeatherComponent extends PositionComponent
     // This component only handles atmospheric entities (rain, clouds).
 
     // 2. Clouds
-    final cloudAlpha = 0.1 + 0.1 * _visualPrecipitation.clamp(0.0, 1.0);
+    final cloudAlpha = 0.08 + 0.08 * _visualPrecipitation.clamp(0.0, 1.0);
     final cloudPaint = Paint()
-      ..color = Colors.white.withValues(alpha: cloudAlpha)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
+      ..color = Colors.white.withValues(alpha: cloudAlpha);
 
-    for (final cloud in _clouds) {
-      _drawCloudCluster(canvas, cloud.pos.toOffset(), cloud.radius, cloudPaint);
+    if (_clouds.isNotEmpty) {
+      // A 30 px Gaussian blur over a cloud band spanning the viewport was a
+      // large offscreen pass. Two batched fill layers give the same soft
+      // silhouette at a fraction of the raster cost.
+      final cloudCore = Path();
+      final cloudHalo = Path();
+      for (final cloud in _clouds) {
+        final center = cloud.pos.toOffset();
+        for (int i = 0; i < 5; i++) {
+          final offX = math.cos(i * 1.25) * cloud.radius * 0.4;
+          final offY = math.sin(i * 1.25) * cloud.radius * 0.15;
+          cloudCore.addOval(
+            Rect.fromCircle(
+              center: center + Offset(offX, offY),
+              radius: cloud.radius * 0.6,
+            ),
+          );
+          cloudHalo.addOval(
+            Rect.fromCircle(
+              center: center + Offset(offX, offY),
+              radius: cloud.radius * 0.85,
+            ),
+          );
+        }
+      }
+      canvas.drawPath(
+        cloudHalo,
+        cloudPaint..color = Colors.white.withValues(alpha: cloudAlpha * 0.4),
+      );
+      canvas.drawPath(
+        cloudCore,
+        cloudPaint..color = Colors.white.withValues(alpha: cloudAlpha),
+      );
     }
 
     // 3. Rain
@@ -180,18 +210,6 @@ class WeatherComponent extends PositionComponent
     }
   }
 
-  void _drawCloudCluster(
-    Canvas canvas,
-    Offset center,
-    double baseRadius,
-    Paint paint,
-  ) {
-    for (int i = 0; i < 5; i++) {
-      final offX = math.cos(i * 1.25) * baseRadius * 0.4;
-      final offY = math.sin(i * 1.25) * baseRadius * 0.15;
-      canvas.drawCircle(center + Offset(offX, offY), baseRadius * 0.6, paint);
-    }
-  }
 }
 
 class _RainDrop {

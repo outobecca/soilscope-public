@@ -114,11 +114,20 @@ class ProcessMagnifierComponent extends PositionComponent
       _drawProjectionBeam(canvas, center, hotspotWorldPosition!);
     }
 
-    // 1. Outer Glow
-    final glowPaint = _glowPaint
-      ..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.15)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 25);
-    canvas.drawCircle(center, (radius + 15) * _scale, glowPaint);
+    // 1. Outer glow: two fills avoid a 25 px offscreen blur over the lens.
+    canvas.drawCircle(
+      center,
+      (radius + 45) * _scale,
+      _glowPaint
+        ..maskFilter = null
+        ..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.05),
+    );
+    canvas.drawCircle(
+      center,
+      (radius + 15) * _scale,
+      _glowPaint
+        ..color = const Color(0xFF38BDF8).withValues(alpha: _opacity * 0.10),
+    );
 
     // 2. Main Glass Circle
     final circleRect = Rect.fromCircle(center: center, radius: radius);
@@ -140,8 +149,8 @@ class ProcessMagnifierComponent extends PositionComponent
     // In Flame, we can't easily use BackdropFilter inside canvas clip, 
     // but we can simulate it with a darker, slightly textured base.
     final blurSimPaint = _blurSimPaint
-      ..color = Colors.black.withValues(alpha: _opacity * 0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..maskFilter = null
+      ..color = Colors.black.withValues(alpha: _opacity * 0.22);
     canvas.drawCircle(center, radius * _scale, blurSimPaint);
     
     // Magnification Level Badge

@@ -305,12 +305,13 @@ class SPACConnectionLinesComponent extends Component
     if (pathMetrics.isEmpty) return;
 
     // 1. Draw Glow Layers (Bioluminescent Effect)
+    // A wide translucent stroke reads as a glow without an offscreen blur for
+    // every continuum line on every frame.
     if (alpha > 0.05) {
       final glowPaint = Paint()
-        ..color = color.withValues(alpha: alpha * 0.15)
-        ..strokeWidth = 4.0 / zoom
-        ..style = PaintingStyle.stroke
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 / zoom);
+        ..color = color.withValues(alpha: alpha * 0.08)
+        ..strokeWidth = 7.0 / zoom
+        ..style = PaintingStyle.stroke;
 
       for (final metric in pathMetrics) {
         canvas.drawPath(metric.extractPath(0, metric.length), glowPaint);
@@ -346,11 +347,11 @@ class SPACConnectionLinesComponent extends Component
           final tangent = metric.getTangentForOffset(pOffset % metric.length);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 1.2 / zoom, particlePaint);
-            // Smaller glow for particle
+            // Soft outer particle halo without a per-particle blur.
             canvas.drawCircle(
               tangent.position,
               3.0 / zoom,
-              Paint()..color = color.withValues(alpha: alpha * 0.3)..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom)
+              Paint()..color = color.withValues(alpha: alpha * 0.14),
             );
           }
         }

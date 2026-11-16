@@ -20,9 +20,7 @@ class WettingFrontComponent extends Component
   @override
   Set<ObservationCycle> get memberOfCycles => {ObservationCycle.water};
   final Paint _wetZonePaint = Paint();
-  final Paint _glowPaint = Paint()
-    ..style = PaintingStyle.stroke
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+  final Paint _glowPaint = Paint()..style = PaintingStyle.stroke;
   final Paint _sharpPaint = Paint()..style = PaintingStyle.stroke;
   final Paint _dropPaint = Paint();
 
@@ -203,9 +201,11 @@ class WettingFrontComponent extends Component
       final wave3 = math.sin(x * 0.2 + time * 3.0) * 2;
       frontPath.lineTo(x, frontY + (wave1 + wave2 + wave3) / zoom);
     }
+    // A wide translucent stroke reads as a glow without a blurred pass along
+    // the entire soil width.
     final glowPaint = _glowPaint
-      ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.3 * cycleOpacity)
-      ..strokeWidth = 6.0 / zoom;
+      ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.16 * cycleOpacity)
+      ..strokeWidth = 9.0 / zoom;
     canvas.drawPath(frontPath, glowPaint);
     final sharpPaint = _sharpPaint
       ..color = const Color(0xFF38BDF8).withValues(alpha: 0.8 * cycleOpacity)

@@ -24,36 +24,47 @@ class RedoxGradientComponent extends Component
     final state = game.displayedState;
     if (state.profile.layers.isEmpty) return;
 
-    final double scaleY = calculateVerticalScale(
-      state.profile.layers.fold(0.0, (sum, l) => sum + l.thickness),
+    final totalThickness = state.profile.layers.fold(
+      0.0,
+      (sum, l) => sum + l.thickness,
     );
+    final double scaleY = calculateVerticalScale(totalThickness);
+    final totalHeight = totalThickness * scaleY;
+    if (totalHeight <= 0) return;
 
+    // One column gradient instead of one shader and rect per layer. Each
+    // horizon keeps its own colour at the correct depth, with a smooth
+    // transition across the boundary.
+    final colors = <Color>[];
+    final stops = <double>[];
     double currentY = surfaceY;
     for (final layer in state.profile.layers) {
+      final ehColor = _getColorForEh(layer.redoxPotential);
       final layerHeight = layer.thickness * scaleY;
-
-      // Eh mapping to colors: 600mV (aerobic) -> -200mV (anaerobic)
-      final Color ehColor = _getColorForEh(layer.redoxPotential);
-
-      _paint.shader =
-          LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ehColor.withValues(alpha: 0.15),
-              ehColor.withValues(alpha: 0.08),
-            ],
-          ).createShader(
-            Rect.fromLTWH(backgroundX, currentY, backgroundWidth, layerHeight),
-          );
-
-      drawFullWidthSoilRect(
-        canvas,
-        Rect.fromLTWH(0, currentY, 0, layerHeight),
-        _paint,
-      );
+      colors
+        ..add(ehColor.withValues(alpha: 0.15))
+        ..add(ehColor.withValues(alpha: 0.08));
+      stops
+        ..add(((currentY - surfaceY) / totalHeight).clamp(0.0, 1.0))
+        ..add(
+          ((currentY + layerHeight - surfaceY) / totalHeight).clamp(0.0, 1.0),
+        );
       currentY += layerHeight;
     }
+
+    _paint.shader = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: colors,
+      stops: stops,
+    ).createShader(
+      Rect.fromLTWH(backgroundX, surfaceY, backgroundWidth, totalHeight),
+    );
+    drawFullWidthSoilRect(
+      canvas,
+      Rect.fromLTWH(0, surfaceY, 0, totalHeight),
+      _paint,
+    );
   }
 
   Color _getColorForEh(double eh) {

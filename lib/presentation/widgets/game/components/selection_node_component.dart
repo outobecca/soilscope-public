@@ -51,14 +51,18 @@ class SelectionNodeComponent extends PositionComponent
     final zoom = game.camera.viewfinder.zoom;
     final pulse = 0.5 + 0.5 * math.sin(time * 3);
     
-    // 1. Outer Glow (Glows brighter on hover)
+    // 1. Outer Glow: two fills keep the halo without a blurred layer per node.
     final glowAlpha = _isHovered ? 0.35 : 0.15;
+    final glowRadius = 22 * (_isHovered ? 1.1 : 1.0);
     canvas.drawCircle(
       center,
-      22 * (_isHovered ? 1.1 : 1.0),
-      Paint()
-        ..color = accentColor.withValues(alpha: glowAlpha)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+      glowRadius * 1.8,
+      Paint()..color = accentColor.withValues(alpha: glowAlpha * 0.22),
+    );
+    canvas.drawCircle(
+      center,
+      glowRadius,
+      Paint()..color = accentColor.withValues(alpha: glowAlpha * 0.55),
     );
 
     // 2. Glassmorphic Core

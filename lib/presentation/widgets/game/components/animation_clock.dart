@@ -10,11 +10,12 @@ enum AnimationMode { live, paused, history, inspection, hidden }
 /// animation jump. The clock clamps the frame delta and separates the visual
 /// time used by cosmetic motion from the simulation clock owned by the engine.
 class AnimationClock {
-  AnimationClock({this.maxFrameDelta = 0.05});
+  AnimationClock({this.maxFrameDelta = 0.1});
 
-  /// Longest frame accepted by the visual layer. Fifty milliseconds is three
-  /// 60 Hz frames; anything longer is treated as a stall and motion resumes
-  /// smoothly from the current pose.
+  /// Longest frame accepted by the visual layer. One hundred milliseconds is
+  /// ten frames at 60 Hz, so motion still advances in real time on a 10–20 FPS
+  /// raster. Anything longer is treated as a stall and motion resumes smoothly
+  /// from the current pose instead of teleporting.
   final double maxFrameDelta;
 
   double _frameDt = 0;

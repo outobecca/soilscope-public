@@ -30,6 +30,15 @@ class MoleculeRenderer {
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.0;
 
+  // Reused across every atom. A saturated particle field used to allocate
+  // thousands of Paint objects per frame, which showed up as GC hitching.
+  static final Paint _scratchPaint = Paint();
+  static final Paint _highlightPaint = Paint();
+  static final Paint _lockPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
   /// Draws a molecule based on ParticleType (Isolate-based).
   static void drawParticle(
     Canvas canvas,
@@ -68,8 +77,12 @@ class MoleculeRenderer {
     double zoom = 1.0,
     double phase = 0.0,
   }) {
-    if (zoom < 0.6 && !isLocked) {
-      _drawSimplified(canvas, center, type, opacity, isLocked);
+    // At the default scene scale individual atoms are only a few pixels
+    // apart. Drawing the full orbital diagram for every particle wasted raster
+    // work without adding readable detail; the full structure returns as soon
+    // as the user zooms in or pins a particle.
+    if (zoom < 1.25 && !isLocked) {
+      _drawSimplified(canvas, center, type, opacity, isLocked, zoom);
       return;
     }
 
@@ -111,12 +124,21 @@ class MoleculeRenderer {
     }
   }
 
-  static void _drawSimplified(Canvas canvas, Offset center, MoleculeType type, double opacity, bool isLocked) {
+  static void _drawSimplified(Canvas canvas, Offset center, MoleculeType type, double opacity, bool isLocked, double zoom) {
     final color = getMoleculeColor(type);
     if (isLocked) {
-      canvas.drawCircle(center, 4.0, Paint()..color = Colors.white.withValues(alpha: 0.15 * opacity));
+      canvas.drawCircle(center, 5.0, _scratchPaint..color = Colors.white.withValues(alpha: 0.15 * opacity));
     }
-    canvas.drawCircle(center, 3.0, Paint()..color = color.withValues(alpha: opacity));
+    canvas.drawCircle(center, 4.0, _scratchPaint..color = color.withValues(alpha: opacity));
+    // The specular dot is sub-pixel at the default zoom; a single colour core
+    // keeps all 400 particles readable with half the raster calls.
+    if (zoom >= 1.1) {
+      canvas.drawCircle(
+        center - const Offset(1.2, 1.2),
+        1.3,
+        _highlightPaint..color = Colors.white.withValues(alpha: 0.4 * opacity),
+      );
+    }
   }
 
   static void _drawAmmonium(Canvas canvas, Offset center, double phase, double opacity, bool isLocked, double morphProgress, bool isPaused, double zoom) {
@@ -267,21 +289,25 @@ class MoleculeRenderer {
   // --- Helpers ---
 
   static void _drawShadow(Canvas canvas, Offset center, double radius, double opacity) {
-    canvas.drawCircle(center + const Offset(0.8, 0.8), radius, Paint()..color = Colors.black.withValues(alpha: 0.25 * opacity));
+    canvas.drawCircle(center + const Offset(0.8, 0.8), radius, _scratchPaint..color = Colors.black.withValues(alpha: 0.25 * opacity));
   }
 
   static void _drawAtomCore(Canvas canvas, Offset center, Color color, double radius, double opacity) {
-    canvas.drawCircle(center, radius, Paint()..color = color.withValues(alpha: opacity));
+    canvas.drawCircle(center, radius, _scratchPaint..color = color.withValues(alpha: opacity));
     // 3D Highlight
-    canvas.drawCircle(center - Offset(radius * 0.3, radius * 0.3), radius * 0.35, Paint()..color = Colors.white.withValues(alpha: opacity * 0.45));
+    canvas.drawCircle(
+      center - Offset(radius * 0.3, radius * 0.3),
+      radius * 0.35,
+      _highlightPaint..color = Colors.white.withValues(alpha: opacity * 0.45),
+    );
   }
 
   static void _drawLockGlow(Canvas canvas, Offset center, double radius, double opacity) {
-    canvas.drawCircle(center, radius, Paint()
-      ..color = Colors.amber.withValues(alpha: 0.3 * opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    canvas.drawCircle(
+      center,
+      radius,
+      _lockPaint..color = Colors.amber.withValues(alpha: 0.3 * opacity),
+    );
   }
 
   static void _drawChargeLabel(Canvas canvas, Offset center, String symbol, double opacity, double zoom) {

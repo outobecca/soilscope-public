@@ -72,6 +72,14 @@ class AnimatedPlantComponent extends PositionComponent
   double _layoutProgress = 0.0; // 0 = organic, 1 = schematic
   final Map<int, Vector2> _schematicRootPositions = {};
 
+  // Root topology changes only when the root system grows. Rebuilding the
+  // taproot chain, child counts and tip-to-collar branches on every frame is
+  // quadratic work that is invisible to the simulation.
+  int _rootTopologyLength = -1;
+  Set<int> _taprootNodeIndices = const <int>{};
+  List<int> _rootChildCounts = const <int>[];
+  Map<int, List<int>> _rootBranchIndices = const <int, List<int>>{};
+
   static const int maxTipGlows = 25;
 
   int? _hoveredRootIndex;
@@ -101,6 +109,16 @@ class AnimatedPlantComponent extends PositionComponent
   final Paint _leafPulsePaint = Paint()
     ..style = PaintingStyle.stroke
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+  // Root painting is the densest part of the scene. These paints are reused
+  // per segment instead of allocating hundreds of Paint objects every frame.
+  final Paint _rootFillPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _rootHighlightPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  final Paint _rootHairPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
 
   AnimatedPlantComponent({
     required this.plantId,
@@ -556,13 +574,15 @@ class AnimatedPlantComponent extends PositionComponent
 
     // Phloem-driven carbon moving DOWN the roots
     if (_random.nextDouble() < 0.15 * dt * 60 * boost) {
-      final branches = _groupNodesIntoBranches(plant.rootSystem);
+      _ensureRootTopology(plant.rootSystem);
+      final branches = _rootBranchIndices;
       if (branches.isEmpty) return;
 
       final branchList = branches.values.toList();
       final branch = branchList[_random.nextInt(branchList.length)];
 
-      final List<Vector2> worldPath = branch.map((node) {
+      final List<Vector2> worldPath = branch.map((index) {
+        final node = plant.rootSystem[index];
         final rawY = SceneCoordinateMapper.mapRootY(
           node.z,
           game.soilSurfaceY,

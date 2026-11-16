@@ -2,14 +2,15 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flame/components.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide Image;
 import '../soil_scope_game.dart';
 
 /// Adds a subtle noise texture to the background for a premium, tactile feel.
-/// Uses a cached Picture to ensure high performance and zero flickering.
+/// The static field is rasterized once into an image so each frame samples a
+/// texture instead of replaying tens of thousands of points.
 class BackgroundNoiseComponent extends PositionComponent
     with HasGameReference<SoilScopeGame> {
-  Picture? _noisePicture;
+  Image? _noiseImage;
   Vector2? _lastSize;
 
   BackgroundNoiseComponent() : super(anchor: Anchor.topLeft);
@@ -18,28 +19,46 @@ class BackgroundNoiseComponent extends PositionComponent
   void render(Canvas canvas) {
     final size = game.size;
 
-    if (_noisePicture == null || _lastSize != size) {
-      _noisePicture = _generateNoisePicture(size);
+    if (_noiseImage == null || _lastSize != size) {
+      _noiseImage?.dispose();
+      _noiseImage = _generateNoiseImage(size);
       _lastSize = size.clone();
     }
 
-    if (_noisePicture != null) {
-      canvas.drawPicture(_noisePicture!);
+    final image = _noiseImage;
+    if (image != null) {
+      canvas.drawImageRect(
+        image,
+        Rect.fromLTWH(
+          0,
+          0,
+          image.width.toDouble(),
+          image.height.toDouble(),
+        ),
+        Rect.fromLTWH(0, 0, size.x, size.y),
+        Paint()..filterQuality = FilterQuality.none,
+      );
     }
   }
 
-  Picture _generateNoisePicture(Vector2 size) {
+  Image _generateNoiseImage(Vector2 size) {
+    final pixelRatio = (PlatformDispatcher
+                .instance
+                .implicitView
+                ?.devicePixelRatio ??
+            1.0)
+        .clamp(1.0, 2.0);
     final recorder = PictureRecorder();
-    final canvas = Canvas(recorder);
+    final canvas = Canvas(recorder)..scale(pixelRatio);
     final random = math.Random(42); // Fixed seed for stability
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: 0.04)
       ..strokeWidth = 1.2
       ..strokeCap = StrokeCap.round;
 
-    // Record one drawRawPoints command instead of ~36k drawRect commands.
-    // The cached picture is replayed every frame, so the command count matters
-    // even though the noise itself is generated only once.
+    // Record one drawRawPoints command, then rasterize it once. Replaying the
+    // points every frame costs a surprising amount of raster time for a field
+    // that is intentionally static.
     final points = <double>[];
     final step = 3.0;
     for (double x = 0; x < size.x; x += step) {
@@ -58,12 +77,18 @@ class BackgroundNoiseComponent extends PositionComponent
         paint,
       );
     }
-    return recorder.endRecording();
+    final picture = recorder.endRecording();
+    final image = picture.toImageSync(
+      (size.x * pixelRatio).ceil(),
+      (size.y * pixelRatio).ceil(),
+    );
+    picture.dispose();
+    return image;
   }
 
   @override
   void onRemove() {
-    _noisePicture?.dispose();
+    _noiseImage?.dispose();
     super.onRemove();
   }
 }
