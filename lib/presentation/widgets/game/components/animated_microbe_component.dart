@@ -162,7 +162,6 @@ class AnimatedMicrobeComponent extends PositionComponent
             SceneCoordinateMapper.mapRootX(
               node.x,
               SoilScopeGame.soilColumnWidth,
-              baseX: plant.baseX,
             ) +
             game.soilLeftX;
         final anchorY = SceneCoordinateMapper.mapRootY(

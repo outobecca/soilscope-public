@@ -417,9 +417,7 @@ class SoilLayerComponent extends PositionComponent
         symbol != null &&
         state.plants.isNotEmpty) {
       if (existingIons.length < 20) {
-        final plant = state.plants.first;
         final centerX = SceneCoordinateMapper.mapShootPosition(
-          plant.baseX,
           size.x,
           0,
         ).x;

@@ -24,7 +24,6 @@ class AtmosphericFluxLayerComponent extends Component
 
     for (final plant in state.plants) {
       final plantBase = SceneCoordinateMapper.mapShootPosition(
-        plant.baseX,
         soilColumnWidth,
         surfaceY,
       );

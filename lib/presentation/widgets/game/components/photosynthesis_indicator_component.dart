@@ -236,7 +236,6 @@ class PhotosynthesisIndicatorComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final soilWidth = SoilScopeGame.soilColumnWidth;
     final plantPos = SceneCoordinateMapper.mapShootPosition(
-      plant.baseX,
       soilWidth,
       surfaceY,
     );

@@ -152,7 +152,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         final tip = entry.value;
         final rawY = SceneCoordinateMapper.mapRootY(tip.z, surfaceY, soilHeight);
         final pos = Offset(
-          SceneCoordinateMapper.mapRootX(tip.x, worldWidth, baseX: plant.baseX) + soilX,
+          SceneCoordinateMapper.mapRootX(tip.x, worldWidth) + soilX,
           rawY.clamp(surfaceY + 10.0, surfaceY + soilHeight - 10.0).toDouble(),
         );
         rootNodes.add(NetNode(

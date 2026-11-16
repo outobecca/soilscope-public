@@ -84,6 +84,10 @@ class SoilScopeGame extends FlameGame
   double get soilSurfaceY => logicalSize.y * atmosphereFraction;
   double get soilLeftX => (logicalSize.x - simulationWidth) / 2;
 
+  /// Horizontal centre of the one-square-metre plot that the plant occupies.
+  double get plotCenterX =>
+      soilLeftX + SceneCoordinateMapper.plotCenterX(simulationWidth);
+
   /// The soil column fills the remaining space below the atmosphere.
   double get soilColumnHeight => logicalSize.y - soilSurfaceY;
 
@@ -267,9 +271,9 @@ class SoilScopeGame extends FlameGame
       }
     }
 
-    // Initial Camera: Center on the middle of the whole continuum to fit sky and soil
+    // Initial camera: centre the simulated plot, not the decorative margins.
     camera.viewfinder.anchor = Anchor.center;
-    camera.viewfinder.position = Vector2(logicalSize.x / 2, logicalSize.y / 2);
+    camera.viewfinder.position = Vector2(plotCenterX, logicalSize.y / 2);
     camera.viewfinder.zoom = 1.0;
 
     // 0. Absolute Backgrounds (Screen Space, pinned to game.size)
@@ -369,7 +373,7 @@ class SoilScopeGame extends FlameGame
   }
 
   void resetCamera() {
-    camera.viewfinder.position = Vector2(logicalSize.x / 2, soilSurfaceY);
+    camera.viewfinder.position = Vector2(plotCenterX, soilSurfaceY);
     camera.viewfinder.zoom = 1.35;
     _clampCamera();
   }
@@ -520,7 +524,7 @@ class SoilScopeGame extends FlameGame
         maxX,
       );
     } else {
-      camera.viewfinder.position.x = logicalSize.x / 2;
+      camera.viewfinder.position.x = plotCenterX;
     }
 
     if (minY <= maxY) {
@@ -632,8 +636,8 @@ class SoilScopeGame extends FlameGame
       camera.viewfinder.zoom = 1.35;
     }
 
-    // Centering the simulation and clamping
-    camera.viewfinder.position = Vector2(logicalSize.x / 2, soilSurfaceY);
+    // Centering the simulation plot and clamping
+    camera.viewfinder.position = Vector2(plotCenterX, soilSurfaceY);
     _clampCamera();
 
     if (_lastState != null) {
@@ -749,7 +753,6 @@ class SoilScopeGame extends FlameGame
               SceneCoordinateMapper.mapRootX(
                     n.x,
                     simulationWidth,
-                    baseX: plant.baseX,
                   ) +
                   soilX,
               SceneCoordinateMapper.mapRootY(n.z, soilSurfaceY, soilAreaHeight),
@@ -760,7 +763,6 @@ class SoilScopeGame extends FlameGame
 
       // Foliage points (approximate canopy centers)
       final shootPos = SceneCoordinateMapper.mapShootPosition(
-        plant.baseX,
         simulationWidth,
         soilSurfaceY,
       );

@@ -99,7 +99,6 @@ class BiologicalEntitiesComponent extends Component
     for (final plant in state.plants) {
       if (!plantMap.containsKey(plant.id)) {
         final plantPos = SceneCoordinateMapper.mapShootPosition(
-          plant.baseX,
           soilWidth,
           surfaceY,
         );
@@ -157,7 +156,6 @@ class BiologicalEntitiesComponent extends Component
 
         final centerX =
             SceneCoordinateMapper.mapShootPosition(
-              plant.baseX,
               soilWidth,
               surfaceY,
             ).x +
@@ -197,10 +195,8 @@ class BiologicalEntitiesComponent extends Component
     final soilWidth = SoilScopeGame.soilColumnWidth;
 
     for (int i = 0; i < 3; i++) {
-      final plant = state.plants[i % state.plants.length];
       final centerX =
           SceneCoordinateMapper.mapShootPosition(
-            plant.baseX,
             soilWidth,
             surfaceY,
           ).x +

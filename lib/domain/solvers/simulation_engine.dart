@@ -16,6 +16,11 @@ import 'microbial_enzymes_solver.dart';
 import 'mycorrhiza_solver.dart';
 import 'nutrient_buffer.dart';
 
+/// Advances the soil profile representing one 1 m² plot centred on the plant.
+///
+/// Layer concentrations are per unit volume and fluxes are per unit area, so
+/// the profile is area-independent; `SimulationPlot` records the footprint
+/// those rates are integrated over and is shared with the animation.
 class SimulationEngine {
   static bool _validateBiophysicalState(BiophysicalState state) {
     // Check layers

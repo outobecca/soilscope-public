@@ -66,7 +66,7 @@ class InspectionTargetLayerComponent extends Component
       final topX = math.sin(totalAngle) * currentHeight * 0.4;
       final topY = -currentHeight;
       final plantBaseX =
-          SceneCoordinateMapper.mapRootX(0.5, worldWidth, baseX: plant.baseX) +
+          SceneCoordinateMapper.mapRootX(0.5, worldWidth) +
           soilX;
       final plantBaseY = surfaceY;
 
@@ -117,7 +117,6 @@ class InspectionTargetLayerComponent extends Component
               SceneCoordinateMapper.mapRootX(
                     deepestTip.x,
                     worldWidth,
-                    baseX: plant.baseX,
                   ) +
                   soilX,
               SceneCoordinateMapper.mapRootY(
@@ -147,7 +146,6 @@ class InspectionTargetLayerComponent extends Component
               SceneCoordinateMapper.mapRootX(
                     rhizosphereNode.x,
                     worldWidth,
-                    baseX: plant.baseX,
                   ) +
                   soilX,
               SceneCoordinateMapper.mapRootY(
@@ -173,7 +171,6 @@ class InspectionTargetLayerComponent extends Component
             SceneCoordinateMapper.mapRootX(
                   0.2,
                   worldWidth,
-                  baseX: plant.baseX,
                 ) +
                 soilX,
             surfaceY + 80,

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
+import '../models/simulation_plot.dart';
 
 /// Pure logic for simulation actions (tillage, fertilization, weather, etc.)
 /// These functions are pure and return a new state, making them easy to test.
@@ -73,8 +74,14 @@ class SimulationActions {
 
     final layers = List<SoilLayer>.from(state.profile.layers);
     final top = layers.first;
-    final thicknessMm = math.max(1.0, top.thickness * 1000.0);
-    final deltaTheta = (amountMm / thicknessMm).clamp(0.0, 0.25);
+    // Convert the applied water depth to the volume held by the 1 m² plot,
+    // then distribute it through the top layer. The area cancels in the
+    // concentration conversion, but making it explicit keeps the plot basis
+    // visible if the plot is ever resized.
+    final appliedVolumeM3 = SimulationPlot.volumeForDepth(amountMm / 1000.0);
+    final topLayerVolumeM3 =
+        SimulationPlot.areaM2 * math.max(0.001, top.thickness);
+    final deltaTheta = (appliedVolumeM3 / topLayerVolumeM3).clamp(0.0, 0.25);
     final nextWater = math.min(
       top.porosity * 0.98,
       top.waterContent + deltaTheta,

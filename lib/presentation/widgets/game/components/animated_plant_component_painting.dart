@@ -1006,9 +1006,11 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final collarX = collarNode?.x ?? 0.5;
     final collarZ = collarNode?.z ?? 0.0;
 
-    // Organic world position
+    // Organic world position. The plot mapper is shared with world-space
+    // components so the drawn root and its hit tests stay on the same 1 m²
+    // extent.
     final organic = Vector2(
-      (n.x - collarX) * worldWidth * 0.45,
+      SceneCoordinateMapper.rootOffsetX(n.x, collarX, worldWidth),
       ((n.z - collarZ) * soilHeight).clamp(0.0, soilHeight).toDouble(),
     );
 
@@ -1170,7 +1172,6 @@ extension _PlantVisuals on AnimatedPlantComponent {
     // Xylem flow moving UP to leaves
     if (_random.nextDouble() < 0.1 * dt * 60) {
       final shootPos = SceneCoordinateMapper.mapShootPosition(
-        _plantData?.baseX ?? 0.5,
         SoilScopeGame.soilColumnWidth,
         game.soilSurfaceY,
       );

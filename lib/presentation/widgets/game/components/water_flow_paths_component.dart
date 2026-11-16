@@ -45,7 +45,7 @@ class WaterFlowPathsComponent extends Component
     final soilX = game.soilLeftX;
 
     for (final plant in state.plants) {
-      final plantBase = SceneCoordinateMapper.mapShootPosition(plant.baseX, worldWidth, surfaceY);
+      final plantBase = SceneCoordinateMapper.mapShootPosition(worldWidth, surfaceY);
       plantBase.x += soilX;
       final tips = plant.rootSystem.where((n) => n.isTip).toList();
 
@@ -57,7 +57,7 @@ class WaterFlowPathsComponent extends Component
         while (current != null) {
           points.add(
             Offset(
-              SceneCoordinateMapper.mapRootX(current.x, worldWidth, baseX: plant.baseX) + soilX,
+              SceneCoordinateMapper.mapRootX(current.x, worldWidth) + soilX,
               SceneCoordinateMapper.mapRootY(current.z, surfaceY, soilHeight),
             ),
           );
@@ -227,7 +227,7 @@ class WaterFlowPathsComponent extends Component
     // Check distance to root flow paths (generous 18px tolerance)
     for (final plant in state.plants) {
       for (final node in plant.rootSystem) {
-        final rx = SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX;
+        final rx = SceneCoordinateMapper.mapRootX(node.x, worldWidth) + soilX;
         final ry = SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight);
         if ((point.x - rx).abs() < 18.0 && (point.y - ry).abs() < 18.0) {
           return true;

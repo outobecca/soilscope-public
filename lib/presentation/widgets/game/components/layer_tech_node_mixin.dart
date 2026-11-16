@@ -48,7 +48,6 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
               .map(
                 (p) =>
                     SceneCoordinateMapper.mapShootPosition(
-                      p.baseX,
                       worldWidth,
                       0,
                     ).x +

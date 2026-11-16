@@ -95,7 +95,6 @@ class BiochemicalDynamicsComponent extends Component
             SceneCoordinateMapper.mapRootX(
                   node.x,
                   worldWidth,
-                  baseX: plant.baseX,
                 ) +
                 game.soilLeftX,
             SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
@@ -264,7 +263,6 @@ class BiochemicalDynamicsComponent extends Component
         final plant = state.plants.firstOrNull;
         final centerX = plant != null
             ? SceneCoordinateMapper.mapShootPosition(
-                    plant.baseX,
                     worldWidth,
                     surfaceY,
                   ).x +
@@ -312,7 +310,6 @@ class BiochemicalDynamicsComponent extends Component
         final plant = state.plants.firstOrNull;
         final centerX = plant != null
             ? SceneCoordinateMapper.mapShootPosition(
-                    plant.baseX,
                     worldWidth,
                     surfaceY,
                   ).x +
@@ -405,7 +402,6 @@ class BiochemicalDynamicsComponent extends Component
           SceneCoordinateMapper.mapRootX(
                 tipNode.x,
                 worldWidth,
-                baseX: plant.baseX,
               ) +
               game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
@@ -518,7 +514,6 @@ class BiochemicalDynamicsComponent extends Component
           SceneCoordinateMapper.mapRootX(
                 tipNode.x,
                 worldWidth,
-                baseX: plant.baseX,
               ) +
               game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
@@ -573,7 +568,7 @@ class BiochemicalDynamicsComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final plant = state.plants.first;
     final plantWorldX =
-        SceneCoordinateMapper.mapRootX(0.5, worldWidth, baseX: plant.baseX) +
+        SceneCoordinateMapper.mapRootX(0.5, worldWidth) +
         game.soilLeftX;
 
     final photosynthesisRate = (_solarRadiation / 1000.0).clamp(0.1, 1.0);
@@ -586,7 +581,6 @@ class BiochemicalDynamicsComponent extends Component
       final startY = surfaceY - 500;
 
       final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
-        plant.baseX,
         worldWidth,
         surfaceY,
       );
@@ -609,7 +603,6 @@ class BiochemicalDynamicsComponent extends Component
     // REDUCED: Decreased spawn frequency for better visibility
     if (_random.nextDouble() < 0.01 * photosynthesisRate * dt) {
       final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
-        plant.baseX,
         worldWidth,
         surfaceY,
       );
@@ -683,7 +676,6 @@ class BiochemicalDynamicsComponent extends Component
     // REDUCED: Decreased spawn frequency for better visibility
     if (_random.nextDouble() < 0.025 * transpirationActivity * dt) {
       final shootPos = SceneCoordinateMapper.mapShootPosition(
-        plant.baseX,
         worldWidth,
         surfaceY,
       );
@@ -713,10 +705,8 @@ class BiochemicalDynamicsComponent extends Component
     final soilWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
     final soilHeight = game.soilColumnHeight;
-    final plant = state.plants.first;
     final centerX =
         SceneCoordinateMapper.mapShootPosition(
-          plant.baseX,
           soilWidth,
           surfaceY,
         ).x +
@@ -790,7 +780,6 @@ class BiochemicalDynamicsComponent extends Component
           SceneCoordinateMapper.mapRootX(
                 tip.x,
                 worldWidth,
-                baseX: plant.baseX,
               ) +
               game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tip.z, surfaceY, soilHeight),
@@ -817,10 +806,8 @@ class BiochemicalDynamicsComponent extends Component
         );
 
     final topLayers = state.profile.layers.take(2).toList();
-    final plant = state.plants.first;
     final centerX =
         SceneCoordinateMapper.mapShootPosition(
-          plant.baseX,
           worldWidth,
           surfaceY,
         ).x +

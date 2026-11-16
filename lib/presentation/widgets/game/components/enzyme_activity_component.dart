@@ -82,7 +82,6 @@ class EnzymeActivityComponent extends PositionComponent
           SceneCoordinateMapper.mapRootX(
             tip.x,
             soilWidth,
-            baseX: picked.plant.baseX,
           ) +
           soilX;
       final tipY =

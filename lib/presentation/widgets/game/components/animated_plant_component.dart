@@ -128,7 +128,7 @@ class AnimatedPlantComponent extends PositionComponent
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
       final nodeWorldPos = Vector2(
-        SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) +
+        SceneCoordinateMapper.mapRootX(node.x, worldWidth) +
             soilX,
         SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
       );
@@ -145,7 +145,7 @@ class AnimatedPlantComponent extends PositionComponent
     RootNode? curr = nearest;
     while (curr != null) {
       final nodePos = Vector2(
-        SceneCoordinateMapper.mapRootX(curr.x, worldWidth, baseX: plant.baseX) +
+        SceneCoordinateMapper.mapRootX(curr.x, worldWidth) +
             soilX,
         SceneCoordinateMapper.mapRootY(curr.z, surfaceY, soilHeight),
       );
@@ -361,7 +361,6 @@ class AnimatedPlantComponent extends PositionComponent
         SceneCoordinateMapper.mapRootX(
           collarX,
           worldWidth,
-          baseX: plant.baseX,
         ) +
         soilX;
 
@@ -572,7 +571,6 @@ class AnimatedPlantComponent extends PositionComponent
           SceneCoordinateMapper.mapRootX(
                 node.x,
                 SoilScopeGame.soilColumnWidth,
-                baseX: plant.baseX,
               ) +
               game.soilLeftX,
           rawY,
@@ -613,7 +611,6 @@ class AnimatedPlantComponent extends PositionComponent
             SceneCoordinateMapper.mapRootX(
                   node.x,
                   worldWidth,
-                  baseX: plant.baseX,
                 ) +
                 soilX,
             rawY.clamp(surfaceY + 5.0, surfaceY + soilHeight - 5.0).toDouble(),

@@ -184,7 +184,11 @@ void main() {
       orElse: () => plantData.rootSystem.last,
     );
     final rootLocal = Vector2(
-      (root.x - collar.x) * SoilScopeGame.soilColumnWidth * 0.45,
+      SceneCoordinateMapper.rootOffsetX(
+        root.x,
+        collar.x,
+        SoilScopeGame.soilColumnWidth,
+      ),
       ((root.z - collar.z) * game.soilColumnHeight).clamp(
         0.0,
         game.soilColumnHeight,
@@ -532,7 +536,6 @@ void main() {
             SceneCoordinateMapper.mapRootX(
                   node.x,
                   SoilScopeGame.soilColumnWidth,
-                  baseX: plant.baseX,
                 ) +
                 game.soilLeftX,
             SceneCoordinateMapper.mapRootY(

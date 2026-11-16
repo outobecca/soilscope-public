@@ -109,7 +109,7 @@ class IonComponent extends PositionComponent
 
       for (int i = 0; i < plant.rootSystem.length; i += 4) {
         final node = plant.rootSystem[i];
-        final rx = SceneCoordinateMapper.mapRootX(node.x, worldWidth, baseX: plant.baseX) + soilX;
+        final rx = SceneCoordinateMapper.mapRootX(node.x, worldWidth) + soilX;
         final ry = SceneCoordinateMapper.mapRootY(node.z, game.soilSurfaceY, soilHeight);
         final rPos = Vector2(rx, ry);
         final distSq = position.distanceToSquared(rPos);

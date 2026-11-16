@@ -30,8 +30,8 @@ mixin SoilComponentMixin on HasGameReference<SoilScopeGame> {
   /// The total height of the soil column.
   double get soilHeight => game.soilColumnHeight;
 
-  /// The logical center of the simulation.
-  double get centerX => SoilScopeGame.logicalSize.x / 2;
+  /// The logical centre of the simulated one-square-metre plot.
+  double get centerX => game.plotCenterX;
 
   /// Checks if a point is within the interactive simulation column.
   bool isInsideSimulation(Vector2 point) {

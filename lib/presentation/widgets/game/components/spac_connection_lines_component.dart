@@ -47,7 +47,6 @@ class SPACConnectionLinesComponent extends Component
 
     // Plant geometry (matching AnimatedPlantComponent exactly)
     final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
-      plant.baseX,
       soilColumnWidth,
       surfaceY,
     );

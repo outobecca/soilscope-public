@@ -14,6 +14,10 @@ class HydrologySolver {
   /// Solves 1D Richards equation flux between layers for a time step [dt]
   /// accounts for Bypass Flow, Hysteresis, Macro-porosity feedbacks and Evaporation.
   ///
+  /// The profile is the 1 m² plot described by `SimulationPlot`. Fluxes are
+  /// depth rates per unit area, so a unit area is the physical integration
+  /// basis; plant sinks are distributed across the same plot.
+  ///
   /// Integrates with multiple plants in the SPAC continuum.
   static HydrologyResult solve(
     SoilProfile profile,

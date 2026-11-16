@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import '../../models/plant.dart';
 import '../../models/soil_profile.dart';
 import '../../models/soil_layer.dart';
+import '../../models/simulation_plot.dart';
 import '../../../core/simulation_constants.dart';
 
 /// Logic for plant root system growth, branching and spatial distribution.
@@ -185,9 +186,12 @@ class RootArchitectureSolver {
           }
 
           // 4. GROWTH EXECUTION
-          final double growthStep =
-              SimulationConstants.rootGrowthStep *
-              (0.45 + 0.55 * penetrationFactor);
+          // Root growth and spatial avoidance are defined in metres, then
+          // converted into the normalized horizontal domain of the 1 m² plot.
+          final double growthStep = SimulationPlot.distanceToNormalized(
+            SimulationConstants.rootGrowthStep *
+                (0.45 + 0.55 * penetrationFactor),
+          );
           
           double dx = steeringForceX * growthStep;
           double dz = steeringForceZ * growthStep;
@@ -201,20 +205,29 @@ class RootArchitectureSolver {
 
           // Spatial Avoidance
           bool spaceOccupied = false;
+          final double avoidanceRadius = SimulationPlot.distanceToNormalized(
+            0.008,
+          );
           for (final existing in newRoots) {
-             if (_dist(tip.x + dx, tip.z + dz, existing.x, existing.z) < 0.008) {
+             if (_dist(tip.x + dx, tip.z + dz, existing.x, existing.z) <
+                 avoidanceRadius) {
                 spaceOccupied = true;
                 break;
              }
           }
           
           if (spaceOccupied) {
-             dx += (_rand.nextDouble() - 0.5) * 0.015;
-             dz += 0.004;
+             dx +=
+                 (_rand.nextDouble() - 0.5) *
+                 SimulationPlot.distanceToNormalized(0.015);
+             dz += SimulationPlot.distanceToNormalized(0.004);
           }
 
           final newNode = RootNode(
-            x: (tip.x + dx).clamp(0.02, 0.98),
+            x: (tip.x + dx).clamp(
+              SimulationPlot.minNormalizedX,
+              SimulationPlot.maxNormalizedX,
+            ),
             z: (tip.z + dz).clamp(0.0, 0.985),
             radius: tip.radius * (isPrimary ? 0.997 : 0.982),
             isTip: true,
@@ -230,7 +243,9 @@ class RootArchitectureSolver {
           final bool branchedRecently = _hasRecentBranch(newRoots, tipIdx, 10);
           
           if (shouldBranch && !branchedRecently && tip.branchLevel < 2) {
-            const double branchStep = SimulationConstants.rootBranchStep;
+            final double branchStep = SimulationPlot.distanceToNormalized(
+              SimulationConstants.rootBranchStep,
+            );
             
             // CONSTRAINT: Strict branching angle 30-60 degrees downward
             final angle = (30 + _rand.nextDouble() * 30) * (math.pi / 180);
@@ -241,7 +256,10 @@ class RootArchitectureSolver {
             
             newRoots.add(
               RootNode(
-                x: (tip.x + bdx).clamp(0.02, 0.98),
+                x: (tip.x + bdx).clamp(
+                  SimulationPlot.minNormalizedX,
+                  SimulationPlot.maxNormalizedX,
+                ),
                 z: (tip.z + bdz).clamp(0.0, 0.985),
                 radius: tip.radius * 0.65, // Lateral is always thinner
                 isTip: true,

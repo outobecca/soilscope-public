@@ -1,40 +1,63 @@
 import 'package:flame/components.dart';
 import '../../../../domain/models/plant.dart';
+import '../../../../domain/models/simulation_plot.dart';
 
-/// Shared coordinate transforms for root-system driven world positioning.
+/// Shared coordinate transforms for the one-square-metre plot.
+///
+/// The simulation column renders the plot centred on the plant. Horizontal
+/// root positions are normalized to the plot (0 = left edge, 0.5 = plant
+/// collar, 1 = right edge), so the solver and every visual component use the
+/// same extent and centre.
 class SceneCoordinateMapper {
+  /// Fraction of the simulation column occupied by the 1 m² plot. The
+  /// remaining margin keeps the plot readable inside the wider visual column.
+  static const double plotWidthFraction = 0.45;
 
-  static double mapRootX(double rootX, double worldWidth, {double baseX = 0.5}) {
-    // baseX is the plant's anchor point [0-1] in the soil column.
-    // rootX is the node's position relative to the plant center [0-1].
-    
-    // Distribute the plant bases more widely
-    final double soilColumnX = worldWidth * 0.1 + baseX * worldWidth * 0.8;
-    
-    // Spread the roots relative to the base (Matched with AnimatedPlantComponent 0.45)
-    return soilColumnX + (rootX - 0.5) * worldWidth * 0.45;
+  /// World-space width of the 1 m² plot [px].
+  static double plotWidth(double worldWidth) =>
+      worldWidth * plotWidthFraction;
+
+  /// World-space x coordinate of the plot centre and plant collar [px].
+  static double plotCenterX(double worldWidth) =>
+      worldWidth * SimulationPlot.centerNormalizedX;
+
+  /// Maps a plot-normalized root x position to the simulation column [px].
+  static double mapRootX(double rootX, double worldWidth) {
+    final plotLeft = plotCenterX(worldWidth) - plotWidth(worldWidth) / 2.0;
+    return plotLeft +
+        SimulationPlot.clampNormalizedX(rootX) * plotWidth(worldWidth);
+  }
+
+  /// Horizontal offset of a root node from the plant collar [px].
+  ///
+  /// Used by the plant component, which positions itself at the collar, so
+  /// its local root drawing and the world-space mapper cannot drift apart.
+  static double rootOffsetX(
+    double rootX,
+    double collarX,
+    double worldWidth,
+  ) {
+    return (SimulationPlot.clampNormalizedX(rootX) -
+            SimulationPlot.clampNormalizedX(collarX)) *
+        plotWidth(worldWidth);
   }
 
   static double mapRootY(double rootZ, double surfaceY, double soilHeight) {
     return surfaceY + rootZ * soilHeight;
   }
 
-  static Vector2 mapShootPosition(double baseX, double worldWidth, double surfaceY) {
-    return Vector2(
-      worldWidth * 0.1 + baseX * worldWidth * 0.8,
-      surfaceY,
-    );
+  static Vector2 mapShootPosition(double worldWidth, double surfaceY) {
+    return Vector2(plotCenterX(worldWidth), surfaceY);
   }
 
   static ({double x, double y}) mapRootNode(
     RootNode node,
     double worldWidth,
     double surfaceY,
-    double soilHeight, {
-    double baseX = 0.5,
-  }) {
+    double soilHeight,
+  ) {
     return (
-      x: mapRootX(node.x, worldWidth, baseX: baseX),
+      x: mapRootX(node.x, worldWidth),
       y: mapRootY(node.z, surfaceY, soilHeight),
     );
   }
@@ -44,10 +67,9 @@ class SceneCoordinateMapper {
   static double mapRootXWorld(
     double rootX,
     double worldWidth,
-    double soilLeftX, {
-    double baseX = 0.5,
-  }) {
-    return mapRootX(rootX, worldWidth, baseX: baseX) + soilLeftX;
+    double soilLeftX,
+  ) {
+    return mapRootX(rootX, worldWidth) + soilLeftX;
   }
 
   /// Convenience: maps a RootNode to world-space Vector2 including soilLeftX offset.
@@ -56,11 +78,10 @@ class SceneCoordinateMapper {
     double worldWidth,
     double surfaceY,
     double soilHeight,
-    double soilLeftX, {
-    double baseX = 0.5,
-  }) {
+    double soilLeftX,
+  ) {
     return Vector2(
-      mapRootXWorld(node.x, worldWidth, soilLeftX, baseX: baseX),
+      mapRootXWorld(node.x, worldWidth, soilLeftX),
       mapRootY(node.z, surfaceY, soilHeight),
     );
   }

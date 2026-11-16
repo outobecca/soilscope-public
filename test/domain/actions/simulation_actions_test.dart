@@ -3,6 +3,7 @@ import 'package:soilscope/domain/actions/simulation_actions.dart';
 import 'package:soilscope/domain/models/biophysical_state.dart';
 import 'package:soilscope/domain/models/soil_layer.dart';
 import 'package:soilscope/domain/models/soil_profile.dart';
+import 'package:soilscope/domain/models/simulation_plot.dart';
 
 SoilLayer _layer({
   required String id,
@@ -90,6 +91,12 @@ void main() {
     expect(after.profile.layers.first.waterContent, closeTo(0.2833, 0.0001));
     expect(after.profile.layers.first.previousWaterContent, 0.25);
     expect(after.profile.layers[1].waterContent, 0.3);
+    final addedVolume =
+        (after.profile.layers.first.waterContent -
+            before.profile.layers.first.waterContent) *
+        before.profile.layers.first.thickness *
+        SimulationPlot.areaM2;
+    expect(addedVolume, closeTo(0.010, 1e-12));
   });
 
   test('organic matter adds labile carbon and microbial biomass', () {
