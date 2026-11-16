@@ -813,6 +813,7 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final glowCount = math.min(nodes.length, glowBudget);
     final reachBase = 8.0 + waterContent * 10.0;
     final alphaFactor = (highlighted ? 0.25 : 0.08) * zoomLOD;
+    final glowPaint = Paint();
 
     for (int g = 0; g < glowCount; g++) {
       final i = glowCount == nodes.length
@@ -830,45 +831,25 @@ extension _PlantVisuals on AnimatedPlantComponent {
 
       final rPos = map(node, i).toOffset();
       final glowRadius = (reachBase + 6.0 * pulse * activity) * 0.5;
+      final glowAlpha = (alphaFactor * activity * 0.55).clamp(0.0, 0.12);
 
-      // 1. Inner Active Core (enzymatic concentration). At normal zoom this
-      // sits inside the outer gradient and is not resolvable.
-      if (zoom >= 1.2) {
-        canvas.drawCircle(
-          rPos,
-          glowRadius * 0.4,
-          Paint()
-            ..shader =
-                RadialGradient(
-                  colors: [
-                    const Color(0xFF84CC16).withValues(
-                      alpha: (alphaFactor * activity * 1.5).clamp(0.0, 0.12),
-                    ),
-                    const Color(0xFF84CC16).withValues(alpha: 0.0),
-                  ],
-                ).createShader(
-                  Rect.fromCircle(center: rPos, radius: glowRadius * 0.4),
-                )
-            ..blendMode = BlendMode.screen,
-        );
-      }
-
-      // 2. Outer rhizosphere influence
-      canvas.drawCircle(
-        rPos,
-        glowRadius,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [
-              const Color(0xFF84CC16).withValues(
-                alpha: (alphaFactor * activity * 0.5).clamp(0.0, 0.1),
-              ),
-              const Color(0xFF84CC16).withValues(alpha: 0.0),
-            ],
-            stops: const [0.3, 1.0],
-          ).createShader(Rect.fromCircle(center: rPos, radius: glowRadius))
-          ..blendMode = BlendMode.screen,
-      );
+      // Three concentric fills approximate the previous radial falloff. The
+      // old path created a RadialGradient shader and a screen-blended layer for
+      // every sampled node; that was the single largest raster cost in the
+      // scene. Reusing one paint keeps the sampled positions and pulse but
+      // removes the per-node shader and blend-mode allocations.
+      glowPaint.color = const Color(
+        0xFF84CC16,
+      ).withValues(alpha: glowAlpha * 0.45);
+      canvas.drawCircle(rPos, glowRadius * 1.55, glowPaint);
+      glowPaint.color = const Color(
+        0xFF84CC16,
+      ).withValues(alpha: glowAlpha * 0.8);
+      canvas.drawCircle(rPos, glowRadius, glowPaint);
+      glowPaint.color = const Color(
+        0xFF84CC16,
+      ).withValues(alpha: (glowAlpha * 1.25).clamp(0.0, 0.14));
+      canvas.drawCircle(rPos, glowRadius * 0.55, glowPaint);
 
       // 3. Enzymatic mining particles are only legible up close.
       if (zoom >= 1.5 && node.isTip && activity > 0.6 && i.isEven) {
@@ -895,10 +876,11 @@ extension _PlantVisuals on AnimatedPlantComponent {
       );
     }
     if (hasTips) {
+      final tipPaint = Paint();
       if (zoom >= 1.2) {
         canvas.drawPath(
           tipHaloPath,
-          Paint()
+          tipPaint
             ..color = const Color(
               0xFFBEF264,
             ).withValues(alpha: 0.025 + pulse * 0.012),
@@ -906,7 +888,7 @@ extension _PlantVisuals on AnimatedPlantComponent {
       }
       canvas.drawPath(
         tipCorePath,
-        Paint()
+        tipPaint
           ..color = const Color(
             0xFFBEF264,
           ).withValues(alpha: 0.04 + pulse * 0.02),

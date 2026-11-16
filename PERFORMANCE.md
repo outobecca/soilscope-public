@@ -319,6 +319,62 @@ single-run, fixed-order protocol and the 30 s steady window still carry the
 session/scene drift described above. A defensible release claim still needs
 the interleaved A/B protocol on the target device.
 
+### Capture: rhizosphere effect and duplicate-shoot pass, 2026-11-16
+
+Same Linux desktop reference, scenario, seed 101 and fixed phase order. The
+"before" column is commit `57aacd2`; the "after" column is a clean run with the
+attribution diagnostics removed.
+
+| Phase | Raster p50 / p95 before (ms) | Raster p50 / p95 after (ms) | FPS before | FPS after | Raster p50 change |
+|---|---|---|---|---|---|
+| Steady simulation | 28.22 / 31.37 | 12.69 / 14.41 | 33.59 | 59.81 | −55.0% |
+| Pinned inspection | 16.99 / 19.27 | 11.11 / 12.88 | 53.91 | 59.92 | −34.6% |
+| Microscope open | 16.63 / 18.84 | 9.02 / 11.19 | 55.13 | 60.11 | −45.8% |
+| Pan + zoom | 28.84 / 32.99 | 13.03 / 15.48 | 32.51 | 59.25 | −54.8% |
+
+Steady build p50/p95 fell from 10.12/25.06 ms to 6.36/11.22 ms. All four phases
+now have both raster p50 and p95 under the 16.7 ms frame budget, and the
+harness reports 59.3–60.1 FPS in each phase. Raster-janky frames were 22/1804
+(steady), 14/593 (pan), 4/611 (pinned) and 2/610 (microscope). Total frame
+span still exceeds vsync on most steady frames because the harness measures
+build plus presentation scheduling, not just raster; the raster target itself
+is met.
+
+The temporary component attribution (paused scene after a 20 s warm-up) found:
+
+| Render group | Raster p50 removed (ms) |
+|---|---:|
+| Animation layer | 14.69 |
+| Soil layers | 5.15 |
+| Symbiosis network | 0.68 |
+| Soil background layer | 0.36 |
+| Weather / background noise | ≤0.4 (within noise) |
+
+Inside the animation layer, the plant was 13.72 ms and microbes/earthworms were
+under 0.5 ms. Inside the plant, **rhizosphere glow was 6.00 ms**, tip animations
+1.31 ms, and root anatomy, shoot geometry, rhizosheath, depletion zone and root
+pressure were each under 0.25 ms individually. After the rhizosphere change the
+full paused scene rendered at 8.77 ms. This corrected the previous assumption
+that root path count was the remaining floor: the root geometry was already
+cheap, while an effect around it was not.
+
+The rhizosphere glow built a `RadialGradient` shader per sampled node and drew
+it with `BlendMode.screen`. The screen-blend layers forced a much larger
+offscreen composite than their small circle bounds suggested, which is why
+removing them cut more than the 6 ms isolated delta. The replacement keeps the
+same sampled node positions, glow budget, pulse and batched tip halos, but uses
+three concentric translucent circles with one reused paint and no shader or
+blend mode. The plant render also contained a second identical branch/leaf pass
+left over from an earlier layout path; it was opaque overdraw and has been
+removed.
+
+No simulation parameter changed; the model fingerprint remains `a456e3ab`. The
+two simulation goldens were refreshed for the intentional rhizosphere shading
+difference, and a zoomed crop of the root zone was reviewed as visually
+equivalent. This is one fresh fixed-order run per column, so it is directional
+under the session-drift caveat. No low-end Android run was made after this
+change; its previous 5.8 FPS row is still a pre-pass lower bound.
+
 ## Optimization log
 
 | Date | Change | Before | After | Device | Result |
@@ -326,6 +382,7 @@ the interleaved A/B protocol on the target device.
 | 2026-11-15 | `BlurSurface` backdrop blur removed (panel-only) | Microscope raster 59.8 ms desktop, 185.7 ms box | 59.9 ms desktop, 192.4 ms box | Linux desktop, low-end Android | **Rejected:** paired deltas inside drift bias, no measured win; default restored to blurred |
 | 2026-11-16 | Animation render pass: root/hair/tip batching and LOD, cached soil texture and noise images, batched symbiosis bundles, blur removal | Steady 69.87 ms / 14.45 FPS; pinned 30.80 ms; microscope 38.52 ms; pan 43.53 ms | Steady 28.22 ms / 33.59 FPS; pinned 16.99 ms; microscope 16.63 ms; pan 28.84 ms | Linux desktop, seed 101, single fresh run each | **Accepted:** steady raster −59.6% and FPS +132%; pinned/microscope near the 60 FPS raster budget; Android not re-run |
 | 2026-11-16 | One gradient per soil column for horizon/redox/pH overlays; R-horizon depth stop corrected from 100.0 to 1.0 | Pinned 18.27 ms, microscope 17.61 ms, steady 28.32 ms raster | Pinned 16.99 ms, microscope 16.63 ms, steady 28.22 ms raster | Same Linux desktop and protocol | **Accepted:** overlay-heavy phases reach ~60 FPS raster; steady unchanged within run noise |
+| 2026-11-16 | Replace screen-blended radial rhizosphere shaders with sampled concentric fills; remove duplicate shoot geometry pass | Steady 28.22 ms / 33.59 FPS; pinned 16.99; microscope 16.63; pan 28.84 | Steady 12.69 ms / 59.81 FPS; pinned 11.11; microscope 9.02; pan 13.03 | Linux desktop, seed 101, single clean run | **Accepted:** all four raster p50 and p95 under 16.7 ms; Android not re-run |
 
 ## Status
 
@@ -336,13 +393,24 @@ phases. The low-end Android box is a single-run lower bound at ~5.4–5.8 FPS.
 Both are raster-bound, so the bottleneck is GPU draw work, not Dart or the
 solver.
 
-The 2026-11-16 animation pass addressed that bottleneck. On the same desktop,
-steady raster fell from 69.87 ms to 28.22 ms (14.45 → 33.59 FPS), pan/zoom from
+The 2026-11-16 animation passes addressed that bottleneck. The first pass took
+steady raster from 69.87 ms to 28.22 ms (14.45 → 33.59 FPS), pan/zoom from
 43.53 ms to 28.84 ms, and pinned/microscope from 30.80/38.52 ms to
-16.99/16.63 ms. The model fingerprint is unchanged, and the root-pressure
-sampling and R-horizon depth bugs found during the pass are fixed. Steady and
-pan/zoom are still roughly 1.7–2× over the 16.7 ms raster budget; the remaining
-cost is the full animated scene painted every frame, not the HUD or the solver.
+16.99/16.63 ms. Component attribution then showed the remaining animation-layer
+cost was concentrated in the rhizosphere glow's per-node radial shaders and
+`BlendMode.screen` compositing, not in the batched root paths. Replacing that
+effect and removing a duplicate shoot pass brought all four phases under
+budget: steady 12.69 ms / 59.81 FPS, pinned 11.11 / 59.92, microscope 9.02 /
+60.11, and pan/zoom 13.03 / 59.25 raster p50. The model fingerprint is
+unchanged, and the root-pressure sampling and R-horizon depth bugs found during
+the passes are fixed.
+
+Every measured phase now has raster p50 and p95 below 16.7 ms on the reference
+desktop, so the avoidable per-frame hotspot identified by attribution is
+closed. The remaining profile total-span numbers are dominated by build plus
+presentation scheduling, not raster. Soil-layer body caching remains a possible
+future win for a slower target, but it is not required to meet the desktop
+raster budget and was not added in this pass.
 
 Rotation corrected the earlier phase picture: the fixed-order capture measured
 steady first every time and microscope second every time, which made steady
@@ -359,11 +427,11 @@ and the blurred default was restored. Pausing the simulation cuts the
 microscope state from ~60 ms to ~34 ms raster on desktop, which pointed at
 per-frame animated draw work. The 2026-11-16 pass followed that evidence.
 
-The next candidates, in order, are baking the per-layer soil body/noise/shadows
-into a cached visible-slice image, reducing the remaining root and symbiosis
-stroke tessellation, and lowering the cosmetic update cadence for effects that
-cannot be cached. None should be accepted without the interleaved A/B on the
-reference desktop and a post-pass low-end Android capture.
+The next candidate, if a slower target needs more headroom, is baking the
+per-layer soil body/noise/shadows into a cached visible-slice image; the
+attribution measured that group at 5.15 ms paused. It should not be accepted
+without the interleaved A/B on the reference desktop and a post-pass low-end
+Android capture.
 
 The matrix still needs a mid-range phone, a desktop browser and (if available)
 an iOS device, and the Android row still needs repeated runs.
