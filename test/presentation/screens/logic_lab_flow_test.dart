@@ -68,6 +68,7 @@ Future<_Harness> _pumpSimulation(WidgetTester tester) async {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en'),
+        navigatorObservers: [appRouteObserver],
         routes: {'/logic_lab': (_) => const LogicLabScreen()},
         home: MainSimulationScreen(scenarioId: scenario.id),
       ),
@@ -307,9 +308,18 @@ void main() {
         reason: 'the animated canvas state must follow the Lab edit',
       );
 
-      container.read(simulationProvider.notifier).start();
-      await tester.pump();
-      expect(container.read(simulationProvider).isRunning, isTrue);
+      expect(
+        container.read(simulationProvider).isRunning,
+        isTrue,
+        reason: 'editing the Lab must resume the simulation on return',
+      );
+      final resumedAt = harness.game.currentTime();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        harness.game.currentTime(),
+        greaterThan(resumedAt),
+        reason: 'the canvas animation clock must resume after the Lab route',
+      );
       container.read(simulationProvider.notifier).stop();
       await tester.pump();
 

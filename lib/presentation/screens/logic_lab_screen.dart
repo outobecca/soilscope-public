@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart' hide Simulation;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../domain/logic_lab/models.dart';
@@ -34,12 +34,15 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
   TransformationController? _graphController;
   LogicLabLaunchContext? _context;
   bool _routeContextLoaded = false;
+  late final Simulation _simulationNotifier;
+  bool _editedSimulation = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_routeContextLoaded) return;
     _routeContextLoaded = true;
+    _simulationNotifier = ref.read(simulationProvider.notifier);
 
     final arguments = ModalRoute.of(context)?.settings.arguments;
     if (arguments is LogicLabLaunchContext) {
@@ -78,6 +81,13 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
 
   @override
   void dispose() {
+    // A Lab edit must leave a live preview, not a paused canvas. Start after
+    // the route unwinds so the simulation provider is no longer being read
+    // during widget disposal. Starting an already-running engine is a no-op.
+    if (_editedSimulation) {
+      final notifier = _simulationNotifier;
+      Future.microtask(notifier.start);
+    }
     _graphController?.dispose();
     super.dispose();
   }
@@ -126,6 +136,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
     if (_currentExample != 'vangenuchten') return;
     final layerId = _targetLayerId();
     if (layerId == null) return;
+    _editedSimulation = true;
     final notifier = ref.read(simulationProvider.notifier);
 
     switch (nodeId) {
@@ -203,6 +214,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
     final outputs = _graph.nodes.where(
       (n) => n.type == NodeType.output && n.operation == 'set_irrigation',
     );
+    if (outputs.isNotEmpty) _editedSimulation = true;
     for (final node in outputs) {
       ref.read(simulationProvider.notifier).setPrecipitation(node.value);
     }
@@ -299,6 +311,7 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
   void _updateLinkedValue(double value) {
     final context = _context;
     if (context == null) return;
+    _editedSimulation = true;
     final layerId = _targetLayerId();
     final notifier = ref.read(simulationProvider.notifier);
 

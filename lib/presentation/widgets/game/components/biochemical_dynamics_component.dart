@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
+import 'package:material_ui/material_ui.dart' show Colors;
 import '../soil_scope_game.dart';
 import '../../../providers/simulation_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,6 @@ class BiochemicalDynamicsComponent extends Component
   double _lastSync = 0;
 
   bool _isRunning = false;
-  double _solarRadiation = 0.0;
 
   @override
   void onMount() {
@@ -41,11 +41,6 @@ class BiochemicalDynamicsComponent extends Component
       fireImmediately: true,
     );
 
-    listenProvider<double>(
-      displayedSimulationStateProvider.select((s) => s.solarRadiation),
-      (prev, next) => _solarRadiation = next,
-      fireImmediately: true,
-    );
   }
 
   @override
@@ -92,11 +87,7 @@ class BiochemicalDynamicsComponent extends Component
         if (_random.nextDouble() < 0.01 * activityFactor * dt) {
           final node = nodes[_random.nextInt(nodes.length)];
           final pos = Vector2(
-            SceneCoordinateMapper.mapRootX(
-                  node.x,
-                  worldWidth,
-                ) +
-                game.soilLeftX,
+            SceneCoordinateMapper.mapRootX(node.x, worldWidth) + game.soilLeftX,
             SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
           );
 
@@ -168,6 +159,34 @@ class BiochemicalDynamicsComponent extends Component
 
     final flowMode = game.ref.read(particleFlowModeProvider);
     final process = game.scenarioProcessProfile;
+
+    final worldWidth = SoilScopeGame.soilColumnWidth;
+    final surfaceY = game.soilSurfaceY;
+    final soilHeight = game.soilColumnHeight;
+
+    // Root uptake is an active process even while the particle pool is at its
+    // cap, so emit its marker before the particle-budget return below.
+    final tips = state.plants
+        .expand((plant) => plant.rootSystem.where((node) => node.isTip))
+        .toList();
+    if (tips.isNotEmpty &&
+        _random.nextDouble() < 0.08 * dt &&
+        _hasLabelCapacity(ProcessMarkerType.nutrientUptake)) {
+      final tipNode = tips[_random.nextInt(tips.length)];
+      game.world.add(
+        ProcessLabel(
+          type: ProcessMarkerType.nutrientUptake,
+          color: CPKStandards.colorN,
+          position: Vector2(
+            SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
+                game.soilLeftX,
+            SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
+          ),
+          showTitle: true,
+        ),
+      );
+    }
+
     final pool = game.moleculePool;
     if (pool == null) return;
 
@@ -178,10 +197,6 @@ class BiochemicalDynamicsComponent extends Component
         (process.leaching * 18 + process.immobilization * 10).round();
     final maxParticles = flowMode ? 60 : 15 + scenarioParticleBudget;
     if (existingCount > maxParticles) return;
-
-    final worldWidth = SoilScopeGame.soilColumnWidth;
-    final surfaceY = game.soilSurfaceY;
-    final soilHeight = game.soilColumnHeight;
 
     // We only need hotspots for root uptake flows, not for the general cycle
     // RHIZOSPHERE CENTRIC: Collect biological hotspots as primary sources for nutrient flows
@@ -262,10 +277,7 @@ class BiochemicalDynamicsComponent extends Component
           _random.nextDouble() < denitrificationChance) {
         final plant = state.plants.firstOrNull;
         final centerX = plant != null
-            ? SceneCoordinateMapper.mapShootPosition(
-                    worldWidth,
-                    surfaceY,
-                  ).x +
+            ? SceneCoordinateMapper.mapShootPosition(worldWidth, surfaceY).x +
                   game.soilLeftX
             : game.soilLeftX + worldWidth / 2;
 
@@ -309,10 +321,7 @@ class BiochemicalDynamicsComponent extends Component
           _random.nextDouble() < 0.03 * dt) {
         final plant = state.plants.firstOrNull;
         final centerX = plant != null
-            ? SceneCoordinateMapper.mapShootPosition(
-                    worldWidth,
-                    surfaceY,
-                  ).x +
+            ? SceneCoordinateMapper.mapShootPosition(worldWidth, surfaceY).x +
                   game.soilLeftX
             : game.soilLeftX + worldWidth / 2;
 
@@ -399,10 +408,7 @@ class BiochemicalDynamicsComponent extends Component
       if (_random.nextDouble() < spawnChance) {
         final tipNode = tips[_random.nextInt(tips.length)];
         final tipPos = Vector2(
-          SceneCoordinateMapper.mapRootX(
-                tipNode.x,
-                worldWidth,
-              ) +
+          SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
               game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
         );
@@ -511,10 +517,7 @@ class BiochemicalDynamicsComponent extends Component
       if (_random.nextDouble() < 0.02 * dt) {
         final tipNode = tips[_random.nextInt(tips.length)];
         final tipPos = Vector2(
-          SceneCoordinateMapper.mapRootX(
-                tipNode.x,
-                worldWidth,
-              ) +
+          SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
               game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
         );
@@ -554,23 +557,54 @@ class BiochemicalDynamicsComponent extends Component
     }
   }
 
+  bool _hasLabelCapacity(ProcessMarkerType type) {
+    final labels = game.world.children.query<ProcessLabel>();
+    return labels.length < 8 &&
+        labels.where((label) => label.type == type).length < 2;
+  }
+
   void _spawnGasExchangeFlows(double dt) {
     final state = game.simulationState;
     if (state == null || state.plants.isEmpty) return;
 
-    final pool = game.moleculePool;
-    if (pool == null) return;
-
-    final existingCount = pool.activeCount;
-    if (existingCount > 20) return;
-
     final worldWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
     final plant = state.plants.first;
+    final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
+      worldWidth,
+      surfaceY,
+    );
+    final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
+    // Absorbed PAR is the plant's actual light capture, so the marker follows
+    // photosynthesis activity rather than a fixed sky-brightness threshold.
+    final photosynthesisRate = (plant.absorbedPAR / 800.0).clamp(0.0, 1.0);
+
+    // Process labels describe the active process, not the temporary particle
+    // budget. Emit them before the particle cap so a busy soil does not hide
+    // photosynthesis behind a saturated molecule pool.
+    if (photosynthesisRate > 0.01 &&
+        _random.nextDouble() < 0.25 * photosynthesisRate * dt &&
+        _hasLabelCapacity(ProcessMarkerType.photosynthesis)) {
+      game.world.add(
+        ProcessLabel(
+          type: ProcessMarkerType.photosynthesis,
+          color: CPKStandards.colorC,
+          position: Vector2(
+            plantWorldPos.x + game.soilLeftX,
+            surfaceY - visualHeight * 0.7,
+          ),
+          showTitle: true,
+        ),
+      );
+    }
+
+    final pool = game.moleculePool;
+    if (pool == null) return;
+    if (pool.activeCount > 20) return;
+
     final plantWorldX =
         SceneCoordinateMapper.plotCenterX(worldWidth) + game.soilLeftX;
 
-    final photosynthesisRate = (_solarRadiation / 1000.0).clamp(0.1, 1.0);
     // CO2 Flow: Bias start position towards the plant to represent local atmospheric drawdown
     if (_random.nextDouble() < 0.025 * photosynthesisRate * dt) {
       final startX = _nextGaussian(
@@ -578,12 +612,6 @@ class BiochemicalDynamicsComponent extends Component
         250.0,
       ).clamp(game.soilLeftX, game.soilLeftX + worldWidth);
       final startY = surfaceY - 500;
-
-      final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
-        worldWidth,
-        surfaceY,
-      );
-      final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
       final foliageTarget = Vector2(
         plantWorldPos.x + game.soilLeftX,
         surfaceY - visualHeight * 0.6,
@@ -601,11 +629,6 @@ class BiochemicalDynamicsComponent extends Component
 
     // REDUCED: Decreased spawn frequency for better visibility
     if (_random.nextDouble() < 0.01 * photosynthesisRate * dt) {
-      final plantWorldPos = SceneCoordinateMapper.mapShootPosition(
-        worldWidth,
-        surfaceY,
-      );
-      final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
       final startPos = Vector2(
         plantWorldPos.x + game.soilLeftX + (_random.nextDouble() - 0.5) * 40,
         surfaceY - visualHeight * 0.7,
@@ -626,18 +649,44 @@ class BiochemicalDynamicsComponent extends Component
     final state = game.simulationState;
     if (state == null || state.plants.isEmpty) return;
 
-    final existingCount = game.world.children
-        .query<MoleculeParticleComponent>()
-        .length;
-    if (existingCount > 35) return; // REDUCED: from 80
-
     final worldWidth = SoilScopeGame.soilColumnWidth;
     final surfaceY = game.soilSurfaceY;
     final plant = state.plants.first;
     final transpirationActivity = (plant.actualTranspiration * 200000.0).clamp(
-      0.1,
+      0.0,
       1.5,
     );
+
+    // Emit the process marker before the particle cap for the same reason as
+    // the gas-exchange marker: the process remains active while its particle
+    // animation is budget-limited.
+    if (transpirationActivity > 0 &&
+        _random.nextDouble() < 0.2 * dt &&
+        _hasLabelCapacity(ProcessMarkerType.transpiration)) {
+      final shootPos = SceneCoordinateMapper.mapShootPosition(
+        worldWidth,
+        surfaceY,
+      );
+      final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
+      game.world.add(
+        ProcessLabel(
+          type: ProcessMarkerType.transpiration,
+          color: Colors.blueAccent,
+          position: Vector2(
+            shootPos.x +
+                game.soilLeftX +
+                (_random.nextDouble() - 0.5) * 70,
+            surfaceY - visualHeight * (0.65 + _random.nextDouble() * 0.15),
+          ),
+          showTitle: true,
+        ),
+      );
+    }
+
+    final existingCount = game.world.children
+        .query<MoleculeParticleComponent>()
+        .length;
+    if (existingCount > 35) return; // REDUCED: from 80
 
     // REDUCED: Decreased spawn frequency for better visibility
     if (_random.nextDouble() < 0.025 * transpirationActivity * dt) {
@@ -705,11 +754,7 @@ class BiochemicalDynamicsComponent extends Component
     final surfaceY = game.soilSurfaceY;
     final soilHeight = game.soilColumnHeight;
     final centerX =
-        SceneCoordinateMapper.mapShootPosition(
-          soilWidth,
-          surfaceY,
-        ).x +
-        soilX;
+        SceneCoordinateMapper.mapShootPosition(soilWidth, surfaceY).x + soilX;
 
     for (final layer in state.profile.layers.take(3)) {
       // Bubble frequency tied to concentration and saturation
@@ -776,11 +821,7 @@ class BiochemicalDynamicsComponent extends Component
     for (final plant in state.plants) {
       for (final tip in plant.rootSystem.where((n) => n.isTip)) {
         hotspotData.add([
-          SceneCoordinateMapper.mapRootX(
-                tip.x,
-                worldWidth,
-              ) +
-              game.soilLeftX,
+          SceneCoordinateMapper.mapRootX(tip.x, worldWidth) + game.soilLeftX,
           SceneCoordinateMapper.mapRootY(tip.z, surfaceY, soilHeight),
           2.0,
         ]);
@@ -806,10 +847,7 @@ class BiochemicalDynamicsComponent extends Component
 
     final topLayers = state.profile.layers.take(2).toList();
     final centerX =
-        SceneCoordinateMapper.mapShootPosition(
-          worldWidth,
-          surfaceY,
-        ).x +
+        SceneCoordinateMapper.mapShootPosition(worldWidth, surfaceY).x +
         game.soilLeftX;
 
     for (int l = 0; l < topLayers.length; l++) {

@@ -75,6 +75,7 @@ class SoilScopeGame extends FlameGame
   BiophysicalState? _pendingAnimationState;
   double _startZoom = 1.0;
   bool _inspectionPaused = false;
+  bool _simulationIsRunning = false;
   bool _reducedMotion = false;
   Component? _keyboardTarget;
 
@@ -142,10 +143,13 @@ class SoilScopeGame extends FlameGame
       // running; snap to the current authoritative snapshot instead.
       _visualState.setTarget(_lastState!, immediate: true);
     }
-    final isRunning = simulationState?.isRunning ?? false;
+    // Use the authoritative run flag rather than the displayed snapshot.
+    // A paused visual snapshot can still be catching up right after a resume;
+    // deriving isRunning from it would keep visualDt at zero and deadlock the
+    // transition that is supposed to catch it up.
     _animationClock.tick(
       dt,
-      isRunning: isRunning,
+      isRunning: _simulationIsRunning,
       isScrubbing: _readIsScrubbing(),
       inspectionPaused: _inspectionPaused,
       reducedMotion: _reducedMotion,
@@ -172,7 +176,7 @@ class SoilScopeGame extends FlameGame
           .firstOrNull;
       magnifierGroup?.updateForInspectionPause(frameDt);
     }
-    if (isRunning && !_inspectionPaused) {
+    if (_simulationIsRunning && !_inspectionPaused) {
       _updateMassFlow(frameDt);
     }
   }
@@ -563,6 +567,7 @@ class SoilScopeGame extends FlameGame
 
   void updateIsRunning(bool isRunning, BiophysicalState state) {
     _syncActionBuffer.add(() {
+      _simulationIsRunning = isRunning;
       _lastState = state;
       _visualState.setTarget(
         state,
@@ -605,6 +610,7 @@ class SoilScopeGame extends FlameGame
       final session = ref.read(simulationSessionProvider);
       debugLog('[SoilScopeGame] onMount: performing initial _updateScene');
       _visualState.reset(initialState);
+      _simulationIsRunning = initialState.isRunning;
       _updateScene(initialState, session);
       _lastState = initialState;
     } catch (e) {

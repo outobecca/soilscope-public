@@ -24,9 +24,15 @@ import 'core/app_theme.dart';
 import 'presentation/widgets/game/flutter_quick_actions.dart';
 import 'presentation/widgets/gamification_bar.dart';
 import 'presentation/widgets/controls/microscope_hud_controller.dart';
+import 'presentation/providers/game_provider.dart';
 import 'presentation/providers/simulation_session_provider.dart';
 import 'presentation/providers/ui_state_provider.dart';
 import 'presentation/providers/tutorial_provider.dart';
+
+/// Lets the simulation route resume its engine after a tool route (Logic Lab,
+/// science reference, builder) is popped.
+final RouteObserver<ModalRoute<void>> appRouteObserver =
+    RouteObserver<ModalRoute<void>>();
 
 void main() {
   runApp(const ProviderScope(child: SoilScopeApp()));
@@ -50,6 +56,7 @@ class SoilScopeApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      navigatorObservers: [appRouteObserver],
       // No explicit initialRoute: on web this lets defaultRouteName honour
       // the URL (e.g. /#/simulation survives a refresh).
       onGenerateRoute: (settings) {
@@ -94,10 +101,11 @@ class MainSimulationScreen extends ConsumerStatefulWidget {
 }
 
 class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, RouteAware {
   bool _initialized = false;
   bool _initializing = false;
   bool _resumeAfterBackground = false;
+  bool _resumeAfterChildRoute = false;
   bool _isAppPaused = false;
   late final Simulation _simulation;
 
@@ -123,7 +131,34 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPushNext() {
+    // Keep the run alive under a tool route, but remember whether it was
+    // running so the return path can restore both the engine and its ticker.
+    _resumeAfterChildRoute = ref.read(simulationProvider).isRunning;
+  }
+
+  @override
+  void didPopNext() {
+    final shouldResume = _resumeAfterChildRoute;
+    _resumeAfterChildRoute = false;
+    if (shouldResume && !ref.read(simulationProvider).isRunning) {
+      _simulation.start();
+    }
+    // Always restore the game ticker after a tool route, even when the run was
+    // intentionally paused and the user edited a value in the Lab.
+    ref.read(soilScopeGameProviderProvider)?.resumeEngine();
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     // The simulation provider is keep-alive. Leaving this route must stop the
     // engine and persist the current session instead of leaving it running

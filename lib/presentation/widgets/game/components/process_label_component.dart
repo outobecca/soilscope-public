@@ -12,6 +12,9 @@ enum ProcessMarkerType {
   adsorption,
   denitrification,
   leaching,
+  photosynthesis,
+  transpiration,
+  nutrientUptake,
 }
 
 class ProcessLabel extends PositionComponent
@@ -46,6 +49,15 @@ class ProcessLabel extends PositionComponent
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    // Bound both the total marker population and each process type. Without
+    // this a high nitrification flux can fill the screen before its labels
+    // fade, hiding the other active processes.
+    final active = game.world.children.query<ProcessLabel>();
+    final sameType = active.where((label) => label.type == type).length;
+    if (active.length >= 8 || sameType >= 2) {
+      removeFromParent();
+      return;
+    }
     if (showTitle) {
       _prepareLabel();
     }
@@ -69,6 +81,15 @@ class ProcessLabel extends PositionComponent
         break;
       case ProcessMarkerType.leaching:
         text = l.leachingTitle.toUpperCase();
+        break;
+      case ProcessMarkerType.photosynthesis:
+        text = l.photosynthesis.toUpperCase();
+        break;
+      case ProcessMarkerType.transpiration:
+        text = l.transpirationLabel;
+        break;
+      case ProcessMarkerType.nutrientUptake:
+        text = l.nutrientUptakeTitle.toUpperCase();
         break;
     }
 
@@ -259,12 +280,44 @@ class ProcessLabel extends PositionComponent
         title = l.leachingTitle.toUpperCase();
         description = l.leachingDesc;
         break;
+      case ProcessMarkerType.photosynthesis:
+        title = l.photosynthesis.toUpperCase();
+        description = l.photosynthesisDesc;
+        stats = {l.source: l.atmosphere, l.productLabel: l.sugarCompound};
+        break;
+      case ProcessMarkerType.transpiration:
+        title = l.transpiration.toUpperCase();
+        description = l.transpirationDesc;
+        stats = {l.source: l.root, l.driverLabel: l.vpdLabel};
+        break;
+      case ProcessMarkerType.nutrientUptake:
+        title = l.nutrientUptakeTitle.toUpperCase();
+        description = l.nutrientUptakeDesc;
+        stats = {l.source: l.root, l.processLabel: l.active};
+        break;
     }
 
     String? symbol;
-    if (type != ProcessMarkerType.adsorption) {
-      symbol = 'N'; // Most processes here are N-related in SoilScope
+    switch (type) {
+      case ProcessMarkerType.photosynthesis:
+        symbol = 'C';
+        break;
+      case ProcessMarkerType.transpiration:
+        symbol = 'O';
+        break;
+      case ProcessMarkerType.adsorption:
+        symbol = null;
+        break;
+      default:
+        symbol = 'N';
     }
+    final logicLabModel = switch (type) {
+      ProcessMarkerType.photosynthesis => 'farquhar',
+      ProcessMarkerType.transpiration => 'vangenuchten',
+      ProcessMarkerType.nutrientUptake => 'chemotaxis',
+      ProcessMarkerType.denitrification => 'redox',
+      _ => 'nitrification',
+    };
 
     game.ref
         .read(uIStateProvider.notifier)
@@ -275,7 +328,10 @@ class ProcessLabel extends PositionComponent
             stats: stats,
             isPinned: pinned,
             sourceId: _infoSourceId,
-            logicLabModel: 'nitrification',
+            logicLabModel: logicLabModel,
+            isAtmosphere:
+                type == ProcessMarkerType.photosynthesis ||
+                type == ProcessMarkerType.transpiration,
             onDismiss: () => _isPinned = false,
             accentColor: color,
             elementSymbol: symbol,
@@ -382,6 +438,64 @@ class ProcessLabel extends PositionComponent
           center + const Offset(0, 5),
           center + const Offset(3.5, 1.5),
           arrowPaint,
+        );
+        break;
+      case ProcessMarkerType.photosynthesis:
+        final sunPaint = Paint()
+          ..color = color.withValues(alpha: 0.9 * opacity)
+          ..strokeWidth = 1.8
+          ..style = PaintingStyle.stroke;
+        canvas.drawCircle(center, 3.8, sunPaint);
+        for (var i = 0; i < 4; i++) {
+          final angle = i * math.pi / 2;
+          final direction = Offset(math.cos(angle), math.sin(angle));
+          canvas.drawLine(
+            center + direction * 6.0,
+            center + direction * 9.0,
+            sunPaint,
+          );
+        }
+        break;
+      case ProcessMarkerType.transpiration:
+        final vaporPaint = Paint()
+          ..color = color.withValues(alpha: 0.9 * opacity)
+          ..strokeWidth = 2.0
+          ..style = PaintingStyle.stroke;
+        canvas.drawLine(
+          center + const Offset(0, 5),
+          center + const Offset(0, -5),
+          vaporPaint,
+        );
+        canvas.drawLine(
+          center + const Offset(0, -5),
+          center + const Offset(-3.5, -1.5),
+          vaporPaint,
+        );
+        canvas.drawLine(
+          center + const Offset(0, -5),
+          center + const Offset(3.5, -1.5),
+          vaporPaint,
+        );
+        break;
+      case ProcessMarkerType.nutrientUptake:
+        final uptakePaint = Paint()
+          ..color = color.withValues(alpha: 0.9 * opacity)
+          ..strokeWidth = 1.8
+          ..style = PaintingStyle.stroke;
+        canvas.drawLine(
+          center + const Offset(-4, 4),
+          center + const Offset(4, -4),
+          uptakePaint,
+        );
+        canvas.drawLine(
+          center + const Offset(4, -4),
+          center + const Offset(4, 0),
+          uptakePaint,
+        );
+        canvas.drawLine(
+          center + const Offset(4, -4),
+          center + const Offset(0, -4),
+          uptakePaint,
         );
         break;
     }

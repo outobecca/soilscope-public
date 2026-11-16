@@ -527,11 +527,13 @@ class SoilLayerComponent extends PositionComponent
   }
 
   double _nitrificationAccumulator = 0;
+  double _labelCooldown = 0;
 
   @override
   void update(double dt) {
     super.update(dt);
     _syncVisualLayer(dt);
+    _labelCooldown = math.max(0.0, _labelCooldown - dt);
     if (!(game.simulationState?.isRunning ?? false)) return;
 
     final state = game.displayedState;
@@ -575,8 +577,10 @@ class SoilLayerComponent extends PositionComponent
 
           // Occasional process notification; the scenario's nitrogen signal
           // makes the label appear often enough to read before it fades.
-          if (_eventRandom.nextDouble() <
-              0.003 + 0.01 * process.nitrification) {
+          if (_labelCooldown <= 0 &&
+              _eventRandom.nextDouble() <
+                  0.003 + 0.01 * process.nitrification) {
+            _labelCooldown = 3.0;
             game.world.add(
               ProcessLabel(
                 type: ProcessMarkerType.nitrification,
