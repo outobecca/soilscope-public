@@ -136,20 +136,34 @@ extension _LogicLabExamples on _LogicLabScreenState {
 
   void _initVanGenuchtenGraph() {
     _currentExample = 'vangenuchten';
+    // Seed the hydraulic constants from the selected layer. Without this the
+    // graph uses the generic textbook defaults and no longer agrees with the
+    // layer's water content even though its input is layer-derived.
+    final state = ref.read(displayedSimulationStateProvider);
+    final layer = _layerFor(state, _targetLayerId(state));
+    final thetaR = (layer?.thetaR ?? 0.05).clamp(0.0, 0.4);
+    final thetaS = (layer?.porosity ?? 0.45).clamp(
+      (thetaR + 0.01).clamp(0.0, 1.0),
+      1.0,
+    );
+    // The simulation stores alpha in 1/m; this graph works in 1/cm.
+    final alpha = ((layer?.vgAlpha ?? 3.6) / 100.0).clamp(0.001, 0.5);
+    final n = (layer?.vgN ?? 1.56).clamp(1.01, 5.0);
+
     // van Genuchten vedenpidätys
     final nodes = [
       LogicNode(
         id: 'in_h',
-        label: 'Pressure Head',
+        label: 'Matric Head h (cm)',
         type: NodeType.input,
-        operation: 'moisture',
+        operation: 'matric_head',
         position: const Offset(50, 80),
       ),
       LogicNode(
         id: 'const_tr',
         label: 'θr (residual)',
         type: NodeType.constant,
-        value: 0.05,
+        value: thetaR,
         isEditable: true,
         position: const Offset(50, 180),
       ),
@@ -157,7 +171,7 @@ extension _LogicLabExamples on _LogicLabScreenState {
         id: 'const_ts',
         label: 'θs (saturated)',
         type: NodeType.constant,
-        value: 0.45,
+        value: thetaS,
         isEditable: true,
         position: const Offset(50, 280),
       ),
@@ -165,7 +179,7 @@ extension _LogicLabExamples on _LogicLabScreenState {
         id: 'const_alpha',
         label: 'α (1/cm)',
         type: NodeType.constant,
-        value: 0.036,
+        value: alpha,
         isEditable: true,
         position: const Offset(50, 380),
       ),
@@ -173,7 +187,7 @@ extension _LogicLabExamples on _LogicLabScreenState {
         id: 'const_n',
         label: 'n',
         type: NodeType.constant,
-        value: 1.56,
+        value: n,
         isEditable: true,
         position: const Offset(50, 480),
       ),
@@ -218,6 +232,12 @@ extension _LogicLabExamples on _LogicLabScreenState {
         fromPortIndex: 0,
         toNodeId: 'func_vg',
         toPortIndex: 3,
+      ),
+      NodeConnection(
+        fromNodeId: 'const_n',
+        fromPortIndex: 0,
+        toNodeId: 'func_vg',
+        toPortIndex: 4,
       ),
       NodeConnection(
         fromNodeId: 'func_vg',

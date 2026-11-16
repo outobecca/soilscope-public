@@ -47,6 +47,10 @@ class HoverInfo {
   /// Optional Logic Lab process hint for sources whose id is ambiguous.
   final String? logicLabModel;
 
+  /// True for selections that belong to the atmosphere rather than a soil
+  /// layer (for example a leaf or meristem inspection).
+  final bool isAtmosphere;
+
   /// Called when this pinned card is dismissed or replaced by another one.
   /// Interactive canvas components use it to release their local visual
   /// selection state instead of keeping a stale highlight/pause forever.
@@ -66,6 +70,7 @@ class HoverInfo {
     this.sourceId,
     this.layerId,
     this.logicLabModel,
+    this.isAtmosphere = false,
     this.onDismiss,
   });
 
@@ -83,6 +88,7 @@ class HoverInfo {
     String? sourceId,
     String? layerId,
     String? logicLabModel,
+    bool? isAtmosphere,
     VoidCallback? onDismiss,
   }) {
     return HoverInfo(
@@ -99,6 +105,7 @@ class HoverInfo {
       sourceId: sourceId ?? this.sourceId,
       layerId: layerId ?? this.layerId,
       logicLabModel: logicLabModel ?? this.logicLabModel,
+      isAtmosphere: isAtmosphere ?? this.isAtmosphere,
       onDismiss: onDismiss ?? this.onDismiss,
     );
   }

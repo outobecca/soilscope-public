@@ -38,7 +38,7 @@ int getInputPortCount(String? operation, NodeType type) {
     case 'MM':
       return 3; // S, Vmax, Km
     case 'VG':
-      return 4; // h, θr, θs, α
+      return 5; // h, θr, θs, α, n
     case 'Farquhar':
       return 4; // Ci, Vcmax, Kc, O
     case 'Redox':
@@ -62,7 +62,7 @@ String getPortLabel(String? operation, int index, bool isInput) {
     case 'MM':
       return ['[S]', 'Vmax', 'Km'][index];
     case 'VG':
-      return ['h', 'θr', 'θs', 'α'][index];
+      return ['h', 'θr', 'θs', 'α', 'n'][index];
     case 'Farquhar':
       return ['Ci', 'Vcmax', 'Kc', 'O'][index];
     case 'Redox':

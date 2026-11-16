@@ -277,6 +277,67 @@ void main() {
       expect(funcNode.value, lessThan(0.45));
     });
 
+    test('matric-head input round-trips the layer water content', () {
+      final layer = testState.profile.layers.first.copyWith(
+        vgAlpha: 3.6, // 1/m, matching 0.036 1/cm in the graph
+        vgN: 1.56,
+      );
+      final state = testState.copyWith(
+        profile: testState.profile.copyWith(layers: [layer]),
+      );
+      final graph = LogicGraph(
+        nodes: [
+          LogicNode(
+            id: 'h',
+            label: 'h',
+            type: NodeType.input,
+            operation: 'matric_head',
+          ),
+          LogicNode(
+            id: 'tr',
+            label: 'θr',
+            type: NodeType.constant,
+            value: 0.05,
+          ),
+          LogicNode(
+            id: 'ts',
+            label: 'θs',
+            type: NodeType.constant,
+            value: 0.45,
+          ),
+          LogicNode(
+            id: 'alpha',
+            label: 'α',
+            type: NodeType.constant,
+            value: 0.036,
+          ),
+          LogicNode(id: 'n', label: 'n', type: NodeType.constant, value: 1.56),
+          LogicNode(
+            id: 'vg',
+            label: 'VG',
+            type: NodeType.function,
+            operation: 'VG',
+          ),
+        ],
+        connections: [
+          for (final (index, id) in ['h', 'tr', 'ts', 'alpha', 'n'].indexed)
+            NodeConnection(
+              fromNodeId: id,
+              fromPortIndex: 0,
+              toNodeId: 'vg',
+              toPortIndex: index,
+            ),
+        ],
+      );
+
+      final result = LogicEvaluator.evaluate(graph, state);
+      final head = result.nodes.firstWhere((node) => node.id == 'h').value;
+      final theta = result.nodes.firstWhere((node) => node.id == 'vg').value;
+
+      expect(head, lessThan(0));
+      expect(theta, closeTo(0.25, 0.001));
+    });
+
     test('Farquhar calculates photosynthesis rate', () {
       // Ac = Vcmax × (Ci - Γ*) / (Ci + Kc(1 + O/Ko))
       final graph = LogicGraph(
@@ -540,7 +601,7 @@ void main() {
     test('inputPortCount returns correct count for functions', () {
       expect(getInputPortCount('Q10', NodeType.function), 2);
       expect(getInputPortCount('MM', NodeType.function), 3);
-      expect(getInputPortCount('VG', NodeType.function), 4);
+      expect(getInputPortCount('VG', NodeType.function), 5);
       expect(getInputPortCount('Farquhar', NodeType.function), 4);
       expect(getInputPortCount('Redox', NodeType.function), 3);
       expect(getInputPortCount('+', NodeType.math), 2);

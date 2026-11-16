@@ -119,9 +119,47 @@ class LogicLabLaunchContext {
       sourceId: info.sourceId,
       layerId: layerId,
       isAtmosphere:
+          info.isAtmosphere ||
           selectedLayerId == 'atmosphere' ||
           source.contains('selection-atmosphere'),
       accentColor: info.accentColor,
+    );
+  }
+
+  /// Builds a context for routes that open the Lab without a card, such as
+  /// Quick Actions. The selected layer supplies the process and location so
+  /// the menu cannot drop the user into the generic nitrification graph.
+  static LogicLabLaunchContext? fromSelection({
+    required BiophysicalState state,
+    String? selectedLayerId,
+  }) {
+    if (selectedLayerId == 'atmosphere') {
+      return const LogicLabLaunchContext(
+        process: LogicLabProcess.photosynthesis,
+        title: 'ATMOSPHERE',
+        description: 'Atmospheric conditions',
+        sourceId: 'selection-atmosphere',
+        isAtmosphere: true,
+      );
+    }
+
+    final layers = state.profile.layers;
+    if (layers.isEmpty) return null;
+    final layerId = selectedLayerId ?? layers.first.id;
+    final index = layers.indexWhere((layer) => layer.id == layerId);
+    if (index < 0) return null;
+    final layer = layers[index];
+    final title = layer.name.isNotEmpty
+        ? layer.name.toUpperCase()
+        : 'LAYER ${layer.id.toUpperCase()}';
+
+    return LogicLabLaunchContext(
+      process: LogicLabProcess.waterRetention,
+      title: title,
+      description: layer.description,
+      sourceId: 'selection-soilLayer-${layer.id}',
+      layerId: layer.id,
+      accentColor: Color(layer.colorValue),
     );
   }
 
@@ -246,8 +284,10 @@ class LogicLabLaunchContext {
 
 /// Opens the Lab with the selected hotspot as its context.
 ///
-/// The card itself stays pinned in the provider, so returning from the Lab
-/// restores the same inspection and its canvas highlight.
+/// The inspection card is dismissed before the route opens. The card freezes
+/// the canvas while it is pinned, so leaving it behind would hide the effect
+/// of Lab edits until the user returned and closed it. The captured launch
+/// context keeps the Lab location-aware without keeping the canvas paused.
 void openLogicLabForInfo(BuildContext context, WidgetRef ref, HoverInfo info) {
   final state = ref.read(displayedSimulationStateProvider);
   final selectedLayerId = ref.read(simulationSessionProvider).selectedLayerId;
@@ -257,5 +297,7 @@ void openLogicLabForInfo(BuildContext context, WidgetRef ref, HoverInfo info) {
     selectedLayerId: selectedLayerId,
   );
 
-  Navigator.of(context).pushNamed('/logic_lab', arguments: launchContext);
+  final navigator = Navigator.of(context);
+  ref.read(uIStateProvider.notifier).clearHoverInfo();
+  navigator.pushNamed('/logic_lab', arguments: launchContext);
 }

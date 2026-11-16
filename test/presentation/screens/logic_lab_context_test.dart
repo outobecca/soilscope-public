@@ -16,12 +16,14 @@ HoverInfo _info({
   required String sourceId,
   String? layerId,
   String? logicLabModel,
+  bool isAtmosphere = false,
 }) => HoverInfo(
   title: title,
   description: 'Hotspot description',
   sourceId: sourceId,
   layerId: layerId,
   logicLabModel: logicLabModel,
+  isAtmosphere: isAtmosphere,
   stats: const {'Value': '12.4', 'Unit': 'mg/kg'},
 );
 
@@ -81,6 +83,20 @@ void main() {
 
     expect(context.process, LogicLabProcess.photosynthesis);
     expect(context.link, LogicLabSimulationLink.solarRadiation);
+  });
+
+  test('leaf inspection is located in the atmosphere', () {
+    final context = LogicLabLaunchContext.fromHoverInfo(
+      info: _info(
+        title: 'PLANT CANOPY',
+        sourceId: 'inspection-leaf',
+        isAtmosphere: true,
+      ),
+      state: state,
+    );
+
+    expect(context.process, LogicLabProcess.photosynthesis);
+    expect(context.isAtmosphere, isTrue);
   });
 
   test('root inspection selects diffusion and the topsoil fallback', () {

@@ -57,8 +57,21 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
           selectedLayerId: ref.read(simulationSessionProvider).selectedLayerId,
         );
         _loadExample(_context!.process.exampleKey);
+        // Quick Actions can reach the Lab while a card is still pinned. Drop
+        // that inspection now so the canvas is not left frozen behind the Lab
+        // when the user navigates back.
+        ref.read(uIStateProvider.notifier).clearHoverInfo();
       } else {
-        _initNitrificationGraph();
+        final selectionContext = LogicLabLaunchContext.fromSelection(
+          state: ref.read(displayedSimulationStateProvider),
+          selectedLayerId: ref.read(simulationSessionProvider).selectedLayerId,
+        );
+        _context = selectionContext;
+        if (selectionContext != null) {
+          _loadExample(selectionContext.process.exampleKey);
+        } else {
+          _initNitrificationGraph();
+        }
       }
     }
   }
@@ -363,13 +376,77 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
       case LogicLabProcess.nitrification:
         return l10n.nitrificationTitle;
       case LogicLabProcess.waterRetention:
-        return l10n.waterFlux;
+        return l10n.soilWaterContentPressureHead;
       case LogicLabProcess.photosynthesis:
         return l10n.photosynthesis;
       case LogicLabProcess.redox:
         return l10n.redoxPotentialTitle;
       case LogicLabProcess.diffusion:
         return l10n.diffusionTitle;
+    }
+  }
+
+  /// Readings are derived from the live state on every build rather than
+  /// copied from the pinned card. An edit made in the banner must update the
+  /// numbers beside it instead of leaving the values captured at selection.
+  List<MapEntry<String, String>> _liveReadings(
+    BiophysicalState state,
+    String? layerId,
+  ) {
+    final process = _context?.process;
+    final layer = _layerFor(state, layerId);
+    String fixed(double value, int decimals) => value.toStringAsFixed(decimals);
+    final layerReadings = <String, String>{
+      'θ': '${fixed(layer?.waterContent ?? 0, 3)} m³/m³',
+      'θr': fixed(layer?.thetaR ?? 0, 3),
+      'θs': fixed(layer?.porosity ?? 0, 3),
+      'pH': fixed(layer?.ph ?? 0, 2),
+      'Eh': '${fixed(layer?.redoxPotential ?? 0, 0)} mV',
+      'O₂': '${fixed(layer?.oxygenContent ?? 0, 1)} mg/L',
+      'Temp': '${fixed((layer?.temperature ?? 273.15) - 273.15, 1)} °C',
+      'NH₄⁺': '${fixed(layer?.ammoniumContent ?? 0, 1)} mg/kg',
+      'NO₃⁻': '${fixed(layer?.nitrateContent ?? 0, 1)} mg/kg',
+      'Org. N': '${fixed(layer?.organicNitrogen ?? 0, 1)} mg/kg',
+    };
+
+    switch (process) {
+      case LogicLabProcess.nitrification:
+        return [
+          MapEntry('NH₄⁺', layerReadings['NH₄⁺']!),
+          MapEntry('Temp', layerReadings['Temp']!),
+          MapEntry('θ', layerReadings['θ']!),
+          MapEntry('pH', layerReadings['pH']!),
+        ];
+      case LogicLabProcess.waterRetention:
+        return [
+          MapEntry('θ', layerReadings['θ']!),
+          MapEntry('θr', layerReadings['θr']!),
+          MapEntry('θs', layerReadings['θs']!),
+          MapEntry('Temp', layerReadings['Temp']!),
+        ];
+      case LogicLabProcess.redox:
+        return [
+          MapEntry('Eh', layerReadings['Eh']!),
+          MapEntry('pH', layerReadings['pH']!),
+          MapEntry('O₂', layerReadings['O₂']!),
+          MapEntry('θ', layerReadings['θ']!),
+        ];
+      case LogicLabProcess.diffusion:
+        return [
+          MapEntry('NH₄⁺', layerReadings['NH₄⁺']!),
+          MapEntry('NO₃⁻', layerReadings['NO₃⁻']!),
+          MapEntry('Org. N', layerReadings['Org. N']!),
+          MapEntry('θ', layerReadings['θ']!),
+        ];
+      case LogicLabProcess.photosynthesis:
+        return [
+          MapEntry('Solar', '${fixed(state.solarRadiation, 0)} W/m²'),
+          MapEntry('PAR', '${fixed(state.par, 0)} µmol/m²/s'),
+          MapEntry('CO₂', '${fixed(state.atmCO2, 3)} mol/m³'),
+          MapEntry('Air temp', '${fixed(state.airTemperature - 273.15, 1)} °C'),
+        ];
+      case null:
+        return const [];
     }
   }
 
@@ -391,13 +468,13 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
     final link = hotspot.link;
     final linkValue = _linkedValue(state, link, layerId);
     final range = _linkedRange(state, link, layerId);
-    final location = layer?.name.isNotEmpty == true
-        ? layer!.name
-        : (layerId ?? l10n.layerLabel);
+    final location = layer == null
+        ? (layerId ?? l10n.layerLabel)
+        : (layer.name.isNotEmpty ? layer.name : layer.id);
     final locatedAt = hotspot.isAtmosphere
         ? l10n.atmosphere
         : '${l10n.layerLabel}: $location';
-    final stats = hotspot.stats.entries.take(5).toList();
+    final readings = _liveReadings(state, layerId);
 
     return Material(
       color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.96),
@@ -476,23 +553,23 @@ class _LogicLabScreenState extends ConsumerState<LogicLabScreen> {
                 ),
               ),
             ],
-            if (stats.isNotEmpty || liveValue != null) ...[
+            if (readings.isNotEmpty || liveValue != null) ...[
               const SizedBox(height: 7),
               SizedBox(
                 height: 28,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: stats.length + (liveValue == null ? 0 : 1),
+                  itemCount: readings.length + (liveValue == null ? 0 : 1),
                   separatorBuilder: (_, _) => const SizedBox(width: 6),
                   itemBuilder: (context, index) {
-                    if (index == stats.length) {
+                    if (index == readings.length) {
                       return _bannerChip(
                         l10n.logicLabLiveResult,
                         liveValue!.toStringAsPrecision(3),
                         accent,
                       );
                     }
-                    final entry = stats[index];
+                    final entry = readings[index];
                     return _bannerChip(entry.key, entry.value, accent);
                   },
                 ),

@@ -1,5 +1,6 @@
 import 'dart:math';
 import '../models/biophysical_state.dart';
+import '../models/soil_layer.dart';
 import 'models.dart';
 
 /// Laskentamoottori, joka laskee graafin arvon BiophysicalStaten perusteella.
@@ -146,6 +147,8 @@ class LogicEvaluator {
         return layer.temperature - 273.15; // K → °C
       case 'moisture':
         return layer.waterContent;
+      case 'matric_head':
+        return _matricHead(layer);
       case 'saturation':
         return layer.porosity > 0 ? layer.waterContent / layer.porosity : 0.0;
       case 'porosity':
@@ -278,6 +281,24 @@ class LogicEvaluator {
       default:
         return 0.0;
     }
+  }
+
+  /// Inverts the van Genuchten retention curve so a water-content input can
+  /// drive the pressure-head formulation used by the graph. The simulation
+  /// stores alpha in 1/m while the Lab's example uses 1/cm.
+  static double _matricHead(SoilLayer layer) {
+    final thetaS = layer.porosity;
+    final thetaR = layer.thetaR;
+    final span = thetaS - thetaR;
+    if (span <= 0) return 0.0;
+
+    final theta = layer.waterContent.clamp(thetaR + 1e-6, thetaS - 1e-6);
+    final effective = ((theta - thetaR) / span).clamp(1e-6, 1.0 - 1e-6);
+    final n = layer.vgN <= 1.0 ? 1.01 : layer.vgN;
+    final m = 1.0 - 1.0 / n;
+    final alphaPerCm = (layer.vgAlpha <= 0 ? 360.0 : layer.vgAlpha) / 100.0;
+    final term = pow(pow(effective, -1.0 / m) - 1.0, 1.0 / n).toDouble();
+    return -(term / alphaPerCm);
   }
 
   /// Hakee kaikkien nodeen tulevien lankojen arvot.

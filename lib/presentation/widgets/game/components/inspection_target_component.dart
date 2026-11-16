@@ -254,6 +254,17 @@ class InspectionTargetComponent extends PositionComponent
             stats: stats,
             isPinned: pinned,
             sourceId: 'inspection-${type.name}',
+            layerId: switch (type) {
+              MagnifierType.leaf || MagnifierType.apicalMeristem => null,
+              MagnifierType.stem ||
+              MagnifierType.root ||
+              MagnifierType.rhizosphere ||
+              MagnifierType.microbe ||
+              MagnifierType.soilStructure => topLayer.id,
+            },
+            isAtmosphere:
+                type == MagnifierType.leaf ||
+                type == MagnifierType.apicalMeristem,
             logicLabModel: switch (type) {
               MagnifierType.apicalMeristem || MagnifierType.leaf =>
                 'photosynthesis',

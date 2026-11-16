@@ -1121,6 +1121,7 @@ class AnimatedPlantComponent extends PositionComponent
             },
             isPinned: pinned,
             sourceId: 'plant-$plantId',
+            isAtmosphere: true,
             onDismiss: () => _isPinned = false,
             accentColor: const Color(0xFF10B981), // Emerald
             screenPosition: game.worldToScreen(anchorWorld).toOffset(),
