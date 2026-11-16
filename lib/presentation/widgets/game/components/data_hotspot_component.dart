@@ -96,7 +96,9 @@ class DataHotspotComponent extends CircleComponent
     
     // Determine element symbol for CPK indicator
     String? elementSymbol;
-    if (['N', 'NH4+', 'NH₄⁺', 'NO3-', 'NO₃⁻'].contains(label)) elementSymbol = 'N';
+    if (['N', 'NH4+', 'NH₄⁺', 'NO3-', 'NO₃⁻'].contains(label)) {
+      elementSymbol = 'N';
+    }
     if (label == 'P') elementSymbol = 'P';
     if (label == 'K') elementSymbol = 'K';
     if (label == 'Ca') elementSymbol = 'Ca';
@@ -109,12 +111,27 @@ class DataHotspotComponent extends CircleComponent
         stats: info['stats'] as Map<String, String>,
         isPinned: pinned,
         sourceId: 'hotspot-$layerId-$label-${identityHashCode(this)}',
+        layerId: layerId,
+        logicLabModel: _logicLabModelForLabel(label),
         onDismiss: () => _isPinned = false,
         accentColor: color,
         elementSymbol: elementSymbol,
         screenPosition: game.worldToScreen(absolutePosition).toOffset(),
       ),
     );
+  }
+
+  String _logicLabModelForLabel(String value) {
+    switch (value) {
+      case 'W':
+        return 'waterRetention';
+      case 'pH' || 'O2':
+        return 'redox';
+      case 'P' || 'K' || 'Cellulase' || 'Phosphatase':
+        return 'diffusion';
+      default:
+        return 'nitrification';
+    }
   }
 
   Map<String, dynamic> _getHotspotInfo(BiophysicalState state) {

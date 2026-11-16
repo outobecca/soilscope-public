@@ -50,17 +50,19 @@ BiophysicalState _createTestState() {
       slope: 0.0,
       layers: [layer],
     ),
-    plants: [const Plant(
-      id: 'test_plant',
-      species: 'Test',
-      age: 30,
-      height: 0.5,
-      lai: 2.0,
-      turgorPressure: 0.8,
-      rootSystem: [],
-      nitrogenUptake: 0.1,
-      waterUptake: 0.01,
-    )],
+    plants: [
+      const Plant(
+        id: 'test_plant',
+        species: 'Test',
+        age: 30,
+        height: 0.5,
+        lai: 2.0,
+        turgorPressure: 0.8,
+        rootSystem: [],
+        nitrogenUptake: 0.1,
+        waterUptake: 0.01,
+      ),
+    ],
     timeElapsed: 0.0,
     precipitation: 0.0,
   );
@@ -72,6 +74,39 @@ void main() {
 
     setUp(() {
       testState = _createTestState();
+    });
+
+    test('reads input values from the requested soil layer', () {
+      final secondLayer = testState.profile.layers.first.copyWith(
+        id: 'layer2',
+        temperature: 303.15,
+      );
+      final layeredState = testState.copyWith(
+        profile: testState.profile.copyWith(
+          layers: [testState.profile.layers.first, secondLayer],
+        ),
+      );
+      final graph = LogicGraph(
+        nodes: [
+          LogicNode(
+            id: 'temp',
+            label: 'Temp',
+            type: NodeType.input,
+            operation: 'temp',
+          ),
+        ],
+        connections: const [],
+      );
+
+      final topsoil = LogicEvaluator.evaluate(graph, layeredState);
+      final subsoil = LogicEvaluator.evaluate(
+        graph,
+        layeredState,
+        layerId: 'layer2',
+      );
+
+      expect(topsoil.nodes.single.value, closeTo(20.0, 0.001));
+      expect(subsoil.nodes.single.value, closeTo(30.0, 0.001));
     });
 
     test('Q10 function calculates temperature effect correctly', () {

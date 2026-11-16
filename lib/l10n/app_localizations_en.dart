@@ -4066,6 +4066,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get applyToSimulation => 'Apply to simulation';
 
   @override
+  String get openLogicLab => 'Open Logic Lab';
+
+  @override
+  String get logicLabLinkedHotspot => 'Linked hotspot';
+
+  @override
+  String get logicLabLiveResult => 'Live result';
+
+  @override
+  String get logicLabAmmonium => 'Ammonium (NH₄⁺)';
+
+  @override
+  String get logicLabWaterContent => 'Soil water content (θ)';
+
+  @override
+  String get logicLabSolarRadiation => 'Solar radiation';
+
+  @override
+  String get logicLabRedoxPotential => 'Redox potential';
+
+  @override
+  String get logicLabOrganicNitrogen => 'Organic nitrogen';
+
+  @override
   String get moreActions => 'More actions';
 
   @override

@@ -39,6 +39,14 @@ class HoverInfo {
   /// Used to tell a refresh of the same selection from a new selection.
   final String? sourceId;
 
+  /// Soil layer this selection belongs to, when it is layer-specific. The
+  /// Logic Lab uses it to evaluate the hotspot's process with that layer's
+  /// live values instead of silently falling back to the topsoil.
+  final String? layerId;
+
+  /// Optional Logic Lab process hint for sources whose id is ambiguous.
+  final String? logicLabModel;
+
   /// Called when this pinned card is dismissed or replaced by another one.
   /// Interactive canvas components use it to release their local visual
   /// selection state instead of keeping a stale highlight/pause forever.
@@ -56,6 +64,8 @@ class HoverInfo {
     this.type = TooltipType.basic,
     this.elementSymbol,
     this.sourceId,
+    this.layerId,
+    this.logicLabModel,
     this.onDismiss,
   });
 
@@ -71,6 +81,8 @@ class HoverInfo {
     TooltipType? type,
     String? elementSymbol,
     String? sourceId,
+    String? layerId,
+    String? logicLabModel,
     VoidCallback? onDismiss,
   }) {
     return HoverInfo(
@@ -85,6 +97,8 @@ class HoverInfo {
       type: type ?? this.type,
       elementSymbol: elementSymbol ?? this.elementSymbol,
       sourceId: sourceId ?? this.sourceId,
+      layerId: layerId ?? this.layerId,
+      logicLabModel: logicLabModel ?? this.logicLabModel,
       onDismiss: onDismiss ?? this.onDismiss,
     );
   }

@@ -24,7 +24,8 @@ class ProcessLabel extends PositionComponent
   double _elapsed = 0;
   bool _isHovered = false;
   bool _isPinned = false;
-  late final String _infoSourceId = 'process-${identityHashCode(this)}';
+  late final String _infoSourceId =
+      'process-${type.name}-${identityHashCode(this)}';
   TextPainter? _textPainter;
   Rect? _labelRect;
   RRect? _labelRRect;
@@ -274,6 +275,7 @@ class ProcessLabel extends PositionComponent
             stats: stats,
             isPinned: pinned,
             sourceId: _infoSourceId,
+            logicLabModel: 'nitrification',
             onDismiss: () => _isPinned = false,
             accentColor: color,
             elementSymbol: symbol,

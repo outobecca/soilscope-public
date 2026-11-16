@@ -254,6 +254,22 @@ class SimulationInterventions {
       switch (param) {
         case 'kSat':
           return layer.copyWith(kSat: value);
+        case 'waterContent':
+          return layer.copyWith(
+            previousWaterContent: layer.waterContent,
+            waterContent: value.clamp(
+              layer.thetaR,
+              (layer.porosity * 0.98).clamp(layer.thetaR, 1.0),
+            ),
+          );
+        case 'thetaR':
+          final thetaR = value.clamp(0.0, 0.4);
+          return layer.copyWith(
+            thetaR: thetaR,
+            waterContent: layer.waterContent < thetaR
+                ? thetaR
+                : layer.waterContent,
+          );
         case 'vgAlpha':
           return layer.copyWith(vgAlpha: value);
         case 'vgN':
@@ -270,8 +286,14 @@ class SimulationInterventions {
           return layer.copyWith(bulkDensity: value);
         case 'porosity':
           return layer.copyWith(porosity: value);
+        case 'ammoniumContent':
+          return layer.copyWith(ammoniumContent: value.clamp(0.0, 1000.0));
         case 'nitrateContent':
           return layer.copyWith(nitrateContent: value);
+        case 'organicNitrogen':
+          return layer.copyWith(organicNitrogen: value.clamp(0.0, 5000.0));
+        case 'redoxPotential':
+          return layer.copyWith(redoxPotential: value.clamp(-500.0, 800.0));
         case 'phosphateContent':
           return layer.copyWith(phosphateContent: value);
         case 'potassiumContent':

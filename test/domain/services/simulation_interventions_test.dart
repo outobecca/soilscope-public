@@ -176,6 +176,33 @@ void main() {
       expect(host.writes, 1);
     });
 
+    test('linked Lab parameters update the target layer', () {
+      final host = _Host();
+      final beforeWater = host.state.profile.layers.first.waterContent;
+
+      host.interventions.updateLayerParameter('A', 'waterContent', 0.35);
+      host.interventions.updateLayerParameter('A', 'ammoniumContent', 42);
+      host.interventions.updateLayerParameter('A', 'organicNitrogen', 77);
+      host.interventions.updateLayerParameter('A', 'redoxPotential', 123);
+
+      final layer = host.state.profile.layers.first;
+      expect(layer.previousWaterContent, closeTo(beforeWater, 1e-12));
+      expect(layer.waterContent, closeTo(0.35, 1e-12));
+      expect(layer.ammoniumContent, 42);
+      expect(layer.organicNitrogen, 77);
+      expect(layer.redoxPotential, 123);
+    });
+
+    test('thetaR edits keep water content above the new residual', () {
+      final host = _Host();
+
+      host.interventions.updateLayerParameter('A', 'thetaR', 0.45);
+
+      final layer = host.state.profile.layers.first;
+      expect(layer.thetaR, 0.4);
+      expect(layer.waterContent, greaterThanOrEqualTo(layer.thetaR));
+    });
+
     test('layer edits leave history mode and write once', () {
       final host = _Host();
 

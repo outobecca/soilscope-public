@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../core/cpk_standards.dart';
 import '../providers/simulation_session_provider.dart';
 import '../providers/ui_state_provider.dart';
+import '../screens/logic_lab/logic_lab_context.dart';
 
 /// The consolidated information overlay for the entire app.
 /// Handles both temporary hovers and pinned inspection states with crystal clear contrast.
@@ -92,6 +93,35 @@ class HoverTooltip extends ConsumerWidget {
                     height: 20,
                   ),
                   _buildLegendSection(context, info.legends!, l10n),
+                ],
+                if (isPinned) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => openLogicLabForInfo(context, ref, info),
+                      icon: const Icon(Icons.science_outlined, size: 16),
+                      label: Text(
+                        l10n?.openLogicLab ?? 'Open Logic Lab',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: accentColor,
+                        side: BorderSide(
+                          color: accentColor.withValues(alpha: 0.6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

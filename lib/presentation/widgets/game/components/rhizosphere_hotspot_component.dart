@@ -216,6 +216,10 @@ class RhizosphereHotspotComponent extends PositionComponent
             stats: stats,
             isPinned: pinned,
             sourceId: 'rhizosphere-$hotspotId',
+            layerId: layerId,
+            logicLabModel: type == HotspotType.fungalHub
+                ? 'diffusion'
+                : 'nitrification',
             onDismiss: () => _isPinned = false,
             accentColor: _getColor(),
             screenPosition: game.worldToScreen(absolutePosition).toOffset(),

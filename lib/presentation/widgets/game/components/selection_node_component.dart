@@ -211,6 +211,12 @@ class SelectionNodeComponent extends PositionComponent
         stats: stats,
         isPinned: pinned,
         sourceId: 'selection-${nodeType.name}-${layerId ?? identityHashCode(this)}',
+        layerId: layerId,
+        logicLabModel: switch (nodeType) {
+          SelectionNodeType.atmosphere => 'photosynthesis',
+          SelectionNodeType.soilLayer => 'waterRetention',
+          SelectionNodeType.enzymes => 'nitrification',
+        },
         onDismiss: () {
           _isPinned = false;
           final selectedLayerId = game

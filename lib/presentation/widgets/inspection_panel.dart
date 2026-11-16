@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/simulation_session_provider.dart';
 import '../providers/ui_state_provider.dart';
+import '../screens/logic_lab/logic_lab_context.dart';
 
 /// A panel that displays detailed information about selected animation elements.
 /// Now integrated into the sidebar dashboard.
@@ -210,6 +211,29 @@ class InspectionPanel extends ConsumerWidget {
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => openLogicLabForInfo(context, ref, info),
+              icon: const Icon(Icons.science_outlined, size: 16),
+              label: Text(
+                l10n.openLogicLab,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
           if (info.legends != null && info.legends!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(

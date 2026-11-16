@@ -8085,6 +8085,54 @@ abstract class AppLocalizations {
   /// **'Apply to simulation'**
   String get applyToSimulation;
 
+  /// No description provided for @openLogicLab.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Logic Lab'**
+  String get openLogicLab;
+
+  /// No description provided for @logicLabLinkedHotspot.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked hotspot'**
+  String get logicLabLinkedHotspot;
+
+  /// No description provided for @logicLabLiveResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Live result'**
+  String get logicLabLiveResult;
+
+  /// No description provided for @logicLabAmmonium.
+  ///
+  /// In en, this message translates to:
+  /// **'Ammonium (NH₄⁺)'**
+  String get logicLabAmmonium;
+
+  /// No description provided for @logicLabWaterContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Soil water content (θ)'**
+  String get logicLabWaterContent;
+
+  /// No description provided for @logicLabSolarRadiation.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar radiation'**
+  String get logicLabSolarRadiation;
+
+  /// No description provided for @logicLabRedoxPotential.
+  ///
+  /// In en, this message translates to:
+  /// **'Redox potential'**
+  String get logicLabRedoxPotential;
+
+  /// No description provided for @logicLabOrganicNitrogen.
+  ///
+  /// In en, this message translates to:
+  /// **'Organic nitrogen'**
+  String get logicLabOrganicNitrogen;
+
   /// No description provided for @moreActions.
   ///
   /// In en, this message translates to:

@@ -12,7 +12,14 @@ import 'models.dart';
 /// - Redox: Nernst-yhtälö (pe0, ratio, n)
 class LogicEvaluator {
   /// Laskee graafin läpi ja päivittää nodien arvot.
-  static LogicGraph evaluate(LogicGraph graph, BiophysicalState state) {
+  ///
+  /// [layerId] selects the soil layer used by input nodes. Without it the
+  /// topsoil is used, preserving the original standalone Lab behaviour.
+  static LogicGraph evaluate(
+    LogicGraph graph,
+    BiophysicalState state, {
+    String? layerId,
+  }) {
     // Luodaan kopio nodeista, jotta voimme päivittää niiden arvot
     final updatedNodes = List<LogicNode>.from(graph.nodes);
 
@@ -21,7 +28,7 @@ class LogicEvaluator {
       final node = updatedNodes[i];
       if (node.type == NodeType.input) {
         updatedNodes[i] = node.copyWith(
-          value: _getInputValue(node.operation, state),
+          value: _getInputValue(node.operation, state, layerId: layerId),
         );
       }
     }
@@ -120,9 +127,18 @@ class LogicEvaluator {
   /// - myc_colon: Kolonisaatioaste (0-1)
   /// - myc_c: C-siirto kasvi→sieni
   /// - myc_p: P-siirto sieni→kasvi
-  static double _getInputValue(String? operation, BiophysicalState state) {
+  static double _getInputValue(
+    String? operation,
+    BiophysicalState state, {
+    String? layerId,
+  }) {
     if (state.profile.layers.isEmpty) return 0.0;
-    final layer = state.profile.layers.first;
+    final layer = layerId == null
+        ? state.profile.layers.first
+        : state.profile.layers.firstWhere(
+            (candidate) => candidate.id == layerId,
+            orElse: () => state.profile.layers.first,
+          );
 
     switch (operation) {
       // === MAAPERÄN FYSIIKKA ===

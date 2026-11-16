@@ -4066,6 +4066,30 @@ class AppLocalizationsFi extends AppLocalizations {
   String get applyToSimulation => 'Käytä simulaatioon';
 
   @override
+  String get openLogicLab => 'Avaa Logiikka-lab';
+
+  @override
+  String get logicLabLinkedHotspot => 'Linkitetty hotspot';
+
+  @override
+  String get logicLabLiveResult => 'Live-tulos';
+
+  @override
+  String get logicLabAmmonium => 'Ammonium (NH₄⁺)';
+
+  @override
+  String get logicLabWaterContent => 'Maan vesipitoisuus (θ)';
+
+  @override
+  String get logicLabSolarRadiation => 'Auringonsäteily';
+
+  @override
+  String get logicLabRedoxPotential => 'Redox-potentiaali';
+
+  @override
+  String get logicLabOrganicNitrogen => 'Orgaaninen typpi';
+
+  @override
   String get moreActions => 'Lisää toimintoja';
 
   @override

@@ -254,6 +254,14 @@ class InspectionTargetComponent extends PositionComponent
             stats: stats,
             isPinned: pinned,
             sourceId: 'inspection-${type.name}',
+            logicLabModel: switch (type) {
+              MagnifierType.apicalMeristem || MagnifierType.leaf =>
+                'photosynthesis',
+              MagnifierType.stem || MagnifierType.soilStructure =>
+                'waterRetention',
+              MagnifierType.root || MagnifierType.rhizosphere => 'diffusion',
+              MagnifierType.microbe => 'nitrification',
+            },
             onDismiss: () {
               magnifier.isVisible = false;
               final selected = game

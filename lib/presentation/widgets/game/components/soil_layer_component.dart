@@ -177,6 +177,8 @@ class SoilLayerComponent extends PositionComponent
               stats: stats,
               isPinned: pinned,
               sourceId: 'soil-layer-$layerId',
+              layerId: layerId,
+              logicLabModel: 'waterRetention',
               onDismiss: () {
                 final session = game.ref.read(simulationSessionProvider);
                 if (session.selectedLayerId == layerId) {
@@ -429,10 +431,7 @@ class SoilLayerComponent extends PositionComponent
         symbol != null &&
         state.plants.isNotEmpty) {
       if (existingIons.length < 20) {
-        final centerX = SceneCoordinateMapper.mapShootPosition(
-          size.x,
-          0,
-        ).x;
+        final centerX = SceneCoordinateMapper.mapShootPosition(size.x, 0).x;
 
         final rand = math.Random(
           layerId.hashCode + symbol.hashCode + existingIons.length,
