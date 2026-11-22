@@ -30,6 +30,9 @@ class BiochemicalDynamicsComponent extends Component
   double _lastSync = 0;
 
   bool _isRunning = false;
+  double _photosynthesisLabelTimer = 0;
+  double _transpirationLabelTimer = 0;
+  double _nutrientUptakeLabelTimer = 0;
 
   @override
   void onMount() {
@@ -169,22 +172,33 @@ class BiochemicalDynamicsComponent extends Component
     final tips = state.plants
         .expand((plant) => plant.rootSystem.where((node) => node.isTip))
         .toList();
-    if (tips.isNotEmpty &&
-        _random.nextDouble() < 0.08 * dt &&
-        _hasLabelCapacity(ProcessMarkerType.nutrientUptake)) {
-      final tipNode = tips[_random.nextInt(tips.length)];
-      game.world.add(
-        ProcessLabel(
-          type: ProcessMarkerType.nutrientUptake,
-          color: CPKStandards.colorN,
-          position: Vector2(
-            SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
-                game.soilLeftX,
-            SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
+    if (tips.isEmpty) {
+      _nutrientUptakeLabelTimer = 0;
+    } else {
+      _nutrientUptakeLabelTimer -= dt;
+      if (_nutrientUptakeLabelTimer <= 0 &&
+          _hasLabelCapacity(ProcessMarkerType.nutrientUptake)) {
+        final tipNode = tips[_random.nextInt(tips.length)];
+        game.world.add(
+          ProcessLabel(
+            type: ProcessMarkerType.nutrientUptake,
+            color: CPKStandards.colorN,
+            position: Vector2(
+              SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
+                  game.soilLeftX +
+                  34,
+              SceneCoordinateMapper.mapRootY(
+                    tipNode.z,
+                    surfaceY,
+                    soilHeight,
+                  ) -
+                  6,
+            ),
+            showTitle: true,
           ),
-          showTitle: true,
-        ),
-      );
+        );
+        _nutrientUptakeLabelTimer = 4.0;
+      }
     }
 
     final pool = game.moleculePool;
@@ -577,25 +591,32 @@ class BiochemicalDynamicsComponent extends Component
     final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
     // Absorbed PAR is the plant's actual light capture, so the marker follows
     // photosynthesis activity rather than a fixed sky-brightness threshold.
-    final photosynthesisRate = (plant.absorbedPAR / 800.0).clamp(0.0, 1.0);
+    // A developing canopy absorbs only tens of W/m² even in full daylight, so
+    // normalize against that range instead of the 800 W/m² incident constant.
+    final photosynthesisRate = (plant.absorbedPAR / 50.0).clamp(0.0, 1.0);
 
     // Process labels describe the active process, not the temporary particle
     // budget. Emit them before the particle cap so a busy soil does not hide
     // photosynthesis behind a saturated molecule pool.
-    if (photosynthesisRate > 0.01 &&
-        _random.nextDouble() < 0.25 * photosynthesisRate * dt &&
-        _hasLabelCapacity(ProcessMarkerType.photosynthesis)) {
-      game.world.add(
-        ProcessLabel(
-          type: ProcessMarkerType.photosynthesis,
-          color: CPKStandards.colorC,
-          position: Vector2(
-            plantWorldPos.x + game.soilLeftX,
-            surfaceY - visualHeight * 0.7,
+    if (photosynthesisRate <= 0) {
+      _photosynthesisLabelTimer = 0;
+    } else {
+      _photosynthesisLabelTimer -= dt;
+      if (_photosynthesisLabelTimer <= 0 &&
+          _hasLabelCapacity(ProcessMarkerType.photosynthesis)) {
+        game.world.add(
+          ProcessLabel(
+            type: ProcessMarkerType.photosynthesis,
+            color: CPKStandards.colorC,
+            position: Vector2(
+              plantWorldPos.x + game.soilLeftX + 165,
+              surfaceY - visualHeight * 0.85,
+            ),
+            showTitle: true,
           ),
-          showTitle: true,
-        ),
-      );
+        );
+        _photosynthesisLabelTimer = 4.0;
+      }
     }
 
     final pool = game.moleculePool;
@@ -660,27 +681,32 @@ class BiochemicalDynamicsComponent extends Component
     // Emit the process marker before the particle cap for the same reason as
     // the gas-exchange marker: the process remains active while its particle
     // animation is budget-limited.
-    if (transpirationActivity > 0 &&
-        _random.nextDouble() < 0.2 * dt &&
-        _hasLabelCapacity(ProcessMarkerType.transpiration)) {
-      final shootPos = SceneCoordinateMapper.mapShootPosition(
-        worldWidth,
-        surfaceY,
-      );
-      final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
-      game.world.add(
-        ProcessLabel(
-          type: ProcessMarkerType.transpiration,
-          color: Colors.blueAccent,
-          position: Vector2(
-            shootPos.x +
-                game.soilLeftX +
-                (_random.nextDouble() - 0.5) * 70,
-            surfaceY - visualHeight * (0.65 + _random.nextDouble() * 0.15),
+    if (transpirationActivity <= 0) {
+      _transpirationLabelTimer = 0;
+    } else {
+      _transpirationLabelTimer -= dt;
+      if (_transpirationLabelTimer <= 0 &&
+          _hasLabelCapacity(ProcessMarkerType.transpiration)) {
+        final shootPos = SceneCoordinateMapper.mapShootPosition(
+          worldWidth,
+          surfaceY,
+        );
+        final visualHeight = SceneCoordinateMapper.plantVisualHeight(plant);
+        game.world.add(
+          ProcessLabel(
+            type: ProcessMarkerType.transpiration,
+            color: Colors.blueAccent,
+            position: Vector2(
+              shootPos.x +
+                  game.soilLeftX +
+                  (_random.nextDouble() - 0.5) * 70,
+              surfaceY - visualHeight * (0.65 + _random.nextDouble() * 0.15),
+            ),
+            showTitle: true,
           ),
-          showTitle: true,
-        ),
-      );
+        );
+        _transpirationLabelTimer = 4.0;
+      }
     }
 
     final existingCount = game.world.children

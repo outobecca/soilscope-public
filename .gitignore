@@ -57,3 +57,4 @@ android/app/build/
 
 # Local indexing cache
 .mfckt-index.json
+/.tmp-verify
