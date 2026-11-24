@@ -17,7 +17,7 @@ import 'simulation_plot.dart';
 /// regenerated with provenance.
 class ModelParameterSet {
   static const String currentId = 'soilscope-core';
-  static const int currentVersion = 4;
+  static const int currentVersion = 5;
 
   /// Every configured model value plus the plot geometry. Order is
   /// irrelevant; [fingerprint] sorts the keys first. Reading

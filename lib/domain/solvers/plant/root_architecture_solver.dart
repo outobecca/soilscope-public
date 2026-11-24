@@ -52,10 +52,10 @@ class RootArchitectureSolver {
     // Seed initial taproot if none exist
     if (newRoots.isEmpty && actualGrowthRate > 1e-9) {
       newRoots.add(
-        const RootNode(
+        RootNode(
           x: SimulationPlot.centerNormalizedX,
           z: 0.0,
-          radius: 0.025,
+          radius: ModelConfig.of('initialRootRadius'),
           isTip: true,
           parentIndex: null,
           branchLevel: 0,

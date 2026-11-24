@@ -53,7 +53,7 @@ class AggregationSolver {
       final double epsDecay = layer.epsContent * epsDecayBase * fTemp * dt;
       final double newEps = (layer.epsContent + epsProduction - epsDecay).clamp(
         0.0,
-        20.0,
+        ModelConfig.of('epsContentMax'),
       );
 
       // 3. Fungal Dynamics (FSPM-lite)
@@ -94,7 +94,7 @@ class AggregationSolver {
       final double newFungi =
           (layer.fungalHyphaeDensity + fungiGrowth - fungiDeath).clamp(
             0.0,
-            1.0,
+            ModelConfig.of('fungalHyphaeMax'),
           );
 
       // 4. Aggregate Stability Logic
@@ -181,16 +181,16 @@ class AggregationSolver {
           );
       final double newMaomN = (layer.maomNitrogen + nStabilized).clamp(
         0.0,
-        5000.0,
+        ModelConfig.of('maomNitrogenMax'),
       );
 
       // Stoichiometric sync: subtract stabilized portion from POM/Biomass if not handled elsewhere.
       // Since MicrobialEnzymesSolver adds ALL death to POM, we subtract the stabilized part from POM.
       final double newPom = (layer.particulateOrganicMatter - cStabilized)
-          .clamp(0.0, 1000.0);
+          .clamp(0.0, ModelConfig.of('particulateOrganicMatterMax'));
       final double newMicN = (layer.microbialNitrogen - nStabilized).clamp(
         0.0,
-        1000.0,
+        ModelConfig.of('microbialNitrogenMax'),
       );
 
       updatedLayers[i] = layer.copyWith(

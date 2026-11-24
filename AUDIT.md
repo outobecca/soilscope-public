@@ -919,7 +919,7 @@ hardware, and the Android row still needs repeated runs.
    a depth or variable the scenario does not expose is reported as a coverage
    gap instead of crashing the Reference Check tab; both paths are tested.
 2. **Done.** `ModelConfig` is now the runtime source of truth for every
-   model-affecting value: 150 defaults covering `SimulationConstants`, the
+   model-affecting value: 161 defaults covering `SimulationConstants`, the
    Farquhar/plant, hydraulics, nutrient, mycorrhiza, chemistry, gas,
    aggregation, microbial-enzyme and nitrogen-cycle parameters, the
    component-driven pool doses, plus the one-square-metre plot geometry.
@@ -930,14 +930,18 @@ hardware, and the Android row still needs repeated runs.
    deployment can override values without editing code. `ModelParameterSet`
    builds its parameters from `ModelConfig.values` plus `SimulationPlot`,
    records `{id, version, fingerprint}` in saved sessions, `reference.json`
-   and Phase 4 captures, and now has version 4 / fingerprint `3cab39ed`. The
+   and Phase 4 captures, and now has version 5 / fingerprint `113669a6`. The
    validation gate fails on parameter drift until the reference is updated
    deliberately. `model_version_test.dart` pins the fingerprint, verifies every
-   configured value is fingerprinted, scans all solver files for static or
-   named local constants outside the config, scans components for literal
-   state doses, and checks that an override changes both the fingerprint and a
-   real validation run. Purely visual values (particle motion, microbe
-   motility, label cadence) stay in `SimulationConstants` and
+   configured value is fingerprinted **and consumed by production code**, scans
+   all solver files for static or named local constants outside the config,
+   scans components for literal state doses, loads an override through the
+   same asset-bundle path the app uses, and checks that overrides change both
+   the fingerprint and real solver output. Model v5 wired the remaining
+   configured state bounds and root/respiration/C-N values into the solvers;
+   their defaults reproduce v4, so the reference values are unchanged. Purely
+   visual values (particle motion, microbe motility, label cadence) stay in
+   `SimulationConstants` and
    `MicrobeMotility` and are deliberately excluded from the scientific
    fingerprint.
 3. **Done — H10.** `simulation_provider.dart` fell from ~1,026 to ~590 lines:

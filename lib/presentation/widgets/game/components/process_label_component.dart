@@ -41,7 +41,19 @@ class ProcessLabel extends PositionComponent
   final Color color;
   final bool isStatic;
   final bool showTitle;
-  final double lifeTime = 5.0;
+  final double lifeTime;
+
+  /// World-space waypoints for markers that belong to a process running
+  /// through a structure. Nutrient uptake uses the plant's vascular path, so
+  /// the marker climbs the root and stem instead of hovering in place.
+  final List<Vector2>? path;
+  final double pathSpeed;
+
+  /// Path markers are motion cues, not inspection targets. Keeping them out
+  /// of the tap tree stops a marker travelling up the stem from stealing the
+  /// plant's own tap as it passes.
+  final bool interactive;
+  int _pathIndex = 0;
   double _elapsed = 0;
   bool _isHovered = false;
   bool _isPinned = false;
@@ -57,12 +69,16 @@ class ProcessLabel extends PositionComponent
     required Vector2 position,
     this.isStatic = false,
     this.showTitle = false,
+    this.path,
+    this.pathSpeed = 60.0,
+    this.lifeTime = 5.0,
+    this.interactive = true,
   }) : super(
-          position: position,
-          size: Vector2.all(36),
-          anchor: Anchor.center,
-          priority: 1600,
-        );
+         position: position,
+         size: Vector2.all(36),
+         anchor: Anchor.center,
+         priority: 1600,
+       );
 
   @override
   Future<void> onLoad() async {
@@ -131,7 +147,10 @@ class ProcessLabel extends PositionComponent
       width: _textPainter!.width + paddingH * 2,
       height: _textPainter!.height + paddingV * 2,
     );
-    _labelRRect = RRect.fromRectAndRadius(_labelRect!, const Radius.circular(4));
+    _labelRRect = RRect.fromRectAndRadius(
+      _labelRect!,
+      const Radius.circular(4),
+    );
   }
 
   @override
@@ -141,15 +160,40 @@ class ProcessLabel extends PositionComponent
     if (!isStatic && !_isPinned) {
       _elapsed += dt;
 
-      final layoutMode = game.ref.read(visualLayoutModeStateProvider);
-      final isSchematic = layoutMode == VisualLayoutMode.schematic;
+      final waypoints = path;
+      if (waypoints != null && waypoints.length > 1) {
+        // Travel along the structure at a steady world-space pace. The marker
+        // is removed at the final waypoint, which is the canopy end of the
+        // plant vascular path.
+        var remaining = pathSpeed * dt;
+        while (remaining > 0 && _pathIndex < waypoints.length) {
+          final target = waypoints[_pathIndex];
+          final toTarget = target - position;
+          final distance = toTarget.length;
+          if (distance <= remaining) {
+            position.setFrom(target);
+            remaining -= distance;
+            _pathIndex++;
+          } else {
+            position.add(toTarget * (remaining / distance));
+            remaining = 0;
+          }
+        }
+        if (_pathIndex >= waypoints.length) {
+          removeFromParent();
+          return;
+        }
+      } else {
+        final layoutMode = game.ref.read(visualLayoutModeStateProvider);
+        final isSchematic = layoutMode == VisualLayoutMode.schematic;
 
-      // Stabilize: Slower rise and NO jitter in schematic mode
-      final speed = isSchematic ? 5.0 : (showTitle ? 25.0 : 10.0);
-      position.y -= speed * dt;
+        // Stabilize: Slower rise and NO jitter in schematic mode
+        final speed = isSchematic ? 5.0 : (showTitle ? 25.0 : 10.0);
+        position.y -= speed * dt;
 
-      if (showTitle && !isSchematic) {
-        position.x += math.sin(_elapsed * 4) * 0.2;
+        if (showTitle && !isSchematic) {
+          position.x += math.sin(_elapsed * 4) * 0.2;
+        }
       }
     }
     if (!isStatic && _elapsed >= lifeTime && !_isPinned) removeFromParent();
@@ -162,15 +206,14 @@ class ProcessLabel extends PositionComponent
     final isNitrogen = isNitrogenProcess(type);
     // A cycle observation mode must visibly filter the process markers; before
     // this, selecting nitrogen left every label at full strength.
-    final double cycleEmphasis = nitrogenMode
-        ? (isNitrogen ? 1.0 : 0.18)
-        : 1.0;
+    final double cycleEmphasis = nitrogenMode ? (isNitrogen ? 1.0 : 0.18) : 1.0;
     final double opacity =
         ((isStatic || _isPinned)
-                ? 1.0
-                : (1.0 - _elapsed / lifeTime).clamp(0.0, 1.0)) *
-            cycleEmphasis;
-    final isHighlighted = _isHovered || _isPinned || (nitrogenMode && isNitrogen);
+            ? 1.0
+            : (1.0 - _elapsed / lifeTime).clamp(0.0, 1.0)) *
+        cycleEmphasis;
+    final isHighlighted =
+        _isHovered || _isPinned || (nitrogenMode && isNitrogen);
     final center = Offset(size.x / 2, size.y / 2);
     final zoom = game.camera.viewfinder.zoom;
 
@@ -237,15 +280,16 @@ class ProcessLabel extends PositionComponent
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
-        zoom: game.camera.viewfinder.zoom,
-        screenRadius: 24,
-        visualWorldRadius: 11,
-        minWorld: 7,
-        maxWorld: 36,
-      );
+    zoom: game.camera.viewfinder.zoom,
+    screenRadius: 24,
+    visualWorldRadius: 11,
+    minWorld: 7,
+    maxWorld: 36,
+  );
 
   @override
   bool containsLocalPoint(Vector2 point) {
+    if (!interactive) return false;
     final center = size / 2;
     return point.distanceTo(center) <= _hitRadius;
   }
@@ -551,7 +595,8 @@ class ProcessLabel extends PositionComponent
     // Tooltip background
     canvas.drawRRect(
       _labelRRect!,
-      Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
+      Paint()
+        ..color = const Color(0xFF0F172A).withValues(alpha: 0.85 * opacity),
     );
 
     // CPK colored border

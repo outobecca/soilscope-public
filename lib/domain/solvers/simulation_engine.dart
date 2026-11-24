@@ -1,4 +1,5 @@
 import '../../core/debug_log.dart';
+import '../../core/model_config.dart';
 import '../../core/simulation_constants.dart';
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
@@ -56,8 +57,11 @@ class SimulationEngine {
     // Check mycorrhiza
     if (state.mycorrhizaState != null) {
       final ms = state.mycorrhizaState!;
-      if ([ms.rootColonization, ms.totalHyphalLength, ms.fungalBiomass]
-          .any((v) => v.isNaN || v.isInfinite)) {
+      if ([
+        ms.rootColonization,
+        ms.totalHyphalLength,
+        ms.fungalBiomass,
+      ].any((v) => v.isNaN || v.isInfinite)) {
         debugLog('[SimulationEngine] Mycorrhiza state validation failed');
         return false;
       }
@@ -69,12 +73,20 @@ class SimulationEngine {
   static BiophysicalState _sanitizeState(BiophysicalState state) {
     final layers = state.profile.layers.map((l) {
       return l.copyWith(
-        temperature: l.temperature.isNaN || l.temperature.isInfinite ? 293.15 : l.temperature,
-        waterContent: l.waterContent.isNaN || l.waterContent.isInfinite ? l.porosity * 0.5 : l.waterContent,
+        temperature: l.temperature.isNaN || l.temperature.isInfinite
+            ? 293.15
+            : l.temperature,
+        waterContent: l.waterContent.isNaN || l.waterContent.isInfinite
+            ? l.porosity * 0.5
+            : l.waterContent,
         ph: l.ph.isNaN || l.ph.isInfinite ? 7.0 : l.ph,
         ec: l.ec.isNaN || l.ec.isInfinite ? 0.5 : l.ec,
-        oxygenContent: l.oxygenContent.isNaN || l.oxygenContent.isInfinite ? 5.0 : l.oxygenContent,
-        co2Content: l.co2Content.isNaN || l.co2Content.isInfinite ? 0.1 : l.co2Content,
+        oxygenContent: l.oxygenContent.isNaN || l.oxygenContent.isInfinite
+            ? 5.0
+            : l.oxygenContent,
+        co2Content: l.co2Content.isNaN || l.co2Content.isInfinite
+            ? 0.1
+            : l.co2Content,
       );
     }).toList();
 
@@ -82,9 +94,15 @@ class SimulationEngine {
       return p.copyWith(
         height: p.height.isNaN || p.height.isInfinite ? 0.1 : p.height,
         lai: p.lai.isNaN || p.lai.isInfinite ? 0.1 : p.lai,
-        turgorPressure: p.turgorPressure.isNaN || p.turgorPressure.isInfinite ? 0.8 : p.turgorPressure,
-        nitrogenUptake: p.nitrogenUptake.isNaN || p.nitrogenUptake.isInfinite ? 0.0 : p.nitrogenUptake,
-        waterUptake: p.waterUptake.isNaN || p.waterUptake.isInfinite ? 0.0 : p.waterUptake,
+        turgorPressure: p.turgorPressure.isNaN || p.turgorPressure.isInfinite
+            ? 0.8
+            : p.turgorPressure,
+        nitrogenUptake: p.nitrogenUptake.isNaN || p.nitrogenUptake.isInfinite
+            ? 0.0
+            : p.nitrogenUptake,
+        waterUptake: p.waterUptake.isNaN || p.waterUptake.isInfinite
+            ? 0.0
+            : p.waterUptake,
       );
     }).toList();
 
@@ -111,7 +129,10 @@ class SimulationEngine {
       throw ArgumentError('All layers must have positive thickness');
     }
 
-    int totalSteps = (dt / SimulationConstants.maxSubStep).ceil().clamp(1, SimulationConstants.maxSubStepsPerTick);
+    int totalSteps = (dt / SimulationConstants.maxSubStep).ceil().clamp(
+      1,
+      SimulationConstants.maxSubStepsPerTick,
+    );
     double stepDt = dt / totalSteps;
 
     BiophysicalState currentState = state;
@@ -126,7 +147,9 @@ class SimulationEngine {
       // Validation is a debug invariant: keep it in development, not in the
       // release tick where it walks every layer and plant per sub-step.
       if (kDebugMode && !_validateBiophysicalState(currentState)) {
-        debugLog('[SimulationEngine] WARNING: Invalid state at step $step, sanitizing...');
+        debugLog(
+          '[SimulationEngine] WARNING: Invalid state at step $step, sanitizing...',
+        );
         currentState = _sanitizeState(currentState);
       }
     }
@@ -135,7 +158,9 @@ class SimulationEngine {
 
     final result = currentState.copyWith(score: newScore);
     if (kDebugMode && !_validateBiophysicalState(result)) {
-      debugLog('[SimulationEngine] ERROR: Final state invalid, returning previous state');
+      debugLog(
+        '[SimulationEngine] ERROR: Final state invalid, returning previous state',
+      );
       return state;
     }
 
@@ -220,7 +245,7 @@ class SimulationEngine {
         solarRadiation: state.solarRadiation,
       );
       updatedPlants.add(nextPlant);
-      
+
       // Update profile with rhizosphere hotspots and chemistry changes from THIS plant
       // In a multi-plant scenario, hotspots will accumulate across all plants.
       updatedProfile = updatedProfile.copyWith(layers: nextLayers);
@@ -245,7 +270,7 @@ class SimulationEngine {
         dt,
         dailyPhotosynthate: plant.totalBiomass * 0.01,
       );
-      
+
       updatedProfile = mycorrhizaResult.profile;
       updatedPlants[pIdx] = mycorrhizaResult.plant;
       currentMycorrhizaState = mycorrhizaResult.mycorrhizaState;
@@ -283,9 +308,11 @@ class SimulationEngine {
         virtualCoverPlant,
         currentMycorrhizaState,
         dt,
-        dailyPhotosynthate: virtualCoverPlant.totalBiomass * 0.005, // Lower C allocation than primary crop
+        dailyPhotosynthate:
+            virtualCoverPlant.totalBiomass *
+            0.005, // Lower C allocation than primary crop
       );
-      
+
       updatedProfile = mycorrhizaResult.profile;
       // We don't save the virtual plant back, but its effects on the profile and state persist
       currentMycorrhizaState = mycorrhizaResult.mycorrhizaState;
@@ -309,17 +336,46 @@ class SimulationEngine {
       );
     }
 
-    // Then, apply aggregated sinks from the buffer
+    // Then, apply aggregated sinks from the buffer. The bounds are model
+    // parameters: a different cap changes how much nutrient can remain in a
+    // layer after uptake.
+    final double nitrateMax = ModelConfig.of('nitrateMax');
+    final double ammoniumMax = ModelConfig.of('ammoniumMax');
+    final double potassiumMax = ModelConfig.of('potassiumMax');
+    final double phosphateMax = ModelConfig.of('phosphateMax');
+    final double calciumMax = ModelConfig.of('solutionCalciumMax');
+    final double magnesiumMax = ModelConfig.of('solutionMagnesiumMax');
+    final double pomMax = ModelConfig.of('particulateOrganicMatterMax');
     for (int i = 0; i < coupledLayers.length; i++) {
       final l = coupledLayers[i];
       coupledLayers[i] = l.copyWith(
-        nitrateContent: (l.nitrateContent - buffer.nitrate[i] * dt).clamp(0.0, 1000.0),
-        ammoniumContent: (l.ammoniumContent - buffer.ammonium[i] * dt).clamp(0.0, 500.0),
-        potassiumContent: (l.potassiumContent - buffer.potassium[i] * dt).clamp(0.0, 1000.0),
-        phosphateContent: (l.phosphateContent - buffer.phosphate[i] * dt).clamp(0.0, 1000.0),
-        solutionCalcium: (l.solutionCalcium - buffer.calcium[i] * dt).clamp(0.0, 10000.0),
-        solutionMagnesium: (l.solutionMagnesium - buffer.magnesium[i] * dt).clamp(0.0, 5000.0),
-        particulateOrganicMatter: (l.particulateOrganicMatter + buffer.carbonSource[i] * dt).clamp(0.0, 1000.0),
+        nitrateContent: (l.nitrateContent - buffer.nitrate[i] * dt).clamp(
+          0.0,
+          nitrateMax,
+        ),
+        ammoniumContent: (l.ammoniumContent - buffer.ammonium[i] * dt).clamp(
+          0.0,
+          ammoniumMax,
+        ),
+        potassiumContent: (l.potassiumContent - buffer.potassium[i] * dt).clamp(
+          0.0,
+          potassiumMax,
+        ),
+        phosphateContent: (l.phosphateContent - buffer.phosphate[i] * dt).clamp(
+          0.0,
+          phosphateMax,
+        ),
+        solutionCalcium: (l.solutionCalcium - buffer.calcium[i] * dt).clamp(
+          0.0,
+          calciumMax,
+        ),
+        solutionMagnesium: (l.solutionMagnesium - buffer.magnesium[i] * dt)
+            .clamp(0.0, magnesiumMax),
+        particulateOrganicMatter:
+            (l.particulateOrganicMatter + buffer.carbonSource[i] * dt).clamp(
+              0.0,
+              pomMax,
+            ),
       );
     }
 

@@ -1,17 +1,31 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:soilscope/core/model_config.dart';
 import 'package:soilscope/data/model_config_repository.dart';
 import 'package:soilscope/domain/models/model_parameter_set.dart';
+import 'package:soilscope/domain/models/plant.dart';
 import 'package:soilscope/domain/models/reference_dataset.dart';
 import 'package:soilscope/domain/services/simulation_persistence.dart';
 import 'package:soilscope/domain/services/validation_reference_run.dart';
+import 'package:soilscope/domain/solvers/nutrient_solver.dart';
+import 'package:soilscope/domain/solvers/plant/root_architecture_solver.dart';
 
 const _referencePath = 'assets/validation/reference.json';
+
+class _StringAssetBundle extends CachingAssetBundle {
+  _StringAssetBundle(this.contents);
+
+  final String contents;
+
+  @override
+  Future<ByteData> load(String key) async =>
+      ByteData.sublistView(Uint8List.fromList(utf8.encode(contents)));
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +36,8 @@ void main() {
       // ModelParameterSet.currentVersion, update this pin and regenerate the
       // validation reference deliberately; do not edit it to silence a drift.
       expect(ModelParameterSet.current.id, 'soilscope-core');
-      expect(ModelParameterSet.current.version, 4);
-      expect(ModelParameterSet.current.fingerprint, '3cab39ed');
+      expect(ModelParameterSet.current.version, 5);
+      expect(ModelParameterSet.current.fingerprint, '113669a6');
       expect(ModelParameterSet.current.parameters, isNotEmpty);
       expect(
         ModelParameterSet.current.parameters.values.every((v) => v.isFinite),
@@ -180,6 +194,119 @@ void main() {
               '${file.path} passes a literal state dose instead of '
               'reading ModelConfig',
         );
+      }
+    });
+
+    test('every configured model value is consumed by production code', () {
+      String stripComments(String source) => source
+          .replaceAll(RegExp(r'/\*.*?\*/', dotAll: true), '')
+          .replaceAll(RegExp(r'//[^\n]*'), '');
+
+      final source = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'))
+          .where((file) => !file.path.endsWith('model_config.dart'))
+          .map((file) => stripComments(file.readAsStringSync()))
+          .join('\n');
+
+      for (final key in ModelConfig.defaults.keys) {
+        final use = RegExp(
+          r"ModelConfig\.of\(\s*'" + RegExp.escape(key) + r"'\s*,?\s*\)",
+        );
+        expect(
+          use.hasMatch(source),
+          isTrue,
+          reason:
+              'ModelConfig.defaults contains "$key" but production code '
+              'never reads it; a configured value must change the model',
+        );
+      }
+    });
+
+    test('the runtime config asset drives the model and a run', () async {
+      final baselineFingerprint = ModelParameterSet.current.fingerprint;
+      final baseline = ValidationReferenceRun.run(
+        hours: 1,
+      ).last.profile.layers.first.waterContent;
+      final bundle = _StringAssetBundle(
+        jsonEncode({
+          'parameters': {'evapBaseRate': 1.0e-6},
+        }),
+      );
+
+      try {
+        await ModelConfigRepository.load(bundle: bundle);
+        expect(ModelConfig.of('evapBaseRate'), 1.0e-6);
+        expect(
+          ModelParameterSet.current.fingerprint,
+          isNot(baselineFingerprint),
+        );
+        final overridden = ValidationReferenceRun.run(
+          hours: 1,
+        ).last.profile.layers.first.waterContent;
+        expect(overridden, isNot(closeTo(baseline, 1e-12)));
+      } finally {
+        ModelConfig.reset();
+      }
+      expect(ModelConfig.values, ModelConfig.defaults);
+    });
+
+    test('pool caps are applied from the active parameter set', () {
+      final initial = ValidationReferenceRun.initialState();
+      final top = initial.profile.layers.first.copyWith(
+        nitrateContent: 5000,
+        ammoniumContent: 4000,
+        phosphateContent: 3000,
+        potassiumContent: 2000,
+      );
+      final profile = initial.profile.copyWith(
+        layers: [top, initial.profile.layers.last],
+      );
+
+      try {
+        ModelConfig.applyOverrides({
+          'nitrateMax': 123,
+          'ammoniumMax': 45,
+          'phosphateMax': 67,
+          'potassiumMax': 89,
+        });
+        final result = NutrientSolver.solve(profile, 60).layers.first;
+
+        expect(result.nitrateContent, lessThanOrEqualTo(123));
+        expect(result.ammoniumContent, lessThanOrEqualTo(45));
+        expect(result.phosphateContent, lessThanOrEqualTo(67));
+        expect(result.potassiumContent, lessThanOrEqualTo(89));
+      } finally {
+        ModelConfig.reset();
+      }
+    });
+
+    test('the initial root radius is read from the active model', () {
+      final state = ValidationReferenceRun.initialState();
+      final plant = Plant(
+        id: 'parameter-probe',
+        species: 'probe',
+        age: 0,
+        height: 0.1,
+        lai: 0.5,
+        turgorPressure: 0.8,
+        rootSystem: const [],
+        nitrogenUptake: 0,
+        waterUptake: 0,
+      );
+
+      try {
+        ModelConfig.applyOverrides({'initialRootRadius': 0.031});
+        final roots = RootArchitectureSolver.growRoots(
+          plant,
+          state.profile,
+          1.0,
+          60,
+        );
+        expect(roots.first.radius, 0.031);
+      } finally {
+        ModelConfig.reset();
       }
     });
 

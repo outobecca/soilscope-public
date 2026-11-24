@@ -38,11 +38,11 @@ class NitrogenCycleModel {
     // which provide mechanistically richer substrate-limitation than the
     // simple first-order decay used in early DNDC-style N cycle models.
 
-    // --- B. IMMOBILIZATION (C/N > 30) ---
+    // --- B. IMMOBILIZATION (C/N above the configured threshold) ---
     double nImmobilized = 0.0;
     double nh4Imm = 0.0;
     double no3Imm = 0.0;
-    if (layer.cnRatio > 30.0) {
+    if (layer.cnRatio > ModelConfig.of('immobilizationCnThreshold')) {
       // Microbes scavenge mineral N when carbon is abundant but N is poor
       final double kImm = ModelConfig.of('nitrogenCycle.kImm');
       final double targetN = (layer.labileCarbon / 8.0).clamp(0.0, 500.0);
@@ -92,7 +92,7 @@ class NitrogenCycleModel {
     final double cOxidizedAnaerobic = nDenitrified * 0.8;
     final double newLabileC = (layer.labileCarbon - cOxidizedAnaerobic).clamp(
       0.0,
-      1000.0,
+      ModelConfig.of('particulateOrganicMatterMax'),
     );
 
     // --- E. BIOLOGICAL NITROGEN FIXATION (BNF) ---
@@ -105,13 +105,19 @@ class NitrogenCycleModel {
     // --- EULER INTEGRATION (Pool Updates) ---
     // POM-N is unchanged here; MicrobialEnzymesSolver is responsible for
     // depolymerization of organic N (protease / urease).
-    double newPomN = pomN.clamp(0.0, 10000.0);
-    double newMicN = (micN + nImmobilized + nFixed).clamp(0.0, 1000.0);
+    double newPomN = pomN.clamp(0.0, ModelConfig.of('organicNitrogenMax'));
+    double newMicN = (micN + nImmobilized + nFixed).clamp(
+      0.0,
+      ModelConfig.of('microbialNitrogenMax'),
+    );
 
-    double newNh4 = (nh4 - nNitrified - nh4Imm + nFixed).clamp(0.0, 500.0);
+    double newNh4 = (nh4 - nNitrified - nh4Imm + nFixed).clamp(
+      0.0,
+      ModelConfig.of('ammoniumMax'),
+    );
     double newNo3 = (no3 + nNitrified - nDenitrified - no3Imm).clamp(
       0.0,
-      1000.0,
+      ModelConfig.of('nitrateMax'),
     );
 
     // Update gas pools (simplified stoichiometry)
@@ -133,7 +139,7 @@ class NitrogenCycleModel {
       denitrificationRate: denitRate,
       nitrousOxideContent: (layer.nitrousOxideContent + n2oProduced).clamp(
         0.0,
-        1.0,
+        ModelConfig.of('nitrousOxideMax'),
       ),
       labileCarbon: newLabileC,
       particulateOrganicMatter: newLabileC,

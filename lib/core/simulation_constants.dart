@@ -19,10 +19,6 @@ class SimulationConstants {
 
   // ============ BIOPHYSICAL BOUNDARIES ============
 
-  static double get nitrateMax => ModelConfig.of('nitrateMax');
-  static double get ammoniumMax => ModelConfig.of('ammoniumMax');
-  static double get phosphateMax => ModelConfig.of('phosphateMax');
-  static double get potassiumMax => ModelConfig.of('potassiumMax');
   static double get organicMatterMax => ModelConfig.of('organicMatterMax');
 
   // ============ VISUALIZATION SCALING ============
@@ -62,10 +58,6 @@ class SimulationConstants {
 
   // ============ PARTICLE PHYSICS ============
 
-  /// C:N ratio threshold for N immobilization.
-  static double get immobilizationCnThreshold =>
-      ModelConfig.of('immobilizationCnThreshold');
-
   /// Target C:N ratio for microbial growth.
   static double get microbialCnTarget => ModelConfig.of('microbialCnTarget');
 
@@ -83,9 +75,6 @@ class SimulationConstants {
 
   // ============ GASES & ATMOSPHERE ============
 
-  /// Universal Gas Constant [J mol⁻¹ K⁻¹].
-  static double get gasConstant => ModelConfig.of('gasConstant');
-
   /// Default atmospheric CO2 concentration [mol m⁻³] (≈ 415 ppm at STP).
   static double get atmCO2Default => ModelConfig.of('atmCO2Default');
 
@@ -94,17 +83,8 @@ class SimulationConstants {
 
   // ============ ENERGY & THERMODYNAMICS ============
 
-  /// Stefan-Boltzmann constant [W m⁻² K⁻⁴].
-  static double get stefanBoltzmann => ModelConfig.of('stefanBoltzmann');
-
-  /// Default soil emissivity.
-  static double get soilEmissivity => ModelConfig.of('soilEmissivity');
-
   /// Default air emissivity.
   static double get airEmissivity => ModelConfig.of('airEmissivity');
-
-  /// Peak solar constant [W m⁻²].
-  static double get solarConstantPeak => ModelConfig.of('solarConstantPeak');
 
   /// Base sub-step for energy integration [s].
   static double get energySubStep => ModelConfig.of('energySubStep');
@@ -113,12 +93,6 @@ class SimulationConstants {
   static double get baseAirTemperature => ModelConfig.of('baseAirTemperature');
 
   // ============ PLANT BIOLOGY ============
-
-  /// Growth rate of mycorrhizal hyphae [m/day].
-  static double get hyphalGrowthRate => ModelConfig.of('hyphalGrowthRate');
-
-  /// Initial root thickness [m].
-  static double get initialRootRadius => ModelConfig.of('initialRootRadius');
 
   /// Base growth step for roots [m].
   static double get rootGrowthStep => ModelConfig.of('rootGrowthStep');
@@ -129,16 +103,8 @@ class SimulationConstants {
   /// Maximum allowed root nodes per plant.
   static int get maxRootsPerPlant => ModelConfig.of('maxRootsPerPlant').toInt();
 
-  /// Energy cost scaling factor for root growth.
-  static double get rootEnergyCostFactor =>
-      ModelConfig.of('rootEnergyCostFactor');
-
   /// Nitrogen half-saturation constant (Km_N) for uptake [mg/kg].
   static double get nitrogenHalfSat => ModelConfig.of('nitrogenHalfSat');
-
-  /// Maintenance respiration fraction of total biomass [day⁻¹].
-  static double get maintenanceRespirationFraction =>
-      ModelConfig.of('maintenanceRespirationFraction');
 
   // ============ AGGREGATION & CARBON CYCLE ============
 
@@ -153,9 +119,6 @@ class SimulationConstants {
 
   /// Base death rate of fungi [s⁻¹].
   static double get fungiDeathBase => ModelConfig.of('fungiDeathBase');
-
-  /// Base mineralization rate for POM [s⁻¹].
-  static double get pomMinRate => ModelConfig.of('pomMinRate');
 
   /// Base death rate for microbial biomass [s⁻¹].
   static double get microbialDeathRate => ModelConfig.of('microbialDeathRate');

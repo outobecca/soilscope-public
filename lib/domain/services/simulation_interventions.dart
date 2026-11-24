@@ -1,4 +1,5 @@
 import '../actions/simulation_actions.dart';
+import '../../core/model_config.dart';
 import '../models/biophysical_state.dart';
 import '../models/soil_layer.dart';
 
@@ -287,11 +288,20 @@ class SimulationInterventions {
         case 'porosity':
           return layer.copyWith(porosity: value);
         case 'ammoniumContent':
-          return layer.copyWith(ammoniumContent: value.clamp(0.0, 1000.0));
+          return layer.copyWith(
+            ammoniumContent: value.clamp(0.0, ModelConfig.of('ammoniumMax')),
+          );
         case 'nitrateContent':
-          return layer.copyWith(nitrateContent: value);
+          return layer.copyWith(
+            nitrateContent: value.clamp(0.0, ModelConfig.of('nitrateMax')),
+          );
         case 'organicNitrogen':
-          return layer.copyWith(organicNitrogen: value.clamp(0.0, 5000.0));
+          return layer.copyWith(
+            organicNitrogen: value.clamp(
+              0.0,
+              ModelConfig.of('organicNitrogenMax'),
+            ),
+          );
         case 'redoxPotential':
           return layer.copyWith(redoxPotential: value.clamp(-500.0, 800.0));
         case 'phosphateContent':

@@ -111,6 +111,10 @@ class NutrientSolver {
       }
     }
 
+    final double nitrateMax = ModelConfig.of('nitrateMax');
+    final double ammoniumMax = ModelConfig.of('ammoniumMax');
+    final double potassiumMax = ModelConfig.of('potassiumMax');
+    final double phosphateMax = ModelConfig.of('phosphateMax');
     final finalLayers = List<SoilLayer>.from(layers);
     for (int i = 0; i < n; i++) {
       final layer = finalLayers[i];
@@ -124,10 +128,19 @@ class NutrientSolver {
           (phosphateFluxes[i] - phosphateFluxes[i + 1]) * dt / layer.thickness;
 
       finalLayers[i] = layer.copyWith(
-        nitrateContent: (layer.nitrateContent + netNit).clamp(0.0, 1000.0),
-        ammoniumContent: (layer.ammoniumContent + netAmm).clamp(0.0, 500.0),
-        potassiumContent: (layer.potassiumContent + netPot).clamp(0.0, 1000.0),
-        phosphateContent: (layer.phosphateContent + netPho).clamp(0.0, 1000.0),
+        nitrateContent: (layer.nitrateContent + netNit).clamp(0.0, nitrateMax),
+        ammoniumContent: (layer.ammoniumContent + netAmm).clamp(
+          0.0,
+          ammoniumMax,
+        ),
+        potassiumContent: (layer.potassiumContent + netPot).clamp(
+          0.0,
+          potassiumMax,
+        ),
+        phosphateContent: (layer.phosphateContent + netPho).clamp(
+          0.0,
+          phosphateMax,
+        ),
       );
     }
 

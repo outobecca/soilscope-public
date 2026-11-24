@@ -62,7 +62,9 @@ particle that is absorbed or consumed changes the simulated state. Purely
 visual movement and layout constants stay in `SimulationConstants` and
 `MicrobeMotility`. `ModelParameterSet`
 (`lib/domain/models/model_parameter_set.dart`) turns the active map into an
-`id`, a `version` and an 8-character fingerprint.
+`id`, a `version` and an 8-character fingerprint. `model_version_test` scans
+production sources and fails if a configured key is never read, and loads an
+override through an `AssetBundle` to prove the JSON path reaches the engine.
 
 At startup `lib/main.dart` loads
 `assets/config/model_parameters.json`. Its `parameters` map is empty in the
@@ -115,8 +117,8 @@ The fixture is one JSON object. Provenance lives beside the numbers.
   "generatedBy": "Instrument/process and the script or person that produced it.",
   "model": {
     "id": "soilscope-core",
-    "version": 4,
-    "fingerprint": "3cab39ed"
+    "version": 5,
+    "fingerprint": "113669a6"
   },
   "relativeTimes": [0.125, 0.25, 0.5, 1.0],
   "series": [

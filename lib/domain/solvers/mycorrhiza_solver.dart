@@ -427,14 +427,16 @@ class MycorrhizaSolver {
     List<double> nUptake,
   ) {
     final updatedLayers = List<SoilLayer>.from(profile.layers);
+    final double phosphateMax = ModelConfig.of('phosphateMax');
+    final double ammoniumMax = ModelConfig.of('ammoniumMax');
 
     for (int i = 0; i < updatedLayers.length; i++) {
       if (i < pUptake.length) {
         updatedLayers[i] = updatedLayers[i].copyWith(
           phosphateContent: (updatedLayers[i].phosphateContent - pUptake[i])
-              .clamp(0.0, 1000.0),
+              .clamp(0.0, phosphateMax),
           ammoniumContent: (updatedLayers[i].ammoniumContent - nUptake[i])
-              .clamp(0.0, 500.0),
+              .clamp(0.0, ammoniumMax),
         );
       }
     }

@@ -244,8 +244,8 @@ class MicrobialEnzymesSolver {
 
     final double newMicrobialBiomass =
         (layer.microbialBiomass + biomassGain - microbialDeath).clamp(
-          1.0,
-          1000.0,
+          ModelConfig.of('microbialBiomassMin'),
+          ModelConfig.of('microbialBiomassMax'),
         );
 
     // Carbon pool sync (POM vs Labile)
@@ -253,13 +253,22 @@ class MicrobialEnzymesSolver {
     final double newPom =
         (layer.particulateOrganicMatter - pomLoss + microbialDeath).clamp(
           0.0,
-          1000.0,
+          ModelConfig.of('particulateOrganicMatterMax'),
         );
 
     return layer.copyWith(
-      ammoniumContent: (layer.ammoniumContent + nh4Gain).clamp(0.0, 500.0),
-      phosphateContent: (layer.phosphateContent + po4Gain).clamp(0.0, 1000.0),
-      organicNitrogen: (layer.organicNitrogen - orgNLoss).clamp(0.0, 10000.0),
+      ammoniumContent: (layer.ammoniumContent + nh4Gain).clamp(
+        0.0,
+        ModelConfig.of('ammoniumMax'),
+      ),
+      phosphateContent: (layer.phosphateContent + po4Gain).clamp(
+        0.0,
+        ModelConfig.of('phosphateMax'),
+      ),
+      organicNitrogen: (layer.organicNitrogen - orgNLoss).clamp(
+        0.0,
+        ModelConfig.of('organicNitrogenMax'),
+      ),
       particulateOrganicMatter: newPom,
       labileCarbon: newPom, // Maintain sync between POM and Labile C
       organicCarbon: newPom + layer.mineralAssociatedOrganicMatter,

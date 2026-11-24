@@ -253,8 +253,14 @@ class ChemistrySolver {
     final double deltaPSol =
         (targetPSol - layer.phosphateContent) *
         (1.0 - math.exp(-kSorptionP * dt));
-    double newPSol = (layer.phosphateContent + deltaPSol).clamp(0.0, 1000.0);
-    double newPSorbed = (totalP - newPSol).clamp(0.0, 3000.0);
+    double newPSol = (layer.phosphateContent + deltaPSol).clamp(
+      0.0,
+      ModelConfig.of('phosphateMax'),
+    );
+    double newPSorbed = (totalP - newPSol).clamp(
+      0.0,
+      ModelConfig.of('sorbedPhosphateMax'),
+    );
 
     return (pSol: newPSol, pSorbed: newPSorbed);
   }
@@ -298,8 +304,14 @@ class ChemistrySolver {
     final double deltaKEx =
         (targetKExMgKg - layer.exchangeablePotassium) *
         (1.0 - math.exp(-kSorptionCations * dt));
-    double newKEx = (layer.exchangeablePotassium + deltaKEx).clamp(0.0, 5000.0);
-    double newKSol = (totalK - newKEx).clamp(0.0, 1000.0);
+    double newKEx = (layer.exchangeablePotassium + deltaKEx).clamp(
+      0.0,
+      ModelConfig.of('exchangeablePotassiumMax'),
+    );
+    double newKSol = (totalK - newKEx).clamp(
+      0.0,
+      ModelConfig.of('potassiumMax'),
+    );
 
     // Base saturation calculation
     final double exKcmol = newKEx / (kMass * 10.0);

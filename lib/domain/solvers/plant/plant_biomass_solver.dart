@@ -194,7 +194,10 @@ class PlantBiomassSolver {
     // Maintenance respiration (Q10 = 2, ref 20°C = 293.15 K)
     final double q10Resp = BiophysicsUtils.q10Factor(tK);
     final double maintenanceResp =
-        plant.totalBiomass * 0.002 * (dt / 86400.0) * q10Resp;
+        plant.totalBiomass *
+        ModelConfig.of('maintenanceRespirationFraction') *
+        (dt / 86400.0) *
+        q10Resp;
 
     // Net biomass change
     final double netGain = carbonGain - maintenanceResp;

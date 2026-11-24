@@ -148,8 +148,7 @@ class AnimatedPlantComponent extends PositionComponent
     for (int i = 0; i < plant.rootSystem.length; i++) {
       final node = plant.rootSystem[i];
       final nodeWorldPos = Vector2(
-        SceneCoordinateMapper.mapRootX(node.x, worldWidth) +
-            soilX,
+        SceneCoordinateMapper.mapRootX(node.x, worldWidth) + soilX,
         SceneCoordinateMapper.mapRootY(node.z, surfaceY, soilHeight),
       );
       final dist = startWorld.distanceTo(nodeWorldPos);
@@ -165,8 +164,7 @@ class AnimatedPlantComponent extends PositionComponent
     RootNode? curr = nearest;
     while (curr != null) {
       final nodePos = Vector2(
-        SceneCoordinateMapper.mapRootX(curr.x, worldWidth) +
-            soilX,
+        SceneCoordinateMapper.mapRootX(curr.x, worldWidth) + soilX,
         SceneCoordinateMapper.mapRootY(curr.z, surfaceY, soilHeight),
       );
       path.add(nodePos);
@@ -378,11 +376,7 @@ class AnimatedPlantComponent extends PositionComponent
     final collarZ = collarNode?.z ?? 0.0;
 
     final collarWorldX =
-        SceneCoordinateMapper.mapRootX(
-          collarX,
-          worldWidth,
-        ) +
-        soilX;
+        SceneCoordinateMapper.mapRootX(collarX, worldWidth) + soilX;
 
     final collarWorldY = SceneCoordinateMapper.mapRootY(
       collarZ,
@@ -630,11 +624,7 @@ class AnimatedPlantComponent extends PositionComponent
             soilHeight,
           );
           final tipPos = Vector2(
-            SceneCoordinateMapper.mapRootX(
-                  node.x,
-                  worldWidth,
-                ) +
-                soilX,
+            SceneCoordinateMapper.mapRootX(node.x, worldWidth) + soilX,
             rawY.clamp(surfaceY + 5.0, surfaceY + soilHeight - 5.0).toDouble(),
           );
 
@@ -708,12 +698,24 @@ class AnimatedPlantComponent extends PositionComponent
             targetPosition: fullPath.isNotEmpty ? fullPath.last : tipPos,
             path: fullPath.isNotEmpty ? fullPath : null,
             velocity: dir * speed,
-            lifeTime: 15.0,
+            lifeTime: _vascularLifeTime(fullPath),
             seed: _random.nextInt(1000),
           );
         }
       }
     }
+  }
+
+  /// Enough time for a nutrient molecule to climb the whole root-to-canopy
+  /// path. Without this the particle expired mid-stem, so the uptake flow
+  /// looked like it vanished before reaching the foliage.
+  double _vascularLifeTime(List<Vector2> path) {
+    if (path.length < 2) return 15.0;
+    var length = 0.0;
+    for (var i = 0; i < path.length - 1; i++) {
+      length += path[i].distanceTo(path[i + 1]);
+    }
+    return (length / 22.0).clamp(15.0, 40.0);
   }
 
   @override
@@ -867,17 +869,14 @@ class AnimatedPlantComponent extends PositionComponent
     final plant = _plantData;
     if (plant == null) return false;
 
-    // Check shoot (stem + leaves) with generous horizontal width for spreading leaves
-    final shootScale =
-        0.5 + (plant.totalBiomass / 1000.0).clamp(0.0, 1.5) + _growthBoost;
-    final shootHeight = 320.0 * shootScale;
-    final shootRect = Rect.fromLTWH(
-      -100 * shootScale,
-      -shootHeight,
-      200 * shootScale,
-      shootHeight,
+    // Follow the painted stem and leaves instead of a broad rectangle. The
+    // old 200 x 320 px box claimed empty sky beside the canopy, so taps meant
+    // for the soil, process markers or nearby hotspots opened the plant card.
+    final shootScale = SceneCoordinateMapper.getShootScale(
+      plant,
+      growthBoost: _growthBoost,
     );
-    if (shootRect.contains(point.toOffset())) return true;
+    if (_isInsideShoot(point, plant, shootScale)) return true;
 
     // Check against root nodes with a screen-space-stable target radius.
     final nodes = plant.rootSystem;
@@ -892,6 +891,133 @@ class AnimatedPlantComponent extends PositionComponent
       if (point.distanceTo(pos) <= _rootHitRadius) return true;
     }
     return false;
+  }
+
+  /// Whether [point] falls on the painted trunk or one of its leaf blades.
+  ///
+  /// The canopy is a union of a narrow stem corridor and per-leaf circles.
+  /// This mirrors `_drawBranches` and `_drawMainStemLeaves`; the leaf count,
+  /// height factors, scales and angles are the same values used by the
+  /// renderer, so the hit silhouette cannot drift from what is drawn.
+  bool _isInsideShoot(Vector2 point, Plant plant, double shootScale) {
+    final double height = 450.0 * shootScale;
+    if (point.y <= 0 &&
+        point.y >= -height &&
+        point.x.abs() <= 10.0 * shootScale) {
+      return true;
+    }
+
+    final turgor = _smoothTurgor;
+    final biomass = _smoothBiomass;
+    final cp1Y = -height * 0.4;
+    final cp2Y = -height * 0.7;
+
+    // Main-stem leaves.
+    final leafProgress = 2.0 + biomass / 120.0;
+    final leafCount = leafProgress.floor().clamp(2, 14);
+    final lastLeafPartial = (leafProgress - leafProgress.floor()).clamp(
+      0.0,
+      1.0,
+    );
+    for (int i = 0; i < leafCount + 1 && i < 14; i++) {
+      final unfolding = i == leafCount ? lastLeafPartial : 1.0;
+      if (unfolding < 0.05) continue;
+      final t = 0.1 + (i / 14.0) * 0.85;
+      final organicY = _cubicBezier(0, cp1Y, cp2Y, -height, t);
+      final schematicY = -height * t;
+      final y = lerpDouble(organicY, schematicY, _layoutProgress)!;
+      final leafScale = (1.2 - (i / 14.0) * 0.5) * shootScale * unfolding;
+      if (_isInsideLeaf(point, Vector2(0, y), i.isEven, leafScale, i)) {
+        return true;
+      }
+    }
+
+    // Branch leaves follow the same radial growth as the painted branches.
+    final sideRootCount = plant.rootSystem
+        .where((node) => node.parentIndex != null)
+        .length;
+    final branchProgress = sideRootCount / 8.0;
+    final branchCount = branchProgress.floor().clamp(0, 12);
+    final lastBranchPartial = (branchProgress - branchProgress.floor()).clamp(
+      0.0,
+      1.0,
+    );
+    for (int i = 0; i < branchCount + 1 && i < 12; i++) {
+      final t = 0.15 + (i / 12.0) * 0.75;
+      if (t > 0.9) continue;
+      final unfolding = i == branchCount ? lastBranchPartial : 1.0;
+      if (unfolding < 0.05) continue;
+
+      final isLeft = i % 2 == 0;
+      final branchLength = 65.0 * shootScale * (1.1 - t * 0.5) * unfolding;
+      final organicAngle =
+          (isLeft ? -math.pi / 2.8 : math.pi / 2.8) *
+          (0.8 + (1.0 - turgor) * 0.5);
+      final schematicAngle = branchCount > 0
+          ? (-math.pi * 0.75 + (i / branchCount) * math.pi * 1.5) - math.pi / 2
+          : (isLeft ? -math.pi / 3 : math.pi / 3) - math.pi / 2;
+      final angle = lerpDouble(organicAngle, schematicAngle, _layoutProgress)!;
+
+      final organicStartY = _cubicBezier(0, cp1Y, cp2Y, -height, t);
+      final schematicStartY = -height * t;
+      final targetStartY = _layoutProgress > 0.5 ? 0.0 : schematicStartY;
+      final startY = lerpDouble(organicStartY, targetStartY, _layoutProgress)!;
+      final length = lerpDouble(
+        branchLength,
+        branchLength * 1.5,
+        _layoutProgress,
+      )!;
+
+      final end = Vector2(
+        math.sin(angle) * length,
+        startY - math.cos(angle) * length,
+      );
+      // The branch stroke itself is visible even where no leaf covers it.
+      if (_distanceToSegment(point, Vector2(0, startY), end) <=
+          6.0 * shootScale) {
+        return true;
+      }
+      final leafScale = shootScale * 0.9 * unfolding;
+      if (_isInsideLeaf(point, end, isLeft, leafScale, i + 50)) return true;
+    }
+
+    return false;
+  }
+
+  bool _isInsideLeaf(
+    Vector2 point,
+    Vector2 stemPoint,
+    bool left,
+    double leafScale,
+    int seed,
+  ) {
+    if (leafScale <= 0.02) return false;
+    final state = game.simulationState;
+    final nContent = (state != null && state.profile.layers.isNotEmpty)
+        ? (state.profile.layers.first.nitrateContent +
+              state.profile.layers.first.ammoniumContent)
+        : 30.0;
+    final isDeficient = nContent < 15.0;
+    final isLowPar = state != null && state.solarRadiation < 200.0;
+    final angleOffset = isDeficient
+        ? (left ? 0.4 : -0.4)
+        : (isLowPar ? (left ? -0.3 : 0.3) : 0.0);
+    final wobble = math.sin(seed * 1.2 + game.currentTime() * 0.4) * 0.08;
+    final angle = (left ? -math.pi / 4 : math.pi / 4) + angleOffset + wobble;
+    final center =
+        stemPoint +
+        Vector2(math.cos(angle), math.sin(angle)) * (26.0 * leafScale);
+    // Match the painted leaf half-length with a small touching tolerance.
+    final radius = 24.0 * leafScale + 4.0;
+    return point.distanceToSquared(center) <= radius * radius;
+  }
+
+  double _distanceToSegment(Vector2 point, Vector2 a, Vector2 b) {
+    final ab = b - a;
+    final lengthSq = ab.length2;
+    if (lengthSq == 0) return point.distanceTo(a);
+    final t = ((point - a).dot(ab) / lengthSq).clamp(0.0, 1.0);
+    return point.distanceTo(a + ab * t);
   }
 
   @override

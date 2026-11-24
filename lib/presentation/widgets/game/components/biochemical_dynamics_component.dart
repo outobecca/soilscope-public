@@ -15,7 +15,6 @@ import 'soil_layer_component.dart';
 import 'soil_symbiosis_network_component.dart';
 import 'animated_plant_component.dart';
 import 'riverpod_lifecycle_mixin.dart';
-import 'simulation_animation_layer_component.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../core/biophysics_utils.dart';
 import '../../../../core/cpk_standards.dart';
@@ -45,7 +44,6 @@ class BiochemicalDynamicsComponent extends Component
       (prev, next) => _isRunning = next,
       fireImmediately: true,
     );
-
   }
 
   @override
@@ -170,37 +168,54 @@ class BiochemicalDynamicsComponent extends Component
     final soilHeight = game.soilColumnHeight;
 
     // Root uptake is an active process even while the particle pool is at its
-    // cap, so emit its marker before the particle-budget return below.
-    final tips = state.plants
-        .expand((plant) => plant.rootSystem.where((node) => node.isTip))
+    // cap, so emit its marker before the particle-budget return below. The
+    // marker follows the same root-to-canopy vascular path as the nutrient
+    // molecules, so "nutrient uptake" visibly moves through the plant instead
+    // of floating in place above the root tip.
+    final uptakePlants = state.plants
+        .where((plant) => plant.rootSystem.any((node) => node.isTip))
         .toList();
-    if (tips.isEmpty) {
+    if (uptakePlants.isEmpty) {
       _nutrientUptakeLabelTimer = 0;
     } else {
       _nutrientUptakeLabelTimer -= dt;
       if (_nutrientUptakeLabelTimer <= 0 &&
           _hasLabelCapacity(ProcessMarkerType.nutrientUptake)) {
+        final plant = uptakePlants[_random.nextInt(uptakePlants.length)];
+        final tips = plant.rootSystem.where((node) => node.isTip).toList();
         final tipNode = tips[_random.nextInt(tips.length)];
+        final tipPosition = Vector2(
+          SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
+              game.soilLeftX,
+          SceneCoordinateMapper.mapRootY(tipNode.z, surfaceY, soilHeight),
+        );
+        final vascularPath = _plantComponentFor(
+          plant.id,
+        )?.getPlantVascularPath(tipPosition);
+        final markerPath = (vascularPath != null && vascularPath.length > 1)
+            ? vascularPath
+            : null;
+        const markerSpeed = 60.0;
+        final pathLength = _polylineLength(markerPath);
+
         game.world.add(
           ProcessLabel(
             type: ProcessMarkerType.nutrientUptake,
             color: CPKStandards.colorN,
-            position: Vector2(
-              SceneCoordinateMapper.mapRootX(tipNode.x, worldWidth) +
-                  game.soilLeftX +
-                  34,
-              SceneCoordinateMapper.mapRootY(
-                    tipNode.z,
-                    surfaceY,
-                    soilHeight,
-                  ) -
-                  6,
-            ),
+            position:
+                markerPath?.first.clone() ?? tipPosition + Vector2(34, -6),
+            path: markerPath,
+            pathSpeed: markerSpeed,
+            // The marker is an animation of flow through the plant; it must
+            // not intercept taps meant for the stem it is crossing.
+            interactive: false,
+            lifeTime: markerPath != null
+                ? (pathLength / markerSpeed + 0.5).clamp(4.0, 24.0)
+                : 5.0,
             showTitle: true,
           ),
         );
-        _nutrientUptakeLabelTimer =
-            SimulationConstants.processLabelInterval;
+        _nutrientUptakeLabelTimer = SimulationConstants.processLabelInterval;
       }
     }
 
@@ -491,13 +506,7 @@ class BiochemicalDynamicsComponent extends Component
           }
 
           // 2. Plant Vascular Path
-          final plantComp = game.world.children
-              .query<SimulationAnimationLayerComponent>()
-              .firstOrNull
-              ?.children
-              .query<AnimatedPlantComponent>()
-              .where((p) => p.plantId == plant.id)
-              .firstOrNull;
+          final plantComp = _plantComponentFor(plant.id);
           if (plantComp != null) {
             final plantPath = plantComp.getPlantVascularPath(tipPos);
             if (plantPath != null) fullPath.addAll(plantPath);
@@ -510,7 +519,9 @@ class BiochemicalDynamicsComponent extends Component
             path: fullPath.isNotEmpty ? fullPath : null,
             velocity: (tipPos - startPos).normalized() * speed,
             seed: _random.nextInt(1000),
-            lifeTime: 12.0, // Long lifetime for full plant transit
+            // Allow the full root-to-canopy transit; the particle removes
+            // itself at the end of the vascular path.
+            lifeTime: _vascularParticleLifeTime(fullPath, speed),
           );
         }
       }
@@ -575,10 +586,35 @@ class BiochemicalDynamicsComponent extends Component
     }
   }
 
+  AnimatedPlantComponent? _plantComponentFor(String plantId) => game.world
+      .descendants()
+      .whereType<AnimatedPlantComponent>()
+      .where((component) => component.plantId == plantId)
+      .firstOrNull;
+
   bool _hasLabelCapacity(ProcessMarkerType type) {
     final labels = game.world.children.query<ProcessLabel>();
     return labels.length < 8 &&
         labels.where((label) => label.type == type).length < 2;
+  }
+
+  double _polylineLength(List<Vector2>? path) {
+    if (path == null || path.length < 2) return 0;
+    var length = 0.0;
+    for (var i = 0; i < path.length - 1; i++) {
+      length += path[i].distanceTo(path[i + 1]);
+    }
+    return length;
+  }
+
+  /// Particles seek waypoints with a lerped velocity, so their real pace is
+  /// below the initial speed. Leave headroom for that so an uptake molecule
+  /// reaches the canopy instead of expiring halfway up the stem.
+  double _vascularParticleLifeTime(List<Vector2> path, double speed) {
+    if (path.length < 2) return 12.0;
+    final length = _polylineLength(path);
+    final pace = speed.clamp(20.0, 70.0);
+    return (length / pace * 1.6).clamp(12.0, 40.0);
   }
 
   void _spawnGasExchangeFlows(double dt) {
@@ -598,8 +634,7 @@ class BiochemicalDynamicsComponent extends Component
     // A developing canopy absorbs only tens of W/m² even in full daylight, so
     // normalize against that range instead of the 800 W/m² incident constant.
     final photosynthesisRate =
-        (plant.absorbedPAR /
-                SimulationConstants.photosynthesisLabelFullScale)
+        (plant.absorbedPAR / SimulationConstants.photosynthesisLabelFullScale)
             .clamp(0.0, 1.0);
 
     // Process labels describe the active process, not the temporary particle
@@ -622,8 +657,7 @@ class BiochemicalDynamicsComponent extends Component
             showTitle: true,
           ),
         );
-        _photosynthesisLabelTimer =
-            SimulationConstants.processLabelInterval;
+        _photosynthesisLabelTimer = SimulationConstants.processLabelInterval;
       }
     }
 
@@ -705,16 +739,13 @@ class BiochemicalDynamicsComponent extends Component
             type: ProcessMarkerType.transpiration,
             color: Colors.blueAccent,
             position: Vector2(
-              shootPos.x +
-                  game.soilLeftX +
-                  (_random.nextDouble() - 0.5) * 70,
+              shootPos.x + game.soilLeftX + (_random.nextDouble() - 0.5) * 70,
               surfaceY - visualHeight * (0.65 + _random.nextDouble() * 0.15),
             ),
             showTitle: true,
           ),
         );
-        _transpirationLabelTimer =
-            SimulationConstants.processLabelInterval;
+        _transpirationLabelTimer = SimulationConstants.processLabelInterval;
       }
     }
 
@@ -733,12 +764,7 @@ class BiochemicalDynamicsComponent extends Component
 
         // Water path: Soil -> Root Tip -> Stem -> Foliage
         final List<Vector2> waterPath = [];
-        final plantComp = game.world.children
-            .query<SimulationAnimationLayerComponent>()
-            .firstOrNull
-            ?.children
-            .query<AnimatedPlantComponent>()
-            .firstOrNull;
+        final plantComp = _plantComponentFor(plant.id);
         if (plantComp != null) {
           final pPath = plantComp.getPlantVascularPath(targetTip);
           if (pPath != null) waterPath.addAll(pPath);

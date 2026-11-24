@@ -245,8 +245,8 @@ Computed getters (not serialized): `plant` (first plant or stub), `solarRadiatio
     "version": 1,
     "model": {
       "id": "soilscope-core",
-      "version": 4,
-      "fingerprint": "3cab39ed"
+      "version": 5,
+      "fingerprint": "113669a6"
     },
     "state": { "...BiophysicalState JSON..." }
   }
