@@ -9,6 +9,7 @@ import '../models/hydrology_result.dart';
 import 'plant_solver.dart';
 import '../../core/biophysics_utils.dart';
 import '../../core/simulation_constants.dart';
+import '../../core/model_config.dart';
 
 class HydrologySolver {
   /// Solves 1D Richards equation flux between layers for a time step [dt]
@@ -54,7 +55,7 @@ class HydrologySolver {
     }
 
     final int requiredSteps = (dt / subStep).ceil();
-    const int maxSteps = 2000;
+    final int maxSteps = ModelConfig.of('hydrology.maxSteps').toInt();
     final int steps = requiredSteps.clamp(1, maxSteps);
     final double actualDt = dt / steps;
 
@@ -77,7 +78,8 @@ class HydrologySolver {
 
     // Bare Soil Evaporation
     final double airTempC = airTemperature - 273.15;
-    final double potentialEvap = SimulationConstants.evapBaseRate * math.max(0.0, airTempC);
+    final double potentialEvap =
+        SimulationConstants.evapBaseRate * math.max(0.0, airTempC);
     final firstLayer = currentProfile.layers.first;
     final double surfaceRelativeSaturation =
         (firstLayer.waterContent / firstLayer.porosity).clamp(0.0, 1.0);
@@ -100,13 +102,15 @@ class HydrologySolver {
       // However, we need to add water tracking to NutrientBuffer,
       // or we can just calculate water sink directly here like PlantSolver does,
       // since water uptake velocity is `weight * actualTrans`.
-      final (layerWeights, totalRootWeight) = RootArchitectureSolver.calculateLayerWeights(plant, currentProfile);
+      final (layerWeights, totalRootWeight) =
+          RootArchitectureSolver.calculateLayerWeights(plant, currentProfile);
       final actualTrans = plant.actualTranspiration;
       if (totalRootWeight > 0 && actualTrans > 0) {
         for (int i = 0; i < currentProfile.layers.length; i++) {
           final weight = layerWeights[i] / totalRootWeight;
           final uptakeVelocity = weight * actualTrans;
-          aggregatedSinks[i] += uptakeVelocity / currentProfile.layers[i].thickness;
+          aggregatedSinks[i] +=
+              uptakeVelocity / currentProfile.layers[i].thickness;
         }
       }
     }
@@ -163,9 +167,9 @@ class HydrologySolver {
 
   static SoilProfile _applyBypass(SoilProfile profile, double waterVolume) {
     if (waterVolume <= 0) return profile;
-    
+
     final updatedLayers = List<SoilLayer>.from(profile.layers);
-    
+
     // Calculate total macro-porosity capacity across the profile
     double totalMacroCapacity = 0.0;
     for (final layer in updatedLayers) {
@@ -175,9 +179,11 @@ class HydrologySolver {
     if (totalMacroCapacity > 1e-9) {
       for (int i = 0; i < updatedLayers.length; i++) {
         final layer = updatedLayers[i];
-        final fraction = (layer.effectiveMacroPorosity * layer.thickness) / totalMacroCapacity;
+        final fraction =
+            (layer.effectiveMacroPorosity * layer.thickness) /
+            totalMacroCapacity;
         final layerWater = waterVolume * fraction;
-        
+
         final deltaTheta = layerWater / layer.thickness;
         updatedLayers[i] = layer.copyWith(
           waterContent: (layer.waterContent + deltaTheta).clamp(
@@ -192,11 +198,15 @@ class HydrologySolver {
       for (int i = 0; i < updatedLayers.length; i++) {
         if (remainingWater <= 0) break;
         final layer = updatedLayers[i];
-        final capacity = (layer.porosity - layer.waterContent) * layer.thickness;
+        final capacity =
+            (layer.porosity - layer.waterContent) * layer.thickness;
         final accepted = math.min(remainingWater, capacity);
-        
+
         updatedLayers[i] = layer.copyWith(
-          waterContent: (layer.waterContent + accepted / layer.thickness).clamp(0.0, layer.porosity),
+          waterContent: (layer.waterContent + accepted / layer.thickness).clamp(
+            0.0,
+            layer.porosity,
+          ),
         );
         remainingWater -= accepted;
       }
@@ -261,7 +271,10 @@ class HydrologySolver {
       final deltaTheta = (netFlux / layer.thickness - sinkTerm) * dt;
 
       var newTheta = layer.waterContent + deltaTheta;
-      newTheta = newTheta.clamp(layer.thetaR + SimulationConstants.thetaMinBuffer, layer.porosity);
+      newTheta = newTheta.clamp(
+        layer.thetaR + SimulationConstants.thetaMinBuffer,
+        layer.porosity,
+      );
 
       updatedLayers[i] = layer.copyWith(
         previousWaterContent: layer.waterContent,

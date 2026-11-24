@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import '../../models/plant.dart';
 import '../../models/soil_profile.dart';
 import '../../../core/biophysics_utils.dart';
+import '../../../core/model_config.dart';
 
 /// Logic for plant water relations: VPD, transpiration, turgor pressure, and SPAC coupling.
 ///
@@ -14,37 +15,41 @@ class PlantHydraulicsSolver {
 
   /// Maximum stomatal conductance [mol H2O m⁻² s⁻¹]
   /// Source: Typical C3 crop value (Medlyn et al., 2011)
-  static const double gsMax = 0.4;
+  static double get gsMax => ModelConfig.of('plantHydraulics.gsMax');
 
   /// Maximum transpiration rate [m³ H2O m⁻² leaf s⁻¹]
-  static const double maxTranspirationRate = 1.0e-8;
+  static double get maxTranspirationRate =>
+      ModelConfig.of('plantHydraulics.maxTranspirationRate');
 
   /// Osmotic potential at full turgor [MPa]
   /// Source: Typical crop mesophyll (Hsiao, 1973)
-  static const double psiOsmotic = -0.8;
+  static double get psiOsmotic => ModelConfig.of('plantHydraulics.psiOsmotic');
 
   /// Root hydraulic conductance per unit root length [m³ MPa⁻¹ m⁻¹ s⁻¹]
   /// Source: Steudle (2000) - root radial conductivity
-  static const double rootLp = 5.0e-8;
+  static double get rootLp => ModelConfig.of('plantHydraulics.rootLp');
 
   /// Stem xylem conductance [m³ MPa⁻¹ s⁻¹]
   /// Source: Typical herbaceous plant
-  static const double xylemKs = 2.0e-6;
+  static double get xylemKs => ModelConfig.of('plantHydraulics.xylemKs');
 
   /// Plant water capacitance [m³ MPa⁻¹]
   /// Source: Nobel (2009) - tissue elasticity
-  static const double plantCapacitance = 1.0e-5;
+  static double get plantCapacitance =>
+      ModelConfig.of('plantHydraulics.plantCapacitance');
 
   /// Critical leaf water potential for stomatal closure [MPa]
   /// Source: Tardieu & Simonneau (1998)
-  static const double psiLeafCrit = -1.5;
+  static double get psiLeafCrit =>
+      ModelConfig.of('plantHydraulics.psiLeafCrit');
 
   /// Leaf water potential at 50% stomatal closure [MPa]
-  static const double psi50 = -1.0;
+  static double get psi50 => ModelConfig.of('plantHydraulics.psi50');
 
   /// Sensitivity parameter for stomatal response to VPD [kPa⁻¹]
   /// Source: Medlyn et al. (2011) optimal stomatal model
-  static const double vpdSensitivity = 0.5;
+  static double get vpdSensitivity =>
+      ModelConfig.of('plantHydraulics.vpdSensitivity');
 
   // ============ CORE CALCULATIONS ============
 
@@ -58,7 +63,9 @@ class PlantHydraulicsSolver {
   }) {
     final double tCelsius = airTemperature - 273.15;
     // Tetens equation via centralized BiophysicsUtils (DRY)
-    final double eSat = BiophysicsUtils.getSaturationVaporPressureCelsius(tCelsius);
+    final double eSat = BiophysicsUtils.getSaturationVaporPressureCelsius(
+      tCelsius,
+    );
     return eSat * (1.0 - relativeHumidity);
   }
 
@@ -241,10 +248,15 @@ class PlantHydraulicsSolver {
     final double gsFinal = gsMax * fStomatalFinal * fVPDFinal;
 
     // Calculate root system supply limit under the relaxed finalPsiLeaf
-    final double totalConductance = (rootConductance * xylemKs) / (rootConductance + xylemKs + 1e-12);
-    final double transSupplyFinal = totalConductance * (psiSoil - finalPsiLeaf).clamp(0.0, 10.0);
+    final double totalConductance =
+        (rootConductance * xylemKs) / (rootConductance + xylemKs + 1e-12);
+    final double transSupplyFinal =
+        totalConductance * (psiSoil - finalPsiLeaf).clamp(0.0, 10.0);
     final double transDemandFinal = potentialTrans * fStomatalFinal * fVPDFinal;
-    final double actualTransFinal = math.min(transDemandFinal, transSupplyFinal);
+    final double actualTransFinal = math.min(
+      transDemandFinal,
+      transSupplyFinal,
+    );
 
     return (
       transpiration: actualTransFinal,

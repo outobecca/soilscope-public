@@ -3,6 +3,7 @@ import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import '../../core/simulation_constants.dart';
 import '../../core/biophysics_utils.dart';
+import '../../core/model_config.dart';
 
 /// Microbial Enzyme Kinetics Solver
 ///
@@ -29,74 +30,88 @@ class MicrobialEnzymesSolver {
   // Catalyzes: Urea → 2NH4+ + CO2
   // Optimal pH: 6.5-7.0
   /// Vmax for urease [mg N kg⁻¹ h⁻¹]
-  static const double vmaxUrease = 50.0;
+  static double get vmaxUrease => ModelConfig.of('microbialEnzymes.vmaxUrease');
 
   /// Km for urease [mg N kg⁻¹] (substrate affinity)
-  static const double kmUrease = 20.0;
+  static double get kmUrease => ModelConfig.of('microbialEnzymes.kmUrease');
 
   /// Optimal pH for urease activity
-  static const double phOptUrease = 6.8;
+  static double get phOptUrease =>
+      ModelConfig.of('microbialEnzymes.phOptUrease');
 
   /// pH sensitivity parameter
-  static const double phSensUrease = 1.5;
+  static double get phSensUrease =>
+      ModelConfig.of('microbialEnzymes.phSensUrease');
 
   // --- PHOSPHATASE (Acid + Alkaline) ---
   // Catalyzes: Organic-P → PO4³⁻
   // Acid phosphatase optimal pH: 5.0-6.0
   // Alkaline phosphatase optimal pH: 8.0-9.0
   /// Vmax for phosphatase [mg P kg⁻¹ h⁻¹]
-  static const double vmaxPhosphatase = 30.0;
+  static double get vmaxPhosphatase =>
+      ModelConfig.of('microbialEnzymes.vmaxPhosphatase');
 
   /// Km for phosphatase [mg P kg⁻¹]
-  static const double kmPhosphatase = 15.0;
+  static double get kmPhosphatase =>
+      ModelConfig.of('microbialEnzymes.kmPhosphatase');
 
   /// Optimal pH for acid phosphatase
-  static const double phOptAcidPhos = 5.5;
+  static double get phOptAcidPhos =>
+      ModelConfig.of('microbialEnzymes.phOptAcidPhos');
 
   /// Optimal pH for alkaline phosphatase
-  static const double phOptAlkPhos = 8.5;
+  static double get phOptAlkPhos =>
+      ModelConfig.of('microbialEnzymes.phOptAlkPhos');
 
   // --- β-GLUCOSIDASE / CELLULASE ---
   // Catalyzes: Cellulose → Glucose → CO2
   // Optimal pH: 5.0-6.0
   /// Vmax for cellulase [mg C kg⁻¹ h⁻¹]
-  static const double vmaxCellulase = 100.0;
+  static double get vmaxCellulase =>
+      ModelConfig.of('microbialEnzymes.vmaxCellulase');
 
   /// Km for cellulase [mg C kg⁻¹]
-  static const double kmCellulase = 50.0;
+  static double get kmCellulase =>
+      ModelConfig.of('microbialEnzymes.kmCellulase');
 
   /// Optimal pH for cellulase
-  static const double phOptCellulase = 5.5;
+  static double get phOptCellulase =>
+      ModelConfig.of('microbialEnzymes.phOptCellulase');
 
   /// pH sensitivity for cellulase
-  static const double phSensCellulase = 1.2;
+  static double get phSensCellulase =>
+      ModelConfig.of('microbialEnzymes.phSensCellulase');
 
   // --- PROTEASE ---
   // Catalyzes: Proteins → Amino acids → NH4+
   // Optimal pH: 7.0-8.0
   /// Vmax for protease [mg N kg⁻¹ h⁻¹]
-  static const double vmaxProtease = 40.0;
+  static double get vmaxProtease =>
+      ModelConfig.of('microbialEnzymes.vmaxProtease');
 
   /// Km for protease [mg N kg⁻¹]
-  static const double kmProtease = 25.0;
+  static double get kmProtease => ModelConfig.of('microbialEnzymes.kmProtease');
 
   /// Optimal pH for protease
-  static const double phOptProtease = 7.5;
+  static double get phOptProtease =>
+      ModelConfig.of('microbialEnzymes.phOptProtease');
 
   // --- GENERAL PARAMETERS ---
   /// Reference temperature [K]
-  static const double tRef = 293.15; // 20°C
+  static double get tRef => ModelConfig.of('microbialEnzymes.tRef'); // 20°C
   /// Q10 for enzyme activity
-  static const double q10Enzyme = 2.0;
+  static double get q10Enzyme => ModelConfig.of('microbialEnzymes.q10Enzyme');
 
   /// Activation energy for Arrhenius [J mol⁻¹]
-  static const double activationEnergy = 50000.0;
+  static double get activationEnergy =>
+      ModelConfig.of('microbialEnzymes.activationEnergy');
 
   /// Gas constant [J mol⁻¹ K⁻¹]
-  static const double gasConstant = SimulationConstants.gasConstant;
+  static double get gasConstant => ModelConfig.of('gasConstant');
 
   /// Substrate inhibition constant (Ki/Km ratio)
-  static const double substrateInhibitionRatio = 5.0;
+  static double get substrateInhibitionRatio =>
+      ModelConfig.of('microbialEnzymes.substrateInhibitionRatio');
 
   /// Runs enzyme-mediated transformations for the soil profile
   static SoilProfile solve(SoilProfile profile, double dt) {
@@ -123,8 +138,8 @@ class MicrobialEnzymesSolver {
 
     // --- RHIZOSPHERE PRIMING EFFECT ---
     // Labile C (exudates) stimulates enzyme production
-    const double vMaxPriming = 2.0;
-    const double kmPriming = 50.0;
+    final double vMaxPriming = ModelConfig.of('microbialEnzymes.vMaxPriming');
+    final double kmPriming = ModelConfig.of('microbialEnzymes.kmPriming');
     final double basePrimingFactor =
         vMaxPriming * layer.labileCarbon / (kmPriming + layer.labileCarbon);
 
@@ -133,13 +148,17 @@ class MicrobialEnzymesSolver {
     double hotspotBoost = 0.0;
     for (final h in layer.hotspots) {
       // Hotspots provide a localized boost to the enzyme pool
-      hotspotBoost += h.intensity * 0.4; 
+      hotspotBoost += h.intensity * 0.4;
     }
-    
-    final double totalPrimingFactor = (basePrimingFactor + hotspotBoost).clamp(0.0, 5.0);
+
+    final double totalPrimingFactor = (basePrimingFactor + hotspotBoost).clamp(
+      0.0,
+      5.0,
+    );
 
     // Enzyme pool scales with microbial biomass and is boosted by priming
-    final double enzymePool = (layer.microbialBiomass / 100.0) * (1.0 + totalPrimingFactor);
+    final double enzymePool =
+        (layer.microbialBiomass / 100.0) * (1.0 + totalPrimingFactor);
 
     // C/N constraint for net N mineralization
     // Mineralization peaks when C/N < 20, and drops towards 0 as C/N approaches 30.
@@ -159,8 +178,7 @@ class MicrobialEnzymesSolver {
     );
 
     // ============ PHOSPHATASE ============
-    final double organicP =
-        layer.particulateOrganicMatter * 0.001;
+    final double organicP = layer.particulateOrganicMatter * 0.001;
     final phosphataseResult = _calculatePhosphataseActivity(
       organicP,
       layer.ph,
@@ -193,11 +211,12 @@ class MicrobialEnzymesSolver {
 
     // ============ MICROBIAL TURNOVER (Moved from AggregationSolver) ============
     final double dtSeconds = dtHours * 3600.0;
-    const double deathRate = SimulationConstants.microbialDeathRate;
-    
+    final double deathRate = SimulationConstants.microbialDeathRate;
+
     // Death scales with temperature and biomass
-    final double microbialDeath = layer.microbialBiomass * deathRate * fTemp * dtSeconds;
-    
+    final double microbialDeath =
+        layer.microbialBiomass * deathRate * fTemp * dtSeconds;
+
     // MAOM Stabilization (necromass capture by minerals)
     // Task 3/6: Moved to AggregationSolver to act as Single Source of Truth for Stable Carbon.
     // Enzymes solver now only handles the generation of POM (necromass detritus).
@@ -219,18 +238,23 @@ class MicrobialEnzymesSolver {
 
     // Microbial biomass gains from C assimilation (CUE ~ 0.35)
     // and losses from death
-    const double cueEnzyme = 0.35;
+    final double cueEnzyme = ModelConfig.of('microbialEnzymes.cueEnzyme');
     final double biomassGain =
         cellulaseResult.substrateConsumed * cueEnzyme * 0.1;
 
-    final double newMicrobialBiomass = (layer.microbialBiomass + biomassGain - microbialDeath).clamp(
-      1.0,
-      1000.0,
-    );
+    final double newMicrobialBiomass =
+        (layer.microbialBiomass + biomassGain - microbialDeath).clamp(
+          1.0,
+          1000.0,
+        );
 
     // Carbon pool sync (POM vs Labile)
     // All death now goes to POM; AggregationSolver will later "promote" some of this to MAOM.
-    final double newPom = (layer.particulateOrganicMatter - pomLoss + microbialDeath).clamp(0.0, 1000.0);
+    final double newPom =
+        (layer.particulateOrganicMatter - pomLoss + microbialDeath).clamp(
+          0.0,
+          1000.0,
+        );
 
     return layer.copyWith(
       ammoniumContent: (layer.ammoniumContent + nh4Gain).clamp(0.0, 500.0),
@@ -443,4 +467,3 @@ class MicrobialEnzymesSolver {
     return (nh4Produced: consumed, substrateConsumed: consumed);
   }
 }
-

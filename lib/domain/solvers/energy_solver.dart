@@ -3,11 +3,17 @@ import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import '../models/plant.dart';
 import '../../core/simulation_constants.dart';
+import '../../core/model_config.dart';
 
 class EnergySolver {
-  static const double sigma = SimulationConstants.stefanBoltzmann; // Stefan-Boltzmann constant
-  static const double emissivity = SimulationConstants.soilEmissivity; // Soil emissivity
-  static const double solarConstant = SimulationConstants.solarConstantPeak; // W/m^2 (approximate peak)
+  /// Stefan-Boltzmann constant.
+  static double get sigma => ModelConfig.of('stefanBoltzmann');
+
+  /// Soil emissivity.
+  static double get emissivity => ModelConfig.of('soilEmissivity');
+
+  /// W/m^2 (approximate peak).
+  static double get solarConstant => ModelConfig.of('solarConstantPeak');
 
   /// Solves heat transfer (Stefan-Boltzmann, conduction, and diurnal cycle)
   /// Accounts for multiple plants shading the soil surface.
@@ -15,15 +21,17 @@ class EnergySolver {
     SoilProfile profile,
     double dt,
     double timeElapsed, {
-    double airTemperature = SimulationConstants.baseAirTemperature,
+    double? airTemperature,
     double latentHeat = 0.0,
     List<Plant> plants = const [],
     double? solarRadiation,
   }) {
+    final double resolvedAirTemperature =
+        airTemperature ?? SimulationConstants.baseAirTemperature;
     // 1. Update Profile Albedo (Darker when wet, darker when covered by plants)
     final firstLayer = profile.layers.first;
-    final double wetnessFactor =
-        (firstLayer.waterContent / firstLayer.porosity).clamp(0.0, 1.0);
+    final double wetnessFactor = (firstLayer.waterContent / firstLayer.porosity)
+        .clamp(0.0, 1.0);
 
     // Sum LAI from all plants for shading effect
     final double totalLai = plants.fold(0.0, (sum, p) => sum + p.lai);
@@ -37,13 +45,12 @@ class EnergySolver {
         );
 
     // 2. Update Layer Thermal Properties
-    final updatedLayers =
-        profile.layers.map((l) {
-          final double lambda = 0.2 + 1.8 * (l.waterContent / l.porosity);
-          final double cvTotal =
-              l.bulkDensity * 800.0 + l.waterContent * 1000.0 * 4184.0;
-          return l.copyWith(thermalConductivity: lambda, heatCapacity: cvTotal);
-        }).toList();
+    final updatedLayers = profile.layers.map((l) {
+      final double lambda = 0.2 + 1.8 * (l.waterContent / l.porosity);
+      final double cvTotal =
+          l.bulkDensity * 800.0 + l.waterContent * 1000.0 * 4184.0;
+      return l.copyWith(thermalConductivity: lambda, heatCapacity: cvTotal);
+    }).toList();
 
     SoilProfile currentProfile = profile.copyWith(
       surfaceAlbedo: currentAlbedo,
@@ -51,7 +58,7 @@ class EnergySolver {
     );
 
     // Sub-stepping for stability
-    const double subStep = SimulationConstants.energySubStep;
+    final double subStep = SimulationConstants.energySubStep;
     int steps = (dt / subStep).ceil();
     double actualDt = dt / steps;
 
@@ -60,7 +67,7 @@ class EnergySolver {
         currentProfile,
         actualDt,
         timeElapsed + s * actualDt,
-        airTemperature: airTemperature,
+        airTemperature: resolvedAirTemperature,
         latentHeat: latentHeat,
         solarRadiation: solarRadiation,
       );
@@ -72,10 +79,12 @@ class EnergySolver {
     SoilProfile profile,
     double dt,
     double t, {
-    double airTemperature = SimulationConstants.baseAirTemperature,
+    double? airTemperature,
     double latentHeat = 0.0,
     double? solarRadiation,
   }) {
+    final double resolvedAirTemperature =
+        airTemperature ?? SimulationConstants.baseAirTemperature;
     final n = profile.layers.length;
     final updatedLayers = List<SoilLayer>.from(profile.layers);
     final heatFluxes = List<double>.filled(n + 1, 0.0);
@@ -83,7 +92,8 @@ class EnergySolver {
     // 1. Shortwave Radiation (Diurnal cycle or Override)
     final double dayTime = t % 86400.0;
     final double hourAngle = (dayTime / 86400.0) * 2.0 * math.pi;
-    final double solarIntensity = solarRadiation ??
+    final double solarIntensity =
+        solarRadiation ??
         (math.max(0.0, math.sin(hourAngle - math.pi / 2.0)) * solarConstant);
     final double netShortwave = (1.0 - profile.surfaceAlbedo) * solarIntensity;
 
@@ -92,10 +102,11 @@ class EnergySolver {
 
     final outgoingLongwave = emissivity * sigma * math.pow(surfaceTemp, 4);
 
-    const double epsilonAir = SimulationConstants.airEmissivity;
-    final incomingLongwave = epsilonAir * sigma * math.pow(airTemperature, 4);
+    final double epsilonAir = SimulationConstants.airEmissivity;
+    final incomingLongwave =
+        epsilonAir * sigma * math.pow(resolvedAirTemperature, 4);
 
-    final sensibleHeat = 10.0 * (surfaceTemp - airTemperature);
+    final sensibleHeat = 10.0 * (surfaceTemp - resolvedAirTemperature);
 
     heatFluxes[0] =
         netShortwave +

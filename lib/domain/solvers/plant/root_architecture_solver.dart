@@ -4,6 +4,7 @@ import '../../models/soil_profile.dart';
 import '../../models/soil_layer.dart';
 import '../../models/simulation_plot.dart';
 import '../../../core/simulation_constants.dart';
+import '../../../core/model_config.dart';
 
 /// Logic for plant root system growth, branching and spatial distribution.
 class RootArchitectureSolver {
@@ -79,41 +80,48 @@ class RootArchitectureSolver {
         if (tip.branchLevel > 0 && tip.parentIndex != null) {
           final parentBranchLen = _getBranchLength(newRoots, tip.parentIndex!);
           // Laterals are limited to 80% of parent's current length to maintain hierarchy
-          if (tip.branchSegmentCount >= parentBranchLen * 0.8 && tip.branchSegmentCount > 5) {
-            continue; 
+          if (tip.branchSegmentCount >= parentBranchLen * 0.8 &&
+              tip.branchSegmentCount > 5) {
+            continue;
           }
         }
-        
+
         // 1. HIERARCHICAL PROFILE: Calculate factors based on depth (z: 0.0 to 1.0)
         final depthFactor = tip.z.clamp(0.0, 1.0);
-        final layerIdx = profile.layers.indexWhere((l) => tip.z >= l.depth && tip.z <= l.depth + l.thickness);
+        final layerIdx = profile.layers.indexWhere(
+          (l) => tip.z >= l.depth && tip.z <= l.depth + l.thickness,
+        );
         final penetrationFactor = layerIdx == -1
             ? 1.0
             : profile.layers[layerIdx].rootGrowthFactor;
-        
+
         // APICAL DOMINANCE: Branching probability decreases exponentially with depth
-        final baseBranchProb = 0.35 * math.exp(-depthFactor * 3.5); 
+        final baseBranchProb = 0.35 * math.exp(-depthFactor * 3.5);
         final isPrimary =
             (tip.x - SimulationPlot.centerNormalizedX).abs() < 0.12 &&
             (tip.parentIndex == null || tip.parentIndex! < 80);
-        
+
         // Growth extension probability also tapers for lateral roots. Compacted
         // layers reduce both extension and branching, so roots stay shallower
         // and the hardpan does not behave like loose loam.
-        final extensionProb = (isPrimary ? 0.95 : (0.85 * math.exp(-depthFactor * 1.8))) * penetrationFactor;
-        final shouldBranch = _rand.nextDouble() < baseBranchProb * penetrationFactor;
+        final extensionProb =
+            (isPrimary ? 0.95 : (0.85 * math.exp(-depthFactor * 1.8))) *
+            penetrationFactor;
+        final shouldBranch =
+            _rand.nextDouble() < baseBranchProb * penetrationFactor;
         final shouldExtend = _rand.nextDouble() < extensionProb;
 
         if (shouldExtend || shouldBranch) {
           // 2. FORCES: Base Vector + Steering
           // Taproot (Level 0) always grows down. Laterals follow their branch angle.
           double baseDX = 0.0;
-          double baseDZ = 1.0; 
+          double baseDZ = 1.0;
 
           if (tip.branchLevel > 0 && tip.parentIndex != null) {
             // Establish base direction from the branch origin
             int? current = tipIdx;
-            while (current != null && newRoots[current].branchSegmentCount > 0) {
+            while (current != null &&
+                newRoots[current].branchSegmentCount > 0) {
               current = newRoots[current].parentIndex;
             }
             if (current != null && newRoots[current].parentIndex != null) {
@@ -134,23 +142,26 @@ class RootArchitectureSolver {
 
           if (layerIdx != -1) {
             final currentLayer = profile.layers[layerIdx];
-            
+
             // 3. BIOLOGICAL MESH ATTRACTION (Chemotaxis)
-            final List<({double x, double z, double energyPotential})> meshNodes = [];
+            final List<({double x, double z, double energyPotential})>
+            meshNodes = [];
             meshNodes.addAll(_getMeshNodes(currentLayer));
             if (layerIdx + 1 < profile.layers.length) {
               meshNodes.addAll(_getMeshNodes(profile.layers[layerIdx + 1]));
             }
-            
-            final viableNodes = meshNodes.where((node) => node.z >= tip.z).toList();
-            
+
+            final viableNodes = meshNodes
+                .where((node) => node.z >= tip.z)
+                .toList();
+
             double chemotaxisX = 0.0;
             double chemotaxisZ = 0.0;
-            
+
             for (final node in viableNodes) {
               final dx = node.x - tip.x;
               final dz = node.z - tip.z;
-              final dist = math.max(0.01, math.sqrt(dx*dx + dz*dz));
+              final dist = math.max(0.01, math.sqrt(dx * dx + dz * dz));
               final double flux = node.energyPotential / (dist * dist);
               final weight = 0.005 * math.exp(-depthFactor * 2.0);
               chemotaxisX += (dx / dist) * flux * weight;
@@ -164,7 +175,7 @@ class RootArchitectureSolver {
             // GEOTROPIC CLAMP: Deviation from base vector max 15 degrees
             final double baseAngle = math.atan2(baseDZ, baseDX);
             final double rawTargetAngle = math.atan2(targetDZ, targetDX);
-            
+
             double diff = rawTargetAngle - baseAngle;
             while (diff > math.pi) {
               diff -= 2 * math.pi;
@@ -172,8 +183,10 @@ class RootArchitectureSolver {
             while (diff < -math.pi) {
               diff += 2 * math.pi;
             }
-            
-            const double maxDev = 15 * math.pi / 180;
+
+            final double maxDev = ModelConfig.of(
+              'rootArchitecture.maxDevRadians',
+            );
             diff = diff.clamp(-maxDev, maxDev);
             final double clampedAngle = baseAngle + diff;
 
@@ -194,10 +207,10 @@ class RootArchitectureSolver {
             SimulationConstants.rootGrowthStep *
                 (0.45 + 0.55 * penetrationFactor),
           );
-          
+
           double dx = steeringForceX * growthStep;
           double dz = steeringForceZ * growthStep;
-          
+
           if (isPrimary) {
             dz = dz.clamp(growthStep * 0.1, growthStep);
           } else {
@@ -211,18 +224,18 @@ class RootArchitectureSolver {
             0.008,
           );
           for (final existing in newRoots) {
-             if (_dist(tip.x + dx, tip.z + dz, existing.x, existing.z) <
-                 avoidanceRadius) {
-                spaceOccupied = true;
-                break;
-             }
+            if (_dist(tip.x + dx, tip.z + dz, existing.x, existing.z) <
+                avoidanceRadius) {
+              spaceOccupied = true;
+              break;
+            }
           }
-          
+
           if (spaceOccupied) {
-             dx +=
-                 (_rand.nextDouble() - 0.5) *
-                 SimulationPlot.distanceToNormalized(0.015);
-             dz += SimulationPlot.distanceToNormalized(0.004);
+            dx +=
+                (_rand.nextDouble() - 0.5) *
+                SimulationPlot.distanceToNormalized(0.015);
+            dz += SimulationPlot.distanceToNormalized(0.004);
           }
 
           final newNode = RootNode(
@@ -243,19 +256,19 @@ class RootArchitectureSolver {
           // 5. BRANCHING: Strict rules for lateral roots
           // CONSTRAINT: Branching Inhibition - Check if this tip has branched recently
           final bool branchedRecently = _hasRecentBranch(newRoots, tipIdx, 10);
-          
+
           if (shouldBranch && !branchedRecently && tip.branchLevel < 2) {
             final double branchStep = SimulationPlot.distanceToNormalized(
               SimulationConstants.rootBranchStep,
             );
-            
+
             // CONSTRAINT: Strict branching angle 30-60 degrees downward
             final angle = (30 + _rand.nextDouble() * 30) * (math.pi / 180);
             final branchDirection = _rand.nextBool() ? 1.0 : -1.0;
-            
+
             double bdx = math.sin(angle) * branchDirection * branchStep;
             double bdz = math.cos(angle) * branchStep;
-            
+
             newRoots.add(
               RootNode(
                 x: (tip.x + bdx).clamp(
@@ -270,28 +283,39 @@ class RootArchitectureSolver {
                 branchSegmentCount: 0,
               ),
             );
+          }
         }
       }
     }
+    return newRoots;
   }
-  return newRoots;
-}
 
-  static List<({double x, double z, double energyPotential})> _getMeshNodes(SoilLayer layer) {
+  static List<({double x, double z, double energyPotential})> _getMeshNodes(
+    SoilLayer layer,
+  ) {
     final rand = math.Random(layer.id.hashCode);
     final List<({double x, double z, double energyPotential})> points = [];
-    
+
     // Bioenergetic value proxy based on C/N ratio and resources
     final cnRatio = layer.cnRatio;
     // Microbes and roots prefer balanced C/N (optimal ~15.0)
-    final cnFactor = math.exp(-math.pow(cnRatio - SimulationConstants.microbialCnTarget, 2) / 250.0);
-    
-    final basePotential = (layer.nitrateContent * 2.5 + layer.phosphateContent * 4.0 + layer.labileCarbon * 0.8) * cnFactor;
-    
+    final cnFactor = math.exp(
+      -math.pow(cnRatio - SimulationConstants.microbialCnTarget, 2) / 250.0,
+    );
+
+    final basePotential =
+        (layer.nitrateContent * 2.5 +
+            layer.phosphateContent * 4.0 +
+            layer.labileCarbon * 0.8) *
+        cnFactor;
+
     for (int i = 0; i < 14; i++) {
       final px = 0.1 + rand.nextDouble() * 0.8;
       final pz = layer.depth + rand.nextDouble() * layer.thickness;
-      final potential = (basePotential * (0.8 + rand.nextDouble() * 0.4)).clamp(0.1, 1000.0);
+      final potential = (basePotential * (0.8 + rand.nextDouble() * 0.4)).clamp(
+        0.1,
+        1000.0,
+      );
       points.add((x: px, z: pz, energyPotential: potential));
     }
     return points;
@@ -338,4 +362,3 @@ class RootArchitectureSolver {
     return false;
   }
 }
-

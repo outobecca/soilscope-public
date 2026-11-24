@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../../core/simulation_constants.dart';
+import '../../core/model_config.dart';
 import 'simulation_plot.dart';
 
 /// The simulation parameter set a run was produced with.
@@ -17,15 +17,14 @@ import 'simulation_plot.dart';
 /// regenerated with provenance.
 class ModelParameterSet {
   static const String currentId = 'soilscope-core';
-  static const int currentVersion = 2;
+  static const int currentVersion = 3;
 
-  /// Every constant that changes simulated values. Order is irrelevant;
-  /// [fingerprint] sorts the keys first.
-  static final Map<String, double> _currentParameters = {
-    // Integration.
-    'baseTickDelta': SimulationConstants.baseTickDelta,
-    'maxSubStep': SimulationConstants.maxSubStep,
-    'maxSubStepsPerTick': SimulationConstants.maxSubStepsPerTick.toDouble(),
+  /// Every configured model value plus the plot geometry. Order is
+  /// irrelevant; [fingerprint] sorts the keys first. Reading
+  /// [ModelConfig.values] here is what makes a runtime configuration override
+  /// part of the model identity rather than only documentation.
+  static Map<String, double> _currentParameters() => {
+    ...ModelConfig.values,
     // One-square-metre plot geometry. Root-domain bounds, distance
     // conversions and irrigation volumes all resolve through these values, so
     // resizing the plot is a model change, not a rendering change.
@@ -34,48 +33,6 @@ class ModelParameterSet {
     'plotMaxNormalizedX': SimulationPlot.maxNormalizedX,
     'plotMinNormalizedX': SimulationPlot.minNormalizedX,
     'plotSideM': SimulationPlot.sideM,
-    // Boundaries.
-    'nitrateMax': SimulationConstants.nitrateMax,
-    'ammoniumMax': SimulationConstants.ammoniumMax,
-    'phosphateMax': SimulationConstants.phosphateMax,
-    'potassiumMax': SimulationConstants.potassiumMax,
-    'organicMatterMax': SimulationConstants.organicMatterMax,
-    // Gases and atmosphere.
-    'gasConstant': SimulationConstants.gasConstant,
-    'atmCO2Default': SimulationConstants.atmCO2Default,
-    'co2HalfSat': SimulationConstants.co2HalfSat,
-    // Energy.
-    'stefanBoltzmann': SimulationConstants.stefanBoltzmann,
-    'soilEmissivity': SimulationConstants.soilEmissivity,
-    'airEmissivity': SimulationConstants.airEmissivity,
-    'solarConstantPeak': SimulationConstants.solarConstantPeak,
-    'energySubStep': SimulationConstants.energySubStep,
-    'baseAirTemperature': SimulationConstants.baseAirTemperature,
-    // Plant biology.
-    'hyphalGrowthRate': SimulationConstants.hyphalGrowthRate,
-    'initialRootRadius': SimulationConstants.initialRootRadius,
-    'rootGrowthStep': SimulationConstants.rootGrowthStep,
-    'rootBranchStep': SimulationConstants.rootBranchStep,
-    'maxRootsPerPlant': SimulationConstants.maxRootsPerPlant.toDouble(),
-    'rootEnergyCostFactor': SimulationConstants.rootEnergyCostFactor,
-    'nitrogenHalfSat': SimulationConstants.nitrogenHalfSat,
-    'maintenanceRespirationFraction':
-        SimulationConstants.maintenanceRespirationFraction,
-    // Aggregation and carbon cycle.
-    'epsProdBase': SimulationConstants.epsProdBase,
-    'epsDecayBase': SimulationConstants.epsDecayBase,
-    'fungiGrowthBase': SimulationConstants.fungiGrowthBase,
-    'fungiDeathBase': SimulationConstants.fungiDeathBase,
-    'pomMinRate': SimulationConstants.pomMinRate,
-    'microbialDeathRate': SimulationConstants.microbialDeathRate,
-    'maomStabRate': SimulationConstants.maomStabRate,
-    'ksatChangeRate': SimulationConstants.ksatChangeRate,
-    // Hydrology.
-    'evapBaseRate': SimulationConstants.evapBaseRate,
-    'thetaMinBuffer': SimulationConstants.thetaMinBuffer,
-    // Carbon / nitrogen coupling.
-    'immobilizationCnThreshold': SimulationConstants.immobilizationCnThreshold,
-    'microbialCnTarget': SimulationConstants.microbialCnTarget,
   };
 
   final String id;
@@ -114,10 +71,10 @@ class ModelParameterSet {
     );
   }
 
-  static final ModelParameterSet current = ModelParameterSet(
+  static ModelParameterSet get current => ModelParameterSet(
     id: currentId,
     version: currentVersion,
-    parameters: _currentParameters,
+    parameters: _currentParameters(),
   );
 
   /// Compact record for saved sessions, references and captures.

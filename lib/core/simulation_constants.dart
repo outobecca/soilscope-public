@@ -1,33 +1,38 @@
+import 'model_config.dart';
+
 /// Central repository for physical and visual simulation constants.
 /// Ensures unified behavior across solvers and Flame components.
+
 class SimulationConstants {
   // ============ TIME & INTEGRATION ============
-  
+
   /// Base delta time multiplier for time scaling.
-  static const double baseTickDelta = 2.0; // Reduced from 10.0
-  
+  static double get baseTickDelta =>
+      ModelConfig.of('baseTickDelta'); // Reduced from 10.0
+
   /// Maximum duration of a single integration sub-step [seconds].
-  static const double maxSubStep = 600.0;
-  
+  static double get maxSubStep => ModelConfig.of('maxSubStep');
+
   /// Maximum number of sub-steps allowed per tick to prevent CPU lock.
-  static const int maxSubStepsPerTick = 50;
+  static int get maxSubStepsPerTick =>
+      ModelConfig.of('maxSubStepsPerTick').toInt();
 
   // ============ BIOPHYSICAL BOUNDARIES ============
 
-  static const double nitrateMax = 1000.0;
-  static const double ammoniumMax = 500.0;
-  static const double phosphateMax = 1000.0;
-  static const double potassiumMax = 1000.0;
-  static const double organicMatterMax = 2000.0;
+  static double get nitrateMax => ModelConfig.of('nitrateMax');
+  static double get ammoniumMax => ModelConfig.of('ammoniumMax');
+  static double get phosphateMax => ModelConfig.of('phosphateMax');
+  static double get potassiumMax => ModelConfig.of('potassiumMax');
+  static double get organicMatterMax => ModelConfig.of('organicMatterMax');
 
   // ============ VISUALIZATION SCALING ============
 
   /// Density factor for nitrate mass flow particles.
   static const double massFlowVisualDensity = 3e5;
-  
+
   /// Density factor for nitrification flux particles.
   static const double nitrificationVisualDensity = 5e5;
-  
+
   /// Minimum flux to trigger visual movement [m/s].
   static const double minVisualFlux = 1e-6;
 
@@ -51,10 +56,11 @@ class SimulationConstants {
   // ============ PARTICLE PHYSICS ============
 
   /// C:N ratio threshold for N immobilization.
-  static const double immobilizationCnThreshold = 25.0;
+  static double get immobilizationCnThreshold =>
+      ModelConfig.of('immobilizationCnThreshold');
 
   /// Target C:N ratio for microbial growth.
-  static const double microbialCnTarget = 15.0;
+  static double get microbialCnTarget => ModelConfig.of('microbialCnTarget');
 
   /// Base jitter strength for Brownian motion.
   static const double particleJitterBase = 12.0; // Reduced from 18.0
@@ -71,91 +77,93 @@ class SimulationConstants {
   // ============ GASES & ATMOSPHERE ============
 
   /// Universal Gas Constant [J mol⁻¹ K⁻¹].
-  static const double gasConstant = 8.314;
+  static double get gasConstant => ModelConfig.of('gasConstant');
 
   /// Default atmospheric CO2 concentration [mol m⁻³] (≈ 415 ppm at STP).
-  static const double atmCO2Default = 0.017;
+  static double get atmCO2Default => ModelConfig.of('atmCO2Default');
 
   /// CO2 half-saturation constant for fertilization effect.
-  static const double co2HalfSat = 0.005;
+  static double get co2HalfSat => ModelConfig.of('co2HalfSat');
 
   // ============ ENERGY & THERMODYNAMICS ============
 
   /// Stefan-Boltzmann constant [W m⁻² K⁻⁴].
-  static const double stefanBoltzmann = 5.67e-8;
+  static double get stefanBoltzmann => ModelConfig.of('stefanBoltzmann');
 
   /// Default soil emissivity.
-  static const double soilEmissivity = 0.95;
+  static double get soilEmissivity => ModelConfig.of('soilEmissivity');
 
   /// Default air emissivity.
-  static const double airEmissivity = 0.75;
+  static double get airEmissivity => ModelConfig.of('airEmissivity');
 
   /// Peak solar constant [W m⁻²].
-  static const double solarConstantPeak = 800.0;
+  static double get solarConstantPeak => ModelConfig.of('solarConstantPeak');
 
   /// Base sub-step for energy integration [s].
-  static const double energySubStep = 60.0;
+  static double get energySubStep => ModelConfig.of('energySubStep');
 
   /// Default base air temperature [K].
-  static const double baseAirTemperature = 293.15;
+  static double get baseAirTemperature => ModelConfig.of('baseAirTemperature');
 
   // ============ PLANT BIOLOGY ============
 
   /// Growth rate of mycorrhizal hyphae [m/day].
-  static const double hyphalGrowthRate = 0.005;
+  static double get hyphalGrowthRate => ModelConfig.of('hyphalGrowthRate');
 
   /// Initial root thickness [m].
-  static const double initialRootRadius = 0.025;
+  static double get initialRootRadius => ModelConfig.of('initialRootRadius');
 
   /// Base growth step for roots [m].
-  static const double rootGrowthStep = 0.005;
+  static double get rootGrowthStep => ModelConfig.of('rootGrowthStep');
 
   /// Base branching step for roots [m].
-  static const double rootBranchStep = 0.004;
+  static double get rootBranchStep => ModelConfig.of('rootBranchStep');
 
   /// Maximum allowed root nodes per plant.
-  static const int maxRootsPerPlant = 350;
+  static int get maxRootsPerPlant => ModelConfig.of('maxRootsPerPlant').toInt();
 
   /// Energy cost scaling factor for root growth.
-  static const double rootEnergyCostFactor = 120.0;
+  static double get rootEnergyCostFactor =>
+      ModelConfig.of('rootEnergyCostFactor');
 
   /// Nitrogen half-saturation constant (Km_N) for uptake [mg/kg].
-  static const double nitrogenHalfSat = 15.0;
+  static double get nitrogenHalfSat => ModelConfig.of('nitrogenHalfSat');
 
   /// Maintenance respiration fraction of total biomass [day⁻¹].
-  static const double maintenanceRespirationFraction = 0.002;
+  static double get maintenanceRespirationFraction =>
+      ModelConfig.of('maintenanceRespirationFraction');
 
   // ============ AGGREGATION & CARBON CYCLE ============
 
   /// Base production rate of EPS [kg EPS / kg biomass / s].
-  static const double epsProdBase = 1.0e-6;
+  static double get epsProdBase => ModelConfig.of('epsProdBase');
 
   /// Base decay rate of EPS [s⁻¹].
-  static const double epsDecayBase = 5.0e-7;
+  static double get epsDecayBase => ModelConfig.of('epsDecayBase');
 
   /// Base growth rate of fungi [s⁻¹].
-  static const double fungiGrowthBase = 1.0e-7;
+  static double get fungiGrowthBase => ModelConfig.of('fungiGrowthBase');
 
   /// Base death rate of fungi [s⁻¹].
-  static const double fungiDeathBase = 2.0e-7;
+  static double get fungiDeathBase => ModelConfig.of('fungiDeathBase');
 
   /// Base mineralization rate for POM [s⁻¹].
-  static const double pomMinRate = 1.0e-8;
+  static double get pomMinRate => ModelConfig.of('pomMinRate');
 
   /// Base death rate for microbial biomass [s⁻¹].
-  static const double microbialDeathRate = 5.0e-8;
+  static double get microbialDeathRate => ModelConfig.of('microbialDeathRate');
 
   /// Fraction of dead microbial biomass stabilized into MAOM.
-  static const double maomStabRate = 0.4;
+  static double get maomStabRate => ModelConfig.of('maomStabRate');
 
   /// Rate of change for saturated hydraulic conductivity [s⁻¹].
-  static const double ksatChangeRate = 1.0e-8;
+  static double get ksatChangeRate => ModelConfig.of('ksatChangeRate');
 
   // ============ HYDROLOGY ============
 
   /// Base evaporation rate per degree Celsius [m/s/°C].
-  static const double evapBaseRate = 1.0e-8;
+  static double get evapBaseRate => ModelConfig.of('evapBaseRate');
 
   /// Minimum volumetric water content buffer above residual moisture.
-  static const double thetaMinBuffer = 0.001;
+  static double get thetaMinBuffer => ModelConfig.of('thetaMinBuffer');
 }

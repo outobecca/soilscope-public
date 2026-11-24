@@ -8,6 +8,7 @@ import 'plant/plant_hydraulics_solver.dart';
 import 'plant/plant_biomass_solver.dart';
 import 'plant/plant_nutrient_uptake_solver.dart';
 import 'nutrient_buffer.dart';
+import '../../core/model_config.dart';
 
 /// Coordinator for plant biophysical processes.
 /// Refactored into modular sub-solvers for hydraulics, nutrients, biomass, and roots.
@@ -28,11 +29,12 @@ class PlantSolver {
     SoilProfile profile,
     double dt, {
     double airTemperature = 293.15,
-    double atmCO2 = SimulationConstants.atmCO2Default,
+    double? atmCO2,
     double relativeHumidity = 0.5,
     double? solarRadiation,
   }) {
-    const double maxSubStep = 1800.0; // 30 mins
+    final double co2 = atmCO2 ?? SimulationConstants.atmCO2Default;
+    final double maxSubStep = ModelConfig.of('plant.maxSubStep'); // 30 mins
     int steps = (dt / maxSubStep).ceil().clamp(1, 100);
     double actualDt = dt / steps;
 
@@ -45,7 +47,7 @@ class PlantSolver {
         profile.copyWith(layers: currentLayers),
         actualDt,
         airTemperature: airTemperature,
-        atmCO2: atmCO2,
+        atmCO2: co2,
         relativeHumidity: relativeHumidity,
         solarRadiation: solarRadiation,
       );
@@ -60,10 +62,11 @@ class PlantSolver {
     SoilProfile profile,
     double dt, {
     double airTemperature = 293.15,
-    double atmCO2 = SimulationConstants.atmCO2Default,
+    double? atmCO2,
     double relativeHumidity = 0.5,
     double? solarRadiation,
   }) {
+    final double co2 = atmCO2 ?? SimulationConstants.atmCO2Default;
     // 1. Calculate root layer weights for water/nutrient distribution
     final (layerWeights, totalRootWeight) =
         RootArchitectureSolver.calculateLayerWeights(plant, profile);
@@ -122,7 +125,10 @@ class PlantSolver {
 
     // CO2 Fertilization Effect
     final double co2Factor =
-        (atmCO2 / (atmCO2 + SimulationConstants.co2HalfSat)) / (SimulationConstants.atmCO2Default / (SimulationConstants.atmCO2Default + SimulationConstants.co2HalfSat));
+        (co2 / (co2 + SimulationConstants.co2HalfSat)) /
+        (SimulationConstants.atmCO2Default /
+            (SimulationConstants.atmCO2Default +
+                SimulationConstants.co2HalfSat));
 
     // 4. Growth & Biomass
     // Growth is now also reduced by water stress
@@ -148,7 +154,7 @@ class PlantSolver {
       co2Factor,
       airTemperature - 273.15,
       dt,
-      co2Concentration: atmCO2,
+      co2Concentration: co2,
       par: par,
     );
 
@@ -162,7 +168,12 @@ class PlantSolver {
     );
 
     // 5. Spatial Root Growth (Pass profile for Hydro/Chemotropism)
-    final newRoots = RootArchitectureSolver.growRoots(plant, profile, growthRate, dt);
+    final newRoots = RootArchitectureSolver.growRoots(
+      plant,
+      profile,
+      growthRate,
+      dt,
+    );
 
     // Calculate diagnostic light fields (Beer-Lambert law)
     final double solarW = solarRadiation ?? 800.0;
@@ -240,7 +251,9 @@ class PlantSolver {
         // Root exudation increases under stress (priming effect)
         // Reference: Canarini et al. (2019) - Root exudation and drought
         final double stressFactor = 1.0 + plant.waterStressIndex * 0.5;
-        const double exudationFraction = 0.15;
+        final double exudationFraction = ModelConfig.of(
+          'plant.exudationFraction',
+        );
         buffer.carbonSource[i] +=
             exudationFraction *
             stressFactor *

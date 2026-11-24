@@ -8,6 +8,7 @@ import '../models/plant.dart';
 import '../models/sustainability_score.dart';
 import 'simulation_engine.dart';
 import '../../core/biophysics_utils.dart';
+import '../../core/model_config.dart';
 import '../../core/simulation_constants.dart';
 
 /// Commands sent to the simulation isolate
@@ -41,7 +42,9 @@ BiophysicalState _sanitizeState(BiophysicalState state) {
         waterContent: l.waterContent.isNaN ? l.porosity * 0.5 : l.waterContent,
         ph: l.ph.isNaN ? 7.0 : l.ph,
         ec: l.ec.isNaN ? 0.5 : l.ec,
-        oxygenContent: l.oxygenContent.isNaN ? BiophysicsUtils.atmO2Saturation : l.oxygenContent,
+        oxygenContent: l.oxygenContent.isNaN
+            ? BiophysicsUtils.atmO2Saturation
+            : l.oxygenContent,
       );
     }
   }
@@ -54,7 +57,9 @@ BiophysicalState _sanitizeState(BiophysicalState state) {
         plant.copyWith(
           height: plant.height.isNaN ? 0.1 : plant.height,
           lai: plant.lai.isNaN ? 0.1 : plant.lai,
-          turgorPressure: plant.turgorPressure.isNaN ? 0.8 : plant.turgorPressure,
+          turgorPressure: plant.turgorPressure.isNaN
+              ? 0.8
+              : plant.turgorPressure,
         ),
       );
     } else {
@@ -64,12 +69,18 @@ BiophysicalState _sanitizeState(BiophysicalState state) {
 
   if (state.mycorrhizaState != null) {
     final ms = state.mycorrhizaState!;
-    if (ms.rootColonization.isNaN || ms.totalHyphalLength.isNaN || ms.fungalBiomass.isNaN) {
+    if (ms.rootColonization.isNaN ||
+        ms.totalHyphalLength.isNaN ||
+        ms.fungalBiomass.isNaN) {
       stateClean = false;
       state = state.copyWith(
         mycorrhizaState: ms.copyWith(
-          rootColonization: ms.rootColonization.isNaN ? 0.0 : ms.rootColonization,
-          totalHyphalLength: ms.totalHyphalLength.isNaN ? 0.0 : ms.totalHyphalLength,
+          rootColonization: ms.rootColonization.isNaN
+              ? 0.0
+              : ms.rootColonization,
+          totalHyphalLength: ms.totalHyphalLength.isNaN
+              ? 0.0
+              : ms.totalHyphalLength,
           fungalBiomass: ms.fungalBiomass.isNaN ? 0.0 : ms.fungalBiomass,
         ),
       );
@@ -90,9 +101,25 @@ BiophysicalState _sanitizeState(BiophysicalState state) {
   return state;
 }
 
+/// Everything the simulation isolate needs before it starts ticking.
+///
+/// Static state is per-isolate, so the active parameter map must be copied
+/// into the child explicitly; otherwise a `model_parameters.json` override
+/// would change the UI-side fingerprint but not the simulated values.
+class SimulationIsolateBootstrap {
+  final SendPort mainSendPort;
+  final Map<String, double> parameters;
+
+  SimulationIsolateBootstrap({
+    required this.mainSendPort,
+    required this.parameters,
+  });
+}
 
 /// The entry point for the simulation isolate
-void simulationIsolateEntry(SendPort mainSendPort) {
+void simulationIsolateEntry(SimulationIsolateBootstrap bootstrap) {
+  ModelConfig.applyOverrides(bootstrap.parameters);
+  final mainSendPort = bootstrap.mainSendPort;
   final childReceivePort = ReceivePort();
   mainSendPort.send(childReceivePort.sendPort);
 
@@ -108,7 +135,8 @@ void simulationIsolateEntry(SendPort mainSendPort) {
         timer?.cancel();
         timer = Timer.periodic(const Duration(milliseconds: 200), (t) {
           if (currentState != null && isRunning) {
-            final dt = SimulationConstants.baseTickDelta * currentState!.timeScale;
+            final dt =
+                SimulationConstants.baseTickDelta * currentState!.timeScale;
             final nextState = SimulationEngine.tick(
               currentState!,
               dt,
@@ -154,7 +182,11 @@ class SimulationIsolateManager {
 
   Future<void> init() async {
     if (kIsWeb || _initialized) {
-      if (kIsWeb) debugLog('SimulationIsolateManager: Running in Web Mode (Main Thread)');
+      if (kIsWeb) {
+        debugLog(
+          'SimulationIsolateManager: Running in Web Mode (Main Thread)',
+        );
+      }
       return;
     }
     _initialized = true;
@@ -163,7 +195,10 @@ class SimulationIsolateManager {
       _receivePort = ReceivePort();
       _isolate = await Isolate.spawn(
         simulationIsolateEntry,
-        _receivePort!.sendPort,
+        SimulationIsolateBootstrap(
+          mainSendPort: _receivePort!.sendPort,
+          parameters: Map<String, double>.from(ModelConfig.values),
+        ),
       );
     } catch (e) {
       // Allow a later retry to attempt the spawn again.
@@ -206,7 +241,9 @@ class SimulationIsolateManager {
     while (_isWebRunning) {
       if (_currentState != null) {
         if (kDebugMode) {
-          debugLog('[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})');
+          debugLog(
+            '[SimulationIsolateManager] _runWebLoop: Ticking... (time=${_currentState!.timeElapsed})',
+          );
         }
         final dt = SimulationConstants.baseTickDelta * _currentState!.timeScale;
         try {
@@ -231,7 +268,9 @@ class SimulationIsolateManager {
           debugLog('Error in web simulation tick: $e');
         }
       } else {
-        debugLog('[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...');
+        debugLog(
+          '[SimulationIsolateManager] _runWebLoop: currentState is NULL, waiting...',
+        );
       }
       await Future.delayed(const Duration(milliseconds: 200));
     }
@@ -240,7 +279,9 @@ class SimulationIsolateManager {
 
   void _processWebCommand(SimulationCommand cmd) {
     if (cmd is StartCommand) {
-      debugLog('[SimulationIsolateManager] processWebCommand: StartCommand, isWebRunning=$_isWebRunning');
+      debugLog(
+        '[SimulationIsolateManager] processWebCommand: StartCommand, isWebRunning=$_isWebRunning',
+      );
       if (!_isWebRunning) {
         _isWebRunning = true;
         _runWebLoop();
@@ -249,7 +290,9 @@ class SimulationIsolateManager {
       debugLog('[SimulationIsolateManager] processWebCommand: StopCommand');
       _isWebRunning = false;
     } else if (cmd is UpdateStateCommand) {
-      debugLog('[SimulationIsolateManager] processWebCommand: UpdateStateCommand');
+      debugLog(
+        '[SimulationIsolateManager] processWebCommand: UpdateStateCommand',
+      );
       _currentState = cmd.state;
       _precipitation = cmd.precipitation;
     }

@@ -1,0 +1,4 @@
+{
+  "description": "Optional runtime overrides for model parameters. The checked-in empty map reproduces the built-in defaults. Every key must exist in ModelConfig.defaults; see lib/core/model_config.dart.",
+  "parameters": {}
+}

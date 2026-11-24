@@ -245,13 +245,14 @@ Computed getters (not serialized): `plant` (first plant or stub), `solarRadiatio
     "version": 1,
     "model": {
       "id": "soilscope-core",
-      "version": 2,
-      "fingerprint": "a456e3ab"
+      "version": 3,
+      "fingerprint": "410ef21c"
     },
     "state": { "...BiophysicalState JSON..." }
   }
   ```
-- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 2`. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
+- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 3`. Its parameters are `ModelConfig.values` plus the `SimulationPlot` geometry, so a runtime override changes the identity. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
+- **`ModelConfig`** (`lib/core/model_config.dart`): one defaults map for all model-affecting solver constants, with `of(key)`, `values`, `applyOverrides()` and `reset()`. `ModelConfigRepository` (`lib/data/model_config_repository.dart`) loads `assets/config/model_parameters.json` before `runApp`; the checked-in `parameters` map is empty, so defaults reproduce prior behavior.
 
 ### 5.8 `ReferenceDataset` JSON Schema (`lib/domain/models/reference_dataset.dart` & `assets/validation/reference.json`)
 

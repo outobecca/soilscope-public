@@ -50,13 +50,25 @@ water NSE to 0.999923 and RMSE to 2.6e-4, which fails these tolerances. They are
 
 ## Model parameter fingerprint
 
-The model-affecting constants in `lib/core/simulation_constants.dart` and the
-one-square-metre plot geometry in `lib/domain/models/simulation_plot.dart` are
-versioned by `ModelParameterSet`
-(`lib/domain/models/model_parameter_set.dart`) as an `id`, a `version` and an
-8-character fingerprint. Rendering and component-layout constants are
-deliberately excluded, so a visual change does not invalidate a scientific
-reference.
+Every tunable model parameter used by the solvers lives in `ModelConfig`
+(`lib/core/model_config.dart`), including kinetics and physiology that used to
+be local constants. `SimulationConstants` exposes those values through
+getters, and the solvers read the same active map, so a parameter cannot be
+fingerprinted without also being consumed. The one-square-metre plot geometry
+in `lib/domain/models/simulation_plot.dart` is included too. `ModelParameterSet`
+(`lib/domain/models/model_parameter_set.dart`) turns the active map into an
+`id`, a `version` and an 8-character fingerprint. Rendering and component-layout
+constants are deliberately excluded, so a visual change does not invalidate a
+scientific reference.
+
+At startup `lib/main.dart` loads
+`assets/config/model_parameters.json`. Its `parameters` map is empty in the
+repository, which reproduces the defaults; a tuning run or deployment can
+override any key without editing solver code. Unknown or non-finite keys are
+rejected, and an override changes the fingerprint because
+`ModelParameterSet.current` reads the active map. The native simulation isolate
+receives a copy of the active map at spawn, so an override changes the values
+actually ticked, not only the UI-side identity.
 
 The fingerprint is recorded in three places:
 
@@ -78,6 +90,11 @@ When a listed constant changes:
    values when the numerical output changed,
 4. update the capture expectations in `PERFORMANCE.md`.
 
+To tune a run, add only the changed keys to
+`assets/config/model_parameters.json`; do not edit `ModelConfig.defaults` for a
+temporary experiment. Run `dart run tool/model_version.dart` to see the active
+identity, and use `ModelConfig.reset()` from a test to restore the defaults.
+
 A save produced by a different parameter set still loads, but the mismatch is
 logged with both labels; it is never silently presented as the current model.
 
@@ -95,8 +112,8 @@ The fixture is one JSON object. Provenance lives beside the numbers.
   "generatedBy": "Instrument/process and the script or person that produced it.",
   "model": {
     "id": "soilscope-core",
-    "version": 2,
-    "fingerprint": "a456e3ab"
+    "version": 3,
+    "fingerprint": "410ef21c"
   },
   "relativeTimes": [0.125, 0.25, 0.5, 1.0],
   "series": [

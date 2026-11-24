@@ -46,7 +46,7 @@ class Particle {
   final int seed;
   bool isImmobilized;
   double state; // Used for morphing and visual cues (0.0 to 1.0)
-  
+
   // Bezier trajectory parameters (used when state >= 10.0)
   double x0 = 0;
   double y0 = 0;
@@ -119,7 +119,6 @@ class Particle {
   }
 }
 
-
 class ParticlePhysicsSolver {
   static void updateParticles(
     List<Particle> particles,
@@ -163,17 +162,20 @@ class ParticlePhysicsSolver {
         }
       }
 
-      if (cnRatio > 25.0 && (p.type == ParticleType.ammonium || p.type == ParticleType.nitrate)) {
+      if (cnRatio > 25.0 &&
+          (p.type == ParticleType.ammonium || p.type == ParticleType.nitrate)) {
         p.isImmobilized = true;
       }
 
-      final damp = (p.isImmobilized ? 0.05 : 1.0) / (friction > 0 ? friction : 1.0);
+      final damp =
+          (p.isImmobilized ? 0.05 : 1.0) / (friction > 0 ? friction : 1.0);
 
       p.x += p.vx * dt * damp * flowBoost;
       p.y += p.vy * dt * damp * flowBoost;
 
       double typeJitter = 1.0;
-      final bool isLabileC = p.type == ParticleType.labileCarbon || p.type == ParticleType.carbon;
+      final bool isLabileC =
+          p.type == ParticleType.labileCarbon || p.type == ParticleType.carbon;
       final bool isStableC = p.type == ParticleType.stableCarbon;
 
       if (isLabileC) {
@@ -183,8 +185,14 @@ class ParticlePhysicsSolver {
       }
 
       final jitterStrength = 15.0 * q10Factor * typeJitter;
-      final bx = (random.nextDouble() * 2 - 1) * jitterStrength * (p.isImmobilized ? 0.2 : 1.0);
-      final by = (random.nextDouble() * 2 - 1) * jitterStrength * (p.isImmobilized ? 0.2 : 1.0);
+      final bx =
+          (random.nextDouble() * 2 - 1) *
+          jitterStrength *
+          (p.isImmobilized ? 0.2 : 1.0);
+      final by =
+          (random.nextDouble() * 2 - 1) *
+          jitterStrength *
+          (p.isImmobilized ? 0.2 : 1.0);
       p.x += bx * dt * flowBoost;
       p.y += by * dt * flowBoost;
 
@@ -216,12 +224,18 @@ class ParticlePhysicsSolver {
 
         double bioValue = 0.0;
 
-        if (h.type == 1 && (p.type == ParticleType.labileCarbon || p.type == ParticleType.carbon)) {
-          const cnTarget = SimulationConstants.microbialCnTarget;
+        if (h.type == 1 &&
+            (p.type == ParticleType.labileCarbon ||
+                p.type == ParticleType.carbon)) {
+          final cnTarget = SimulationConstants.microbialCnTarget;
           bioValue = 35.0 / (1.0 + (cnRatio - cnTarget).abs() * 0.5);
-        } else if (h.type == 2 && (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium)) {
+        } else if (h.type == 2 &&
+            (p.type == ParticleType.nitrate ||
+                p.type == ParticleType.ammonium)) {
           bioValue = 300.0;
-        } else if (h.type == 2 && (p.type == ParticleType.phosphorus || p.type == ParticleType.water)) {
+        } else if (h.type == 2 &&
+            (p.type == ParticleType.phosphorus ||
+                p.type == ParticleType.water)) {
           bioValue = 50.0;
         } else if (h.type == 3 && p.type == ParticleType.labileCarbon) {
           bioValue = 30.0;
@@ -244,21 +258,26 @@ class ParticlePhysicsSolver {
         final dy = bestHotspot.y - p.y;
         final dist = math.sqrt(dx * dx + dy * dy).clamp(1.0, 1000.0);
 
-        if (bestHotspot.type == 2 && (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium)) {
-           final targetVx = (dx / dist) * 80.0;
-           final targetVy = (dy / dist) * 80.0;
-           p.vx += (targetVx - p.vx) * 3.0 * dt;
-           p.vy += (targetVy - p.vy) * 3.0 * dt;
+        if (bestHotspot.type == 2 &&
+            (p.type == ParticleType.nitrate ||
+                p.type == ParticleType.ammonium)) {
+          final targetVx = (dx / dist) * 80.0;
+          final targetVy = (dy / dist) * 80.0;
+          p.vx += (targetVx - p.vx) * 3.0 * dt;
+          p.vy += (targetVy - p.vy) * 3.0 * dt;
         } else {
-           final diffCoeff = (0.5 + waterFlux * 2.0).clamp(0.1, 5.0);
-           final force = (maxAccessibility * diffCoeff * 15.0) / dist;
-           p.vx += (dx / dist) * force * dt;
-           p.vy += (dy / dist) * force * dt;
+          final diffCoeff = (0.5 + waterFlux * 2.0).clamp(0.1, 5.0);
+          final force = (maxAccessibility * diffCoeff * 15.0) / dist;
+          p.vx += (dx / dist) * force * dt;
+          p.vy += (dy / dist) * force * dt;
         }
 
         if (dist < 30.0) {
           if (bestHotspot.type == 1) {
-            if (!isAnaerobic && p.type == ParticleType.ammonium && p.state == 0.0 && random.nextDouble() < 0.05) {
+            if (!isAnaerobic &&
+                p.type == ParticleType.ammonium &&
+                p.state == 0.0 &&
+                random.nextDouble() < 0.05) {
               p.state = 0.01;
               p.vx += (random.nextDouble() - 0.5) * 10;
             }
@@ -267,16 +286,19 @@ class ParticlePhysicsSolver {
             }
           }
           if (bestHotspot.type == 2) {
-            if (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium || p.type == ParticleType.phosphorus) {
-              if (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium) {
-                 if (p.state < 10) {
-                    p.state = 10.0;
-                    p.x0 = p.x;
-                    p.y0 = p.y;
-                    p.t = 0.0;
-                 }
+            if (p.type == ParticleType.nitrate ||
+                p.type == ParticleType.ammonium ||
+                p.type == ParticleType.phosphorus) {
+              if (p.type == ParticleType.nitrate ||
+                  p.type == ParticleType.ammonium) {
+                if (p.state < 10) {
+                  p.state = 10.0;
+                  p.x0 = p.x;
+                  p.y0 = p.y;
+                  p.t = 0.0;
+                }
               } else {
-                 p.life -= 0.4 * dt;
+                p.life -= 0.4 * dt;
               }
             }
           }
@@ -321,7 +343,8 @@ class ParticlePhysicsSolver {
               if (isAnaerobic) vMax *= 0.3;
               const double kM = 0.5;
               final double mmRate = vMax / (kM + 1.0);
-              if (random.nextDouble() < mmRate * q10Factor * dt * 8.0 * flowBoost) {
+              if (random.nextDouble() <
+                  mmRate * q10Factor * dt * 8.0 * flowBoost) {
                 p.type = ParticleType.ammonium;
                 p.life = 1.0;
               }
@@ -330,7 +353,8 @@ class ParticlePhysicsSolver {
         }
       }
 
-      if (p.state >= 10.0 && (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium)) {
+      if (p.state >= 10.0 &&
+          (p.type == ParticleType.nitrate || p.type == ParticleType.ammonium)) {
         p.t += dt * 0.8 * flowBoost;
         if (p.t > 1.0) p.t = 1.0;
 
@@ -349,7 +373,7 @@ class ParticlePhysicsSolver {
         p.isImmobilized = false;
 
         if (p.t >= 1.0) {
-           p.life -= 1.5 * dt * flowBoost;
+          p.life -= 1.5 * dt * flowBoost;
         }
       }
 
@@ -363,12 +387,16 @@ class ParticlePhysicsSolver {
             final dx = a.x - p.x;
             final dy = a.y - p.y;
             final r2 = (dx * dx + dy * dy).clamp(100.0, 100000.0);
-            final force = SimulationConstants.attractorForceScale * (q1 * a.q) / r2;
+            final force =
+                SimulationConstants.attractorForceScale * (q1 * a.q) / r2;
             final r = math.sqrt(r2);
             p.vx += (dx / r) * force * dt;
             p.vy += (dy / r) * force * dt;
 
-            if (force < -5.0 && r < 15.0 && p.type == ParticleType.ammonium && random.nextDouble() < 0.08) {
+            if (force < -5.0 &&
+                r < 15.0 &&
+                p.type == ParticleType.ammonium &&
+                random.nextDouble() < 0.08) {
               p.isImmobilized = true;
               p.vx *= 0.1;
               p.vy *= 0.1;
@@ -419,10 +447,10 @@ class ParticlePhysicsSolver {
         p.vy -= 15.0 * dt;
         p.life -= 0.5 * dt;
       } else {
-         if (p.y < surfaceY + 4.0) {
-            p.y = surfaceY + 4.0;
-            p.vy *= -1;
-         }
+        if (p.y < surfaceY + 4.0) {
+          p.y = surfaceY + 4.0;
+          p.vy *= -1;
+        }
       }
 
       if (p.y > worldHeight - 6.0) {
@@ -432,4 +460,3 @@ class ParticlePhysicsSolver {
     }
   }
 }
-

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:material_ui/material_ui.dart' hide Simulation;
 import 'core/debug_log.dart';
+import 'data/model_config_repository.dart';
 import 'l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/widgets/flame_simulation_view.dart';
@@ -34,7 +35,9 @@ import 'presentation/providers/tutorial_provider.dart';
 final RouteObserver<ModalRoute<void>> appRouteObserver =
     RouteObserver<ModalRoute<void>>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ModelConfigRepository.load();
   runApp(const ProviderScope(child: SoilScopeApp()));
 }
 

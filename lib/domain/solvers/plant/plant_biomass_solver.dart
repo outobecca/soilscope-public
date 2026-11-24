@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import '../../models/plant.dart';
 import '../../../core/biophysics_utils.dart';
 import '../../../core/simulation_constants.dart';
+import '../../../core/model_config.dart';
 
 /// Plant Biomass Solver with Farquhar-von Caemmerer-Berry (FvCB) Photosynthesis Model
 ///
@@ -18,62 +19,70 @@ import '../../../core/simulation_constants.dart';
 /// - Rd = Day respiration
 class PlantBiomassSolver {
   // ============ GROWTH PARAMETERS ============
-  static const double phi = 0.5; // Extensibility coefficient [MPa⁻¹ s⁻¹]
-  static const double yieldThreshold = 0.2; // Turgor threshold for growth [MPa]
-  static const double maxHeight = 1.2; // Maximum plant height [m]
-  static const double maxLai = 6.0; // Maximum LAI
+  static double get phi => ModelConfig.of(
+    'plantBiomass.phi',
+  ); // Extensibility coefficient [MPa⁻¹ s⁻¹]
+  static double get yieldThreshold => ModelConfig.of(
+    'plantBiomass.yieldThreshold',
+  ); // Turgor threshold for growth [MPa]
+  static double get maxHeight =>
+      ModelConfig.of('plantBiomass.maxHeight'); // Maximum plant height [m]
+  static double get maxLai =>
+      ModelConfig.of('plantBiomass.maxLai'); // Maximum LAI
 
   // ============ FARQUHAR MODEL PARAMETERS ============
   // Reference values at 25°C (298.15 K)
 
   /// Maximum carboxylation rate at 25°C [µmol CO2 m⁻² s⁻¹]
   /// Source: Typical C3 crop (Wullschleger, 1993)
-  static const double vcmax25 = 80.0;
+  static double get vcmax25 => ModelConfig.of('plantBiomass.vcmax25');
 
   /// Maximum electron transport rate at 25°C [µmol e⁻ m⁻² s⁻¹]
   /// Typically Jmax/Vcmax ≈ 1.67 (Wullschleger, 1993)
-  static const double jmax25 = 130.0;
+  static double get jmax25 => ModelConfig.of('plantBiomass.jmax25');
 
   /// Day respiration at 25°C [µmol CO2 m⁻² s⁻¹]
   /// Typically ~1-2% of Vcmax
-  static const double rd25 = 1.5;
+  static double get rd25 => ModelConfig.of('plantBiomass.rd25');
 
   /// Michaelis constant for CO2 at 25°C [µmol mol⁻¹ or µbar]
-  static const double kc25 = 404.0;
+  static double get kc25 => ModelConfig.of('plantBiomass.kc25');
 
   /// Michaelis constant for O2 at 25°C [mmol mol⁻¹ or mbar]
-  static const double ko25 = 278.0;
+  static double get ko25 => ModelConfig.of('plantBiomass.ko25');
 
   /// CO2 compensation point at 25°C (no Rd) [µmol mol⁻¹]
-  static const double gammastar25 = 42.75;
+  static double get gammastar25 => ModelConfig.of('plantBiomass.gammastar25');
 
   /// Atmospheric O2 concentration [mmol mol⁻¹]
-  static const double oi = 210.0;
+  static double get oi => ModelConfig.of('plantBiomass.oi');
 
   /// Curvature factor for light response
-  static const double theta = 0.7;
+  static double get theta => ModelConfig.of('plantBiomass.theta');
 
   /// Quantum yield of electron transport [mol e⁻ mol⁻¹ photons]
-  static const double alpha = 0.3;
+  static double get alpha => ModelConfig.of('plantBiomass.alpha');
 
   // ============ TEMPERATURE RESPONSE PARAMETERS ============
   // Activation energies [J mol⁻¹] from Medlyn et al. (2002)
-  static const double haVcmax = 65330.0;
-  static const double haJmax = 43900.0;
-  static const double haRd = 46390.0;
-  static const double haKc = 79430.0;
-  static const double haKo = 36380.0;
-  static const double haGammastar = 37830.0;
+  static double get haVcmax => ModelConfig.of('plantBiomass.haVcmax');
+  static double get haJmax => ModelConfig.of('plantBiomass.haJmax');
+  static double get haRd => ModelConfig.of('plantBiomass.haRd');
+  static double get haKc => ModelConfig.of('plantBiomass.haKc');
+  static double get haKo => ModelConfig.of('plantBiomass.haKo');
+  static double get haGammastar => ModelConfig.of('plantBiomass.haGammastar');
 
   // Deactivation parameters for Jmax (peaked response)
-  static const double hdJmax = 200000.0; // [J mol⁻¹]
-  static const double dsJmax = 650.0; // [J mol⁻¹ K⁻¹]
+  static double get hdJmax =>
+      ModelConfig.of('plantBiomass.hdJmax'); // [J mol⁻¹]
+  static double get dsJmax =>
+      ModelConfig.of('plantBiomass.dsJmax'); // [J mol⁻¹ K⁻¹]
 
   /// Gas constant [J mol⁻¹ K⁻¹]
-  static const double gasR = 8.314;
+  static double get gasR => ModelConfig.of('gasConstant');
 
   /// Reference temperature [K]
-  static const double tRef = 298.15;
+  static double get tRef => ModelConfig.of('plantBiomass.tRef');
 
   /// Calculates actual growth rate based on turgor, nutrients, toxicity and maturity.
   static double calculateGrowthRate(
@@ -114,9 +123,11 @@ class PlantBiomassSolver {
     double co2Factor,
     double tCelsius,
     double dt, {
-    double co2Concentration = SimulationConstants.atmCO2Default, // mol/m³
+    double? co2Concentration, // mol/m³
     double par = 500.0, // µmol m⁻² s⁻¹ (typical daytime average)
   }) {
+    final double co2 =
+        co2Concentration ?? SimulationConstants.atmCO2Default; // mol/m³
     // Convert temperature to Kelvin
     final double tK = tCelsius + 273.15;
 
@@ -140,8 +151,7 @@ class PlantBiomassSolver {
 
     // Convert CO2 concentration to µmol mol⁻¹ (ppm)
     // 0.017 mol/m³ at STP ≈ 415 ppm
-    final double ca =
-        co2Concentration * 1000000.0 / 41.0; // Approximate conversion
+    final double ca = co2 * 1000000.0 / 41.0; // Approximate conversion
 
     // Estimate internal CO2 (Ci) from stomatal conductance
     // Ci/Ca ratio typically 0.7-0.8 for C3 plants under normal conditions
@@ -252,4 +262,3 @@ class PlantBiomassSolver {
     return j.clamp(0.0, jmax);
   }
 }
-

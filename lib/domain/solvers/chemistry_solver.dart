@@ -3,6 +3,8 @@ import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import '../../core/periodic_table.dart';
 import '../../core/biophysics_utils.dart';
+import '../../core/model_config.dart';
+import '../../core/simulation_constants.dart';
 
 /// Chemistry Solver: pH dynamics, redox chemistry, and ion exchange.
 ///
@@ -22,34 +24,40 @@ class ChemistrySolver {
   // pe = Eh(mV) / 59.2 at 25°C
 
   /// O2/H2O redox couple pe° (aerobic respiration)
-  static const double peO2 = 13.75;
+  static double get peO2 => ModelConfig.of('chemistry.peO2');
 
   /// NO3-/N2 redox couple pe° (denitrification)
-  static const double peNO3 = 12.65;
+  static double get peNO3 => ModelConfig.of('chemistry.peNO3');
 
   /// MnO2/Mn2+ redox couple pe° (manganese reduction)
-  static const double peMnO2 = 8.5;
+  static double get peMnO2 => ModelConfig.of('chemistry.peMnO2');
 
   /// Fe(OH)3/Fe2+ redox couple pe° (iron reduction)
-  static const double peFeOH3 = -0.1; // At pH 7
+  static double get peFeOH3 => ModelConfig.of('chemistry.peFeOH3'); // At pH 7
 
   /// SO4/H2S redox couple pe° (sulfate reduction)
-  static const double peSO4 = -3.5;
+  static double get peSO4 => ModelConfig.of('chemistry.peSO4');
 
   /// CO2/CH4 redox couple pe° (methanogenesis)
-  static const double peCH4 = -4.0;
+  static double get peCH4 => ModelConfig.of('chemistry.peCH4');
 
   // Eh thresholds (mV) for TEA transitions (Theoretical at pH 7)
-  static const double ehAerobic = 750.0; // O2 dominant
-  static const double ehNitrate = 650.0; // NO3- reduction starts
-  static const double ehManganese = 400.0; // Mn(IV) reduction starts
-  static const double ehIron = 50.0; // Fe(III) reduction starts
-  static const double ehSulfate = -150.0; // SO4 reduction starts
-  static const double ehMethane = -220.0; // Methanogenesis dominant
+  static double get ehAerobic =>
+      ModelConfig.of('chemistry.ehAerobic'); // O2 dominant
+  static double get ehNitrate =>
+      ModelConfig.of('chemistry.ehNitrate'); // NO3- reduction starts
+  static double get ehManganese =>
+      ModelConfig.of('chemistry.ehManganese'); // Mn(IV) reduction starts
+  static double get ehIron =>
+      ModelConfig.of('chemistry.ehIron'); // Fe(III) reduction starts
+  static double get ehSulfate =>
+      ModelConfig.of('chemistry.ehSulfate'); // SO4 reduction starts
+  static double get ehMethane =>
+      ModelConfig.of('chemistry.ehMethane'); // Methanogenesis dominant
 
   /// Solves chemical equilibria, pH dynamics, and redox status with sub-stepping for stability
   static SoilProfile solve(SoilProfile profile, double dt) {
-    const double maxSubStep = 600.0;
+    final double maxSubStep = SimulationConstants.maxSubStep;
     int steps = (dt / maxSubStep).ceil().clamp(1, 100);
     double actualDt = dt / steps;
 
@@ -128,7 +136,11 @@ class ChemistrySolver {
   static ({double eh, double pe, String dominantTEA, double fe2Plus})
   _calculateRedoxState(SoilLayer layer, double dt, double q10) {
     // Current O2 content determines aerobic/anaerobic boundary
-    final double o2Fraction = (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(1e-6, 1.0);
+    final double o2Fraction =
+        (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(
+          1e-6,
+          1.0,
+        );
 
     double pe;
     String dominantTEA;
@@ -219,7 +231,9 @@ class ChemistrySolver {
     }
 
     // Effective Langmuir parameters
-    const double qMaxP = 300.0; // mg/kg maximum capacity
+    final double qMaxP = ModelConfig.of(
+      'chemistry.qMaxP',
+    ); // mg/kg maximum capacity
     final double kLP = 0.15 * phFactor * redoxReleaseFactor;
     final double kSorptionP = 1.2e-5 * q10;
 
@@ -253,7 +267,9 @@ class ChemistrySolver {
   /// Reference: Sposito (2008)
   static ({double kSol, double kEx, double alEx, double baseSaturation})
   _calculateCationExchange(SoilLayer layer, double dt, double q10) {
-    const double kGK = 0.5; // Gapon constant for K/Ca exchange
+    final double kGK = ModelConfig.of(
+      'chemistry.kGK',
+    ); // Gapon constant for K/Ca exchange
     final double kSorptionCations = 2.0e-4 * q10;
 
     final double kMass = PeriodicTable.getElement('K').atomicMass;
@@ -358,27 +374,30 @@ class ChemistrySolver {
   static double _calculateEC(SoilLayer layer, double pSol, double kSol) {
     final theta = layer.waterContent.clamp(0.01, 1.0);
     final rho = layer.bulkDensity;
-    
+
     double totalMeqL = 0;
-    
+
     // Anions
     totalMeqL += (layer.nitrateContent * rho) / (62.0 * theta * 1000.0); // NO3-
     totalMeqL += (pSol * rho) / (97.0 * theta * 1000.0); // H2PO4-
-    
+
     // Cations
-    totalMeqL += (layer.ammoniumContent * rho) / (18.0 * theta * 1000.0); // NH4+
+    totalMeqL +=
+        (layer.ammoniumContent * rho) / (18.0 * theta * 1000.0); // NH4+
     totalMeqL += (kSol * rho) / (39.1 * theta * 1000.0); // K+
-    totalMeqL += (layer.solutionCalcium * rho) / (20.05 * theta * 1000.0); // Ca2+
-    totalMeqL += (layer.solutionMagnesium * rho) / (12.15 * theta * 1000.0); // Mg2+
-    
+    totalMeqL +=
+        (layer.solutionCalcium * rho) / (20.05 * theta * 1000.0); // Ca2+
+    totalMeqL +=
+        (layer.solutionMagnesium * rho) / (12.15 * theta * 1000.0); // Mg2+
+
     // Add contribution from other trace elements (average eq weight ~35)
     for (final val in layer.traceElements.values) {
-       totalMeqL += (val * rho) / (35.0 * theta * 1000.0);
+      totalMeqL += (val * rho) / (35.0 * theta * 1000.0);
     }
-    
+
     // Base salinity factor related to clay content (intrinsic salts)
     final salinityBase = layer.clayFraction * 1.5;
-    
+
     return (totalMeqL * 0.1) + (salinityBase * 0.05);
   }
 }

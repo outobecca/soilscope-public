@@ -1,6 +1,8 @@
 import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import 'nitrogen_cycle_model.dart';
+import '../../core/model_config.dart';
+import '../../core/simulation_constants.dart';
 
 class NutrientSolver {
   /// Solves 1D Nutrient transport (Diffusion + Advection) and biological transformations
@@ -10,7 +12,7 @@ class NutrientSolver {
     List<double>? waterFluxes,
   }) {
     // For stability with high timeScale, use sub-stepping if dt > 600s
-    const double maxSubStep = 600.0;
+    final double maxSubStep = SimulationConstants.maxSubStep;
     int steps = (dt / maxSubStep).ceil().clamp(1, 100);
     double actualDt = dt / steps;
 
@@ -54,10 +56,10 @@ class NutrientSolver {
     final potassiumFluxes = List<double>.filled(n + 1, 0.0);
     final phosphateFluxes = List<double>.filled(n + 1, 0.0);
 
-    const double dLNitrate = 1.9e-9;
-    const double dLAmmonium = 1.5e-9;
-    const double dLPotassium = 1.8e-9;
-    const double dLPhosphate = 0.8e-9;
+    final double dLNitrate = ModelConfig.of('nutrient.dLNitrate');
+    final double dLAmmonium = ModelConfig.of('nutrient.dLAmmonium');
+    final double dLPotassium = ModelConfig.of('nutrient.dLPotassium');
+    final double dLPhosphate = ModelConfig.of('nutrient.dLPhosphate');
 
     for (int i = 0; i < n - 1; i++) {
       final l1 = layers[i];

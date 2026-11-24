@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import '../models/soil_layer.dart';
 import '../models/soil_profile.dart';
 import '../models/plant.dart';
-import '../../core/simulation_constants.dart';
 import '../../core/biophysics_utils.dart';
+import '../../core/model_config.dart';
 
 /// Mycorrhiza Symbiosis Solver
 ///
@@ -28,46 +28,55 @@ class MycorrhizaSolver {
 
   /// Maximum carbon transfer to fungus as fraction of daily photosynthate
   /// Source: Smith & Read (2008) - typically 4-20%
-  static const double maxCarbonTransferFraction = 0.15;
+  static double get maxCarbonTransferFraction =>
+      ModelConfig.of('mycorrhiza.maxCarbonTransferFraction');
 
   /// Hyphal extension rate [m day⁻¹]
   /// Source: Typical AM fungi
-  static const double hyphalGrowthRate = SimulationConstants.hyphalGrowthRate;
+  static double get hyphalGrowthRate => ModelConfig.of('hyphalGrowthRate');
 
   /// Maximum hyphal density [m hyphae m⁻³ soil]
-  static const double maxHyphalDensity = 100.0;
+  static double get maxHyphalDensity =>
+      ModelConfig.of('mycorrhiza.maxHyphalDensity');
 
   /// Hyphal turnover rate [day⁻¹]
   /// Hyphae live 5-7 days on average
-  static const double hyphalTurnover = 0.15;
+  static double get hyphalTurnover =>
+      ModelConfig.of('mycorrhiza.hyphalTurnover');
 
   /// P uptake efficiency of hyphae relative to roots [dimensionless]
   /// Hyphae can access P in smaller pores
-  static const double pUptakeEfficiency = 3.0;
+  static double get pUptakeEfficiency =>
+      ModelConfig.of('mycorrhiza.pUptakeEfficiency');
 
   /// N uptake efficiency of hyphae [dimensionless]
   /// Less efficient than P but still significant
-  static const double nUptakeEfficiency = 1.5;
+  static double get nUptakeEfficiency =>
+      ModelConfig.of('mycorrhiza.nUptakeEfficiency');
 
   /// Colonization rate constant [day⁻¹]
   /// Rate at which fungi colonize new root tips
-  static const double colonizationRate = 0.1;
+  static double get colonizationRate =>
+      ModelConfig.of('mycorrhiza.colonizationRate');
 
   /// Maximum root colonization [fraction]
-  static const double maxColonization = 0.8;
+  static double get maxColonization =>
+      ModelConfig.of('mycorrhiza.maxColonization');
 
   /// Carbon cost per unit P transferred [g C / mg P]
   /// Based on stoichiometric exchange ratios
-  static const double cCostPerP = 100.0;
+  static double get cCostPerP => ModelConfig.of('mycorrhiza.cCostPerP');
 
   /// Carbon cost per unit N transferred [g C / mg N]
-  static const double cCostPerN = 50.0;
+  static double get cCostPerN => ModelConfig.of('mycorrhiza.cCostPerN');
 
   /// Minimum soil temperature for mycorrhizal activity [K]
-  static const double minTempActivity = 278.15; // 5°C
+  static double get minTempActivity =>
+      ModelConfig.of('mycorrhiza.minTempActivity'); // 5°C
 
   /// Optimal temperature for mycorrhizal activity [K]
-  static const double optTempActivity = 298.15; // 25°C
+  static double get optTempActivity =>
+      ModelConfig.of('mycorrhiza.optTempActivity'); // 25°C
 
   /// Solves mycorrhizal dynamics for one time step
   static ({SoilProfile profile, Plant plant, MycorrhizaState mycorrhizaState})
@@ -129,7 +138,8 @@ class MycorrhizaSolver {
 
     // 5. Update soil nutrient pools (depletion by hyphae)
     final updatedProfile = _updateSoilNutrients(
-      hyphalResult.profile, // Use the profile returned by _updateHyphalNetwork which has updated disturbance
+      hyphalResult
+          .profile, // Use the profile returned by _updateHyphalNetwork which has updated disturbance
       nutrientResult.pUptakeByLayer,
       nutrientResult.nUptakeByLayer,
     );
@@ -208,7 +218,11 @@ class MycorrhizaSolver {
   }
 
   /// Updates extramatrical hyphal network and handles cultivation disturbance
-  static ({double totalHyphalLength, List<double> layerHyphalDensities, SoilProfile profile})
+  static ({
+    double totalHyphalLength,
+    List<double> layerHyphalDensities,
+    SoilProfile profile,
+  })
   _updateHyphalNetwork(
     SoilProfile profile,
     Plant plant,
@@ -224,20 +238,28 @@ class MycorrhizaSolver {
 
     for (int i = 0; i < profile.layers.length; i++) {
       final layer = profile.layers[i];
-      
+
       // Update Cultivation Disturbance State
       double currentDisturbance = layer.cultivationDisturbance;
       if (layer.isCultivated) {
         // Fast mechanical breaking
-        currentDisturbance = (currentDisturbance + dtDays * 10.0).clamp(0.0, 1.0);
+        currentDisturbance = (currentDisturbance + dtDays * 10.0).clamp(
+          0.0,
+          1.0,
+        );
       } else if (currentDisturbance > 0.0) {
         // Gradual recovery if conditions are favorable
         if (fTemp > 0.1 && fMoisture > 0.1) {
-            currentDisturbance = (currentDisturbance - dtDays * 0.05).clamp(0.0, 1.0);
+          currentDisturbance = (currentDisturbance - dtDays * 0.05).clamp(
+            0.0,
+            1.0,
+          );
         }
       }
-      
-      updatedLayers[i] = layer.copyWith(cultivationDisturbance: currentDisturbance);
+
+      updatedLayers[i] = layer.copyWith(
+        cultivationDisturbance: currentDisturbance,
+      );
 
       // Count roots in this layer
       final rootsInLayer = plant.rootSystem
@@ -264,12 +286,16 @@ class MycorrhizaSolver {
 
         // Turnover is massively increased by cultivation disturbance
         // Isaac (1992): Tillage disrupts the extraradical mycelial network
-        final double disturbanceDecay = previousDensity * currentDisturbance * 5.0 * dtDays;
-        final double turnover = (previousDensity * hyphalTurnover * dtDays) + disturbanceDecay;
+        final double disturbanceDecay =
+            previousDensity * currentDisturbance * 5.0 * dtDays;
+        final double turnover =
+            (previousDensity * hyphalTurnover * dtDays) + disturbanceDecay;
 
         // New density (limited by soil pore space)
         final double maxInLayer =
-            maxHyphalDensity * (1.0 - layer.clayFraction * 0.5) * (1.0 - currentDisturbance * 0.9);
+            maxHyphalDensity *
+            (1.0 - layer.clayFraction * 0.5) *
+            (1.0 - currentDisturbance * 0.9);
         layerDensities[i] = (previousDensity + growth - turnover).clamp(
           0.0,
           maxInLayer,
@@ -467,31 +493,29 @@ class MycorrhizaState {
   factory MycorrhizaState.fromJson(Map<String, dynamic> json) {
     return MycorrhizaState(
       rootColonization: (json['rootColonization'] as num?)?.toDouble() ?? 0.0,
-      totalHyphalLength:
-          (json['totalHyphalLength'] as num?)?.toDouble() ?? 0.0,
-      layerHyphalDensities: (json['layerHyphalDensities'] as List<dynamic>?)
+      totalHyphalLength: (json['totalHyphalLength'] as num?)?.toDouble() ?? 0.0,
+      layerHyphalDensities:
+          (json['layerHyphalDensities'] as List<dynamic>?)
               ?.map((e) => (e as num).toDouble())
               .toList() ??
           const [],
       carbonTransferredToday:
           (json['carbonTransferredToday'] as num?)?.toDouble() ?? 0.0,
-      pTransferredToday:
-          (json['pTransferredToday'] as num?)?.toDouble() ?? 0.0,
-      nTransferredToday:
-          (json['nTransferredToday'] as num?)?.toDouble() ?? 0.0,
+      pTransferredToday: (json['pTransferredToday'] as num?)?.toDouble() ?? 0.0,
+      nTransferredToday: (json['nTransferredToday'] as num?)?.toDouble() ?? 0.0,
       fungalBiomass: (json['fungalBiomass'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'rootColonization': rootColonization,
-        'totalHyphalLength': totalHyphalLength,
-        'layerHyphalDensities': layerHyphalDensities,
-        'carbonTransferredToday': carbonTransferredToday,
-        'pTransferredToday': pTransferredToday,
-        'nTransferredToday': nTransferredToday,
-        'fungalBiomass': fungalBiomass,
-      };
+    'rootColonization': rootColonization,
+    'totalHyphalLength': totalHyphalLength,
+    'layerHyphalDensities': layerHyphalDensities,
+    'carbonTransferredToday': carbonTransferredToday,
+    'pTransferredToday': pTransferredToday,
+    'nTransferredToday': nTransferredToday,
+    'fungalBiomass': fungalBiomass,
+  };
 
   MycorrhizaState copyWith({
     double? rootColonization,
@@ -506,7 +530,8 @@ class MycorrhizaState {
       rootColonization: rootColonization ?? this.rootColonization,
       totalHyphalLength: totalHyphalLength ?? this.totalHyphalLength,
       layerHyphalDensities: layerHyphalDensities ?? this.layerHyphalDensities,
-      carbonTransferredToday: carbonTransferredToday ?? this.carbonTransferredToday,
+      carbonTransferredToday:
+          carbonTransferredToday ?? this.carbonTransferredToday,
       pTransferredToday: pTransferredToday ?? this.pTransferredToday,
       nTransferredToday: nTransferredToday ?? this.nTransferredToday,
       fungalBiomass: fungalBiomass ?? this.fungalBiomass,
@@ -526,4 +551,3 @@ class MycorrhizaState {
     return (pTransferredToday + nTransferredToday) / carbonTransferredToday;
   }
 }
-

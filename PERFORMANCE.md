@@ -269,8 +269,11 @@ Same Linux desktop reference (AMD Radeon 760M / Mesa radeonsi, 1280×720 at
 dpr 1.0, Flutter 3.47.9 profile build), same `compacted_clay` scenario, seed
 101 and the fixed protocol order (pinned inspection, microscope, pan + zoom,
 steady). Each capture is a fresh process with the same deterministic seed and
-model fingerprint `a456e3ab`. Both are single runs, so the drift caveat above
-still applies; the comparison is directional, not a device guarantee.
+model fingerprint `a456e3ab` (model v2). Model v3 moved the same default values
+behind `ModelConfig` and has fingerprint `410ef21c`; because the defaults are
+unchanged, these captures remain comparable. Both are single runs, so the drift
+caveat above still applies; the comparison is directional, not a device
+guarantee.
 
 | Phase | Raster p50 / p95 before (ms) | Raster p50 / p95 after (ms) | FPS before | FPS after | Raster p50 change |
 |---|---|---|---|---|---|
@@ -368,8 +371,9 @@ blend mode. The plant render also contained a second identical branch/leaf pass
 left over from an earlier layout path; it was opaque overdraw and has been
 removed.
 
-No simulation parameter changed; the model fingerprint remains `a456e3ab`. The
-two simulation goldens were refreshed for the intentional rhizosphere shading
+No simulation parameter changed; the default model fingerprint is now
+`410ef21c` (v2 was `a456e3ab`) because the values moved behind `ModelConfig`.
+The two simulation goldens were refreshed for the intentional rhizosphere shading
 difference, and a zoomed crop of the root zone was reviewed as visually
 equivalent. This is one fresh fixed-order run per column, so it is directional
 under the session-drift caveat. No low-end Android run was made after this

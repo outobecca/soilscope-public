@@ -4,11 +4,12 @@ import '../models/soil_profile.dart';
 import '../models/plant.dart';
 import '../../core/simulation_constants.dart';
 import '../../core/biophysics_utils.dart';
+import '../../core/model_config.dart';
 
 class GasSolver {
   // Diffusion constants in air (m^2/s)
-  static const double d0O2 = 2.0e-5;
-  static const double d0CO2 = 1.6e-5;
+  static double get d0O2 => ModelConfig.of('gas.d0O2');
+  static double get d0CO2 => ModelConfig.of('gas.d0CO2');
 
   // Atmospheric O2 saturation concentration delegated to shared constant.
   // See BiophysicsUtils.atmO2Saturation.
@@ -19,24 +20,26 @@ class GasSolver {
     SoilProfile profile,
     double dt, {
     List<Plant> plants = const [],
-    double atmCO2 = SimulationConstants.atmCO2Default,
+    double? atmCO2,
   }) {
+    final double co2 = atmCO2 ?? SimulationConstants.atmCO2Default;
     final n = profile.layers.length;
 
     // Calculate stability-based sub-step
     double minSafeDt = dt;
-    const double dzSurf = 0.01;
+    final double dzSurf = ModelConfig.of('gas.dzSurf');
     for (int i = 0; i < n; i++) {
       final l = profile.layers[i];
       final eps = (l.porosity - l.waterContent).clamp(0.001, 1.0);
       final factor = math.pow(eps, 2.0) / math.pow(l.porosity, 2.0 / 3.0);
       final deO2Val = d0O2 * factor;
-      
+
       if (i == 0) {
         final safeDtSurf = 0.25 * dzSurf * l.thickness / (deO2Val + 1e-12);
         minSafeDt = math.min(minSafeDt, safeDtSurf);
       }
-      final safeDtInternal = 0.25 * l.thickness * l.thickness / (deO2Val + 1e-12);
+      final safeDtInternal =
+          0.25 * l.thickness * l.thickness / (deO2Val + 1e-12);
       minSafeDt = math.min(minSafeDt, safeDtInternal);
     }
 
@@ -47,16 +50,21 @@ class GasSolver {
     SoilProfile currentProfile = profile;
     for (int s = 0; s < steps; s++) {
       final stepLayers = List<SoilLayer>.from(currentProfile.layers);
-      
+
       // 1. Respiration step
       for (int i = 0; i < n; i++) {
         stepLayers[i] = _solveRespiration(stepLayers[i], actualDt, plants);
       }
-      
+
       // 2. Diffusion step
-      currentProfile = _solveDiffusion(stepLayers, actualDt, currentProfile, atmCO2: atmCO2);
+      currentProfile = _solveDiffusion(
+        stepLayers,
+        actualDt,
+        currentProfile,
+        atmCO2: co2,
+      );
     }
-    
+
     return currentProfile;
   }
 
@@ -67,30 +75,44 @@ class GasSolver {
   ) {
     // Environmental factors
     final double fTemp = BiophysicsUtils.q10Factor(layer.temperature);
-    final double airFilledPorosity = (layer.porosity - layer.waterContent).clamp(0.0, 1.0);
+    final double airFilledPorosity = (layer.porosity - layer.waterContent)
+        .clamp(0.0, 1.0);
     // fWater: substrate diffusion is severely limited only in near-saturated soils
     // (air-filled porosity < 2%); uses AFP threshold rather than full WFPS curve
     // because the O2-limitation term separately captures waterlogging effects.
     // Threshold of 2% AFP follows Renault & Stengel (1994) Soil Biol. Biochem.
-    final double fWater = airFilledPorosity > 0.02 ? 1.0 : (airFilledPorosity / 0.02);
+    final double fWater = airFilledPorosity > 0.02
+        ? 1.0
+        : (airFilledPorosity / 0.02);
 
     // a. Microbial Respiration
-    const double kMic = 1.0e-8; // mol / (kg_biomass * s)
+    final double kMic = ModelConfig.of('gas.kMic'); // mol / (kg_biomass * s)
     final double micActivity =
-        fTemp * fWater * (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(0.0, 1.0);
+        fTemp *
+        fWater *
+        (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(0.0, 1.0);
     final double respMic = kMic * layer.microbialBiomass * micActivity * dt;
 
     // b. Combined Root Respiration from all plants
     double totalRespRoot = 0.0;
-    const double kRoot = 5.0e-10; // mol / (node * s)
+    final double kRoot = ModelConfig.of('gas.kRoot'); // mol / (node * s)
 
     for (final plant in plants) {
-      int rootNodes =
-          plant.rootSystem
-              .where((n) => n.z >= layer.depth && n.z <= layer.depth + layer.thickness)
-              .length;
+      int rootNodes = plant.rootSystem
+          .where(
+            (n) => n.z >= layer.depth && n.z <= layer.depth + layer.thickness,
+          )
+          .length;
 
-      totalRespRoot += kRoot * rootNodes * fTemp * (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(0.1, 1.0) * dt;
+      totalRespRoot +=
+          kRoot *
+          rootNodes *
+          fTemp *
+          (layer.oxygenContent / BiophysicsUtils.atmO2Saturation).clamp(
+            0.1,
+            1.0,
+          ) *
+          dt;
     }
 
     final totalResp = respMic + totalRespRoot;
@@ -105,8 +127,9 @@ class GasSolver {
     List<SoilLayer> layers,
     double dt,
     SoilProfile originalProfile, {
-    double atmCO2 = SimulationConstants.atmCO2Default,
+    double? atmCO2,
   }) {
+    final double co2 = atmCO2 ?? SimulationConstants.atmCO2Default;
     final n = layers.length;
     final o2Fluxes = List<double>.filled(n + 1, 0.0);
     final co2Fluxes = List<double>.filled(n + 1, 0.0);
@@ -124,9 +147,12 @@ class GasSolver {
     }
 
     // 1. Surface Boundary (Exchange with Atmosphere)
-    const double dzSurf = 0.01;
-    o2Fluxes[0] = deO2[0] * (BiophysicsUtils.atmO2Saturation - layers[0].oxygenContent) / dzSurf;
-    co2Fluxes[0] = deCO2[0] * (atmCO2 - layers[0].co2Content) / dzSurf;
+    final double dzSurf = ModelConfig.of('gas.dzSurf');
+    o2Fluxes[0] =
+        deO2[0] *
+        (BiophysicsUtils.atmO2Saturation - layers[0].oxygenContent) /
+        dzSurf;
+    co2Fluxes[0] = deCO2[0] * (co2 - layers[0].co2Content) / dzSurf;
 
     // 2. Internal Fluxes
     for (int i = 0; i < n - 1; i++) {
@@ -134,8 +160,12 @@ class GasSolver {
       final avgDeO2 = (deO2[i] + deO2[i + 1]) / 2.0;
       final avgDeCO2 = (deCO2[i] + deCO2[i + 1]) / 2.0;
 
-      o2Fluxes[i + 1] = avgDeO2 * (layers[i].oxygenContent - layers[i + 1].oxygenContent) / dz;
-      co2Fluxes[i + 1] = avgDeCO2 * (layers[i].co2Content - layers[i + 1].co2Content) / dz;
+      o2Fluxes[i + 1] =
+          avgDeO2 *
+          (layers[i].oxygenContent - layers[i + 1].oxygenContent) /
+          dz;
+      co2Fluxes[i + 1] =
+          avgDeCO2 * (layers[i].co2Content - layers[i + 1].co2Content) / dz;
     }
 
     // 3. Bottom Boundary (Zero flux)
