@@ -7,6 +7,7 @@ import '../../../../domain/models/plant.dart';
 import 'animated_plant_component.dart';
 import 'animated_microbe_component.dart';
 import 'animated_earthworm_component.dart';
+import 'microbe_motility.dart';
 import 'visual_seed.dart';
 import 'scene_coordinate_mapper.dart';
 
@@ -51,8 +52,6 @@ class BiologicalEntitiesComponent extends Component
   final math.Random _random = visualRandom(const ['biological-entities']);
   late ecs.World _ecsWorld;
 
-  // STRICT LIMITS: Reduced density for clarity (Task: Combine/Reduce)
-  static const int maxMicrobes = 12;
 
   @override
   Future<void> onLoad() async {
@@ -134,8 +133,7 @@ class BiologicalEntitiesComponent extends Component
       0,
       (sum, l) => sum + l.microbialBiomass,
     );
-    // Target count based on science, but strictly capped at 25 (Task: Reduce density)
-    final int targetCount = (totalBiomass * 5.0).toInt().clamp(3, maxMicrobes);
+    final int targetCount = MicrobeMotility.visibleClusterCount(totalBiomass);
 
     final existing = children.query<AnimatedMicrobeComponent>();
     final int currentCount = existing.length;
@@ -147,27 +145,49 @@ class BiologicalEntitiesComponent extends Component
 
       for (int i = 0; i < toAdd; i++) {
         // Double-check the limit during generation to prevent race conditions or loops
-        if (children.query<AnimatedMicrobeComponent>().length >= maxMicrobes) {
+        if (children.query<AnimatedMicrobeComponent>().length >=
+            MicrobeMotility.maxVisibleClusters) {
           break;
         }
         // Spread new microbes across all plants instead of always around the
         // first plant in a multi-plant scenario.
         final plant = state.plants[(currentCount + i) % state.plants.length];
 
-        final centerX =
-            SceneCoordinateMapper.mapShootPosition(
-              soilWidth,
-              surfaceY,
-            ).x +
-            game.soilLeftX;
-        final mx = _nextGaussian(
-          centerX,
-          150.0,
-        ).clamp(game.soilLeftX + 20, game.soilLeftX + soilWidth - 20);
-        final my = _nextGaussian(
-          surfaceY + 150,
-          200.0,
-        ).clamp(surfaceY + 20, surfaceY + game.soilColumnHeight - 20);
+        // Spawn in the rhizosphere: a random root node plus a small offset,
+        // instead of scattering cells across the whole column.
+        final roots = plant.rootSystem;
+        Vector2 spawn;
+        if (roots.isNotEmpty) {
+          final root = roots[_random.nextInt(roots.length)];
+          final rootPosition = SceneCoordinateMapper.mapRootNodeWorld(
+            root,
+            soilWidth,
+            surfaceY,
+            game.soilColumnHeight,
+            game.soilLeftX,
+          );
+          spawn = rootPosition + MicrobeMotility.spawnOffset(_random);
+        } else {
+          final centerX =
+              SceneCoordinateMapper.mapShootPosition(soilWidth, surfaceY).x +
+              game.soilLeftX;
+          spawn = Vector2(
+            centerX +
+                _nextGaussian(0, MicrobeMotility.fallbackSpawnSigma),
+            surfaceY +
+                MicrobeMotility.fallbackSpawnDepth +
+                _nextGaussian(0, MicrobeMotility.fallbackSpawnSigma),
+          );
+        }
+        final margin = MicrobeMotility.spawnMargin;
+        final mx = spawn.x.clamp(
+          game.soilLeftX + margin,
+          game.soilLeftX + soilWidth - margin,
+        );
+        final my = spawn.y.clamp(
+          surfaceY + margin,
+          surfaceY + game.soilColumnHeight - margin,
+        );
 
         add(
           AnimatedMicrobeComponent(

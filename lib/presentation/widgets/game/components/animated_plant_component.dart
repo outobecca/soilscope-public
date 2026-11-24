@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flame/collisions.dart';
 import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/model_config.dart';
 import '../../../../domain/models/plant.dart';
 import '../../../../domain/models/simulation_plot.dart';
 import '../soil_scope_game.dart';
@@ -653,10 +654,13 @@ class AnimatedPlantComponent extends PositionComponent
                 (l) => node.z >= l.depth && node.z <= l.depth + l.thickness,
                 orElse: () => state.profile.layers.first,
               );
-              // Try to consume a small amount of exchangeable K (0.05 mg/kg per particle)
+              // Consume exchangeable K for each spawned particle.
               canSpawn = game.ref
                   .read(simulationProvider.notifier)
-                  .consumePotassium(layer.id, 0.05);
+                  .consumePotassium(
+                    layer.id,
+                    ModelConfig.of('interaction.rootPotassiumUptake'),
+                  );
             } else {
               canSpawn = false;
             }

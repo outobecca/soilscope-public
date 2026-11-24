@@ -287,7 +287,9 @@ class InspectionTargetComponent extends PositionComponent
               }
             },
             accentColor: Colors.cyanAccent,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

@@ -8,7 +8,16 @@ import 'visual_seed.dart';
 
 /// Mixin to handle technical node (nutrients, sensors) placement in world space.
 mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
-  final math.Random _random = visualRandom(const ['layer-tech-nodes']);
+  /// Layer identity supplied by the owning component; also seeds the node RNG.
+  String get layerId;
+
+  // Each layer needs its own sequence. A shared seed gave every layer the same
+  // normal-distributed offsets, so the sampling nodes lined up in a vertical
+  // column instead of following each layer's own root zone.
+  late final math.Random _random = visualRandom([
+    'layer-tech-nodes',
+    layerId,
+  ]);
   bool _hudNodesSpawned = false;
 
   /// Box-Muller transform for Gaussian distribution
@@ -41,20 +50,25 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     final double layerHeight = size.y;
     final worldWidth = SoilScopeGame.soilColumnWidth;
 
-    // Collect X anchors from ALL plants so that hotspots are spread across the
-    // entire root zone rather than biased toward the first plant only.
-    final List<double> plantCenterXs = state.plants.isNotEmpty
-        ? state.plants
-              .map(
-                (p) =>
-                    SceneCoordinateMapper.mapShootPosition(
-                      worldWidth,
-                      0,
-                    ).x +
-                    game.soilLeftX,
-              )
-              .toList()
-        : [game.soilLeftX + worldWidth / 2];
+    // Sampling nodes belong to the one-square-metre plot the roots occupy, not
+    // to the decorative soil margins. Anchor them on the root tips that actually
+    // fall inside this layer and keep the normal spread inside the plot bounds.
+    final double plotWidth = SceneCoordinateMapper.plotWidth(worldWidth);
+    final double plotLeft = game.plotCenterX - plotWidth / 2;
+    final double plotRight = game.plotCenterX + plotWidth / 2;
+    const double hotspotHalfExtent = 20.0;
+    final double minX = plotLeft + hotspotHalfExtent;
+    final double maxX = plotRight - hotspotHalfExtent;
+
+    final double layerTop = position.y;
+    final double layerBottom = position.y + layerHeight;
+    final List<double> rootAnchors = game.rootTipWorldPositions
+        .where((tip) => tip.y >= layerTop && tip.y <= layerBottom)
+        .map((tip) => tip.x)
+        .toList();
+    final List<double> anchorXs = rootAnchors.isEmpty
+        ? [game.plotCenterX]
+        : rootAnchors;
 
     final int numNodesToSpawn = 2 + _random.nextInt(3); // Spawn 2 to 4 nodes
     const double hotspotRadius = 24.0;
@@ -70,6 +84,26 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     final allNodes = game.technicalHotspotLayer.children
         .whereType<ExpandableHotspotNode>()
         .toList();
+
+    // A sampling node must not sit on top of a dynamic rhizosphere marker: the
+    // technical overlay wins the tap, so an overlapping node would make the
+    // rhizosphere hotspot unreachable. Reserve the model hotspots that fall in
+    // this layer before choosing positions.
+    final List<Vector2> reservedCenters = [];
+    for (final hotspot in state.profile.layers[layerIndex].hotspots) {
+      reservedCenters.add(
+        Vector2(
+          position.x + SceneCoordinateMapper.mapRootX(hotspot.x, worldWidth),
+          layerTop + hotspot.z * layerHeight,
+        ),
+      );
+    }
+    // A cluster expands its metrics to 60 px, and a metric keeps a ~24 px
+    // hit radius even when zoomed out. Keep the whole expansion clear of a
+    // rhizosphere marker so the two interactive targets stay distinguishable.
+    const double minRhizosphereDistance = 110.0;
+    final double minRhizosphereDistanceSq =
+        minRhizosphereDistance * minRhizosphereDistance;
 
     // Build a node-type plan: the first slot is always nutrient (biological) and
     // the second is always sensor, guaranteeing that every layer has at least one
@@ -89,29 +123,50 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
       );
     }
 
+    final double verticalMargin = math.min(20.0, layerHeight / 4);
+    final double usableHeight = math.max(
+      0.0,
+      layerHeight - verticalMargin * 2,
+    );
+
     for (int i = 0; i < numNodesToSpawn; i++) {
-      // Round-robin through plant anchors so every plant is equally represented
-      // and no plant is left without a nearby hotspot.
-      final double centerX = plantCenterXs[i % plantCenterXs.length];
+      // Round-robin through the layer's root tips so the sampling nodes follow
+      // the rhizosphere instead of an arbitrary point in the soil.
+      final double centerX = anchorXs[i % anchorXs.length].clamp(minX, maxX);
 
       int attempts = 0;
       Vector2? validPosition;
+      Vector2? bestPosition;
+      double bestClearanceSq = -1.0;
 
-      while (attempts < 20) {
+      while (attempts < 40) {
         final px = _nextGaussian(
           centerX,
-          250.0,
-        ).clamp(game.soilLeftX + 50.0, game.soilLeftX + worldWidth - 50.0);
+          plotWidth * 0.18,
+        ).clamp(minX, maxX);
         final py =
-            position.y + 20.0 + _random.nextDouble() * (layerHeight - 40.0);
+            layerTop + verticalMargin + _random.nextDouble() * usableHeight;
         final candidatePos = Vector2(px, py);
 
         bool isValid = true;
+        double clearanceSq = double.infinity;
         for (final node in allNodes) {
-          if (node.position.distanceToSquared(candidatePos) < minDistanceSq) {
+          final distanceSq = node.position.distanceToSquared(candidatePos);
+          if (distanceSq < minDistanceSq) {
             isValid = false;
-            break;
           }
+          if (distanceSq < clearanceSq) clearanceSq = distanceSq;
+        }
+        for (final reserved in reservedCenters) {
+          final distanceSq = reserved.distanceToSquared(candidatePos);
+          if (distanceSq < minRhizosphereDistanceSq) {
+            isValid = false;
+          }
+          if (distanceSq < clearanceSq) clearanceSq = distanceSq;
+        }
+        if (clearanceSq > bestClearanceSq) {
+          bestClearanceSq = clearanceSq;
+          bestPosition = candidatePos;
         }
 
         if (isValid) {
@@ -120,6 +175,10 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
         }
         attempts++;
       }
+
+      // A crowded layer still gets its guaranteed sampling coverage; pick the
+      // roomiest candidate instead of silently dropping the node.
+      validPosition ??= bestPosition;
 
       if (validPosition != null) {
         final isBiological = isBiologicalPlan[i];

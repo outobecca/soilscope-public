@@ -234,7 +234,9 @@ class SelectionNodeComponent extends PositionComponent
           }
         },
         accentColor: accentColor,
-        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+        screenPosition: game
+            .worldToScreen(absolutePositionOf(size / 2))
+            .toOffset(),
       ),
     );
   }

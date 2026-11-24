@@ -1,4 +1,10 @@
-/// Runtime source of truth for the tunable parameters used by the solvers.
+/// Runtime source of truth for tunable values that change simulated state.
+///
+/// Solvers read these values directly. Visual components also read the
+/// `interaction.*` entries, because absorbing a particle or emitting a bubble
+/// changes a soil or plant pool. Purely visual motion and layout constants
+/// deliberately stay in `SimulationConstants` and `MicrobeMotility` so a
+/// rendering change does not invalidate a scientific reference.
 ///
 /// The defaults reproduce the model before this class existed. The app loads
 /// an optional override file at startup (`ModelConfigRepository`); tests and
@@ -7,8 +13,9 @@
 class ModelConfig {
   const ModelConfig._();
 
-  /// Defaults for all tunable model inputs. Rendering and layout constants
-  /// deliberately stay in `SimulationConstants`.
+  /// Defaults for all tunable model inputs, including the component pool
+  /// doses that used to be literals in Flame components. Rendering and layout
+  /// constants deliberately stay in `SimulationConstants`.
   static const Map<String, double> defaults = {
     // Integration and plot-independent model defaults.
     'baseTickDelta': 2.0,
@@ -154,6 +161,17 @@ class ModelConfig {
     'plantNutrientUptake.km': 10.0,
     'rootArchitecture.maxDevRadians': 0.2617993877991494,
     'hydrology.maxSteps': 2000.0,
+    // Component-driven resource exchange. A visual particle that is absorbed,
+    // consumed or emitted changes a simulated pool, so these doses are model
+    // inputs: changing one changes results and must change the fingerprint.
+    'interaction.plantNutrientAbsorption': 0.1,
+    'interaction.ionNutrientAbsorption': 0.5,
+    'interaction.rootPotassiumUptake': 0.05,
+    'interaction.exudateCarbonCost': 0.05,
+    'interaction.mineralNitrogenCost': 0.05,
+    'interaction.bubbleGasCost': 0.5,
+    'interaction.microbeExudateUptake': 0.005,
+    'interaction.microbeRootUptake': 0.002,
   };
 
   static Map<String, double> _active = defaults;

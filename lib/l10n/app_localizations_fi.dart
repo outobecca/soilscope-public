@@ -4181,4 +4181,76 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get retryAction => 'Yritä uudelleen';
+
+  @override
+  String get nitrogenCycleTitle => 'Typpikierto';
+
+  @override
+  String get nitrogenCycleSubtitle => 'Seuraa typpeä orgaanisesta aineesta juureen – tai takaisin ilmaan.';
+
+  @override
+  String get nitrogenCycleHint => 'Hohtavat hiukkaset käyttävät alla olevia värejä. Napauta hiukkasta.';
+
+  @override
+  String get nitrogenLivePools => 'ELÄVÄT VARASTOT';
+
+  @override
+  String get nitrogenFormOrganic => 'Orgaaninen N';
+
+  @override
+  String get nitrogenFormOrganicDesc => 'Proteiinit, humus ja kuolleet mikrobit. Juuret eivät voi ottaa sitä ennen kuin mikrobit mineralisoivat sen.';
+
+  @override
+  String get nitrogenFormAmmonium => 'Ammonium';
+
+  @override
+  String get nitrogenFormAmmoniumDesc => 'NH₄⁺ kiinnittyy saveen ja humukseen (CEC), joten se pysyy juuristossa huuhtoutumatta.';
+
+  @override
+  String get nitrogenFormNitrate => 'Nitraatti';
+
+  @override
+  String get nitrogenFormNitrateDesc => 'NO₃⁻ liikkuu vapaasti maavedessä – nopea otto, mutta myös nopea huuhtoutuminen.';
+
+  @override
+  String get nitrogenFormGas => 'Dityppioksidi';
+
+  @override
+  String get nitrogenFormGasDesc => 'N₂O syntyy märässä, vähähappisessa maassa, kun denitrifioijat käyttävät nitraattia hapen sijaan.';
+
+  @override
+  String get nitrogenProcessMineralization => 'Mineralisaatio';
+
+  @override
+  String get nitrogenProcessMineralizationDesc => 'mikrobit vapauttavat NH₄⁺:ää orgaanisesta aineesta.';
+
+  @override
+  String get nitrogenProcessNitrification => 'Nitrifikaatio';
+
+  @override
+  String get nitrogenProcessNitrificationDesc => 'erikoistuneet bakteerit muuttavat NH₄⁺:n NO₃⁻:ksi.';
+
+  @override
+  String get nitrogenProcessDenitrification => 'Denitrifikaatio';
+
+  @override
+  String get nitrogenProcessDenitrificationDesc => 'vähässä hapessa NO₃⁻ hengitetään N₂O:ksi ja N₂:ksi.';
+
+  @override
+  String get nitrogenProcessUptake => 'Juuren otto';
+
+  @override
+  String get nitrogenProcessLeaching => 'Huuhtoutuminen';
+
+  @override
+  String get nitrogenProcessFixation => 'N₂-sidonta';
+
+  @override
+  String get nitrogenProcessFixationDesc => 'vapaat ja symbioottiset mikrobit sitovat N₂:ta ilmasta maahan.';
+
+  @override
+  String get nitrogenUnitMass => 'mg/kg';
+
+  @override
+  String get nitrogenUnitGas => 'mol/m³';
 }

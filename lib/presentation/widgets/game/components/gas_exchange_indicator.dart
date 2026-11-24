@@ -473,7 +473,9 @@ class AtmosphericFluxIndicator extends PositionComponent
             onDismiss: () => _isPinned = false,
             accentColor: accent,
             elementSymbol: symbol,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

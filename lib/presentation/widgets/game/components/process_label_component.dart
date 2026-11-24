@@ -19,6 +19,24 @@ enum ProcessMarkerType {
 
 class ProcessLabel extends PositionComponent
     with HasGameReference<SoilScopeGame>, TapCallbacks, HoverCallbacks {
+  /// Processes that move nitrogen rather than carbon, water or phosphorus.
+  /// Kept here so the nitrogen observation mode has one mapping instead of
+  /// duplicating a switch in the renderer.
+  static bool isNitrogenProcess(ProcessMarkerType type) {
+    switch (type) {
+      case ProcessMarkerType.nitrification:
+      case ProcessMarkerType.mineralization:
+      case ProcessMarkerType.denitrification:
+      case ProcessMarkerType.leaching:
+      case ProcessMarkerType.nutrientUptake:
+        return true;
+      case ProcessMarkerType.adsorption:
+      case ProcessMarkerType.photosynthesis:
+      case ProcessMarkerType.transpiration:
+        return false;
+    }
+  }
+
   final ProcessMarkerType type;
   final Color color;
   final bool isStatic;
@@ -139,10 +157,20 @@ class ProcessLabel extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final double opacity = (isStatic || _isPinned)
-        ? 1.0
-        : (1.0 - _elapsed / lifeTime).clamp(0.0, 1.0);
-    final isHighlighted = _isHovered || _isPinned;
+    final activeCycle = game.ref.read(activeCycleProvider);
+    final nitrogenMode = activeCycle == ObservationCycle.nitrogen;
+    final isNitrogen = isNitrogenProcess(type);
+    // A cycle observation mode must visibly filter the process markers; before
+    // this, selecting nitrogen left every label at full strength.
+    final double cycleEmphasis = nitrogenMode
+        ? (isNitrogen ? 1.0 : 0.18)
+        : 1.0;
+    final double opacity =
+        ((isStatic || _isPinned)
+                ? 1.0
+                : (1.0 - _elapsed / lifeTime).clamp(0.0, 1.0)) *
+            cycleEmphasis;
+    final isHighlighted = _isHovered || _isPinned || (nitrogenMode && isNitrogen);
     final center = Offset(size.x / 2, size.y / 2);
     final zoom = game.camera.viewfinder.zoom;
 
@@ -335,7 +363,9 @@ class ProcessLabel extends PositionComponent
             onDismiss: () => _isPinned = false,
             accentColor: color,
             elementSymbol: symbol,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

@@ -4181,4 +4181,76 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get retryAction => 'Retry';
+
+  @override
+  String get nitrogenCycleTitle => 'Nitrogen cycle';
+
+  @override
+  String get nitrogenCycleSubtitle => 'Follow nitrogen from organic matter to the root — or back to the air.';
+
+  @override
+  String get nitrogenCycleHint => 'Glowing particles use the colours below. Tap one to inspect that form.';
+
+  @override
+  String get nitrogenLivePools => 'LIVE POOLS';
+
+  @override
+  String get nitrogenFormOrganic => 'Organic N';
+
+  @override
+  String get nitrogenFormOrganicDesc => 'Proteins, humus and dead microbes. Roots cannot take this up until microbes mineralise it.';
+
+  @override
+  String get nitrogenFormAmmonium => 'Ammonium';
+
+  @override
+  String get nitrogenFormAmmoniumDesc => 'NH₄⁺ sticks to clay and humus (CEC), so it waits in the root zone instead of leaching.';
+
+  @override
+  String get nitrogenFormNitrate => 'Nitrate';
+
+  @override
+  String get nitrogenFormNitrateDesc => 'NO₃⁻ moves freely with soil water — fast uptake, but also fast leaching.';
+
+  @override
+  String get nitrogenFormGas => 'Nitrous oxide';
+
+  @override
+  String get nitrogenFormGasDesc => 'N₂O forms in wet, low-oxygen soil when denitrifiers use nitrate instead of oxygen.';
+
+  @override
+  String get nitrogenProcessMineralization => 'Mineralisation';
+
+  @override
+  String get nitrogenProcessMineralizationDesc => 'microbes release NH₄⁺ from organic matter.';
+
+  @override
+  String get nitrogenProcessNitrification => 'Nitrification';
+
+  @override
+  String get nitrogenProcessNitrificationDesc => 'specialist bacteria convert NH₄⁺ into NO₃⁻.';
+
+  @override
+  String get nitrogenProcessDenitrification => 'Denitrification';
+
+  @override
+  String get nitrogenProcessDenitrificationDesc => 'in low oxygen, NO₃⁻ is respired to N₂O and N₂.';
+
+  @override
+  String get nitrogenProcessUptake => 'Root uptake';
+
+  @override
+  String get nitrogenProcessLeaching => 'Leaching';
+
+  @override
+  String get nitrogenProcessFixation => 'N₂ fixation';
+
+  @override
+  String get nitrogenProcessFixationDesc => 'free-living and symbiotic microbes pull N₂ from the air into the soil.';
+
+  @override
+  String get nitrogenUnitMass => 'mg/kg';
+
+  @override
+  String get nitrogenUnitGas => 'mol/m³';
 }

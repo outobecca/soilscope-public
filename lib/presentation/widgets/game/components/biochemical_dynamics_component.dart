@@ -19,6 +19,8 @@ import 'simulation_animation_layer_component.dart';
 import '../../../providers/ui_state_provider.dart';
 import '../../../../core/biophysics_utils.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/model_config.dart';
+import '../../../../core/simulation_constants.dart';
 import 'process_label_component.dart';
 import 'visual_seed.dart';
 
@@ -100,8 +102,8 @@ class BiochemicalDynamicsComponent extends Component
             orElse: () => state.profile.layers.first,
           );
 
-          // MASS CONSERVATION: Consume POM/Labile C from state
-          final amount = 0.05;
+          // MASS CONSERVATION: Consume POM/Labile C from state.
+          final amount = ModelConfig.of('interaction.exudateCarbonCost');
           final isCarbon = _random.nextDouble() < 0.7;
           final consumed = game.ref
               .read(simulationProvider.notifier)
@@ -197,7 +199,8 @@ class BiochemicalDynamicsComponent extends Component
             showTitle: true,
           ),
         );
-        _nutrientUptakeLabelTimer = 4.0;
+        _nutrientUptakeLabelTimer =
+            SimulationConstants.processLabelInterval;
       }
     }
 
@@ -242,8 +245,9 @@ class BiochemicalDynamicsComponent extends Component
         if (biologicalSources.isNotEmpty && _random.nextDouble() < 0.7) {
           final h =
               biologicalSources[_random.nextInt(biologicalSources.length)];
-          rx = h.absolutePosition.x + (_random.nextDouble() - 0.5) * 40.0;
-          ry = h.absolutePosition.y + (_random.nextDouble() - 0.5) * 40.0;
+          final hCenter = h.absolutePositionOf(h.size / 2);
+          rx = hCenter.x + (_random.nextDouble() - 0.5) * 40.0;
+          ry = hCenter.y + (_random.nextDouble() - 0.5) * 40.0;
         } else {
           rx = _nextGaussian(
             game.soilLeftX + worldWidth / 2,
@@ -445,7 +449,7 @@ class BiochemicalDynamicsComponent extends Component
 
         if (nearbySources.isNotEmpty) {
           final h = nearbySources[_random.nextInt(nearbySources.length)];
-          startPos = h.absolutePosition;
+          startPos = h.absolutePositionOf(h.size / 2);
           startLayerId = h.layerId;
         } else {
           // Fallback: spawn very close to the tip to represent local mineralized pool
@@ -454,7 +458,7 @@ class BiochemicalDynamicsComponent extends Component
           startPos = Vector2(rx, ry);
         }
 
-        final amount = 0.05;
+        final amount = ModelConfig.of('interaction.mineralNitrogenCost');
 
         bool success = true;
         if (startLayerId != null) {
@@ -593,7 +597,10 @@ class BiochemicalDynamicsComponent extends Component
     // photosynthesis activity rather than a fixed sky-brightness threshold.
     // A developing canopy absorbs only tens of W/m² even in full daylight, so
     // normalize against that range instead of the 800 W/m² incident constant.
-    final photosynthesisRate = (plant.absorbedPAR / 50.0).clamp(0.0, 1.0);
+    final photosynthesisRate =
+        (plant.absorbedPAR /
+                SimulationConstants.photosynthesisLabelFullScale)
+            .clamp(0.0, 1.0);
 
     // Process labels describe the active process, not the temporary particle
     // budget. Emit them before the particle cap so a busy soil does not hide
@@ -615,7 +622,8 @@ class BiochemicalDynamicsComponent extends Component
             showTitle: true,
           ),
         );
-        _photosynthesisLabelTimer = 4.0;
+        _photosynthesisLabelTimer =
+            SimulationConstants.processLabelInterval;
       }
     }
 
@@ -705,7 +713,8 @@ class BiochemicalDynamicsComponent extends Component
             showTitle: true,
           ),
         );
-        _transpirationLabelTimer = 4.0;
+        _transpirationLabelTimer =
+            SimulationConstants.processLabelInterval;
       }
     }
 
@@ -815,8 +824,8 @@ class BiochemicalDynamicsComponent extends Component
           symbol = 'N2O';
         }
 
-        // MASS CONSERVATION: Subtract from state
-        final amount = 0.5; // Bubble represents 0.5 mg/kg gas pulse
+        // MASS CONSERVATION: Subtract from state.
+        final amount = ModelConfig.of('interaction.bubbleGasCost');
         final success = game.ref
             .read(simulationProvider.notifier)
             .consumeGas(layer.id, symbol, amount);

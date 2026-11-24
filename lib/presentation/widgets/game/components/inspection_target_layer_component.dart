@@ -169,10 +169,10 @@ class InspectionTargetLayerComponent extends Component
           }
           break;
         case MagnifierType.microbe:
-          // Soil micro-zone near the top layer
+          // Soil micro-zone beside the root collar, inside the planted plot.
           target.position = Vector2(
             SceneCoordinateMapper.mapRootX(
-                  SimulationPlot.centerNormalizedX - 0.3,
+                  SimulationPlot.centerNormalizedX + 0.15,
                   worldWidth,
                 ) +
                 soilX,
@@ -180,8 +180,15 @@ class InspectionTargetLayerComponent extends Component
           );
           break;
         case MagnifierType.soilStructure:
-          // Static soil aggregate position
-          target.position = Vector2(soilX + worldWidth * 0.15, surfaceY + 220);
+          // A soil aggregate inside the plot, not in the decorative margin.
+          target.position = Vector2(
+            SceneCoordinateMapper.mapRootX(
+                  SimulationPlot.centerNormalizedX - 0.2,
+                  worldWidth,
+                ) +
+                soilX,
+            surfaceY + 220,
+          );
           break;
       }
 

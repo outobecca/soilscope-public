@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
+import '../../../../core/nitrogen_forms.dart';
 
 /// Visualizes nitrous oxide (N2O) escaping the soil surface under anaerobic conditions.
 class NitrousOxideBubbleComponent extends Component
@@ -34,7 +35,14 @@ class NitrousOxideBubbleComponent extends Component
     // Only emit when denitrification is active (anaerobic conditions)
     if (fWaterAnaerobic <= 0.5) return;
 
-    // Rising grey micro-bubbles
+    final nitrogenMode =
+        game.ref.read(activeCycleProvider) == ObservationCycle.nitrogen;
+    final gasColor = nitrogenMode
+        ? NitrogenForm.nitrousOxide.color
+        : Colors.blueGrey;
+
+    // Rising micro-bubbles. Nitrogen mode keeps the denitrification gas in the
+    // form colour promised by the explainer card instead of neutral grey.
     for (int i = 0; i < 12; i++) {
       final x = soilX + (i + 1) * (soilWidth / 13);
       final phase = (time * 0.6 + i * 0.15) % 1.0;
@@ -46,12 +54,23 @@ class NitrousOxideBubbleComponent extends Component
 
       // 1. Shadow
       canvas.drawCircle(pos + const Offset(1, 1), radius, _shadowPaint..color = Colors.black.withValues(alpha: 0.1 * alpha));
-      
+
+      if (nitrogenMode) {
+        canvas.drawCircle(
+          pos,
+          radius * 2.0,
+          Paint()
+            ..color = gasColor.withValues(alpha: 0.22 * alpha)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+        );
+      }
+
       // 2. Body
       canvas.drawCircle(
         pos,
         radius,
-        _bodyPaint..color = Colors.blueGrey.withValues(alpha: 0.4 * alpha),
+        _bodyPaint
+          ..color = gasColor.withValues(alpha: (nitrogenMode ? 0.7 : 0.4) * alpha),
       );
       
       // 3. Highlight (Shaded look)

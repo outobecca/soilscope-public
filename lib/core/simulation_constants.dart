@@ -53,6 +53,13 @@ class SimulationConstants {
   /// Zoom level threshold for showing high-detail icons.
   static const double detailZoomThreshold = 5.5;
 
+  /// Seconds between repeats of the same process label.
+  static const double processLabelInterval = 4.0;
+
+  /// Absorbed PAR at which the photosynthesis label reaches full strength
+  /// [W/m²]. A developing canopy absorbs far less than incident sunlight.
+  static const double photosynthesisLabelFullScale = 50.0;
+
   // ============ PARTICLE PHYSICS ============
 
   /// C:N ratio threshold for N immobilization.

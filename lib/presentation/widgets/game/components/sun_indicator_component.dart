@@ -207,7 +207,9 @@ class SunIndicatorComponent extends PositionComponent
             sourceId: 'sun-indicator',
             onDismiss: () => _isPinned = false,
             accentColor: Colors.amberAccent,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

@@ -55,11 +55,14 @@ Every tunable model parameter used by the solvers lives in `ModelConfig`
 be local constants. `SimulationConstants` exposes those values through
 getters, and the solvers read the same active map, so a parameter cannot be
 fingerprinted without also being consumed. The one-square-metre plot geometry
-in `lib/domain/models/simulation_plot.dart` is included too. `ModelParameterSet`
+in `lib/domain/models/simulation_plot.dart` is included too. Component-driven
+pool doses (`interaction.*`: nutrient absorption, exudation, bubble emission
+and microbial uptake) are also configured and fingerprinted, because a visual
+particle that is absorbed or consumed changes the simulated state. Purely
+visual movement and layout constants stay in `SimulationConstants` and
+`MicrobeMotility`. `ModelParameterSet`
 (`lib/domain/models/model_parameter_set.dart`) turns the active map into an
-`id`, a `version` and an 8-character fingerprint. Rendering and component-layout
-constants are deliberately excluded, so a visual change does not invalidate a
-scientific reference.
+`id`, a `version` and an 8-character fingerprint.
 
 At startup `lib/main.dart` loads
 `assets/config/model_parameters.json`. Its `parameters` map is empty in the
@@ -112,8 +115,8 @@ The fixture is one JSON object. Provenance lives beside the numbers.
   "generatedBy": "Instrument/process and the script or person that produced it.",
   "model": {
     "id": "soilscope-core",
-    "version": 3,
-    "fingerprint": "410ef21c"
+    "version": 4,
+    "fingerprint": "3cab39ed"
   },
   "relativeTimes": [0.125, 0.25, 0.5, 1.0],
   "series": [

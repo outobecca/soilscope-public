@@ -245,14 +245,14 @@ Computed getters (not serialized): `plant` (first plant or stub), `solarRadiatio
     "version": 1,
     "model": {
       "id": "soilscope-core",
-      "version": 3,
-      "fingerprint": "410ef21c"
+      "version": 4,
+      "fingerprint": "3cab39ed"
     },
     "state": { "...BiophysicalState JSON..." }
   }
   ```
-- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 3`. Its parameters are `ModelConfig.values` plus the `SimulationPlot` geometry, so a runtime override changes the identity. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
-- **`ModelConfig`** (`lib/core/model_config.dart`): one defaults map for all model-affecting solver constants, with `of(key)`, `values`, `applyOverrides()` and `reset()`. `ModelConfigRepository` (`lib/data/model_config_repository.dart`) loads `assets/config/model_parameters.json` before `runApp`; the checked-in `parameters` map is empty, so defaults reproduce prior behavior.
+- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 4`. Its parameters are `ModelConfig.values` plus the `SimulationPlot` geometry, so a runtime override changes the identity. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
+- **`ModelConfig`** (`lib/core/model_config.dart`): one defaults map for all model-affecting solver values and the `interaction.*` component pool doses, with `of(key)`, `values`, `applyOverrides()` and `reset()`. Rendering-only motion and layout stay in `SimulationConstants` and `MicrobeMotility`. `ModelConfigRepository` (`lib/data/model_config_repository.dart`) loads `assets/config/model_parameters.json` before `runApp`; the checked-in `parameters` map is empty, so defaults reproduce prior behavior.
 
 ### 5.8 `ReferenceDataset` JSON Schema (`lib/domain/models/reference_dataset.dart` & `assets/validation/reference.json`)
 

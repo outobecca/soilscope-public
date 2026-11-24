@@ -22,8 +22,8 @@ void main() {
       // ModelParameterSet.currentVersion, update this pin and regenerate the
       // validation reference deliberately; do not edit it to silence a drift.
       expect(ModelParameterSet.current.id, 'soilscope-core');
-      expect(ModelParameterSet.current.version, 3);
-      expect(ModelParameterSet.current.fingerprint, '410ef21c');
+      expect(ModelParameterSet.current.version, 4);
+      expect(ModelParameterSet.current.fingerprint, '3cab39ed');
       expect(ModelParameterSet.current.parameters, isNotEmpty);
       expect(
         ModelParameterSet.current.parameters.values.every((v) => v.isFinite),
@@ -71,6 +71,8 @@ void main() {
         'attractorForceScale',
         'interactionDistance',
         'physicsTickMs',
+        'processLabelInterval',
+        'photosynthesisLabelFullScale',
       };
       Set<String> staticConstantsIn(String path) =>
           RegExp(r'static const \w+ (\w+) =')
@@ -133,6 +135,69 @@ void main() {
           reason: '${file.path} declares a model constant outside ModelConfig',
         );
       }
+    });
+
+    test('component state doses are configured and fingerprinted', () {
+      const interactionKeys = {
+        'interaction.plantNutrientAbsorption',
+        'interaction.ionNutrientAbsorption',
+        'interaction.rootPotassiumUptake',
+        'interaction.exudateCarbonCost',
+        'interaction.mineralNitrogenCost',
+        'interaction.bubbleGasCost',
+        'interaction.microbeExudateUptake',
+        'interaction.microbeRootUptake',
+      };
+
+      final files = Directory('lib/presentation/widgets/game/components')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.dart'))
+          .toList();
+      final source = files.map((file) => file.readAsStringSync()).join('\n');
+
+      for (final key in interactionKeys) {
+        expect(ModelConfig.defaults, contains(key));
+        expect(ModelParameterSet.current.parameters, contains(key));
+        expect(
+          source,
+          contains("ModelConfig.of('$key')"),
+          reason: 'component state dose $key is configured but unused',
+        );
+      }
+
+      // A component may consume an amount, but that amount must come from
+      // ModelConfig. A numeric third argument would change results invisibly.
+      final literalDose = RegExp(
+        r'(?:absorbNutrient|consumeResource|consumeGas|consumePotassium)'
+        r'\([^;]*?,\s*[-+]?\d',
+      );
+      for (final file in files) {
+        expect(
+          literalDose.hasMatch(file.readAsStringSync()),
+          isFalse,
+          reason:
+              '${file.path} passes a literal state dose instead of '
+              'reading ModelConfig',
+        );
+      }
+    });
+
+    test('interaction overrides are accepted and change the fingerprint', () {
+      final baseline = ModelParameterSet.current.fingerprint;
+      try {
+        ModelConfig.applyOverrides({
+          'interaction.plantNutrientAbsorption': 0.2,
+        });
+        expect(ModelConfig.of('interaction.plantNutrientAbsorption'), 0.2);
+        expect(ModelParameterSet.current.fingerprint, isNot(baseline));
+      } finally {
+        ModelConfig.reset();
+      }
+      expect(
+        ModelConfig.of('interaction.plantNutrientAbsorption'),
+        ModelConfig.defaults['interaction.plantNutrientAbsorption'],
+      );
     });
 
     test('a runtime override changes the fingerprint and the engine', () {

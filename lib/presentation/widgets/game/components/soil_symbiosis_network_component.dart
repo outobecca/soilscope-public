@@ -11,6 +11,7 @@ import 'soil_layer_component.dart';
 import 'biological_entities_component.dart';
 import 'rhizosphere_hotspot_component.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/nitrogen_forms.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import 'cycle_highlight_mixin.dart';
 import 'simulation_animation_layer_component.dart';
@@ -235,9 +236,11 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     // 2. Target Nodes (Hotspots and Microbes)
     final hotspots = game.technicalHotspotLayer.children.whereType<ExpandableHotspotNode>();
     for (final h in hotspots) {
+      // The node is a centred 80 px box; its origin sits 40 px up-left of the
+      // visible dot. Connect the network to the drawn centre.
       otherNodes.add(NetNode(
-        h.absolutePosition.toOffset(), 
-        'hotspot', 
+        h.absolutePositionOf(h.size / 2).toOffset(),
+        'hotspot',
         id: 'hotspot_${h.layerId}',
         metadata: {'layerId': h.layerId}
       ));
@@ -248,9 +251,9 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       final rhizoHotspots = layer.children.whereType<RhizosphereHotspotComponent>();
       for (final h in rhizoHotspots) {
         otherNodes.add(NetNode(
-          h.absolutePosition.toOffset(), 
-          'rhizosphere_hotspot', 
-          id: 'rhizo_${h.hotspotId}', 
+          h.absolutePositionOf(h.size / 2).toOffset(),
+          'rhizosphere_hotspot',
+          id: 'rhizo_${h.hotspotId}',
           metadata: {'layerId': h.layerId}
         ));
       }
@@ -261,7 +264,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final microbes = biologicalEntities?.children.whereType<AnimatedMicrobeComponent>() ?? const [];
     for (final m in microbes) {
       otherNodes.add(NetNode(
-        m.absolutePosition.toOffset(), 
+        m.absolutePositionOf(m.size / 2).toOffset(),
         'microbe',
         id: 'microbe_${m.microbeId}'
       ));
@@ -571,7 +574,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
         // Color mapping based on active cycle
         Color pColor = Colors.white;
         switch (activeCycle) {
-          case ObservationCycle.nitrogen: pColor = CPKStandards.colorN; break;
+          case ObservationCycle.nitrogen: pColor = NitrogenForm.nitrate.color; break;
           case ObservationCycle.carbon: pColor = CPKStandards.colorC; break;
           case ObservationCycle.water: pColor = CPKStandards.colorO; break;
           case ObservationCycle.phosphorus: pColor = CPKStandards.colorP; break;

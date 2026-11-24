@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
 import '../../../providers/ui_state_provider.dart';
+import '../../../../core/nitrogen_forms.dart';
 
 /// Mixin for components that participate in biogeochemical cycle highlighting.
 /// Allows components to define which cycles they belong to and automatically 
@@ -33,7 +36,7 @@ mixin CycleHighlightMixin on Component, HasGameReference<SoilScopeGame> {
     if (!isCycleHighlighted) return null;
     final activeCycle = game.ref.read(activeCycleProvider);
     switch (activeCycle) {
-      case ObservationCycle.nitrogen: return Colors.blueAccent;
+      case ObservationCycle.nitrogen: return NitrogenForm.nitrate.color;
       case ObservationCycle.carbon: return Colors.amberAccent;
       case ObservationCycle.water: return Colors.cyanAccent;
       case ObservationCycle.phosphorus: return Colors.orangeAccent;
@@ -41,27 +44,39 @@ mixin CycleHighlightMixin on Component, HasGameReference<SoilScopeGame> {
     }
   }
 
-  /// Renders a standard cycle glow if active.
+  /// Renders the active-cycle emphasis around [center].
+  ///
+  /// The previous treatment was a single 8 px blur at 40 % alpha, which the
+  /// soil texture visually swallowed. A pulsing halo plus two crisp rings is
+  /// legible on top of the layered texture while still staying translucent.
+  /// The pulse runs on the visual clock, so it freezes with the canvas.
   void renderCycleGlow(Canvas canvas, Offset center, double radius) {
     final glowColor = cycleGlowColor;
-    if (glowColor != null) {
-      canvas.drawCircle(
-        center,
-        radius * 1.3,
-        Paint()
-          ..color = glowColor.withValues(alpha: 0.4)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-      );
-      
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.8)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-      );
-    }
+    if (glowColor == null) return;
+
+    final pulse = 0.9 + 0.1 * math.sin(game.currentTime() * math.pi);
+    canvas.drawCircle(
+      center,
+      radius * 2.4 * pulse,
+      Paint()
+        ..color = glowColor.withValues(alpha: 0.22)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+    canvas.drawCircle(
+      center,
+      radius * 1.5 * pulse,
+      Paint()
+        ..color = glowColor.withValues(alpha: 0.55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6,
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
   }
 }

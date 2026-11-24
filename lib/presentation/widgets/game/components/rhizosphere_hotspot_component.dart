@@ -222,7 +222,9 @@ class RhizosphereHotspotComponent extends PositionComponent
                 : 'nitrification',
             onDismiss: () => _isPinned = false,
             accentColor: _getColor(),
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

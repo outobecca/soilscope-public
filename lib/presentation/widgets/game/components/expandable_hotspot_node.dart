@@ -4,9 +4,11 @@ import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
+import '../../../providers/ui_state_provider.dart';
 import 'data_hotspot_component.dart';
 import 'canvas_hit_testing.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/nitrogen_forms.dart';
 
 /// A consolidated, expandable hotspot node that anchors multiple soil metrics.
 /// Initial state is a neutral indicator. Tapping expands it to reveal specific metrics.
@@ -15,6 +17,22 @@ class ExpandableHotspotNode extends PositionComponent
   final String layerId;
   final List<String> metrics;
 
+  /// Metrics that expose a pool or flux in the nitrogen cycle.
+  static const Set<String> nitrogenMetricLabels = {
+    'NH₄⁺',
+    'NH4+',
+    'NO₃⁻',
+    'NO3-',
+    'POM-N',
+    'Mic-N',
+    'MAOM-N',
+  };
+
+  /// Whether this cluster opens nitrogen data. Used by the nitrogen
+  /// observation mode to mark the nodes that expose that cycle.
+  bool get exposesNitrogenPools =>
+      metrics.any(nitrogenMetricLabels.contains);
+
   /// Position inside the owning layer, normalised to 0..1. The layer's world
   /// rect can change when the scenario or viewport changes; keeping the
   /// anchor relative lets the node follow its layer instead of staying where
@@ -22,6 +40,10 @@ class ExpandableHotspotNode extends PositionComponent
   final Vector2 layerAnchor;
 
   bool _isExpanded = false;
+
+  /// Whether this cluster currently shows its metric children.
+  bool get isExpanded => _isExpanded;
+
   final List<DataHotspotComponent> _childHotspots = [];
 
   late final CircleComponent _baseIndicator;
@@ -72,15 +94,12 @@ class ExpandableHotspotNode extends PositionComponent
   @override
   bool containsLocalPoint(Vector2 point) {
     final center = size / 2;
-    if (_isExpanded) {
-      // Expanded state: capture taps within the cluster radius.
-      return (point - center).length <= 85.0;
-    }
-    // Collapsed state: keep the target stable on screen instead of letting
-    // the world-space radius balloon at high zoom.
+    // The metric children are their own TapCallbacks components. This node
+    // should only claim its visible core; an 85 px expanded disc used to
+    // swallow taps meant for nearby rhizosphere markers and layers.
     final hitRadius = CanvasHitTesting.worldRadius(
       zoom: game.camera.viewfinder.zoom,
-      screenRadius: 26,
+      screenRadius: _isExpanded ? 18 : 26,
       visualWorldRadius: 12,
       minWorld: 10,
       maxWorld: 36,
@@ -140,6 +159,37 @@ class ExpandableHotspotNode extends PositionComponent
       coreRadius * 0.4,
       Paint()..color = Colors.white.withValues(alpha: 0.5),
     );
+
+    // 6. Nitrogen observation emphasis. The permanent white sampling dots are
+    // the only always-present nitrogen anchors on a quiet canvas, so nitrogen
+    // mode marks the nodes that actually expose nitrogen pools.
+    if (game.ref.read(activeCycleProvider) == ObservationCycle.nitrogen &&
+        exposesNitrogenPools) {
+      final pulse = 0.9 + 0.1 * math.sin(game.currentTime() * 2 * math.pi / 1.6);
+      canvas.drawCircle(
+        center,
+        20.0 * pulse,
+        Paint()
+          ..color = NitrogenForm.nitrate.color.withValues(alpha: 0.24)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+      canvas.drawCircle(
+        center,
+        13.0,
+        Paint()
+          ..color = NitrogenForm.nitrate.color.withValues(alpha: 0.9)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
+      );
+      canvas.drawCircle(
+        center,
+        8.0,
+        Paint()
+          ..color = NitrogenForm.ammonium.color.withValues(alpha: 0.85)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
+      );
+    }
   }
 
   void _toggleExpansion() {

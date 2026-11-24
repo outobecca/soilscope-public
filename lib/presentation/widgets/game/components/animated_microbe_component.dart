@@ -6,8 +6,11 @@ import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../core/cpk_standards.dart';
 import '../../../../core/biophysics_utils.dart';
+import '../../../../core/nitrogen_forms.dart';
+import '../../../../core/model_config.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'scene_coordinate_mapper.dart';
+import 'microbe_motility.dart';
 import '../../../providers/simulation_provider.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
@@ -45,7 +48,7 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   double _time = 0;
   double _activationBoost = 0.0;
-  int? _anchorIndex;
+  Vector2? _rootAnchor;
   final Vector2 _velocity = Vector2.zero();
   double _retargetTimer = 0.0;
   Vector2? _chemotacticTarget;
@@ -54,13 +57,9 @@ class AnimatedMicrobeComponent extends PositionComponent
   // Visual Immobilization State
   final List<Color> _absorbedNutrients = [];
   double _pulseScale = 1.0;
-  static const int _maxAbsorbed = 12;
 
   static final Vector2 _tmpVec = Vector2.zero();
   static final Vector2 _tmpVec2 = Vector2.zero();
-
-  // Performance Guard: Max clusters per world
-  static const int maxClusters = 50;
 
   final Paint _coreGlowPaint = Paint()
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
@@ -84,7 +83,6 @@ class AnimatedMicrobeComponent extends PositionComponent
          priority: 80,
        ) {
     _time = seed.toDouble();
-    _anchorIndex = seed;
   }
 
   double get _hitRadius => CanvasHitTesting.worldRadius(
@@ -112,118 +110,167 @@ class AnimatedMicrobeComponent extends PositionComponent
 
     final vdt = getPerceptualDt(dt);
     if (_activationBoost > 0) {
-      _activationBoost = (_activationBoost - vdt * 0.4).clamp(0.0, 1.0);
+      _activationBoost =
+          (_activationBoost -
+                  vdt * MicrobeMotility.activationDecayPerSecond)
+              .clamp(0.0, 1.0);
     }
 
     final layer = state.profile.layers.first;
     final activityFactor = BiophysicsUtils.q10Factor(
       layer.temperature,
     ).clamp(0.1, 4.0);
-    final totalActivity = activityFactor * (1.0 + _activationBoost * 2.5);
+    final totalActivity =
+        activityFactor *
+        (1.0 + _activationBoost * MicrobeMotility.activationSpeedBoost);
     _time += vdt * totalActivity;
 
-    _decideMovementTarget(vdt);
+    _retargetTimer -= vdt;
+    if (_retargetTimer <= 0) {
+      _refreshRootAnchor(state);
+      _decideMovementTarget(state);
+      _retargetTimer = MicrobeMotility.retargetDelay(_random);
+    }
     _handleImmobilizationAnchoring(vdt);
 
     if (state.plants.isNotEmpty) {
-      _retargetTimer -= vdt;
+      final rootAnchor = _rootAnchor;
 
-      Vector2 targetPos;
+      Vector2? targetPos;
       bool isFeeding = false;
 
-      if (_chemotacticTarget != null) {
-        targetPos = _chemotacticTarget!;
-        if (position.distanceTo(targetPos) < 20) {
+      final chemotactic = _chemotacticTarget;
+      if (chemotactic != null) {
+        targetPos = chemotactic;
+        if (position.distanceTo(chemotactic) <
+            MicrobeMotility.feedingRadiusHotspot) {
           isFeeding = true;
-          _activationBoost = (_activationBoost + vdt * 1.5).clamp(0.0, 1.0);
+          _activationBoost =
+              (_activationBoost +
+                      vdt * MicrobeMotility.activationGainHotspot)
+                  .clamp(0.0, 1.0);
 
           // MASS CONSERVATION: Visual feeding updates biophysical state
-          if (_random.nextDouble() < 0.05 * vdt * 10) {
+          if (_random.nextDouble() <
+              MicrobeMotility.feedingExudateRatePerSecond * vdt) {
             final layerId = _getCurrentLayerId(state);
             if (layerId != null) {
               game.ref
                   .read(simulationProvider.notifier)
-                  .consumeResource(layerId, 'labileCarbon', 0.005);
+                  .consumeResource(
+                    layerId,
+                    'labileCarbon',
+                    ModelConfig.of('interaction.microbeExudateUptake'),
+                  );
             }
           }
         }
-      } else {
-        // Default wandering around roots if no high-fitness hotspot is found
-        final plant = state.plants[seed % state.plants.length];
-        if (_anchorIndex == null ||
-            _anchorIndex! >= plant.rootSystem.length ||
-            _retargetTimer <= 0) {
-          _anchorIndex = _random.nextInt(plant.rootSystem.length);
-          _retargetTimer = 4.0 + _random.nextDouble() * 6.0;
-        }
+      } else if (rootAnchor != null) {
+        // Stay with a nearby root when no local hotspot is worth the trip.
+        targetPos = rootAnchor;
 
-        final node = plant.rootSystem[_anchorIndex!];
-        final anchorX =
-            SceneCoordinateMapper.mapRootX(
-              node.x,
-              SoilScopeGame.soilColumnWidth,
-            ) +
-            game.soilLeftX;
-        final anchorY = SceneCoordinateMapper.mapRootY(
-          node.z,
-          game.soilSurfaceY,
-          game.soilColumnHeight,
-        );
-        _tmpVec.setValues(anchorX, anchorY);
-        targetPos = _tmpVec;
-
-        if (position.distanceTo(targetPos) < 30) {
+        if (position.distanceTo(rootAnchor) <
+            MicrobeMotility.feedingRadiusRoot) {
           isFeeding = true;
-          _activationBoost = (_activationBoost + vdt * 0.5).clamp(0.0, 1.0);
+          _activationBoost =
+              (_activationBoost + vdt * MicrobeMotility.activationGainRoot)
+                  .clamp(0.0, 1.0);
 
           // Roots provide energy -> consume exudates (labile carbon)
-          if (_random.nextDouble() < 0.02 * vdt * 10) {
+          if (_random.nextDouble() <
+              MicrobeMotility.feedingRootRatePerSecond * vdt) {
             final layerId = _getCurrentLayerId(state);
             if (layerId != null) {
               game.ref
                   .read(simulationProvider.notifier)
-                  .consumeResource(layerId, 'labileCarbon', 0.002);
+                  .consumeResource(
+                    layerId,
+                    'labileCarbon',
+                    ModelConfig.of('interaction.microbeRootUptake'),
+                  );
             }
           }
         }
       }
 
-      final orbitRadius = (isFeeding ? 6.0 : 30.0) + (seed % 4) * 6;
-      final orbitSpeed = isFeeding ? 0.08 : 0.4;
-      final orbitAngle = _time * orbitSpeed + seed;
+      if (targetPos != null) {
+        final orbitRadius =
+            (isFeeding
+                ? MicrobeMotility.orbitFeedRadius
+                : MicrobeMotility.orbitSeekRadius) +
+            (seed % 4) * MicrobeMotility.orbitGrowthPerSeed;
+        final orbitSpeed = isFeeding
+            ? MicrobeMotility.orbitSpeedFeed
+            : MicrobeMotility.orbitSpeedSeek;
+        final orbitAngle = _time * orbitSpeed + seed;
 
-      _tmpVec2.setValues(
-        math.cos(orbitAngle) * orbitRadius,
-        math.sin(orbitAngle) * orbitRadius * 0.6,
-      );
-      final orbitOffset = _tmpVec2;
-      final desiredPos = targetPos + orbitOffset;
+        _tmpVec2.setValues(
+          math.cos(orbitAngle) * orbitRadius,
+          math.sin(orbitAngle) *
+              orbitRadius *
+              MicrobeMotility.orbitVerticalScale,
+        );
+        final desired = rootAnchor == null
+            ? targetPos + _tmpVec2
+            : MicrobeMotility.clampToRhizosphere(
+                rootAnchor,
+                targetPos + _tmpVec2,
+              );
 
-      _tmpVec2.setFrom(desiredPos);
-      _tmpVec2.sub(position);
-      final targetVelocity = _tmpVec2..scale(isFeeding ? 0.5 : 1.0);
-      _applyMicrobeRepulsion(vdt);
+        _tmpVec2.setFrom(desired);
+        _tmpVec2.sub(position);
+        final targetVelocity = _tmpVec2
+          ..scale(
+            isFeeding
+                ? MicrobeMotility.feedVelocityScale
+                : MicrobeMotility.seekVelocityScale,
+          );
+        _applyMicrobeRepulsion(vdt);
 
-      _velocity.lerp(targetVelocity, vdt * 2.5);
+        _velocity.lerp(targetVelocity, vdt * MicrobeMotility.velocityResponse);
 
-      final maxSpeed = (isFeeding ? 18.0 : 55.0) * (1.0 + activityFactor * 0.2);
-      if (_velocity.length > maxSpeed) _velocity.scaleTo(maxSpeed);
+        final maxSpeed = MicrobeMotility.speedLimit(
+          feeding: isFeeding,
+          activityFactor: activityFactor,
+        );
+        if (_velocity.length > maxSpeed) _velocity.scaleTo(maxSpeed);
 
-      final moveMultiplier = (isHovered || isPinned) ? 0.15 : 1.0;
-      position.add(_velocity * vdt * moveMultiplier);
+        final moveMultiplier = (isHovered || isPinned)
+            ? MicrobeMotility.hoverSpeedDamping
+            : 1.0;
+        position.add(_velocity * vdt * moveMultiplier);
+
+        // Passive transport: a weak ride on the soil-water flux. Active
+        // swimming dominates, but drainage still nudges the colony.
+        position.y +=
+            MicrobeMotility.passiveDrift(layer.verticalFlux) * vdt;
+
+        if (rootAnchor != null &&
+            position.distanceTo(rootAnchor) >
+                MicrobeMotility.rhizosphereRadius) {
+          position.setFrom(
+            MicrobeMotility.clampToRhizosphere(rootAnchor, position),
+          );
+          _velocity.scale(MicrobeMotility.rhizosphereClampVelocityRetain);
+        }
+      }
 
       final soilX = game.soilLeftX;
       final soilWidth = SoilScopeGame.soilColumnWidth;
-      position.x = position.x.clamp(soilX + 15, soilX + soilWidth - 15);
+      final margin = MicrobeMotility.soilEdgeMargin;
+      position.x = position.x.clamp(soilX + margin, soilX + soilWidth - margin);
       position.y = position.y.clamp(
-        game.soilSurfaceY + 15,
-        game.soilSurfaceY + game.soilColumnHeight - 15,
+        game.soilSurfaceY + margin,
+        game.soilSurfaceY + game.soilColumnHeight - margin,
       );
     }
 
     // Recover pulse
     if (_pulseScale > 1.0) {
-      _pulseScale = math.max(1.0, _pulseScale - vdt * 2.0);
+      _pulseScale = math.max(
+        1.0,
+        _pulseScale - vdt * MicrobeMotility.pulseDecayPerSecond,
+      );
     }
 
     _checkForMolecularTransformations(vdt);
@@ -231,7 +278,8 @@ class AnimatedMicrobeComponent extends PositionComponent
 
   /// Detects nearby molecule particles and triggers biochemical transformations (e.g. Nitrification)
   void _checkForMolecularTransformations(double vdt) {
-    if (_random.nextDouble() > 0.1 * vdt) {
+    if (_random.nextDouble() >
+        MicrobeMotility.transformationCheckRate * vdt) {
       return; // Optimization: check only occasionally
     }
 
@@ -242,7 +290,7 @@ class AnimatedMicrobeComponent extends PositionComponent
       if (mol.transformTarget != null) continue; // Already transforming
 
       final dist = position.distanceTo(mol.position);
-      if (dist < 40.0) {
+      if (dist < MicrobeMotility.transformationRadius) {
         // MICROBIAL BIOCHEMISTRY: Determine transformation based on type
         MoleculeType? target;
         if (mol.type == MoleculeType.ammonium) {
@@ -253,10 +301,16 @@ class AnimatedMicrobeComponent extends PositionComponent
           target = MoleculeType.ammonium; // Mineralization
         }
 
-        if (target != null && _random.nextDouble() < 0.3) {
+        if (target != null &&
+            _random.nextDouble() < MicrobeMotility.transformationChance) {
           mol.transformTarget = target;
-          _pulseScale = 1.3; // Microbe pulses when active
-          _activationBoost = (_activationBoost + 0.2).clamp(0.0, 1.0);
+          _pulseScale =
+              MicrobeMotility.transformationPulseScale; // Microbe pulses
+          _activationBoost =
+              (_activationBoost + MicrobeMotility.transformationBoost).clamp(
+                0.0,
+                1.0,
+              );
           break; // One transformation per microbe per check
         }
       }
@@ -274,9 +328,9 @@ class AnimatedMicrobeComponent extends PositionComponent
     if (data.isEmpty) return;
 
     final center = position;
-    const double sensingRadius = 80.0;
-    const double captureRadius = 6.0;
-    const double pullStrength = 120.0;
+    const sensingRadius = MicrobeMotility.immobilizationSensingRadius;
+    const captureRadius = MicrobeMotility.immobilizationCaptureRadius;
+    const pullStrength = MicrobeMotility.immobilizationPullStrength;
 
     for (int i = 0; i < data.length; i += 7) {
       final pState = data[i + 6];
@@ -295,12 +349,14 @@ class AnimatedMicrobeComponent extends PositionComponent
 
           // Add to visual cluster
           _absorbedNutrients.add(_getColorForParticleType(type));
-          if (_absorbedNutrients.length > _maxAbsorbed) {
+          if (_absorbedNutrients.length >
+              MicrobeMotility.maxAbsorbedNutrients) {
             _absorbedNutrients.removeAt(0);
           }
 
-          _pulseScale = 1.25; // Trigger pulse
-          _activationBoost = (_activationBoost + 0.1).clamp(0.0, 1.0);
+          _pulseScale = MicrobeMotility.capturePulseScale; // Trigger pulse
+          _activationBoost =
+              (_activationBoost + MicrobeMotility.captureBoost).clamp(0.0, 1.0);
 
           // "Hide" the particle visually by moving it out of view or setting state to 0
           data[i + 6] = 0;
@@ -313,8 +369,16 @@ class AnimatedMicrobeComponent extends PositionComponent
           data[i + 4] = toCenter.y * pullStrength;
 
           // Slight position nudge to overcome physics isolate overrides
-          data[i + 1] += toCenter.x * pullStrength * 0.2 * vdt;
-          data[i + 2] += toCenter.y * pullStrength * 0.2 * vdt;
+          data[i + 1] +=
+              toCenter.x *
+              pullStrength *
+              MicrobeMotility.immobilizationNudge *
+              vdt;
+          data[i + 2] +=
+              toCenter.y *
+              pullStrength *
+              MicrobeMotility.immobilizationNudge *
+              vdt;
         }
       }
     }
@@ -350,20 +414,19 @@ class AnimatedMicrobeComponent extends PositionComponent
     return state.profile.layers.firstOrNull?.id;
   }
 
-  void _decideMovementTarget(double dt) {
-    if (_retargetTimer > 0.5 && _chemotacticTarget != null) return;
-
-    final state = game.simulationState;
-    if (state == null) return;
+  void _decideMovementTarget(BiophysicalState state) {
+    final anchor = _rootAnchor;
 
     final double cnRatio = state.profile.layers.first.cnRatio;
     final bool isNitrogenLimited =
-        cnRatio > 24.0; // Microbes seek N if ratio is high
+        cnRatio >
+        MicrobeMotility
+            .nitrogenLimitedCnRatio; // Microbes seek N if ratio is high
 
     double maxFitness = -1.0;
     Vector2? bestTarget;
 
-    // 1. Evaluate Hotspots (Opportunistic centers)
+    // 1. Evaluate local hotspots (opportunistic centres).
     final hotspots = game.world.children
         .whereType<SoilLayerComponent>()
         .expand((l) => l.children.whereType<DataHotspotComponent>())
@@ -371,31 +434,40 @@ class AnimatedMicrobeComponent extends PositionComponent
 
     for (final h in hotspots) {
       final dist = position.distanceTo(h.position);
-      if (dist > 400) continue; // Out of sensing range
+      if (dist > MicrobeMotility.sensingRadiusHotspot) continue;
+      if (anchor != null &&
+          h.position.distanceTo(anchor) >
+              MicrobeMotility.rhizosphereRadius +
+                  MicrobeMotility.rhizosphereSensingMargin) {
+        continue;
+      }
 
       // Base benefit from content
       double benefit = 1.0;
       if (h.type == HotspotType.nutrient) {
-        benefit = 2.0;
+        benefit = MicrobeMotility.nutrientBenefit;
         // Priority bonus for Nitrogen if soil is C-rich (Nitrogen limitation)
         if (isNitrogenLimited &&
             (h.label.contains('N') ||
                 h.label.contains('NH') ||
                 h.label.contains('NO'))) {
-          benefit *= 2.5;
+          benefit *= MicrobeMotility.nitrogenBenefitMultiplier;
         }
       } else if (h.label == 'T' || h.label == 'W') {
-        benefit = 1.5; // Seek optimal temperature/water
+        benefit =
+            MicrobeMotility.climateBenefit; // Seek optimal temperature/water
       }
 
-      final fitness = benefit / (dist / 100.0).clamp(1.0, 10.0);
+      final fitness =
+          benefit /
+          (dist / MicrobeMotility.hotspotDistanceScale).clamp(1.0, 10.0);
       if (fitness > maxFitness) {
         maxFitness = fitness;
         bestTarget = h.position;
       }
     }
 
-    // 2. Evaluate Molecule Particles (Dynamic chemotaxis)
+    // 2. Evaluate nearby exudates (dynamic chemotaxis).
     final molecules =
         game.moleculePool?.activeParticles ??
         const <MoleculeParticleComponent>[];
@@ -403,24 +475,68 @@ class AnimatedMicrobeComponent extends PositionComponent
       if (mol.type != MoleculeType.labileCarbon) continue;
 
       final dist = position.distanceTo(mol.position);
-      if (dist > 300) continue;
+      if (dist > MicrobeMotility.sensingRadiusExudate) continue;
+            if (anchor != null &&
+          mol.position.distanceTo(anchor) >
+              MicrobeMotility.rhizosphereRadius +
+                  MicrobeMotility.rhizosphereSensingMargin) {
+        continue;
+      }
 
       // Labile carbon is high energy
-      double benefit = 3.0;
-      if (isNitrogenLimited) benefit *= 0.7;
+      double benefit = MicrobeMotility.exudateBenefit;
+      if (isNitrogenLimited) {
+        benefit *= MicrobeMotility.exudateNitrogenPenalty;
+      }
 
-      final fitness = benefit / (dist / 80.0).clamp(1.0, 10.0);
+      final fitness =
+          benefit /
+          (dist / MicrobeMotility.exudateDistanceScale).clamp(1.0, 10.0);
       if (fitness > maxFitness) {
         maxFitness = fitness;
         bestTarget = mol.position;
       }
     }
 
-    if (bestTarget != null && maxFitness > 0.5) {
+    if (bestTarget != null && maxFitness > MicrobeMotility.minimumFitness) {
       _chemotacticTarget = bestTarget;
     } else {
       _chemotacticTarget = null;
     }
+  }
+
+  /// Picks a stable root anchor from the nearest few root nodes.
+  ///
+  /// Seeding the choice keeps colonies spread along the local root system
+  /// instead of all converging on one point.
+  void _refreshRootAnchor(BiophysicalState state) {
+    final roots = <Vector2>[];
+    for (final plant in state.plants) {
+      for (final node in plant.rootSystem) {
+        roots.add(
+          SceneCoordinateMapper.mapRootNodeWorld(
+            node,
+            SoilScopeGame.soilColumnWidth,
+            game.soilSurfaceY,
+            game.soilColumnHeight,
+            game.soilLeftX,
+          ),
+        );
+      }
+    }
+
+    if (roots.isEmpty) {
+      _rootAnchor = null;
+      return;
+    }
+
+    roots.sort(
+      (a, b) => position
+          .distanceToSquared(a)
+          .compareTo(position.distanceToSquared(b)),
+    );
+    final nearby = roots.take(MicrobeMotility.rootAnchorSearchCount).toList();
+    _rootAnchor = nearby[seed % nearby.length];
   }
 
   void _applyMicrobeRepulsion(double dt) {
@@ -428,11 +544,14 @@ class AnimatedMicrobeComponent extends PositionComponent
     for (final other in others) {
       if (other == this) continue;
       final dist = position.distanceTo(other.position);
-      if (dist < 30) {
+      if (dist < MicrobeMotility.repulsionRadius) {
         _tmpVec.setFrom(position);
         _tmpVec.sub(other.position);
         _tmpVec.normalize();
-        _tmpVec.scale((30 - dist) * 1.5);
+        _tmpVec.scale(
+          (MicrobeMotility.repulsionRadius - dist) *
+              MicrobeMotility.repulsionStrength,
+        );
         _velocity.add(_tmpVec * dt);
       }
     }
@@ -503,6 +622,32 @@ class AnimatedMicrobeComponent extends PositionComponent
       (_coreShadowPaint
         ..color = Colors.black.withValues(alpha: 0.3 * currentOpacity)),
     );
+    // Nitrogen observation emphasis: these colonies drive mineralisation,
+    // nitrification and denitrification, so mark them while that cycle is
+    // being studied. The ring is screen-constant and freezes with the clock.
+    if (game.ref.read(activeCycleProvider) == ObservationCycle.nitrogen) {
+      final pulse = 0.9 + 0.1 * math.sin(game.currentTime() * 2.2);
+      canvas.drawCircle(
+        center,
+        22.0 * pulse,
+        Paint()
+          ..color = NitrogenForm.nitrate.color.withValues(
+            alpha: 0.20 * currentOpacity,
+          )
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+      canvas.drawCircle(
+        center,
+        15.0,
+        Paint()
+          ..color = NitrogenForm.nitrate.color.withValues(
+            alpha: 0.8 * currentOpacity,
+          )
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4 / zoom,
+      );
+    }
+
     // Core body
     canvas.drawCircle(
       center,
@@ -519,25 +664,42 @@ class AnimatedMicrobeComponent extends PositionComponent
     );
 
     // 2. Swarm Effect: Multiple tiny dots representing individuals
-    final dotCount = (6 * biomassIntensity).toInt().clamp(3, 12);
-    final dotRadius = 1.0 / zoom;
+    final dotCount = (MicrobeMotility.swarmDotBase * biomassIntensity)
+        .toInt()
+        .clamp(MicrobeMotility.swarmDotMin, MicrobeMotility.swarmDotMax);
+    final dotRadius = MicrobeMotility.swarmDotRadius / zoom;
 
     final swarmPaint = _swarmPaint
       ..color = baseColor.withValues(alpha: 0.5 * currentOpacity);
 
     for (int i = 0; i < dotCount; i++) {
-      final angle = (_time * 1.5) + (i * math.pi * 2 / dotCount) + (seed * i);
-      final dist = (10.0 + 4.0 * math.sin(_time * 0.5 + i)) * biomassIntensity;
+      // Slow internal jiggle: a colony should look like it is milling in
+      // place, not spinning at a visible frame-rate.
+      final angle =
+          (_time * MicrobeMotility.swarmRotationSpeed) +
+          (i * math.pi * 2 / dotCount) +
+          (seed * i);
+      final dist =
+          (MicrobeMotility.swarmBaseDistance +
+              MicrobeMotility.swarmPulseDistance *
+                  math.sin(_time * MicrobeMotility.swarmPulseSpeed + i)) *
+          biomassIntensity;
       final dotCenter =
-          center + Offset(math.cos(angle) * dist, math.sin(angle) * dist * 0.8);
+          center +
+          Offset(
+            math.cos(angle) * dist,
+            math.sin(angle) * dist * MicrobeMotility.swarmVerticalScale,
+          );
       canvas.drawCircle(dotCenter, dotRadius, swarmPaint);
     }
 
     // 3. Captured Nutrients (Immobilized resources)
     for (int i = 0; i < _absorbedNutrients.length; i++) {
       final color = _absorbedNutrients[i];
-      final angle = (i * math.pi * 2 / _maxAbsorbed) + _time * 0.5;
-      final dist = 14.0 * biomassIntensity;
+      final angle =
+          (i * math.pi * 2 / MicrobeMotility.maxAbsorbedNutrients) +
+          _time * MicrobeMotility.nutrientOrbitSpeed;
+      final dist = MicrobeMotility.nutrientOrbitDistance * biomassIntensity;
       final nutrientPos =
           center + Offset(math.cos(angle) * dist, math.sin(angle) * dist);
 
@@ -579,7 +741,11 @@ class AnimatedMicrobeComponent extends PositionComponent
             },
             isPinned: pinned,
             accentColor: const Color(0xFFFACC15), // Golden Yellow
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            // Microbes are 120 px boxes with a centre anchor; anchoring the
+            // card at the origin put it 60 px away from the colony.
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

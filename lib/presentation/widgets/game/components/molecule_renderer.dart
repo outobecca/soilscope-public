@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/nitrogen_forms.dart';
 import '../../../../domain/solvers/particle_physics_solver.dart';
 
 enum MoleculeType {
@@ -316,6 +317,44 @@ class MoleculeRenderer {
     canvas.drawLine(Offset(center.dx - s/2, center.dy), Offset(center.dx + s/2, center.dy), p);
     if (symbol == '+') {
       canvas.drawLine(Offset(center.dx, center.dy - s/2), Offset(center.dx, center.dy + s/2), p);
+    }
+  }
+
+  /// Colour used to highlight a nitrogen form in the scene.
+  static Color? nitrogenHighlightColor(MoleculeType type) =>
+      getNitrogenForm(type)?.color;
+
+  /// Colour used to highlight a batch-rendered nitrogen particle.
+  static Color? nitrogenHighlightColorForParticle(ParticleType type) =>
+      getNitrogenFormForParticle(type)?.color;
+
+  /// The nitrogen form rendered by [type], used for colour-coded teaching.
+  static NitrogenForm? getNitrogenForm(MoleculeType type) {
+    switch (type) {
+      case MoleculeType.ammonium:
+        return NitrogenForm.ammonium;
+      case MoleculeType.nitrate:
+        return NitrogenForm.nitrate;
+      case MoleculeType.organicNitrogen:
+        return NitrogenForm.organic;
+      case MoleculeType.nitrousOxide:
+        return NitrogenForm.nitrousOxide;
+      default:
+        return null;
+    }
+  }
+
+  /// The nitrogen form represented by a batch-rendered [ParticleType].
+  static NitrogenForm? getNitrogenFormForParticle(ParticleType type) {
+    switch (type) {
+      case ParticleType.ammonium:
+        return NitrogenForm.ammonium;
+      case ParticleType.nitrate:
+        return NitrogenForm.nitrate;
+      case ParticleType.organicNitrogen:
+        return NitrogenForm.organic;
+      default:
+        return null;
     }
   }
 

@@ -23,6 +23,7 @@ import 'presentation/widgets/controls/timeline_slider_widget.dart';
 import 'presentation/widgets/tutorial_overlay_widget.dart';
 import 'core/app_theme.dart';
 import 'presentation/widgets/game/flutter_quick_actions.dart';
+import 'presentation/widgets/game/nitrogen_cycle_explainer.dart';
 import 'presentation/widgets/gamification_bar.dart';
 import 'presentation/widgets/controls/microscope_hud_controller.dart';
 import 'presentation/providers/game_provider.dart';
@@ -515,6 +516,14 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
     final sidebarState = ref.watch(sidebarStateProvider);
     final isLeftSidebarOpen = sidebarState.isLeftOpen;
     final isRightSidebarOpen = sidebarState.isRightOpen;
+    final isMicroscopeOpen = ref.watch(
+      simulationSessionProvider.select((s) => s.isMicroscopeEnabled),
+    );
+    // The microscope occupies the top strip on narrow layouts, so the
+    // nitrogen explainer starts below it instead of underneath it.
+    final explainerTop = isMicroscopeOpen
+        ? (isMobile ? 216.0 : 220.0)
+        : (isMobile ? 72.0 : 84.0);
 
     if (l10n == null) {
       debugLog('[MainSimulationScreen] build: L10N is NULL - showing fallback spinner');
@@ -683,6 +692,18 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               top: 16,
               right: 16,
               child: SafeArea(child: EventNotificationOverlay()),
+            ),
+
+            // 5.5 NITROGEN CYCLE EXPLAINER
+            // Visible only while the nitrogen observation layer is active.
+            // The overlay clamps itself to the surface, so the panel stays on
+            // screen at every window size. Kept below the inspection card in
+            // the stack so a tapped particle wins.
+            Positioned.fill(
+              child: NitrogenCycleOverlay(
+                topInset: explainerTop,
+                bottomReserve: isMobile ? 236 : 176,
+              ),
             ),
 
             // 6. CONSOLIDATED INFORMATION OVERLAY (TOOLTIPS & INSPECTION)

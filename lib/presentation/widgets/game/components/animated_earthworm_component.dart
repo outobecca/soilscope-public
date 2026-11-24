@@ -220,9 +220,11 @@ class AnimatedEarthwormComponent extends PositionComponent
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    // Generous touch & hover target (100x60 px area centered on the worm)
+    // Keep the target close to the drawn body. The old 100x60 box swallowed
+    // taps aimed at soil layers, roots and microbes well away from the worm.
     final center = size / 2;
-    return (point.x - center.x).abs() <= 50 && (point.y - center.y).abs() <= 30;
+    return (point.x - center.x).abs() <= 40 &&
+        (point.y - center.y).abs() <= 16;
   }
 
   @override
@@ -257,7 +259,9 @@ class AnimatedEarthwormComponent extends PositionComponent
             },
             isPinned: pinned,
             accentColor: const Color(0xFFD97706),
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

@@ -13,6 +13,7 @@ import 'canvas_hit_testing.dart';
 import 'animated_plant_component.dart';
 import 'molecule_renderer.dart';
 import 'visual_seed.dart';
+import '../../../../core/model_config.dart';
 
 /// Optimized Molecular Particle component with reduced pixel footprint.
 /// Represents a cluster of molecules (edustusmalli).
@@ -51,6 +52,18 @@ class MoleculeParticleComponent extends PositionComponent
       case MoleculeType.oxygen:
         return {};
     }
+  }
+
+  /// Form-specific glow: in nitrogen mode each form keeps its own colour so
+  /// ammonium, nitrate, organic N and N₂O stay distinguishable in the scene.
+  @override
+  Color? get cycleGlowColor {
+    final activeCycle = game.ref.read(activeCycleProvider);
+    if (activeCycle == ObservationCycle.nitrogen) {
+      final color = MoleculeRenderer.nitrogenHighlightColor(type);
+      if (color != null) return color;
+    }
+    return super.cycleGlowColor;
   }
 
   MoleculeType type;
@@ -151,7 +164,11 @@ class MoleculeParticleComponent extends PositionComponent
       ).replaceAll(RegExp(r'[^a-zA-Z]'), '');
       game.ref
           .read(simulationProvider.notifier)
-          .absorbNutrient(plantId, symbol, 0.1);
+          .absorbNutrient(
+            plantId,
+            symbol,
+            ModelConfig.of('interaction.plantNutrientAbsorption'),
+          );
       game.triggerPlantGrowth();
       _isAbsorbed = true;
       children.query<CircleHitbox>().firstOrNull?.collisionType =
@@ -291,7 +308,11 @@ class MoleculeParticleComponent extends PositionComponent
           ).replaceAll(RegExp(r'[^a-zA-Z]'), '');
           game.ref
               .read(simulationProvider.notifier)
-              .absorbNutrient(targetPlantId, symbol, 0.1);
+              .absorbNutrient(
+                targetPlantId,
+                symbol,
+                ModelConfig.of('interaction.plantNutrientAbsorption'),
+              );
         }
       }
     }
@@ -326,7 +347,7 @@ class MoleculeParticleComponent extends PositionComponent
     final center = Offset(size.x / 2, size.y / 2);
 
     // 1. CYCLE GLOW
-    renderCycleGlow(canvas, center, 4.0);
+    renderCycleGlow(canvas, center, 6.0);
 
     // Hover / selection highlight halo
     if (isHovered || isPinned) {
@@ -429,7 +450,9 @@ class MoleculeParticleComponent extends PositionComponent
             legends: info['legends'] as List<LegendItem>?,
             accentColor: MoleculeRenderer.getMoleculeColor(type),
             elementSymbol: symbol,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

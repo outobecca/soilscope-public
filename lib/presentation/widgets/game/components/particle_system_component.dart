@@ -174,12 +174,15 @@ class MolecularParticleFieldComponent extends Component
   void _drawHighlight(
     Canvas canvas,
     Offset pos,
+    ParticleType type,
     ObservationCycle activeCycle,
     String? highlightedSymbol,
     bool isPinned,
     bool isHovered,
     bool isElementHighlighted,
   ) {
+    final nitrogenHighlight = MoleculeRenderer
+        .nitrogenHighlightColorForParticle(type);
     String symbol = 'N';
     if (activeCycle == ObservationCycle.carbon) {
       symbol = 'C';
@@ -191,28 +194,47 @@ class MolecularParticleFieldComponent extends Component
       symbol = highlightedSymbol;
     }
 
-    final highlightColor = isElementHighlighted
+    final highlightColor =
+        (activeCycle == ObservationCycle.nitrogen && nitrogenHighlight != null)
+        ? nitrogenHighlight.withValues(alpha: 0.85)
+        : isElementHighlighted
         ? (CPKStandards.getColor(symbol).withValues(alpha: 0.8))
         : (isPinned ? Colors.white : Colors.white70);
 
+    final bool cycleHighlight =
+        activeCycle == ObservationCycle.nitrogen && nitrogenHighlight != null;
     final double pulse = isElementHighlighted
         ? (0.8 + 0.4 * math.sin(game.currentTime() * 8))
         : 1.0;
 
     // Constrain highlight size to prevent massive blobs at low zoom
-    final double baseHighlightRadius = isElementHighlighted ? 10.0 : 8.0;
+    final double baseHighlightRadius = cycleHighlight
+        ? 12.0
+        : (isElementHighlighted ? 10.0 : 8.0);
     final double scaledRadius = (baseHighlightRadius / renderZoom).clamp(
       baseHighlightRadius,
-      25.0,
+      28.0,
     );
 
+    // A translucent disc reads as a highlight even on the busiest soil
+    // texture; the thin ring alone disappeared into the grain speckle.
     canvas.drawCircle(
       pos,
       scaledRadius * pulse,
       Paint()
-        ..color = highlightColor.withValues(alpha: 0.3 * pulse)
+        ..color = highlightColor.withValues(
+          alpha: (cycleHighlight ? 0.20 : 0.12) * pulse,
+        ),
+    );
+    canvas.drawCircle(
+      pos,
+      scaledRadius * pulse,
+      Paint()
+        ..color = highlightColor.withValues(
+          alpha: cycleHighlight ? 0.9 : 0.55,
+        )
         ..style = PaintingStyle.stroke
-        ..strokeWidth = (isElementHighlighted ? 2.0 : 1.2) / renderZoom,
+        ..strokeWidth = (cycleHighlight ? 2.0 : 1.2) / renderZoom,
     );
   }
 
@@ -281,7 +303,7 @@ class MolecularParticleFieldComponent extends Component
         bool isPartOfActiveCycle = _isPartOfActiveCycle(type, activeCycle);
 
         if (activeCycle != ObservationCycle.none && !isPartOfActiveCycle) {
-          baseOpacity *= 0.15; // High-contrast dimming
+          baseOpacity *= 0.08; // High-contrast dimming
         }
 
         // Element Highlighting Logic
@@ -296,6 +318,7 @@ class MolecularParticleFieldComponent extends Component
           _drawHighlight(
             canvas,
             pos,
+            type,
             activeCycle,
             highlightedSymbol,
             isPinned,

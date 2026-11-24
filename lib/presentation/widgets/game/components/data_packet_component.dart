@@ -251,7 +251,9 @@ class DataPacket extends PositionComponent
             },
             legends: info['legends'] as List<LegendItem>?,
             accentColor: color,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

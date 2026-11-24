@@ -32,6 +32,7 @@ class SoilLayerComponent extends PositionComponent
         LayerTechNodeMixin,
         RiverpodLifecycleMixin,
         TapCallbacks {
+  @override
   final String layerId;
   SoilLayer _layer;
   bool isSelected;
@@ -491,7 +492,13 @@ class SoilLayerComponent extends PositionComponent
       activeHotspotIds.add(h.id);
       final existing = dynamicMap[h.id];
 
-      final Vector2 hotspotPos = Vector2(h.x * size.x, h.z * size.y);
+      // `h.x` is plot-normalised (0.5 = plant collar), not a fraction of the
+      // full decorative column. Mapping it with the shared root transform keeps
+      // the rhizosphere glow on the root that produced it.
+      final Vector2 hotspotPos = Vector2(
+        SceneCoordinateMapper.mapRootX(h.x, size.x),
+        h.z * size.y,
+      );
 
       if (existing != null) {
         existing.position = hotspotPos;

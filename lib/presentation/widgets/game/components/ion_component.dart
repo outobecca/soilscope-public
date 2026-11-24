@@ -9,6 +9,7 @@ import '../../../providers/simulation_provider.dart';
 import '../../../providers/simulation_session_provider.dart';
 import 'scene_coordinate_mapper.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/model_config.dart';
 import 'animated_plant_component.dart';
 import 'molecule_renderer.dart';
 import 'biological_entity_mixin.dart';
@@ -61,9 +62,11 @@ class IonComponent extends PositionComponent
     super.onCollisionStart(intersectionPoints, other);
     if (other is AnimatedPlantComponent && !_isAbsorbed) {
       final plantId = other.plantId;
-      // Ion absorption represents a larger pool segment
-      final amount = 0.5; 
-      game.ref.read(simulationProvider.notifier).absorbNutrient(plantId, symbol, amount);
+      // Ion absorption represents a larger pool segment.
+      final amount = ModelConfig.of('interaction.ionNutrientAbsorption');
+      game.ref
+          .read(simulationProvider.notifier)
+          .absorbNutrient(plantId, symbol, amount);
       game.triggerPlantGrowth();
       _isAbsorbed = true;
       removeFromParent();
@@ -226,7 +229,9 @@ class IonComponent extends PositionComponent
             legends: info['legends'] as List<LegendItem>?,
             accentColor: color,
             elementSymbol: symbol,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

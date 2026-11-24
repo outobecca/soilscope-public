@@ -116,7 +116,12 @@ class DataHotspotComponent extends CircleComponent
         onDismiss: () => _isPinned = false,
         accentColor: color,
         elementSymbol: elementSymbol,
-        screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+        // Anchor the card on the drawn centre, not the component's top-left
+        // origin (the circle uses Anchor.center, so absolutePosition is 24 px
+        // up-left of what the user sees and taps).
+        screenPosition: game
+            .worldToScreen(absolutePositionOf(size / 2))
+            .toOffset(),
       ),
     );
   }

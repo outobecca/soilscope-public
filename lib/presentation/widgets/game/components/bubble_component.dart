@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart' hide PointerMoveEvent;
 import '../soil_scope_game.dart';
 import '../../../../domain/models/biophysical_state.dart';
 import '../../../../core/cpk_standards.dart';
+import '../../../../core/nitrogen_forms.dart';
 import '../../../providers/ui_state_provider.dart';
 import 'canvas_hit_testing.dart';
 import 'molecule_renderer.dart';
@@ -45,7 +46,7 @@ class BubbleComponent extends CircleComponent
          position: position,
          radius: _getRadiusForType(type),
          anchor: Anchor.center,
-         paint: Paint()..color = _getColorForType(type).withValues(alpha: 0.5),
+         paint: Paint()..color = colorForType(type).withValues(alpha: 0.5),
        );
 
   static double _getRadiusForType(BubbleType type) {
@@ -61,12 +62,14 @@ class BubbleComponent extends CircleComponent
     }
   }
 
-  static Color _getColorForType(BubbleType type) {
+  /// The rendered colour of a gas bubble. N₂O shares the nitrogen-form
+  /// violet so the scene and the nitrogen explainer stay in sync.
+  static Color colorForType(BubbleType type) {
     switch (type) {
       case BubbleType.co2:
         return Colors.white70;
       case BubbleType.n2o:
-        return Colors.deepPurpleAccent;
+        return NitrogenForm.nitrousOxide.color;
       case BubbleType.ch4:
         return Colors.orange;
       case BubbleType.o2:
@@ -271,7 +274,9 @@ class BubbleComponent extends CircleComponent
             legends: info['legends'] as List<LegendItem>?,
             accentColor: accent,
             elementSymbol: symbol,
-            screenPosition: game.worldToScreen(absolutePosition).toOffset(),
+            screenPosition: game
+                .worldToScreen(absolutePositionOf(size / 2))
+                .toOffset(),
           ),
         );
   }

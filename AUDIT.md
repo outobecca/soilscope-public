@@ -919,20 +919,27 @@ hardware, and the Android row still needs repeated runs.
    a depth or variable the scenario does not expose is reported as a coverage
    gap instead of crashing the Reference Check tab; both paths are tested.
 2. **Done.** `ModelConfig` is now the runtime source of truth for every
-   model-affecting solver value: 142 defaults covering `SimulationConstants`,
-   the Farquhar/plant, hydraulics, nutrient, mycorrhiza, chemistry, gas,
-   aggregation, microbial-enzyme and nitrogen-cycle parameters, plus the
-   one-square-metre plot geometry. Solvers read the active map through
-   `ModelConfig.of`; the app loads `assets/config/model_parameters.json` before
-   `runApp`, so a deployment can override values without editing solver code.
-   `ModelParameterSet` builds its parameters from `ModelConfig.values` plus
-   `SimulationPlot`, records `{id, version, fingerprint}` in saved sessions,
-   `reference.json` and Phase 4 captures, and now has version 3 / fingerprint
-   `410ef21c`. The validation gate fails on parameter drift until the reference
-   is updated deliberately. `model_version_test.dart` pins the fingerprint,
-   verifies every configured value is fingerprinted, scans all solver files for
-   static or named local constants outside the config, and checks that an
-   override changes both the fingerprint and a real validation run.
+   model-affecting value: 150 defaults covering `SimulationConstants`, the
+   Farquhar/plant, hydraulics, nutrient, mycorrhiza, chemistry, gas,
+   aggregation, microbial-enzyme and nitrogen-cycle parameters, the
+   component-driven pool doses, plus the one-square-metre plot geometry.
+   Solvers read the active map through `ModelConfig.of`; Flame components read
+   the same map for absorption, exudation, bubble and microbial-uptake doses,
+   so a visual hook cannot change a pool without joining the fingerprint. The
+   app loads `assets/config/model_parameters.json` before `runApp`, so a
+   deployment can override values without editing code. `ModelParameterSet`
+   builds its parameters from `ModelConfig.values` plus `SimulationPlot`,
+   records `{id, version, fingerprint}` in saved sessions, `reference.json`
+   and Phase 4 captures, and now has version 4 / fingerprint `3cab39ed`. The
+   validation gate fails on parameter drift until the reference is updated
+   deliberately. `model_version_test.dart` pins the fingerprint, verifies every
+   configured value is fingerprinted, scans all solver files for static or
+   named local constants outside the config, scans components for literal
+   state doses, and checks that an override changes both the fingerprint and a
+   real validation run. Purely visual values (particle motion, microbe
+   motility, label cadence) stay in `SimulationConstants` and
+   `MicrobeMotility` and are deliberately excluded from the scientific
+   fingerprint.
 3. **Done — H10.** `simulation_provider.dart` fell from ~1,026 to ~590 lines:
    intervention rules moved to `SimulationInterventions`, timeline storage to
    `SimulationTimeline`, the default scenario to

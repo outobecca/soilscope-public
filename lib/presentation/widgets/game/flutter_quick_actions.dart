@@ -438,6 +438,18 @@ class FlutterQuickActions extends ConsumerWidget {
                       ),
                       _buildActionTile(
                         context: context,
+                        icon: Icons.loop_rounded,
+                        label: l10n.nitrogenCycleTitle,
+                        isActive: cycle == ObservationCycle.nitrogen,
+                        onTap: () {
+                          ref
+                              .read(activeCycleProvider.notifier)
+                              .setCycle(ObservationCycle.nitrogen);
+                          close();
+                        },
+                      ),
+                      _buildActionTile(
+                        context: context,
                         icon: flowOn
                             ? Icons.device_hub_rounded
                             : Icons.device_hub_outlined,

@@ -8318,6 +8318,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retryAction;
+
+  /// No description provided for @nitrogenCycleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrogen cycle'**
+  String get nitrogenCycleTitle;
+
+  /// No description provided for @nitrogenCycleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow nitrogen from organic matter to the root — or back to the air.'**
+  String get nitrogenCycleSubtitle;
+
+  /// No description provided for @nitrogenCycleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Glowing particles use the colours below. Tap one to inspect that form.'**
+  String get nitrogenCycleHint;
+
+  /// No description provided for @nitrogenLivePools.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE POOLS'**
+  String get nitrogenLivePools;
+
+  /// No description provided for @nitrogenFormOrganic.
+  ///
+  /// In en, this message translates to:
+  /// **'Organic N'**
+  String get nitrogenFormOrganic;
+
+  /// No description provided for @nitrogenFormOrganicDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Proteins, humus and dead microbes. Roots cannot take this up until microbes mineralise it.'**
+  String get nitrogenFormOrganicDesc;
+
+  /// No description provided for @nitrogenFormAmmonium.
+  ///
+  /// In en, this message translates to:
+  /// **'Ammonium'**
+  String get nitrogenFormAmmonium;
+
+  /// No description provided for @nitrogenFormAmmoniumDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'NH₄⁺ sticks to clay and humus (CEC), so it waits in the root zone instead of leaching.'**
+  String get nitrogenFormAmmoniumDesc;
+
+  /// No description provided for @nitrogenFormNitrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrate'**
+  String get nitrogenFormNitrate;
+
+  /// No description provided for @nitrogenFormNitrateDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'NO₃⁻ moves freely with soil water — fast uptake, but also fast leaching.'**
+  String get nitrogenFormNitrateDesc;
+
+  /// No description provided for @nitrogenFormGas.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrous oxide'**
+  String get nitrogenFormGas;
+
+  /// No description provided for @nitrogenFormGasDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'N₂O forms in wet, low-oxygen soil when denitrifiers use nitrate instead of oxygen.'**
+  String get nitrogenFormGasDesc;
+
+  /// No description provided for @nitrogenProcessMineralization.
+  ///
+  /// In en, this message translates to:
+  /// **'Mineralisation'**
+  String get nitrogenProcessMineralization;
+
+  /// No description provided for @nitrogenProcessMineralizationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'microbes release NH₄⁺ from organic matter.'**
+  String get nitrogenProcessMineralizationDesc;
+
+  /// No description provided for @nitrogenProcessNitrification.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitrification'**
+  String get nitrogenProcessNitrification;
+
+  /// No description provided for @nitrogenProcessNitrificationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'specialist bacteria convert NH₄⁺ into NO₃⁻.'**
+  String get nitrogenProcessNitrificationDesc;
+
+  /// No description provided for @nitrogenProcessDenitrification.
+  ///
+  /// In en, this message translates to:
+  /// **'Denitrification'**
+  String get nitrogenProcessDenitrification;
+
+  /// No description provided for @nitrogenProcessDenitrificationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'in low oxygen, NO₃⁻ is respired to N₂O and N₂.'**
+  String get nitrogenProcessDenitrificationDesc;
+
+  /// No description provided for @nitrogenProcessUptake.
+  ///
+  /// In en, this message translates to:
+  /// **'Root uptake'**
+  String get nitrogenProcessUptake;
+
+  /// No description provided for @nitrogenProcessLeaching.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaching'**
+  String get nitrogenProcessLeaching;
+
+  /// No description provided for @nitrogenProcessFixation.
+  ///
+  /// In en, this message translates to:
+  /// **'N₂ fixation'**
+  String get nitrogenProcessFixation;
+
+  /// No description provided for @nitrogenProcessFixationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'free-living and symbiotic microbes pull N₂ from the air into the soil.'**
+  String get nitrogenProcessFixationDesc;
+
+  /// No description provided for @nitrogenUnitMass.
+  ///
+  /// In en, this message translates to:
+  /// **'mg/kg'**
+  String get nitrogenUnitMass;
+
+  /// No description provided for @nitrogenUnitGas.
+  ///
+  /// In en, this message translates to:
+  /// **'mol/m³'**
+  String get nitrogenUnitGas;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
