@@ -45,7 +45,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  generate: true
+  # Disabled so `flutter pub get` in CI does not overwrite the `material_ui` /
+  # `cupertino_ui` delegate imports in `lib/l10n/app_localizations.dart`.
+  generate: false
   assets:
     - assets/config/
     - assets/scenarios/

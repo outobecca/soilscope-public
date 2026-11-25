@@ -52,12 +52,7 @@ BiophysicalState seededState({double scale = 1.0}) {
     nitrate += layer.nitrateContent;
     gas += layer.nitrousOxideContent;
   }
-  return (
-    organic: organic,
-    ammonium: ammonium,
-    nitrate: nitrate,
-    gas: gas,
-  );
+  return (organic: organic, ammonium: ammonium, nitrate: nitrate, gas: gas);
 }
 
 Future<ProviderContainer> pumpOverlay(
@@ -75,9 +70,7 @@ Future<ProviderContainer> pumpOverlay(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   final container = ProviderContainer(
-    overrides: [
-      simulationProvider.overrideWithValue(state ?? seededState()),
-    ],
+    overrides: [simulationProvider.overrideWithValue(state ?? seededState())],
   );
   addTearDown(container.dispose);
 
@@ -183,10 +176,7 @@ void expectCardInsideSurface(
   }
 
   expect(
-    find.descendant(
-      of: card,
-      matching: find.byType(SingleChildScrollView),
-    ),
+    find.descendant(of: card, matching: find.byType(SingleChildScrollView)),
     findsOneWidget,
     reason: '$label: card must remain scrollable instead of clipping content',
   );
@@ -221,33 +211,22 @@ Future<void> openViewActions(WidgetTester tester) async {
 }
 
 void main() {
-  const surfaces = <
-    ({
-      String name,
-      Size size,
-      double topInset,
-      double bottomReserve,
-    })
-  >[
-    (
-      name: 'narrow',
-      size: Size(320, 568),
-      topInset: 72,
-      bottomReserve: 236,
-    ),
-    (
-      name: 'medium',
-      size: Size(768, 1024),
-      topInset: 84,
-      bottomReserve: 176,
-    ),
-    (
-      name: 'wide',
-      size: Size(1440, 900),
-      topInset: 84,
-      bottomReserve: 176,
-    ),
-  ];
+  const surfaces =
+      <({String name, Size size, double topInset, double bottomReserve})>[
+        (
+          name: 'narrow',
+          size: Size(320, 568),
+          topInset: 72,
+          bottomReserve: 236,
+        ),
+        (
+          name: 'medium',
+          size: Size(768, 1024),
+          topInset: 84,
+          bottomReserve: 176,
+        ),
+        (name: 'wide', size: Size(1440, 900), topInset: 84, bottomReserve: 176),
+      ];
 
   for (final surface in surfaces) {
     testWidgets(
@@ -300,10 +279,7 @@ void main() {
     tester,
   ) async {
     final state = seededState();
-    await pumpOverlay(
-      tester,
-      surface: const Size(1440, 900),
-    );
+    await pumpOverlay(tester, surface: const Size(1440, 900));
     expectNoFlutterError(tester, 'pool layout');
 
     final expected = expectedPools(state);
@@ -346,18 +322,11 @@ void main() {
   testWidgets('pool totals follow a changed state instead of staying stale', (
     tester,
   ) async {
-    await pumpOverlay(
-      tester,
-      surface: const Size(1440, 900),
-    );
+    await pumpOverlay(tester, surface: const Size(1440, 900));
     expect(displayedTotal(tester, NitrogenForm.organic), '528.0');
 
     final doubled = seededState(scale: 2.0);
-    await pumpOverlay(
-      tester,
-      surface: const Size(1440, 900),
-      state: doubled,
-    );
+    await pumpOverlay(tester, surface: const Size(1440, 900), state: doubled);
     expectNoFlutterError(tester, 'updated pool layout');
 
     final expected = expectedPools(doubled);
@@ -422,10 +391,7 @@ void main() {
   testWidgets('card swatches match the scene nitrogen colour mapping', (
     tester,
   ) async {
-    await pumpOverlay(
-      tester,
-      surface: const Size(1440, 900),
-    );
+    await pumpOverlay(tester, surface: const Size(1440, 900));
     expectNoFlutterError(tester, 'colour mapping layout');
 
     for (final form in NitrogenForm.values) {
@@ -450,15 +416,11 @@ void main() {
     );
     expect(
       swatchColor(tester, NitrogenForm.ammonium),
-      MoleculeRenderer.nitrogenHighlightColorForParticle(
-        ParticleType.ammonium,
-      ),
+      MoleculeRenderer.nitrogenHighlightColorForParticle(ParticleType.ammonium),
     );
     expect(
       swatchColor(tester, NitrogenForm.nitrate),
-      MoleculeRenderer.nitrogenHighlightColorForParticle(
-        ParticleType.nitrate,
-      ),
+      MoleculeRenderer.nitrogenHighlightColorForParticle(ParticleType.nitrate),
     );
 
     // Hero-molecule path used by individually spawned molecules.
@@ -486,10 +448,7 @@ void main() {
       MoleculeRenderer.nitrogenHighlightColorForParticle(ParticleType.water),
       isNull,
     );
-    expect(
-      MoleculeRenderer.nitrogenHighlightColor(MoleculeType.water),
-      isNull,
-    );
+    expect(MoleculeRenderer.nitrogenHighlightColor(MoleculeType.water), isNull);
   });
 
   testWidgets('observation-cycle tile opens the explainer', (tester) async {
@@ -499,10 +458,7 @@ void main() {
       withQuickActions: true,
       activate: false,
     );
-    expect(
-      find.byKey(const ValueKey('nitrogen-cycle-card')),
-      findsNothing,
-    );
+    expect(find.byKey(const ValueKey('nitrogen-cycle-card')), findsNothing);
 
     await openViewActions(tester);
     final cycleTile = find.ancestor(
@@ -515,10 +471,7 @@ void main() {
     expectNoFlutterError(tester, 'observation-cycle tile');
 
     expect(container.read(activeCycleProvider), ObservationCycle.nitrogen);
-    expect(
-      find.byKey(const ValueKey('nitrogen-cycle-card')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('nitrogen-cycle-card')), findsOneWidget);
   });
 
   testWidgets('dedicated Nitrogen cycle tile opens the explainer', (
@@ -530,10 +483,7 @@ void main() {
       withQuickActions: true,
       activate: false,
     );
-    expect(
-      find.byKey(const ValueKey('nitrogen-cycle-card')),
-      findsNothing,
-    );
+    expect(find.byKey(const ValueKey('nitrogen-cycle-card')), findsNothing);
 
     await openViewActions(tester);
     final nitrogenTile = find.ancestor(
@@ -546,9 +496,6 @@ void main() {
     expectNoFlutterError(tester, 'dedicated nitrogen tile');
 
     expect(container.read(activeCycleProvider), ObservationCycle.nitrogen);
-    expect(
-      find.byKey(const ValueKey('nitrogen-cycle-card')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('nitrogen-cycle-card')), findsOneWidget);
   });
 }

@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/debug_log.dart';
+import '../../core/model_config.dart';
 import '../../domain/models/biophysical_state.dart';
 import '../../domain/models/default_simulation_profile.dart';
 import '../../domain/models/soil_profile.dart';
@@ -488,8 +489,8 @@ class Simulation extends _$Simulation {
       final daysThisChunk = chunkDays < remaining ? chunkDays : remaining;
 
       final (nextState, chunkHistory) = await compute(
-        preCalculateTimelineTask,
-        (cursor, daysThisChunk),
+        preCalculateTimelineIsolateTask,
+        (cursor, daysThisChunk, Map<String, double>.from(ModelConfig.values)),
       );
 
       cursor = nextState;

@@ -146,15 +146,11 @@ Future<CanvasScene> pumpCanvasScene(
     return layers.length >= 2 &&
         layers.every(
           (layer) =>
-              nodes.where((node) => node.layerId == layer.layerId).length >=
-              2,
+              nodes.where((node) => node.layerId == layer.layerId).length >= 2,
         );
   });
 
-  final scene = CanvasScene(
-    container: container,
-    boundaryKey: boundaryKey,
-  );
+  final scene = CanvasScene(container: container, boundaryKey: boundaryKey);
   if (effectiveScenario.initialProfile.layers.any(
     (layer) => layer.hotspots.isNotEmpty,
   )) {
@@ -174,18 +170,14 @@ Future<void> startCanvasScene(WidgetTester tester, CanvasScene scene) async {
   scene.container.read(simulationProvider.notifier).start();
   await pumpCanvasUntil(
     tester,
-    () =>
-        scene.game.world
-            .descendants()
-            .whereType<AnimatedMicrobeComponent>()
-            .isNotEmpty,
+    () => scene.game.world
+        .descendants()
+        .whereType<AnimatedMicrobeComponent>()
+        .isNotEmpty,
   );
 }
 
-Future<ui.Image> grabCanvasImage(
-  WidgetTester tester,
-  CanvasScene scene,
-) async {
+Future<ui.Image> grabCanvasImage(WidgetTester tester, CanvasScene scene) async {
   final boundary = tester.renderObject<RenderRepaintBoundary>(
     find.byKey(scene.boundaryKey),
   );
@@ -364,12 +356,7 @@ Scenario canvasScenario({double topWaterContent = 0.25}) {
             ),
           ],
         ),
-        layer(
-          id: 'subsoil',
-          depth: 0.3,
-          thickness: 0.5,
-          name: 'Subsoil',
-        ),
+        layer(id: 'subsoil', depth: 0.3, thickness: 0.5, name: 'Subsoil'),
       ],
       surfaceAlbedo: 0.2,
       slope: 0.05,

@@ -713,8 +713,7 @@ extension _PlantVisuals on AnimatedPlantComponent {
       if (batchedTaproot.getBounds().isEmpty == false) {
         canvas.drawPath(
           batchedTaproot,
-          taprootPaint
-            ..strokeWidth = (8.5 * shootScale).clamp(2.0, 14.0),
+          taprootPaint..strokeWidth = (8.5 * shootScale).clamp(2.0, 14.0),
         );
       }
     }

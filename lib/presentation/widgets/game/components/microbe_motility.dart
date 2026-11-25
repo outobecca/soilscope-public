@@ -197,15 +197,17 @@ class MicrobeMotility {
 
   /// Number of visible colonies the current biomass supports.
   static int visibleClusterCount(double totalBiomass) =>
-      (totalBiomass * clustersPerBiomass)
-          .toInt()
-          .clamp(minVisibleClusters, maxVisibleClusters);
+      (totalBiomass * clustersPerBiomass).toInt().clamp(
+        minVisibleClusters,
+        maxVisibleClusters,
+      );
 
   /// A random offset inside the rhizosphere-spawn envelope.
   static Vector2 spawnOffset(math.Random random) {
     final angle = random.nextDouble() * math.pi * 2;
     final radius =
-        spawnOffsetMin + random.nextDouble() * (spawnOffsetMax - spawnOffsetMin);
+        spawnOffsetMin +
+        random.nextDouble() * (spawnOffsetMax - spawnOffsetMin);
     return Vector2(
       math.cos(angle) * radius,
       math.sin(angle) * radius * spawnVerticalScale,

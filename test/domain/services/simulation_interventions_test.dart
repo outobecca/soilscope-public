@@ -227,5 +227,124 @@ void main() {
       expect(host.writes, 0);
       expect(host.leftHistory, isFalse);
     });
+
+    test(
+      'speed and weather controls update session fields and leave history',
+      () {
+        final host = _Host();
+
+        host.interventions.setSpeed(5.0);
+        expect(host.state.timeScale, 5.0);
+        expect(host.leftHistory, isFalse);
+
+        host.interventions.setPrecipitation(12.5);
+        expect(host.leftHistory, isTrue);
+        expect(host.state.precipitation, 12.5);
+
+        host.leftHistory = false;
+        host.interventions.toggleAutoWeather();
+        expect(host.leftHistory, isTrue);
+        expect(host.state.autoWeather, isTrue);
+
+        host.leftHistory = false;
+        host.interventions.setAutoWeather(false);
+        expect(host.leftHistory, isTrue);
+        expect(host.state.autoWeather, isFalse);
+
+        host.leftHistory = false;
+        host.interventions.updateWeather(301.15, 0.72);
+        expect(host.leftHistory, isTrue);
+        expect(host.state.airTemperature, 301.15);
+        expect(host.state.relativeHumidity, 0.72);
+
+        host.leftHistory = false;
+        host.interventions.updateSolarRadiation(640.0);
+        expect(host.leftHistory, isTrue);
+        expect(host.state.solarRadiationOverride, 640.0);
+
+        host.leftHistory = false;
+        host.interventions.updatePAR(420.0);
+        expect(host.leftHistory, isTrue);
+        expect(host.state.solarRadiationOverride, closeTo(200.0, 1e-12));
+      },
+    );
+
+    test(
+      'extreme weather, organic matter, drainage and explicit cover crop log events',
+      () {
+        final host = _Host();
+
+        host.interventions.setCoverCrop(true);
+        expect(host.state.hasCoverCrop, isTrue);
+        expect(host.logs.last, 'Cover crop planted.');
+
+        host.interventions.triggerHeatWave();
+        expect(host.logs.last, 'Heat wave!');
+        expect(host.state.precipitation, 0.0);
+
+        host.interventions.triggerFlashFlood();
+        expect(host.logs.last, 'Flash flood!');
+        expect(host.state.precipitation, greaterThan(0));
+
+        final beforeCarbon = host.state.profile.layers.first.organicCarbon;
+        host.interventions.applyOrganicMatter();
+        expect(host.logs.last, 'Organic matter incorporated.');
+        expect(
+          host.state.profile.layers.first.organicCarbon,
+          greaterThan(beforeCarbon),
+        );
+
+        final beforeWater = host.state.profile.layers.first.waterContent;
+        host.interventions.applyDrainage();
+        expect(host.logs.last, 'Soil drained and re-aerated.');
+        expect(
+          host.state.profile.layers.first.waterContent,
+          lessThanOrEqualTo(beforeWater),
+        );
+
+        final beforeK = host.state.profile.layers.first.potassiumContent;
+        host.interventions.updateNutrient('A', 'K', 11.0);
+        expect(
+          host.state.profile.layers.first.potassiumContent,
+          closeTo(beforeK + 11.0, 1e-12),
+        );
+      },
+    );
+
+    test(
+      'all named layer parameters update cleanly and ignore unknown keys',
+      () {
+        final host = _Host();
+
+        host.interventions
+          ..updateLayerParameter('A', 'kSat', 3.5e-5)
+          ..updateLayerParameter('A', 'vgAlpha', 2.4)
+          ..updateLayerParameter('A', 'vgN', 1.8)
+          ..updateLayerParameter('A', 'sandFraction', 0.5)
+          ..updateLayerParameter('A', 'siltFraction', 0.3)
+          ..updateLayerParameter('A', 'clayFraction', 0.2)
+          ..updateLayerParameter('A', 'organicCarbon', 18.0)
+          ..updateLayerParameter('A', 'bulkDensity', 1250.0)
+          ..updateLayerParameter('A', 'porosity', 0.48)
+          ..updateLayerParameter('A', 'nitrateContent', 88.0)
+          ..updateLayerParameter('A', 'phosphateContent', 19.0)
+          ..updateLayerParameter('A', 'potassiumContent', 64.0)
+          ..updateLayerParameter('A', 'unknownParam', 999.0);
+
+        final layer = host.state.profile.layers.first;
+        expect(layer.kSat, 3.5e-5);
+        expect(layer.vgAlpha, 2.4);
+        expect(layer.vgN, 1.8);
+        expect(layer.sandFraction, 0.5);
+        expect(layer.siltFraction, 0.3);
+        expect(layer.clayFraction, 0.2);
+        expect(layer.organicCarbon, 18.0);
+        expect(layer.bulkDensity, 1250.0);
+        expect(layer.porosity, 0.48);
+        expect(layer.nitrateContent, 88.0);
+        expect(layer.phosphateContent, 19.0);
+        expect(layer.potassiumContent, 64.0);
+      },
+    );
   });
 }

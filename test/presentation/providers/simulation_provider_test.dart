@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:soilscope/core/model_config.dart';
 import 'package:soilscope/domain/models/biophysical_state.dart';
 import 'package:soilscope/domain/models/scenario.dart';
 import 'package:soilscope/domain/models/soil_layer.dart';
@@ -293,6 +294,78 @@ void main() {
             reason: 'snapshots must stay six simulated hours apart',
           );
         }
+      },
+    );
+
+    test(
+      'pre-calculation propagates ModelConfig overrides and water events',
+      () async {
+        final dryScenario = _scenario('dry').copyWith(
+          cultivationPlan: const [
+            CultivationEvent(
+              executionTime: 0,
+              type: 'water',
+              amount: 0.001,
+              layerId: 'A1',
+            ),
+          ],
+        );
+
+        final containerA = ProviderContainer();
+        addTearDown(containerA.dispose);
+        final notifierA = containerA.read(simulationProvider.notifier);
+        notifierA.loadScenario(_scenario('override-a'));
+        await notifierA.preCalculateTimeline(1);
+        final baselineWater = containerA
+            .read(simulationProvider)
+            .history
+            .last
+            .profile
+            .layers
+            .first
+            .waterContent;
+
+        try {
+          ModelConfig.applyOverrides({'evapBaseRate': 1.0e-5});
+          final containerB = ProviderContainer();
+          addTearDown(containerB.dispose);
+          final notifierB = containerB.read(simulationProvider.notifier);
+          notifierB.loadScenario(_scenario('override-b'));
+          await notifierB.preCalculateTimeline(1);
+          final overriddenWater = containerB
+              .read(simulationProvider)
+              .history
+              .last
+              .profile
+              .layers
+              .first
+              .waterContent;
+          expect(
+            overriddenWater,
+            lessThan(baselineWater),
+            reason: 'spawned compute isolates must receive active overrides',
+          );
+        } finally {
+          ModelConfig.reset();
+        }
+
+        final containerWater = ProviderContainer();
+        addTearDown(containerWater.dispose);
+        final notifierWater = containerWater.read(simulationProvider.notifier);
+        notifierWater.loadScenario(dryScenario);
+        await notifierWater.preCalculateTimeline(1);
+        final wateredFirstHour = containerWater
+            .read(simulationProvider)
+            .history[1]
+            .profile
+            .layers
+            .first
+            .waterContent;
+        expect(
+          wateredFirstHour,
+          greaterThan(0.25),
+          reason: 'a scheduled water event must reach HydrologySolver',
+        );
       },
     );
   });

@@ -8139,12 +8139,6 @@ abstract class AppLocalizations {
   /// **'More actions'**
   String get moreActions;
 
-  /// No description provided for @manageSection.
-  ///
-  /// In en, this message translates to:
-  /// **'MANAGE'**
-  String get manageSection;
-
   /// No description provided for @viewSection.
   ///
   /// In en, this message translates to:

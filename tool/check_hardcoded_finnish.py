@@ -28,10 +28,10 @@ def strip_comments(source: str) -> str:
 
 
 def main() -> int:
-    root = Path("lib/presentation")
+    roots = [Path("lib/main.dart"), *sorted(Path("lib/presentation").rglob("*.dart"))]
     offenders = []
-    for path in sorted(root.rglob("*.dart")):
-        if path.name in ALLOWED_FILES:
+    for path in roots:
+        if not path.is_file() or path.name in ALLOWED_FILES:
             continue
         for number, line in enumerate(
             strip_comments(path.read_text(encoding="utf-8")).splitlines(), 1

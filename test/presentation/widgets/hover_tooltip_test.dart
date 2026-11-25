@@ -66,8 +66,9 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           routes: {
             '/logic_lab': (context) {
-              final launchContext = ModalRoute.of(context)?.settings.arguments
-                  as LogicLabLaunchContext?;
+              final launchContext =
+                  ModalRoute.of(context)?.settings.arguments
+                      as LogicLabLaunchContext?;
               return Scaffold(
                 body: Text(launchContext?.process.name ?? 'missing context'),
               );
@@ -81,15 +82,17 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(HoverTooltip)),
     );
-    container.read(uIStateProvider.notifier).setHoverInfo(
-      HoverInfo(
-        title: 'PHOTOSYNTHESIS',
-        description: 'Leaf carbon gain',
-        isPinned: true,
-        sourceId: 'photosynthesis-indicator',
-        layerId: 'B1',
-      ),
-    );
+    container
+        .read(uIStateProvider.notifier)
+        .setHoverInfo(
+          HoverInfo(
+            title: 'PHOTOSYNTHESIS',
+            description: 'Leaf carbon gain',
+            isPinned: true,
+            sourceId: 'photosynthesis-indicator',
+            layerId: 'B1',
+          ),
+        );
     await tester.pump();
 
     await tester.tap(find.text('Open Logic Lab'));

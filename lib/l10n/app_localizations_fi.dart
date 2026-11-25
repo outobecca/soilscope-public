@@ -4093,9 +4093,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get moreActions => 'Lisää toimintoja';
 
   @override
-  String get manageSection => 'HALLINTA';
-
-  @override
   String get viewSection => 'NÄKYMÄ';
 
   @override

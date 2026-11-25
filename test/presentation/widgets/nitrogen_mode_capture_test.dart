@@ -82,9 +82,7 @@ void main() {
       for (var i = 0; i < field.particleData.length; i += 10) {
         ids.add(field.particleData[i].toInt());
       }
-      return seedWorld.keys.every(
-        (type) => ids.contains(9000 + type.index),
-      );
+      return seedWorld.keys.every((type) => ids.contains(9000 + type.index));
     });
 
     final seededIds = <int>{};
@@ -188,12 +186,7 @@ void main() {
     expect(carbon.length, width * height * 4);
     expect(nitrogen.length, width * height * 4);
 
-    final totalChanged = changedCanvasPixels(
-      carbon,
-      nitrogen,
-      width,
-      height,
-    );
+    final totalChanged = changedCanvasPixels(carbon, nitrogen, width, height);
     expect(
       totalChanged,
       greaterThan(5000),

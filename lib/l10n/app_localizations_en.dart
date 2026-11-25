@@ -4093,9 +4093,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreActions => 'More actions';
 
   @override
-  String get manageSection => 'MANAGE';
-
-  @override
   String get viewSection => 'VIEW';
 
   @override

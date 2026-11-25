@@ -4,12 +4,7 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// The colours are shared by the scene highlight and the explainer so the
 /// legend always matches what is glowing in the soil.
-enum NitrogenForm {
-  organic,
-  ammonium,
-  nitrate,
-  nitrousOxide,
-}
+enum NitrogenForm { organic, ammonium, nitrate, nitrousOxide }
 
 extension NitrogenFormStyle on NitrogenForm {
   Color get color {

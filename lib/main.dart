@@ -484,7 +484,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               const CircularProgressIndicator(color: Colors.cyan),
               const SizedBox(height: 32),
               Text(
-                l10n?.preparingSimulation ?? 'VALMISTELLAAN SIMULAATIOTA...',
+                l10n?.preparingSimulation ?? 'PREPARING SIMULATION...',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       letterSpacing: 2.0,
@@ -493,7 +493,7 @@ class _MainSimulationScreenState extends ConsumerState<MainSimulationScreen>
               ),
               const SizedBox(height: 12),
               Text(
-                l10n?.launchingEngine ?? 'Käynnistetään simulaatiomoottoria...',
+                l10n?.launchingEngine ?? 'Launching simulation engine...',
                 style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
             ],

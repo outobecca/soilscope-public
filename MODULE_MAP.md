@@ -16,7 +16,7 @@ SoilScope is organized into four primary layers under `lib/` plus bundled JSON a
 | **Domain Services & Actions** | `lib/domain/actions/`, `lib/domain/services/`, `lib/domain/logic_lab/` | Pure state transitions (`SimulationActions`), lifecycle/persistence/timeline/intervention services, and the node-based `LogicEvaluator` |
 | **Data** | `lib/data/` | Asset loaders (`ScenarioRepository`, `ReferenceDatasetRepository`) |
 | **Presentation** | `lib/presentation/` | Riverpod providers (`lib/presentation/providers/`), Flame 2D simulation (`lib/presentation/widgets/game/soil_scope_game.dart`), HUD, controls, and screens |
-| **Assets** | `assets/` | Bundled scenario JSONs (`assets/scenarios/`), validation reference JSON (`assets/validation/reference.json`), and SVG/PNG images (`assets/images/`) |
+| **Assets** | `assets/` | Runtime parameter override JSON (`assets/config/model_parameters.json`), bundled scenario JSONs (`assets/scenarios/`), validation reference JSON (`assets/validation/reference.json`), and SVG/PNG images (`assets/images/`) |
 
 ---
 
@@ -251,7 +251,7 @@ Computed getters (not serialized): `plant` (first plant or stub), `solarRadiatio
     "state": { "...BiophysicalState JSON..." }
   }
   ```
-- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 4`. Its parameters are `ModelConfig.values` plus the `SimulationPlot` geometry, so a runtime override changes the identity. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
+- **`ModelParameterSet`** (`lib/domain/models/model_parameter_set.dart`): `currentId = 'soilscope-core'`, `currentVersion = 5`. Its parameters are `ModelConfig.values` plus the `SimulationPlot` geometry, so a runtime override changes the identity. `toJson()` emits `id`, `version`, `fingerprint`; `toCanonicalJson()` adds `parameters` (`Map<String, double>`).
 - **`ModelConfig`** (`lib/core/model_config.dart`): one defaults map for all model-affecting solver values and the `interaction.*` component pool doses, with `of(key)`, `values`, `applyOverrides()` and `reset()`. Rendering-only motion and layout stay in `SimulationConstants` and `MicrobeMotility`. `ModelConfigRepository` (`lib/data/model_config_repository.dart`) loads `assets/config/model_parameters.json` before `runApp`; the checked-in `parameters` map is empty, so defaults reproduce prior behavior.
 
 ### 5.8 `ReferenceDataset` JSON Schema (`lib/domain/models/reference_dataset.dart` & `assets/validation/reference.json`)

@@ -1,6 +1,17 @@
+import '../../core/model_config.dart';
 import '../models/biophysical_state.dart';
 import '../solvers/simulation_engine.dart';
 import 'simulation_tick_processor.dart';
+
+/// Isolate-safe wrapper around [preCalculateTimelineTask] that copies the
+/// active [ModelConfig] parameters into a spawned `compute` isolate before
+/// advancing the model.
+(BiophysicalState, List<BiophysicalState>) preCalculateTimelineIsolateTask(
+  (BiophysicalState, int, Map<String, double>) args,
+) {
+  ModelConfig.applyOverrides(args.$3);
+  return preCalculateTimelineTask((args.$1, args.$2));
+}
 
 /// One pre-calculation chunk. Runs through `compute`, so it stays top-level.
 ///
@@ -27,7 +38,11 @@ import 'simulation_tick_processor.dart';
       }
     }
 
-    currentState = SimulationEngine.tick(currentState, dt);
+    currentState = SimulationEngine.tick(
+      currentState,
+      dt,
+      precipitation: currentState.precipitation,
+    );
 
     if (i % 6 == 0) {
       history.add(currentState.copyWith(history: []));

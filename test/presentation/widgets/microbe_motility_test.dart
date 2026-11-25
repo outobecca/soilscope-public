@@ -66,8 +66,7 @@ void main() {
         expect(
           offset.y.abs(),
           lessThanOrEqualTo(
-            MicrobeMotility.spawnOffsetMax *
-                MicrobeMotility.spawnVerticalScale,
+            MicrobeMotility.spawnOffsetMax * MicrobeMotility.spawnVerticalScale,
           ),
         );
       }

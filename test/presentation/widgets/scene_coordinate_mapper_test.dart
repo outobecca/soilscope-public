@@ -7,8 +7,7 @@ void main() {
     const worldWidth = 1200.0;
 
     test('maps the plot centre to the scene centre', () {
-      final expectedCenter =
-          worldWidth * SimulationPlot.centerNormalizedX;
+      final expectedCenter = worldWidth * SimulationPlot.centerNormalizedX;
       expect(
         SceneCoordinateMapper.plotCenterX(worldWidth),
         closeTo(expectedCenter, 1e-12),

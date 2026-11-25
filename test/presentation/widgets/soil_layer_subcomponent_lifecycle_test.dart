@@ -44,7 +44,8 @@ class _Harness {
   List<RhizosphereHotspotComponent> rhizosphere() =>
       layer.children.whereType<RhizosphereHotspotComponent>().toList();
 
-  List<IonComponent> ions() => layer.children.whereType<IonComponent>().toList();
+  List<IonComponent> ions() =>
+      layer.children.whereType<IonComponent>().toList();
 }
 
 Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
@@ -115,31 +116,31 @@ Future<_Harness> _pumpSimulation(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('repeated syncs do not duplicate technical or rhizosphere nodes', (
-    tester,
-  ) async {
-    final harness = await _pumpSimulation(tester);
-    for (var i = 0; i < 12; i++) {
-      harness.layer.triggerSubComponentSync();
-    }
-    await tester.pump();
+  testWidgets(
+    'repeated syncs do not duplicate technical or rhizosphere nodes',
+    (tester) async {
+      final harness = await _pumpSimulation(tester);
+      for (var i = 0; i < 12; i++) {
+        harness.layer.triggerSubComponentSync();
+      }
+      await tester.pump();
 
-    final techNodes = harness.techNodes();
-    expect(techNodes, isNotEmpty);
-    expect(
-      techNodes.map((node) => node.layerId).toSet(),
-      {harness.layer.layerId},
-    );
-    expect(
-      techNodes.map(identityHashCode).toSet().length,
-      techNodes.length,
-      reason: 'the same node instance must not be added twice',
-    );
+      final techNodes = harness.techNodes();
+      expect(techNodes, isNotEmpty);
+      expect(techNodes.map((node) => node.layerId).toSet(), {
+        harness.layer.layerId,
+      });
+      expect(
+        techNodes.map(identityHashCode).toSet().length,
+        techNodes.length,
+        reason: 'the same node instance must not be added twice',
+      );
 
-    final rhizosphere = harness.rhizosphere();
-    expect(rhizosphere.map((h) => h.hotspotId).toList(), ['rhs-1']);
-    expect(rhizosphere, hasLength(1));
-  });
+      final rhizosphere = harness.rhizosphere();
+      expect(rhizosphere.map((h) => h.hotspotId).toList(), ['rhs-1']);
+      expect(rhizosphere, hasLength(1));
+    },
+  );
 
   testWidgets('rhizosphere markers follow hotspot additions and removals', (
     tester,
@@ -160,15 +161,15 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 32));
 
-    expect(
-      harness.rhizosphere().map((h) => h.hotspotId).toSet(),
-      {'rhs-1', 'rhs-2'},
-    );
+    expect(harness.rhizosphere().map((h) => h.hotspotId).toSet(), {
+      'rhs-1',
+      'rhs-2',
+    });
     expect(harness.rhizosphere(), hasLength(2));
 
-    final removed = harness
-        .rhizosphere()
-        .firstWhere((h) => h.hotspotId == 'rhs-1');
+    final removed = harness.rhizosphere().firstWhere(
+      (h) => h.hotspotId == 'rhs-1',
+    );
 
     harness.layer.debugHandleLayerUpdate(
       modelLayer.copyWith(
@@ -283,12 +284,7 @@ Scenario _scenario() {
           nitrogenContent: 1000.0,
           name: 'Topsoil',
           hotspots: const [
-            RhizosphereHotspot(
-              id: 'rhs-1',
-              x: 0.25,
-              z: 0.5,
-              intensity: 0.8,
-            ),
+            RhizosphereHotspot(id: 'rhs-1', x: 0.25, z: 0.5, intensity: 0.8),
           ],
         ),
       ],

@@ -27,10 +27,7 @@ class _Harness {
   final SoilScopeGame game;
 }
 
-Future<void> _pumpUntil(
-  WidgetTester tester,
-  bool Function() condition,
-) async {
+Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
   for (var frame = 0; frame < 160; frame++) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 25)),
@@ -118,10 +115,7 @@ void main() {
       );
       expect(
         node.position.y,
-        inInclusiveRange(
-          layer.position.y,
-          layer.position.y + layer.size.y,
-        ),
+        inInclusiveRange(layer.position.y, layer.position.y + layer.size.y),
         reason: '${node.layerId} hotspot must stay inside its own layer',
       );
       expect(node.layerAnchor.x, inInclusiveRange(0.0, 1.0));
@@ -160,10 +154,7 @@ void main() {
       isNotEmpty,
       reason: 'every layer guarantees one sensor cluster',
     );
-    expect(
-      nutrientNodes.every((n) => n.metrics.contains('NH₄⁺')),
-      isTrue,
-    );
+    expect(nutrientNodes.every((n) => n.metrics.contains('NH₄⁺')), isTrue);
   });
 
   testWidgets('rhizosphere hotspots follow the plot root transform', (
@@ -223,14 +214,35 @@ void main() {
   });
 
   test('process markers are classified for the nitrogen mode', () {
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.nitrification), isTrue);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.mineralization), isTrue);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.denitrification), isTrue);
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.nitrification),
+      isTrue,
+    );
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.mineralization),
+      isTrue,
+    );
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.denitrification),
+      isTrue,
+    );
     expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.leaching), isTrue);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.nutrientUptake), isTrue);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.photosynthesis), isFalse);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.transpiration), isFalse);
-    expect(ProcessLabel.isNitrogenProcess(ProcessMarkerType.adsorption), isFalse);
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.nutrientUptake),
+      isTrue,
+    );
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.photosynthesis),
+      isFalse,
+    );
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.transpiration),
+      isFalse,
+    );
+    expect(
+      ProcessLabel.isNitrogenProcess(ProcessMarkerType.adsorption),
+      isFalse,
+    );
   });
 }
 
@@ -296,12 +308,7 @@ Scenario _scenario() {
             ),
           ],
         ),
-        layer(
-          id: 'subsoil',
-          depth: 0.3,
-          thickness: 0.5,
-          name: 'Subsoil',
-        ),
+        layer(id: 'subsoil', depth: 0.3, thickness: 0.5, name: 'Subsoil'),
       ],
       surfaceAlbedo: 0.2,
       slope: 0.05,

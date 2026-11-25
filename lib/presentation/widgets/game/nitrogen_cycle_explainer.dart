@@ -34,9 +34,7 @@ class NitrogenPoolTotals {
     var nitrousOxide = 0.0;
     for (final layer in layers) {
       organic +=
-          layer.organicNitrogen +
-          layer.maomNitrogen +
-          layer.microbialNitrogen;
+          layer.organicNitrogen + layer.maomNitrogen + layer.microbialNitrogen;
       ammonium += layer.ammoniumContent;
       nitrate += layer.nitrateContent;
       nitrousOxide += layer.nitrousOxideContent;
@@ -88,10 +86,8 @@ class NitrogenCycleOverlay extends ConsumerWidget {
               constraints.maxHeight - bottomReserve - _minCardHeight,
             ),
           );
-          final availableWidth =
-              constraints.maxWidth - _horizontalMargin * 2;
-          final availableHeight =
-              constraints.maxHeight - top - bottomReserve;
+          final availableWidth = constraints.maxWidth - _horizontalMargin * 2;
+          final availableHeight = constraints.maxHeight - top - bottomReserve;
           if (availableWidth <= 0 || availableHeight <= 0) {
             return const SizedBox.shrink();
           }
@@ -265,11 +261,7 @@ class NitrogenCycleExplainer extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(
-    WidgetRef ref,
-    AppLocalizations l10n,
-    ThemeData theme,
-  ) {
+  Widget _buildHeader(WidgetRef ref, AppLocalizations l10n, ThemeData theme) {
     final accent = NitrogenForm.nitrate.color;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,10 +364,7 @@ class NitrogenCycleExplainer extends ConsumerWidget {
             shape: BoxShape.circle,
             color: color,
             boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.55),
-                blurRadius: 6,
-              ),
+              BoxShadow(color: color.withValues(alpha: 0.55), blurRadius: 6),
             ],
           ),
         ),
@@ -438,12 +427,7 @@ class NitrogenCycleExplainer extends ConsumerWidget {
     );
   }
 
-  Widget _flowChip(
-    ThemeData theme,
-    IconData icon,
-    String label,
-    Color color,
-  ) {
+  Widget _flowChip(ThemeData theme, IconData icon, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
@@ -473,17 +457,15 @@ class NitrogenCycleExplainer extends ConsumerWidget {
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.55,
+        ),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.air_rounded,
-            size: 15,
-            color: NitrogenForm.ammonium.color,
-          ),
+          Icon(Icons.air_rounded, size: 15, color: NitrogenForm.ammonium.color),
           const SizedBox(width: 7),
           Expanded(
             child: Text.rich(
@@ -531,11 +513,7 @@ class _Connector extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.south_rounded,
-            size: 14,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.south_rounded, size: 14, color: theme.colorScheme.primary),
           const SizedBox(width: 5),
           Expanded(
             child: Text.rich(

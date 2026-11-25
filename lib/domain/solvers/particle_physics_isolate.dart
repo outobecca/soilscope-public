@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../core/debug_log.dart';
+import '../../core/model_config.dart';
 import '../../core/simulation_constants.dart';
 import 'particle_physics_solver.dart';
 
@@ -62,8 +63,22 @@ class RemoveParticles extends ParticleCommand {
   RemoveParticles(this.count, this.typeIndex);
 }
 
+/// Bootstrap payload carrying the active [ModelConfig] values into the
+/// particle physics isolate so runtime parameter overrides stay consistent.
+class ParticleIsolateBootstrap {
+  final SendPort mainSendPort;
+  final Map<String, double> parameters;
+
+  ParticleIsolateBootstrap({
+    required this.mainSendPort,
+    required this.parameters,
+  });
+}
+
 /// The entry point for the particle physics isolate
-void particleIsolateEntry(SendPort mainSendPort) {
+void particleIsolateEntry(ParticleIsolateBootstrap bootstrap) {
+  ModelConfig.applyOverrides(bootstrap.parameters);
+  final mainSendPort = bootstrap.mainSendPort;
   final childReceivePort = ReceivePort();
   mainSendPort.send(childReceivePort.sendPort);
 
@@ -223,11 +238,21 @@ class ParticlePhysicsIsolateManager {
     if (_initialized) return;
     _initialized = true;
 
-    _receivePort = ReceivePort();
-    _isolate = await Isolate.spawn(
-      particleIsolateEntry,
-      _receivePort!.sendPort,
-    );
+    try {
+      _receivePort = ReceivePort();
+      _isolate = await Isolate.spawn(
+        particleIsolateEntry,
+        ParticleIsolateBootstrap(
+          mainSendPort: _receivePort!.sendPort,
+          parameters: Map<String, double>.from(ModelConfig.values),
+        ),
+      );
+    } catch (e) {
+      _initialized = false;
+      _receivePort?.close();
+      _receivePort = null;
+      rethrow;
+    }
 
     _receivePort!.listen((message) {
       if (message is SendPort) {
