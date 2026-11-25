@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -22,6 +23,22 @@ class WaterFlowPathsComponent extends Component
   bool _isPinned = false;
   bool _isHovered = false;
 
+  // A flowing dash used to cost three drawCircle calls plus three fresh
+  // Paint objects. Collect every droplet in the frame into three point
+  // batches instead: glow, core and highlight each become one drawRawPoints
+  // call regardless of how many tips are visible.
+  final Paint _glowPaint = Paint()..strokeCap = StrokeCap.round;
+  final Paint _corePaint = Paint()..strokeCap = StrokeCap.round;
+  final Paint _highlightPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.5)
+    ..strokeCap = StrokeCap.round;
+  final Paint _arrowPaint = Paint();
+  final List<double> _glowPoints = [];
+  final List<double> _corePoints = [];
+  final List<double> _highlightPoints = [];
+  final Path _arrowPath = Path();
+  final Path _bypassPath = Path();
+
   @override
   void render(Canvas canvas) {
     final double zoom = game.camera.viewfinder.zoom;
@@ -36,11 +53,9 @@ class WaterFlowPathsComponent extends Component
 
     // --- 1. XYLEM UPTAKE (Roots -> Stem) for all plants ---
     // Visualizes suction-driven mass flow from soil solution to xylem.
-    final waterFlowPaint = Paint()
-      ..color = const Color(0xFF38BDF8).withValues(alpha: (_isHovered || _isPinned) ? 0.6 : 0.3)
-      ..strokeWidth = 1.4 / zoom
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    final flowColor = const Color(
+      0xFF38BDF8,
+    ).withValues(alpha: (_isHovered || _isPinned) ? 0.6 : 0.3);
 
     final soilX = game.soilLeftX;
 
@@ -70,10 +85,11 @@ class WaterFlowPathsComponent extends Component
         points.add(plantBase.toOffset());
 
         if (points.length >= 2) {
-          _drawCurvedFlowPath(canvas, points, waterFlowPaint, time, zoom, isUpward: true);
+          _collectCurvedFlowPath(points, time, zoom);
         }
       }
     }
+    _drawFlowDroplets(canvas, zoom, flowColor);
 
     // --- 2. MACROPORE BYPASS FLOW (Worm burrows) ---
     // High-speed infiltration through large structural voids during rain.
@@ -84,6 +100,7 @@ class WaterFlowPathsComponent extends Component
         ..strokeWidth = 2.5 / zoom
         ..style = PaintingStyle.stroke;
 
+      _bypassPath.reset();
       for (final worm in worms) {
         final wormX = worm.position.x;
         final wormY = worm.position.y;
@@ -91,19 +108,19 @@ class WaterFlowPathsComponent extends Component
         final start = Offset(wormX, surfaceY);
         final end = Offset(wormX, wormY);
 
-        _drawAnimatedFlowLine(canvas, start, end, bypassPaint, 12, 6, -time * 30, zoom);
+        _collectAnimatedFlowLine(start, end, 12, 6, -time * 30, zoom);
+      }
+      if (_bypassPath.getBounds().isEmpty == false) {
+        canvas.drawPath(_bypassPath, bypassPaint);
       }
     }
   }
 
-  void _drawCurvedFlowPath(
-    Canvas canvas,
+  void _collectCurvedFlowPath(
     List<Offset> points,
-    Paint paint,
     double time,
-    double zoom, {
-    required bool isUpward,
-  }) {
+    double zoom,
+  ) {
     final path = Path();
     path.moveTo(points.first.dx, points.first.dy);
 
@@ -119,6 +136,9 @@ class WaterFlowPathsComponent extends Component
     final dashLen = 8.0 / zoom;
     final dashGap = 10.0 / zoom;
 
+    final radius = 2.0 / zoom;
+    final highlightOffset = radius * 0.3;
+
     for (final metric in metrics) {
       // Offset depends on direction. Roots -> Stem is "forward" along points list
       double currentDist = (time * 45.0) % (dashLen + dashGap);
@@ -129,30 +149,20 @@ class WaterFlowPathsComponent extends Component
           final tangent = metric.getTangentForOffset(currentDist);
           if (tangent != null) {
             final pos = tangent.position;
-            // Shaded "water droplet" pulse
-            final radius = 2.0 / zoom;
-            
-            // Glow
-            canvas.drawCircle(
-              pos, 
-              radius * 2.0, 
-              Paint()..color = paint.color.withValues(alpha: 0.2)..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom)
-            );
-            
-            // Core
-            canvas.drawCircle(pos, radius, Paint()..color = paint.color);
-            
-            // Shading highlight
-            canvas.drawCircle(
-              pos - Offset(radius * 0.3, radius * 0.3),
-              radius * 0.4,
-              Paint()..color = Colors.white.withValues(alpha: 0.5)
-            );
+            _glowPoints
+              ..add(pos.dx)
+              ..add(pos.dy);
+            _corePoints
+              ..add(pos.dx)
+              ..add(pos.dy);
+            _highlightPoints
+              ..add(pos.dx - highlightOffset)
+              ..add(pos.dy - highlightOffset);
           }
           
           // Direction indicator arrow at the end of some dashes
           if (zoom > 2.0 && currentDist % (4 * (dashLen + dashGap)) < (dashLen + dashGap)) {
-            _drawSmallArrow(canvas, metric, currentDist + dashLen, paint.color, zoom);
+            _collectSmallArrow(metric, currentDist + dashLen, zoom);
           }
         }
         currentDist += dashLen + dashGap;
@@ -160,28 +170,73 @@ class WaterFlowPathsComponent extends Component
     }
   }
 
-  void _drawSmallArrow(Canvas canvas, PathMetric metric, double offset, Color color, double zoom) {
-    final tangent = metric.getTangentForOffset(offset.clamp(0.0, metric.length));
-    if (tangent != null) {
-      final angle = math.atan2(tangent.vector.dy, tangent.vector.dx);
-      canvas.save();
-      canvas.translate(tangent.position.dx, tangent.position.dy);
-      canvas.rotate(angle);
-      final arrowPath = Path()
-        ..moveTo(0, 0)
-        ..lineTo(-4 / zoom, -2 / zoom)
-        ..lineTo(-4 / zoom, 2 / zoom)
-        ..close();
-      canvas.drawPath(arrowPath, Paint()..color = color.withValues(alpha: 0.8));
-      canvas.restore();
+  void _drawFlowDroplets(Canvas canvas, double zoom, Color color) {
+    _glowPaint
+      ..color = color.withValues(alpha: 0.2)
+      ..strokeWidth = 8.0 / zoom
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 2 / zoom);
+    _corePaint
+      ..color = color
+      ..strokeWidth = 4.0 / zoom;
+    _highlightPaint
+      ..color = Colors.white.withValues(alpha: 0.5)
+      ..strokeWidth = 1.6 / zoom;
+
+    if (_glowPoints.isNotEmpty) {
+      canvas.drawRawPoints(
+        PointMode.points,
+        Float32List.fromList(_glowPoints),
+        _glowPaint,
+      );
     }
+    if (_corePoints.isNotEmpty) {
+      canvas.drawRawPoints(
+        PointMode.points,
+        Float32List.fromList(_corePoints),
+        _corePaint,
+      );
+    }
+    if (_highlightPoints.isNotEmpty) {
+      canvas.drawRawPoints(
+        PointMode.points,
+        Float32List.fromList(_highlightPoints),
+        _highlightPaint,
+      );
+    }
+    if (_arrowPath.getBounds().isEmpty == false) {
+      canvas.drawPath(
+        _arrowPath,
+        _arrowPaint..color = color.withValues(alpha: 0.8),
+      );
+    }
+
+    _glowPoints.clear();
+    _corePoints.clear();
+    _highlightPoints.clear();
+    _arrowPath.reset();
   }
 
-  void _drawAnimatedFlowLine(
-    Canvas canvas,
+  void _collectSmallArrow(PathMetric metric, double offset, double zoom) {
+    final tangent = metric.getTangentForOffset(offset.clamp(0.0, metric.length));
+    if (tangent == null) return;
+    final angle = math.atan2(tangent.vector.dy, tangent.vector.dx);
+    final cosA = math.cos(angle);
+    final sinA = math.sin(angle);
+    Offset rotate(double x, double y) =>
+        Offset(x * cosA - y * sinA, x * sinA + y * cosA);
+    final origin = tangent.position;
+    final a = rotate(-4 / zoom, -2 / zoom);
+    final b = rotate(-4 / zoom, 2 / zoom);
+    _arrowPath
+      ..moveTo(origin.dx, origin.dy)
+      ..lineTo(origin.dx + a.dx, origin.dy + a.dy)
+      ..lineTo(origin.dx + b.dx, origin.dy + b.dy)
+      ..close();
+  }
+
+  void _collectAnimatedFlowLine(
     Offset start,
     Offset end,
-    Paint paint,
     double dLen,
     double dGap,
     double offset,
@@ -203,7 +258,9 @@ class WaterFlowPathsComponent extends Component
               math.cos(angle) * (curr + sLen).clamp(0, dist),
               math.sin(angle) * (curr + sLen).clamp(0, dist),
             );
-        canvas.drawLine(s, e, paint);
+        _bypassPath
+          ..moveTo(s.dx, s.dy)
+          ..lineTo(e.dx, e.dy);
       }
       curr += sLen + sGap;
     }

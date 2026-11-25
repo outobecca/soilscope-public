@@ -6,9 +6,9 @@
 **Method:** source reading plus a temporary in-process probe (removed after the run) on the Linux reference host, and — for the memory section — a temporary CDP heap profiler (removed after the run) driving headless Chrome.
 
 **Implementation status (25 Nov 2026):** A1, B1/B2, A10, A5, C4, A2, A4, A7, A8,
-B3 and A9 are implemented; A6 was measured and closed as a non-finding, and A9's
-proposed selection rewrite was measured and reverted — see §1.1. The remaining
-findings are recommendations. The repository's `PERFORMANCE.md` guardrail (*no raster optimization is
+B3, A9 and A11 are implemented; A6 was measured and closed as a non-finding, and
+A9's proposed selection rewrite and a molecule point-batching attempt were measured
+and reverted — see §1.1. The remaining findings are recommendations. The repository's `PERFORMANCE.md` guardrail (*no raster optimization is
 accepted without a before/after profile on a real target*) still applies before these
 are presented as device wins.
 
@@ -87,6 +87,7 @@ Second batch (state pushes and session notifications):
 | A7 scenario loads | `data/scenario_repository.dart` | 4 asset reads + JSON parses per screen visit — **12.8 ms** cold | one shared future — **5.3 µs** warm |
 | B3 overlay text | `components/scientific_overlays_component.dart` | a fresh `TextPainter` per zoom step per label; the animated boundary issued one `drawLine` per dash | one layout per label, drawn through a `1 / zoom` canvas transform; dashes batched into one `drawPath` per boundary — **1435 → 1405 MB per 20 s (−2.1%)** |
 | A9 edge identity | `components/soil_symbiosis_network_component.dart` | `stableId` string rebuilt per access (**0.066 µs**, three times per edge per frame) | final field + cached phase seed (**0.014 µs**); the nearest-target selection rewrite was measured and rejected (56 vs 51 µs per rebuild) |
+| A11 water-flux droplets | `components/water_flow_paths_component.dart` | 3 `drawCircle` calls and 3 fresh `Paint`s per animated dash, per root tip, per frame (blur `Paint` included) | one `drawRawPoints` per layer per frame, arrowheads in one path, bypass dashes in one path — **CanvasKit site −4.9%, total median −1.4%** |
 
 Probe: 60 gate requests, a provider listener counting notifications for duplicate
 selections, and 500 timed comparisons on a 350-node plant. The A2 probe built the
@@ -195,7 +196,9 @@ largest contributors are the CanvasKit glue around each paint operation
 Dart paint paths. A4 (per-frame `Paint`/`Shader`/`Path` construction in three
 always-visible components) did reduce the rate when implemented — 69.8 → 67.9 MB/s —
 but the bulk is the per-draw CanvasKit bridge, so the simulation state itself retains
-nothing; the remaining lever is the number of paint operations, not their setup. Caveat: headless SwiftShader ran at ~23 fps versus ~72 fps in
+nothing; the remaining lever is the number of paint operations, not their setup. A11
+(water-flux droplet batching) is the first cut at that: the CanvasKit glue site fell
+**4.9%** across the interleaved capture, with total allocation median **−1.4%**. Caveat: headless SwiftShader ran at ~23 fps versus ~72 fps in
 the integrated browser, so the absolute churn rate is ~3× lower there; the forced-GC
 result is the decisive part.
 
@@ -555,6 +558,44 @@ idempotent with an explicit state (`idle / starting / ready / failed`).
 
 ---
 
+### A11 — Every water-flux dash costs three paints and three draw calls · P1 (done)
+
+`water_flow_paths_component.dart` (`_drawCurvedFlowPath`)
+
+For every root tip the component traces a root-to-shoot path and, for each animated
+dash on it, draws a blurred glow, a core and a specular highlight. Each of those three
+circles allocated a fresh `Paint`, and the glow also allocated a new
+`MaskFilter.blur` every time. At the default viewport a tip can carry a dozen or more
+dashes and the root system grows during a run, so this is a per-frame draw-call source
+that scales with the plant.
+
+**Implemented (25 Nov):** droplets are collected into three reusable point lists and
+drawn as one `drawRawPoints` call per layer per frame (blur filter built once per
+frame); arrowheads at zoom > 2 accumulate into a single path; bypass-flow dashes share
+one path instead of issuing one `drawLine` each.
+
+Measured with the interleaved protocol from `PERFORMANCE.md`: two release bundles
+served side-by-side and sampled alternately, seven A/B pairs, same viewport and scene
+script. Total allocation is noisy because the runs reach slightly different root
+counts at the same wall-clock point, so the raw totals alone would be inconclusive:
+
+| Pair | Total before → after | Delta | CanvasKit glue site |
+|---|---|---|---|
+| 5 | 1572 → 1550 MB | **−1.4%** | 375 → 354 MB (−5.6%) |
+| 6 | 1575 → 1497 MB | **−4.9%** | 371 → 338 MB (−8.9%) |
+| 7 | 1558 → 1561 MB | +0.2% | 363 → 362 MB (−0.3%) |
+
+Across all seven pairs the total median is **−22 MB per 20 s (−1.4%)** with five of
+seven pairs improving, and the CanvasKit glue site — the direct signal for draw-call
+allocation — fell in every pair where it was captured (**−18.3 MB mean, −4.9%**). Kept.
+
+An earlier attempt to point-batch the isolate field's simplified molecules measured
+**worse** (median 1493 → 1513 MB per 20 s) and was reverted: those dots are a small
+part of the scene at this viewport, and the per-colour bucket buffers offset the
+saved calls.
+
+---
+
 ## 3. Cache keys
 
 ### B1 — Inventory: five ad-hoc key schemes for one canvas
@@ -826,6 +867,7 @@ These were checked because a review that "finds" already-solved problems is nois
 | P2 | `SimulationTimeline.append()` owns the view; drop `snapshotAdded` handshake | S | `simulation_timeline.dart`, `simulation_tick_processor.dart` | removes a stale-view failure mode |
 | P3 | Memoize `ScenarioProcessProfile` per scenario | XS | `soil_scope_game.dart:576-677` | 4 derivations → 1 |
 | P3 | Cache `NetworkEdge.stableId` **(done)**; target-selection rewrite rejected by measurement | S | `soil_symbiosis_network_component.dart:281-330, 766` | 0.066 → 0.014 µs per id access |
+| P1 | Batch water-flux droplets, arrowheads and bypass dashes **(done, measured)** | S | `water_flow_paths_component.dart` | 3 draws per dash → 3 per frame; CanvasKit site −4.9% |
 | P3 | Extract `CoalescedWrite<T>`; cap the event log; delete `_webTimer` | M | providers, `event_log_provider.dart`, `simulation_isolate.dart` | duplication and unbounded growth |
 
 ---
