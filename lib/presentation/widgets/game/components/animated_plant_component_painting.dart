@@ -795,7 +795,9 @@ extension _PlantVisuals on AnimatedPlantComponent {
     final vitality = (1.0 - plant.waterStressIndex).clamp(0.1, 1.0);
     final waterContent = state.profile.layers.first.waterContent;
 
-    final pulseSpeed = 1.5 + vitality * 3.0;
+    // A slow rhizosphere breath (4–11 s period) reads as a living halo; the
+    // previous 1–4 Hz flicker turned the glow field into visual static.
+    final pulseSpeed = 0.55 + vitality * 1.0;
     final pulse = 0.5 + 0.5 * math.sin(time * pulseSpeed);
 
     // LOD: fade the effect out when zoomed far out.
@@ -904,8 +906,8 @@ extension _PlantVisuals on AnimatedPlantComponent {
   ) {
     const int count = 2; // Reduced count
     for (int j = 0; j < count; j++) {
-      final t = (time * 0.6 + j / count) % 1.0;
-      final angle = (j / count) * math.pi * 2 + time * 0.3;
+      final t = (time * 0.26 + j / count) % 1.0;
+      final angle = (j / count) * math.pi * 2 + time * 0.12;
 
       // Particles move FROM soil TO root (Nutrient Uptake / Symbiosis)
       final dist = 25 * (1.0 - t); // Tighter distance
@@ -1055,7 +1057,7 @@ extension _PlantVisuals on AnimatedPlantComponent {
       // stable across list rebuilds, so the pulse does not jump when roots
       // grow.
       final phase = (branch.last * 0.61803398875) % 1.0;
-      final progress = (time * 0.8 + phase) % 1.0;
+      final progress = (time * 0.32 + phase) % 1.0;
       final reversedProgress = 1.0 - progress;
       final position = (reversedProgress * (branch.length - 1)).floor();
 

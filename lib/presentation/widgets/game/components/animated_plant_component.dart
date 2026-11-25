@@ -450,7 +450,7 @@ class AnimatedPlantComponent extends PositionComponent
 
     // 2. Periodic "Active Maintenance" glows for healthy tips
     final vitality = (1.0 - plant.waterStressIndex).clamp(0.0, 1.0);
-    if (vitality > 0.4 && _random.nextDouble() < 0.05 * dt * 60) {
+    if (vitality > 0.4 && _random.nextDouble() < 0.025 * dt * 60) {
       final tips = plant.rootSystem
           .asMap()
           .entries
@@ -530,7 +530,7 @@ class AnimatedPlantComponent extends PositionComponent
 
     // Release rate in events per second. The accumulator keeps the visual
     // density independent of frame rate and avoids a burst after a slow frame.
-    final spawnRatePerSecond = (0.05 + carbonAvailability * 0.15) * 60.0;
+    final spawnRatePerSecond = (0.035 + carbonAvailability * 0.09) * 45.0;
 
     if (_exudateAccumulator.consume(dt, spawnRatePerSecond) > 0) {
       final nodes = plant.rootSystem;
@@ -568,7 +568,7 @@ class AnimatedPlantComponent extends PositionComponent
     final boost = isFlowMode ? 3.0 : 1.0;
 
     // Phloem-driven carbon moving DOWN the roots
-    if (_random.nextDouble() < 0.15 * dt * 60 * boost) {
+    if (_random.nextDouble() < 0.08 * dt * 60 * boost) {
       _ensureRootTopology(plant.rootSystem);
       final branches = _rootBranchIndices;
       if (branches.isEmpty) return;
@@ -1274,6 +1274,6 @@ class _RootTipGlow {
 
   void update(double dt) => life += dt;
   double get alpha => (1.0 - life / 2.5).clamp(0.0, 1.0);
-  double get pulse => math.sin(life * (isGrowth ? 8.0 : 4.0));
+  double get pulse => math.sin(life * (isGrowth ? 3.2 : 1.8));
   bool get isDone => life > 2.5;
 }

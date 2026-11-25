@@ -203,8 +203,8 @@ class MoleculeParticleComponent extends PositionComponent
       currentTarget = path![_pathIndex];
       // Organic "drift" around waypoints: Add a small deterministic jitter based on seed and time
       final driftScale = (type == MoleculeType.ammonium) ? 2.5 : 4.0;
-      final driftX = math.sin(_time * 2.0 + seed) * driftScale;
-      final driftY = math.cos(_time * 2.5 + seed) * driftScale;
+      final driftX = math.sin(_time * 1.0 + seed) * driftScale;
+      final driftY = math.cos(_time * 1.2 + seed) * driftScale;
 
       // If we are close to the current waypoint, advance
       // Using a slightly larger radius for faster particles to prevent skipping
@@ -232,20 +232,22 @@ class MoleculeParticleComponent extends PositionComponent
         // Ammonium is very "sticky" (CEC) and slow
         final isAmmonium = type == MoleculeType.ammonium;
         final seekStrength = isAmmonium ? 0.02 : 0.08;
-        final baseSpeed = isAmmonium ? 15.0 : 35.0;
+        // Slow enough to track a molecule along a root; nutrient transport is
+        // a process to observe, not a race.
+        final baseSpeed = isAmmonium ? 12.0 : 26.0;
 
         // Add brownian jitter for ammonium to represent restricted diffusion
         if (isAmmonium) {
           _tmpVec.add(
             Vector2(
-              math.sin(_time * 5.0 + seed) * 0.5,
-              math.cos(_time * 4.0 + seed) * 0.5,
+              math.sin(_time * 2.4 + seed) * 0.5,
+              math.cos(_time * 2.0 + seed) * 0.5,
             ),
           );
         }
 
         velocity.lerp(
-          _tmpVec * (baseSpeed + math.sin(_time + seed) * 15.0),
+          _tmpVec * (baseSpeed + math.sin(_time + seed) * 10.0),
           seekStrength,
         );
       }

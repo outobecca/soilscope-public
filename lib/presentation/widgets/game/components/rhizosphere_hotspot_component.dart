@@ -56,11 +56,12 @@ class RhizosphereHotspotComponent extends PositionComponent
     _glow.add(
       OpacityEffect.to(
         0.05 * intensity,
-        EffectController(duration: 2.0, reverseDuration: 2.0, infinite: true),
+        EffectController(duration: 3.6, reverseDuration: 3.6, infinite: true),
       ),
     );
 
-    // Add some "metabolic particles"
+    // Add some "metabolic particles". They drift slowly so the exudation
+    // zone reads as an exchange process rather than a flickering cluster.
     for (int i = 0; i < 5; i++) {
       final p = CircleComponent(
         radius: 2,
@@ -79,8 +80,8 @@ class RhizosphereHotspotComponent extends PositionComponent
         MoveByEffect(
           Vector2(math.cos(angle) * dist, math.sin(angle) * dist),
           EffectController(
-            duration: 1.0 + random.nextDouble(),
-            reverseDuration: 1.0 + random.nextDouble(),
+            duration: 3.0 + random.nextDouble() * 1.6,
+            reverseDuration: 3.0 + random.nextDouble() * 1.6,
             infinite: true,
             curve: Curves.easeInOutSine,
           ),

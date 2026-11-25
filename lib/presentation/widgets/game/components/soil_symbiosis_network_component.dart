@@ -96,8 +96,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final time = game.currentTime();
 
     // 1. Organic Graph Maintenance (Single Source)
-    // Increased update frequency but made it "softer"
-    if (time - _lastGraphUpdate > 0.8) {
+    // Rewire slowly enough that the topology can be followed by eye. The old
+    // 0.8 s cadence rebuilt the whole network faster than the routes through
+    // it could be read.
+    if (time - _lastGraphUpdate > 2.6) {
       _rebuildSymbioticGraph(state, time);
       _lastGraphUpdate = time;
     }
@@ -160,7 +162,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final otherPath = Path();
     final otherHalo = Path();
     for (final node in nodes) {
-      final pulse = 0.8 + 0.2 * math.sin(time * 3.0 + node.pos.dx);
+      final pulse = 0.85 + 0.15 * math.sin(time * 1.1 + node.pos.dx);
       final isTip = node.type == 'root_tip';
       final radius = (isTip ? 8.0 : 4.0) * pulse / zoom;
       (isTip ? tipPath : otherPath).addOval(
@@ -360,14 +362,14 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     final boost = flowMode ? 2.5 : 1.0;
 
     final sway = (4.0 + turgor * 6.0) * math.sin(time * (0.4 + turgor * 0.2) + seed) * boost;
-    final pulse = 1.0 + 0.1 * math.sin(time * (2.0 + turgor * 2.0) + seed);
+    final pulse = 1.0 + 0.06 * math.sin(time * (0.7 + turgor * 0.5) + seed);
     
     final cp = mid + (normal * (baseDrift + sway) * pulse);
 
     // HYPHAL EXPANSION: Animate new edges growing from root to target
     final edgeKey = edge.stableId;
     final birthTime = _edgeBirthTimes[edgeKey] ?? 0.0;
-    final growthAge = ((time - birthTime) * 1.5).clamp(0.0, 1.0);
+    final growthAge = ((time - birthTime) * 0.55).clamp(0.0, 1.0);
     
     if (growthAge < 0.05) return;
 
@@ -421,7 +423,7 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
       final bundle = Path();
       for (int i = 0; i < 3; i++) {
         final threadOffset = normal * (i - 1) * 3.0 / zoom;
-        final jitter = 2.0 * math.sin(time * 2.0 + i + seed);
+        final jitter = 1.2 * math.sin(time * 0.7 + i + seed);
 
         final threadPath = Path()
           ..moveTo(start.dx, start.dy)
@@ -555,7 +557,10 @@ class SoilSymbiosisNetworkComponent extends PositionComponent
     // displayed flow.
     if (zoom < 1.2 && edge.stableId.hashCode.isOdd) return;
     
-    final speed = (0.5 + activity * 0.4 + turgor * 0.3) * (flowMode ? 2.5 : 1.0);
+    // A pulse needs about two seconds to cross a hypha, so the direction of
+    // exchange can be followed instead of glimpsed.
+    final speed =
+        (0.22 + activity * 0.16 + turgor * 0.12) * (flowMode ? 2.0 : 1.0);
     // One pulse per edge already reads as a continuous flow when hundreds of
     // hyphae are visible. Extra pulses were mostly hidden by overlap.
     final count = flowMode ? 4 : (zoom < 1.2 ? 1 : (1.5 * activity).toInt().clamp(1, 2));
