@@ -5,7 +5,31 @@ import '../core/debug_log.dart';
 import '../domain/models/scenario.dart';
 
 class ScenarioRepository {
+  static Future<List<Scenario>>? _cached;
+
+  /// Scenarios are immutable bundled assets. Every screen visit — and every
+  /// re-subscription of `scenariosProvider` — used to read and parse all four
+  /// files again. Cache the future the same way [ReferenceDatasetRepository]
+  /// caches its dataset.
   static Future<List<Scenario>> getScenarios() async {
+    final cached = _cached;
+    if (cached != null) return cached;
+
+    final future = _loadScenarios();
+    _cached = future;
+    try {
+      return await future;
+    } catch (_) {
+      // Do not keep a failed load: a retry must read the assets again.
+      if (identical(_cached, future)) _cached = null;
+      rethrow;
+    }
+  }
+
+  /// Test hook: forget the cached list so a different bundle can be used.
+  static void resetCache() => _cached = null;
+
+  static Future<List<Scenario>> _loadScenarios() async {
     final List<String> assetPaths = [
       'assets/scenarios/compacted_clay.json',
       'assets/scenarios/nitrate_leaching.json',

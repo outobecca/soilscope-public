@@ -5,8 +5,9 @@
 **Lens, in the order requested:** (1) redundant execution, (2) cache-key consolidation, (3) state-management streamlining.
 **Method:** source reading plus a temporary in-process probe (removed after the run) on the Linux reference host, and — for the memory section — a temporary CDP heap profiler (removed after the run) driving headless Chrome.
 
-**Implementation status (25 Nov 2026):** A1, B1/B2, A10, A5, C4, A2 and A4 are
-implemented; A6 was measured and closed as a non-finding — see §1.1. The remaining
+**Implementation status (25 Nov 2026):** A1, B1/B2, A10, A5, C4, A2, A4, A7, A8,
+B3 and A9 are implemented; A6 was measured and closed as a non-finding, and A9's
+proposed selection rewrite was measured and reverted — see §1.1. The remaining
 findings are recommendations. The repository's `PERFORMANCE.md` guardrail (*no raster optimization is
 accepted without a before/after profile on a real target*) still applies before these
 are presented as device wins.
@@ -82,6 +83,10 @@ Second batch (state pushes and session notifications):
 | A6 equality | measurement only | claimed deep walk of 350 roots per tick | early-exit **<0.01 µs**, forced full walk **4 µs** — not hot, closed |
 | A2 sub-component sync | `components/soil_layer_component.dart` | 3 recursive `query<T>()` scans, a rebuilt hotspot map and a full node re-anchor every call — **22.2 µs/call** | direct-child ion scan, layer-owned tech/rhizosphere lists, geometry-gated re-anchor, and no session/state reads below detail zoom — **8.6 µs/call** common path (6.2–8.6 across runs; 15.3 without the layer caches), 20–38 µs at detail zoom (provider read dominates; noisy) |
 | A4 per-frame paints | `components/soil_layer_component.dart`, `scientific_overlays_component.dart`, `horizon_color_bands_component.dart` | 2 shadow shaders + 3 `Paint`s + a `Random` + up to 10 `Path`s per layer per frame; the grass strip rebuilt (30 `Path`s, 3 `Paint`s, `Random`); a 12-colour list + shader per horizon frame | shadow/crack/selection paints cached on geometry; grass recorded as a `ui.Picture` per soil geometry; band colours/stops static and the shader cached per column rect — **69.8 → 67.9 MB/s allocated** |
+| A8 parameter-set identity | `domain/models/model_parameter_set.dart` | `current` rebuilt (sort ~190 values, canonical string, FNV hash) on every access — **174 µs** | memoized on `ModelConfig.values` identity — **0.046 µs** per access |
+| A7 scenario loads | `data/scenario_repository.dart` | 4 asset reads + JSON parses per screen visit — **12.8 ms** cold | one shared future — **5.3 µs** warm |
+| B3 overlay text | `components/scientific_overlays_component.dart` | a fresh `TextPainter` per zoom step per label; the animated boundary issued one `drawLine` per dash | one layout per label, drawn through a `1 / zoom` canvas transform; dashes batched into one `drawPath` per boundary — **1435 → 1405 MB per 20 s (−2.1%)** |
+| A9 edge identity | `components/soil_symbiosis_network_component.dart` | `stableId` string rebuilt per access (**0.066 µs**, three times per edge per frame) | final field + cached phase seed (**0.014 µs**); the nearest-target selection rewrite was measured and rejected (56 vs 51 µs per rebuild) |
 
 Probe: 60 gate requests, a provider listener counting notifications for duplicate
 selections, and 500 timed comparisons on a 350-node plant. The A2 probe built the
@@ -461,6 +466,12 @@ link.
 or make `scenariosProvider` `keepAlive`. Prefer the repository cache so non-Riverpod
 callers and tests get the same behaviour.
 
+**Implemented (25 Nov):** `ScenarioRepository` caches its load future like
+`ReferenceDatasetRepository`, and drops the cache if the load throws so a retry reads
+the assets again. Measured: a cold load (four asset reads + parses) is **12.8 ms**;
+subsequent calls return the shared list in **5.3 µs**. `scenario_repository_test`
+asserts that repeated calls share one list and that `resetCache()` reloads.
+
 ---
 
 ### A8 — Model identity rebuilt from scratch on every access · P2
@@ -494,6 +505,12 @@ static ModelParameterSet get current {
 Because `ModelConfig.applyOverrides`/`reset` replace `_active` with a new map instance,
 `identical` invalidates correctly and the fingerprint stays honest.
 
+**Implemented (25 Nov):** `current` memoizes on `ModelConfig.values` identity. Measured
+on this host: **174 µs per rebuild → 0.046 µs per memoized access**. The pinned
+fingerprint and every override/reset provenance test still pass; a regression test
+asserts identity reuse, invalidation after an override, and the restored fingerprint
+after `reset()`.
+
 ---
 
 ### A9 — Symbiosis graph rebuild is O(n² log n) with per-access string keys · P3
@@ -511,6 +528,15 @@ Because `ModelConfig.applyOverrides`/`reset` replace `_active` with a new map in
 **Fix:** sort once per rebuild into a reusable buffer, use a `Set<NetNode>` for
 membership, and store `stableId` as a `final` field on the edge (constructed once).
 The birth-time map is otherwise correct and well-bounded (`removeWhere` on active keys).
+
+**Implemented (25 Nov):** `NetworkEdge.stableId` is built once in the constructor and
+the per-frame phase seed is cached with it. Measured: **0.066 µs → 0.014 µs per
+access** (4.7×), for three accesses per edge per frame. The `nextFrontier` membership
+check now uses a `Set`, which preserves behaviour and removes a list scan per frontier
+node. The proposed nearest-target selection was measured on the real frontier size
+(40 frontier nodes × 60 remaining targets) and came out **slower** than the in-place
+sort (56 vs 51 µs per rebuild), so it was reverted — the sort also benefits from the
+near-sorted order it leaves behind. The rebuild only runs every 2.6 s of visual time.
 
 ---
 
@@ -579,6 +605,28 @@ LRU.
    `fontSize(textScale)`, so a zoom gesture produces ~4 keys instead of ~60.
 2. Better: lay out one painter per label at a fixed size and scale the canvas
    (`canvas.save(); canvas.scale(1 / zoom); …`) — no key at all.
+
+**Implemented (25 Nov, option 2):** labels are laid out once at their logical size and
+painted through a canvas scaled by `1 / zoom`, so pinch/scroll reuses one painter per
+label for the whole session. Cache hits now refresh insertion order, making eviction
+LRU. The animated horizon boundary also records its dashes into one reused `Path` and
+issues **one `drawPath` instead of one `drawLine` per dash** (~58 lines per frame at
+the default 460 px viewport collapse into two paths). Rendering is geometrically
+unchanged at every zoom (the old code compensated `fontSize` by `1 / zoom`); the
+golden capture at the default zoom still matches.
+
+Measured with the A4 CDP method (release bundle, 460×1100 headless Chrome, forced GC,
+20 s sampling window, collected objects included), three runs per build, same scene:
+
+| Build | Allocated per 20 s | Rate | `canvaskit.js:108` site |
+|---|---|---|---|
+| before B3 | 1458 / 1420 / 1428 MB | 71.8 MB/s | 375 / 364 / 369 MB |
+| with B3 | 1408 / 1397 / 1409 MB | 70.2 MB/s | 340 / 340 / 347 MB |
+
+That is **−30.6 MB per 20 s (−1.5 MB/s, −2.1%)**; every with-B3 run is below every
+before run, and the CanvasKit glue site itself drops ~27 MB (−7%). Kept. As with A4
+this is an allocation result, not a frame-time claim — the absolute rate is ~3× lower
+in the headless software raster than in the integrated browser.
 
 ### B4 — Consolidation proposal
 
@@ -771,13 +819,13 @@ These were checked because a review that "finds" already-solved problems is nois
 | P1 | Coalesce `UpdateStateCommand` to one per tick **(done)** | S | `simulation_runtime.dart` | 60 pushes → 2 per 60 drag events |
 | P1 | Value equality on `SimulationSessionState`; narrow selects in the panel **(equality done; panel selects remain)** | S | `simulation_session_provider.dart`, `control_panel_section.dart` | duplicate re-selection adds 0 notifications |
 | P2 | Cancel the old subscription in `SimulationRuntime.initialize` **(done)** | XS | `simulation_runtime.dart:59` | prevents duplicate tick processing |
-| P2 | Memoize `ModelParameterSet.current` on `ModelConfig.values` identity | XS | `model_parameter_set.dart:56` | 161 µs → ~0 per access |
-| P2 | Cache `ScenarioRepository.getScenarios()` like the reference repository | XS | `scenario_repository.dart` | 4 parses → 1 per app session |
+| P2 | Memoize `ModelParameterSet.current` on `ModelConfig.values` identity **(done)** | XS | `model_parameter_set.dart:56` | 174 µs → 0.046 µs per access |
+| P2 | Cache `ScenarioRepository.getScenarios()` like the reference repository **(done)** | XS | `scenario_repository.dart` | 12.8 ms → 5.3 µs per screen visit |
 | P2 | Hoist per-frame shadow/horizon/grass paints and shaders | S | `soil_layer_component.dart:342-421`, `horizon_color_bands_component.dart:62-88`, `scientific_overlays_component.dart:243-280` | ~360 shader builds/s → 0 |
-| P2 | Quantize the text-painter key (or scale the canvas) | S | `scientific_overlays_component.dart:206-231` | stops cache thrash during zoom |
+| P2 | Scale the canvas instead of re-laying-out text per zoom **(done, measured)** | S | `scientific_overlays_component.dart:206-231` | stops cache thrash during zoom; one `drawPath` per dashed boundary; **−2.1% allocation** |
 | P2 | `SimulationTimeline.append()` owns the view; drop `snapshotAdded` handshake | S | `simulation_timeline.dart`, `simulation_tick_processor.dart` | removes a stale-view failure mode |
 | P3 | Memoize `ScenarioProcessProfile` per scenario | XS | `soil_scope_game.dart:576-677` | 4 derivations → 1 |
-| P3 | Cache `NetworkEdge.stableId`; sort targets once per rebuild | S | `soil_symbiosis_network_component.dart:281-330, 766` | removes per-frame strings and O(n² log n) |
+| P3 | Cache `NetworkEdge.stableId` **(done)**; target-selection rewrite rejected by measurement | S | `soil_symbiosis_network_component.dart:281-330, 766` | 0.066 → 0.014 µs per id access |
 | P3 | Extract `CoalescedWrite<T>`; cap the event log; delete `_webTimer` | M | providers, `event_log_provider.dart`, `simulation_isolate.dart` | duplication and unbounded growth |
 
 ---

@@ -19,4 +19,19 @@ void main() {
       }
     }
   });
+
+  test('scenarios are read and parsed once per session', () async {
+    ScenarioRepository.resetCache();
+    final first = await ScenarioRepository.getScenarios();
+    final second = await ScenarioRepository.getScenarios();
+    expect(identical(first, second), isTrue);
+
+    ScenarioRepository.resetCache();
+    final reloaded = await ScenarioRepository.getScenarios();
+    expect(identical(first, reloaded), isFalse);
+    expect(
+      reloaded.map((scenario) => scenario.id),
+      first.map((scenario) => scenario.id),
+    );
+  });
 }

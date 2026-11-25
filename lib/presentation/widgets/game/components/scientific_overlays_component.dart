@@ -15,6 +15,16 @@ class ScientificOverlaysComponent extends Component
 
   final Map<String, TextPainter> _textPainters = {};
 
+  /// Reused dash geometry for the animated horizon boundary.
+  final Path _dashPath = Path();
+
+  // Overlay text is laid out once at a fixed logical size and drawn through a
+  // canvas scaled by `1 / zoom`. Sizing the painter itself by `1 / zoom`
+  // created a new TextPainter for every zoom step and filled the cache with
+  // layouts that were never reused.
+  static const double _markerTextSize = 11;
+  static const double _labelTextSize = 12;
+
   /// Paints reused across frames; only their width fields are rewritten.
   final Paint _boundaryPaint = Paint()
     ..color = Colors.white.withValues(alpha: 0.15)
@@ -114,7 +124,6 @@ class ScientificOverlaysComponent extends Component
     final double scaleY = soilHeight / thickness;
     final visible = _visibleWorldRect;
     final margin = 12 / zoom;
-    final labelFontSize = 11 / zoom;
 
     double currentY = surfaceY;
     _boundaryPaint.strokeWidth = 0.8 / zoom;
@@ -147,12 +156,12 @@ class ScientificOverlaysComponent extends Component
       final tp = _textPainter(
         label,
         color: Colors.white.withValues(alpha: 0.35),
-        fontSize: labelFontSize,
+        fontSize: _markerTextSize,
         bold: true,
       );
       final maxRight = math.min(soilX + soilWidth, visible.right) - margin;
-      final labelX = math.max(soilX + margin, maxRight - tp.width);
-      tp.paint(canvas, Offset(labelX, currentY + 5 / zoom));
+      final labelX = math.max(soilX + margin, maxRight - tp.width / zoom);
+      _paintText(canvas, tp, Offset(labelX, currentY + 5 / zoom), zoom);
 
       currentY += layerHeight;
     }
@@ -208,10 +217,30 @@ class ScientificOverlaysComponent extends Component
     final tp = _textPainter(
       label,
       color: const Color(0xFF455A64),
-      fontSize: 11 / zoom,
+      fontSize: _markerTextSize,
       bold: true,
     );
-    tp.paint(canvas, Offset(markerLeft + 17 / zoom, y - tp.height / 2));
+    _paintText(
+      canvas,
+      tp,
+      Offset(markerLeft + 17 / zoom, y - tp.height / (2 * zoom)),
+      zoom,
+    );
+  }
+
+  /// Draws [painter] at a constant screen size with its top-left at
+  /// [worldPosition]. One layout serves every zoom level.
+  void _paintText(
+    Canvas canvas,
+    TextPainter painter,
+    Offset worldPosition,
+    double zoom,
+  ) {
+    canvas.save();
+    canvas.translate(worldPosition.dx, worldPosition.dy);
+    canvas.scale(1 / zoom);
+    painter.paint(canvas, Offset.zero);
+    canvas.restore();
   }
 
   TextPainter _textPainter(
@@ -220,10 +249,14 @@ class ScientificOverlaysComponent extends Component
     required double fontSize,
     bool bold = false,
   }) {
-    final key =
-        '$text|${color.toARGB32()}|${fontSize.toStringAsFixed(2)}|$bold';
-    final cached = _textPainters[key];
-    if (cached != null) return cached;
+    final key = '$text|${color.toARGB32()}|$fontSize|$bold';
+    final cached = _textPainters.remove(key);
+    if (cached != null) {
+      // Re-insert on a hit so eviction drops the least recently used label
+      // rather than whichever key was inserted first.
+      _textPainters[key] = cached;
+      return cached;
+    }
 
     final painter = TextPainter(
       text: TextSpan(
@@ -320,14 +353,23 @@ class ScientificOverlaysComponent extends Component
     double dashSpace,
     double time,
   ) {
+    // One path per boundary instead of one drawLine per dash. A wide column
+    // holds dozens of dashes, and every canvas call crosses the CanvasKit
+    // bridge on web.
+    final path = _dashPath..reset();
+    var hasDashes = false;
     double currentX = startX + (time * 10) % (dashWidth + dashSpace);
     while (currentX < endX) {
       final dashEnd = (currentX + dashWidth).clamp(startX, endX);
       if (currentX >= startX) {
-        canvas.drawLine(Offset(currentX, y), Offset(dashEnd, y), paint);
+        path
+          ..moveTo(currentX, y)
+          ..lineTo(dashEnd, y);
+        hasDashes = true;
       }
       currentX += dashWidth + dashSpace;
     }
+    if (hasDashes) canvas.drawPath(path, paint);
   }
 
   void _drawWaterTable(
@@ -362,12 +404,12 @@ class ScientificOverlaysComponent extends Component
     final label = _textPainter(
       l.saturatedZone.toUpperCase(),
       color: const Color(0xFF0EA5E9),
-      fontSize: 12 / zoom,
+      fontSize: _labelTextSize,
       bold: true,
     );
     final maxRight = math.min(soilX + soilWidth, visible.right) - margin;
-    final textX = math.max(soilX + margin, maxRight - label.width);
-    label.paint(canvas, Offset(textX, waterTableY + 10 / zoom));
+    final textX = math.max(soilX + margin, maxRight - label.width / zoom);
+    _paintText(canvas, label, Offset(textX, waterTableY + 10 / zoom), zoom);
   }
 
   void _drawSurfaceLabel(Canvas canvas, double surfaceY, double soilX) {
@@ -376,21 +418,24 @@ class ScientificOverlaysComponent extends Component
     final boundaryTp = _textPainter(
       game.l10n.surfaceLabel.toUpperCase(),
       color: const Color(0xFF8B5CF6),
-      fontSize: 12 / zoom,
+      fontSize: _labelTextSize,
       bold: true,
     );
+    final textWidth = boundaryTp.width / zoom;
     final minX = math.max(soilX + 10 / zoom, visible.left + 8 / zoom);
     final maxX = math.max(
       minX,
       math.min(
-        soilX + SoilScopeGame.soilColumnWidth - boundaryTp.width - 8 / zoom,
-        visible.right - boundaryTp.width - 8 / zoom,
+        soilX + SoilScopeGame.soilColumnWidth - textWidth - 8 / zoom,
+        visible.right - textWidth - 8 / zoom,
       ),
     );
     final labelX = (soilX + 10 / zoom).clamp(minX, maxX).toDouble();
-    boundaryTp.paint(
+    _paintText(
       canvas,
-      Offset(labelX, surfaceY - boundaryTp.height - 2 / zoom),
+      boundaryTp,
+      Offset(labelX, surfaceY - boundaryTp.height / zoom - 2 / zoom),
+      zoom,
     );
   }
 

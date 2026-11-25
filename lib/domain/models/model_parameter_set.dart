@@ -71,11 +71,24 @@ class ModelParameterSet {
     );
   }
 
-  static ModelParameterSet get current => ModelParameterSet(
-    id: currentId,
-    version: currentVersion,
-    parameters: _currentParameters(),
-  );
+  // `current` is read by persistence, provenance records, tooling and tests.
+  // Building it sorts ~190 parameters, renders a canonical string and hashes
+  // it (161 µs measured). `ModelConfig.applyOverrides` and `reset` replace the
+  // active map by identity, so map identity is a complete cache key.
+  static ModelParameterSet? _cached;
+  static Map<String, double>? _cachedFor;
+
+  static ModelParameterSet get current {
+    final active = ModelConfig.values;
+    final cached = _cached;
+    if (cached != null && identical(_cachedFor, active)) return cached;
+    _cachedFor = active;
+    return _cached = ModelParameterSet(
+      id: currentId,
+      version: currentVersion,
+      parameters: _currentParameters(),
+    );
+  }
 
   /// Compact record for saved sessions, references and captures.
   Map<String, Object?> toJson() => {

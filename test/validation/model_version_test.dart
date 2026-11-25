@@ -45,6 +45,31 @@ void main() {
       );
     });
 
+    test('current is memoized until the active configuration changes', () {
+      ModelConfig.reset();
+      final first = ModelParameterSet.current;
+      expect(
+        identical(ModelParameterSet.current, first),
+        isTrue,
+        reason: 'repeated reads must not rebuild the parameter set',
+      );
+
+      try {
+        ModelConfig.applyOverrides({'evapBaseRate': 1.0e-6});
+        final overridden = ModelParameterSet.current;
+        expect(identical(overridden, first), isFalse);
+        expect(overridden.fingerprint, isNot(first.fingerprint));
+        expect(identical(ModelParameterSet.current, overridden), isTrue);
+      } finally {
+        ModelConfig.reset();
+      }
+
+      // Reset restores the default map by identity, so the memo rebuilds from
+      // it and the fingerprint returns to the pinned value.
+      expect(ModelParameterSet.current.fingerprint, first.fingerprint);
+      expect(ModelParameterSet.current.parameters, first.parameters);
+    });
+
     test('fingerprint ignores insertion order but not values', () {
       final reordered = Map<String, double>.fromEntries(
         ModelParameterSet.current.parameters.entries.toList().reversed,
