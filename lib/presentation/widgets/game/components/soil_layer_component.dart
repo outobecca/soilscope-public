@@ -55,6 +55,18 @@ class SoilLayerComponent extends PositionComponent
   int _noiseGeneration = 0;
   SoilLayer? _paintSourceLayer;
   Size _paintedSize = Size.zero;
+
+  /// Paints reused across frames; only their color/width fields are rewritten.
+  final Paint _noisePaint = Paint()..filterQuality = FilterQuality.low;
+  final Paint _bioPaint = Paint()..style = PaintingStyle.fill;
+  final Paint _selectionPaint = Paint()..style = PaintingStyle.stroke;
+  final Paint _crackPaint = Paint()..style = PaintingStyle.stroke;
+  Paint? _topShadowPaint;
+  Paint? _bottomShadowPaint;
+  double _bottomShadowHeight = double.nan;
+  List<Path>? _crackPaths;
+  double _crackPathsWidth = double.nan;
+  double _crackPathsHeight = double.nan;
   late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
   SelectionNodeComponent? _selectionNode;
 
@@ -402,12 +414,10 @@ class SoilLayerComponent extends PositionComponent
     if (bioFactor > 0.1) {
       final double pulse =
           0.5 + 0.5 * math.sin(game.currentTime() * (1.0 + bioFactor * 4.0));
-      final bioPaint = Paint()
-        ..color = const Color(
-          0xFF689F38,
-        ).withValues(alpha: 0.03 * bioFactor * pulse)
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(wideRect, bioPaint);
+      _bioPaint.color = const Color(
+        0xFF689F38,
+      ).withValues(alpha: 0.03 * bioFactor * pulse);
+      canvas.drawRect(wideRect, _bioPaint);
     }
 
     // 3. Draw noise and textures
@@ -415,11 +425,7 @@ class SoilLayerComponent extends PositionComponent
     if (noiseImage != null) {
       canvas.save();
       canvas.clipRect(size.toRect());
-      canvas.drawImage(
-        noiseImage,
-        Offset.zero,
-        Paint()..filterQuality = FilterQuality.low,
-      );
+      canvas.drawImage(noiseImage, Offset.zero, _noisePaint);
       canvas.restore();
     }
 
@@ -431,14 +437,7 @@ class SoilLayerComponent extends PositionComponent
         wideRect.width,
         25.0,
       );
-      final topShadowPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
-        ).createShader(topShadowRect)
-        ..blendMode = BlendMode.multiply;
-      canvas.drawRect(topShadowRect, topShadowPaint);
+      canvas.drawRect(topShadowRect, _topShadowPaintFor());
     }
 
     if (!isBottomLayer) {
@@ -448,14 +447,7 @@ class SoilLayerComponent extends PositionComponent
         wideRect.width,
         25.0,
       );
-      final bottomShadowPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
-        ).createShader(bottomShadowRect)
-        ..blendMode = BlendMode.multiply;
-      canvas.drawRect(bottomShadowRect, bottomShadowPaint);
+      canvas.drawRect(bottomShadowRect, _bottomShadowPaintFor(size.y));
     }
 
     // 4. High-zoom details
@@ -465,35 +457,73 @@ class SoilLayerComponent extends PositionComponent
 
     // 5. Selection highlight
     if (isSelected) {
-      final highlightPaint = Paint()
+      _selectionPaint
         ..color = Theme.of(
           game.buildContext!,
         ).colorScheme.primary.withValues(alpha: 0.3)
-        ..style = PaintingStyle.stroke
         ..strokeWidth = 4 / zoom;
-      canvas.drawRect(wideRect.deflate(2), highlightPaint);
+      canvas.drawRect(wideRect.deflate(2), _selectionPaint);
     }
   }
 
   void _drawCracks(Canvas canvas) {
-    final crackPaint = Paint()
-      ..color = Colors.black.withValues(
-        alpha: 0.3 * _layer.effectiveMacroPorosity,
-      )
-      ..strokeWidth = 2 * _layer.effectiveMacroPorosity
-      ..style = PaintingStyle.stroke;
-    final nCracks = (5 * _layer.effectiveMacroPorosity).toInt().clamp(1, 10);
-    final rand = math.Random(layerId.hashCode + 2);
-    for (int i = 0; i < nCracks; i++) {
-      double startX = rand.nextDouble() * size.x;
-      canvas.drawPath(
-        Path()
-          ..moveTo(startX, 0)
-          ..lineTo(startX + (rand.nextDouble() - 0.5) * 10, size.y * 0.5)
-          ..lineTo(startX + (rand.nextDouble() - 0.5) * 10, size.y),
-        crackPaint,
-      );
+    final porosity = _layer.effectiveMacroPorosity;
+    _crackPaint
+      ..color = Colors.black.withValues(alpha: 0.3 * porosity)
+      ..strokeWidth = 2 * porosity;
+    final nCracks = (5 * porosity).toInt().clamp(1, 10);
+    final paths = _crackPathsForSize();
+    for (int i = 0; i < nCracks && i < paths.length; i++) {
+      canvas.drawPath(paths[i], _crackPaint);
     }
+  }
+
+  /// Cracks are deterministic for a layer, so only a size change can move
+  /// them. Ten paths are kept and the live porosity selects how many are
+  /// drawn, instead of re-seeding a `Random` and rebuilding paths per frame.
+  List<Path> _crackPathsForSize() {
+    final cached = _crackPaths;
+    if (cached != null &&
+        _crackPathsWidth == size.x &&
+        _crackPathsHeight == size.y) {
+      return cached;
+    }
+    _crackPathsWidth = size.x;
+    _crackPathsHeight = size.y;
+    final rand = math.Random(layerId.hashCode + 2);
+    return _crackPaths = List<Path>.generate(10, (_) {
+      final startX = rand.nextDouble() * size.x;
+      return Path()
+        ..moveTo(startX, 0)
+        ..lineTo(startX + (rand.nextDouble() - 0.5) * 10, size.y * 0.5)
+        ..lineTo(startX + (rand.nextDouble() - 0.5) * 10, size.y);
+    });
+  }
+
+  /// Both shadows are fixed 25 px fades. The top one always sits at y 0; the
+  /// bottom one only depends on the layer height, so their shaders are built
+  /// on geometry change instead of once per frame.
+  Paint _topShadowPaintFor() {
+    return _topShadowPaint ??= Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
+      ).createShader(const Rect.fromLTWH(0, 0, 1, 25))
+      ..blendMode = BlendMode.multiply;
+  }
+
+  Paint _bottomShadowPaintFor(double height) {
+    final cached = _bottomShadowPaint;
+    if (cached != null && _bottomShadowHeight == height) return cached;
+    _bottomShadowHeight = height;
+    return _bottomShadowPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.bottomCenter,
+        end: Alignment.topCenter,
+        colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
+      ).createShader(Rect.fromLTWH(0, height - 25, 1, 25))
+      ..blendMode = BlendMode.multiply;
   }
 
   void _syncSubComponents() {

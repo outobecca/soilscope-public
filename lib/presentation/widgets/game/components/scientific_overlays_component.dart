@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:material_ui/material_ui.dart';
 import '../soil_scope_game.dart';
@@ -13,6 +14,26 @@ class ScientificOverlaysComponent extends Component
   ScientificOverlaysComponent() : super(priority: 1700);
 
   final Map<String, TextPainter> _textPainters = {};
+
+  /// Paints reused across frames; only their width fields are rewritten.
+  final Paint _boundaryPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.15)
+    ..style = PaintingStyle.stroke;
+  final Paint _markerPaint = Paint()
+    ..color = const Color(0xFF455A64).withValues(alpha: 0.6);
+  final Paint _waterFillPaint = Paint()
+    ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.06);
+  final Paint _waterLinePaint = Paint()
+    ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.4)
+    ..style = PaintingStyle.stroke;
+
+  /// The grass strip is static for a given soil geometry, so it is recorded
+  /// once instead of rebuilding a `Random`, 30 `Path`s and its `Paint`s per
+  /// frame.
+  ui.Picture? _grassPicture;
+  double _grassPictureX = double.nan;
+  double _grassPictureY = double.nan;
+  double _grassPictureWidth = double.nan;
 
   @override
   void render(Canvas canvas) {
@@ -96,10 +117,7 @@ class ScientificOverlaysComponent extends Component
     final labelFontSize = 11 / zoom;
 
     double currentY = surfaceY;
-    final boundaryPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8 / zoom;
+    _boundaryPaint.strokeWidth = 0.8 / zoom;
 
     for (int i = 0; i < activeLayers.length; i++) {
       final layer = activeLayers[i];
@@ -112,7 +130,7 @@ class ScientificOverlaysComponent extends Component
         bottomY,
         soilX,
         soilX + soilWidth,
-        boundaryPaint,
+        _boundaryPaint,
         8 / zoom,
         8 / zoom,
         time,
@@ -152,14 +170,12 @@ class ScientificOverlaysComponent extends Component
     final double thickness = game.activeProfileThickness;
     final double scaleY = soilHeight / thickness;
 
-    final markerPaint = Paint()
-      ..color = const Color(0xFF455A64).withValues(alpha: 0.6)
-      ..strokeWidth = 1.0 / zoom;
+    _markerPaint.strokeWidth = 1.0 / zoom;
 
     double currentY = surfaceY;
 
     // Draw 0cm marker on the visible depth rail.
-    _drawMarker(canvas, "0cm", currentY, markerX, markerPaint, zoom);
+    _drawMarker(canvas, "0cm", currentY, markerX, _markerPaint, zoom);
 
     for (var layer in activeLayers) {
       currentY += layer.thickness * scaleY;
@@ -169,7 +185,7 @@ class ScientificOverlaysComponent extends Component
         "${depthCm.toStringAsFixed(0)}cm",
         currentY,
         markerX,
-        markerPaint,
+        _markerPaint,
         zoom,
       );
     }
@@ -238,6 +254,27 @@ class ScientificOverlaysComponent extends Component
     double soilX,
     double soilWidth,
   ) {
+    if (_grassPicture == null ||
+        _grassPictureX != soilX ||
+        _grassPictureY != surfaceY ||
+        _grassPictureWidth != soilWidth) {
+      _grassPictureX = soilX;
+      _grassPictureY = surfaceY;
+      _grassPictureWidth = soilWidth;
+      _grassPicture?.dispose();
+      _grassPicture = _buildSurfaceGrass(surfaceY, soilX, soilWidth);
+    }
+    canvas.drawPicture(_grassPicture!);
+  }
+
+  ui.Picture _buildSurfaceGrass(
+    double surfaceY,
+    double soilX,
+    double soilWidth,
+  ) {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
     // Subtle green grass strip at soil surface, constrained to soil column
     final grassPaint = Paint()
       ..color = const Color(0xFF4CAF50).withValues(alpha: 0.7);
@@ -269,6 +306,8 @@ class ScientificOverlaysComponent extends Component
         ..close();
       canvas.drawPath(path, rand.nextBool() ? bladePaint : darkBladePaint);
     }
+
+    return recorder.endRecording();
   }
 
   void _drawDashedHorizontalLine(
@@ -301,8 +340,6 @@ class ScientificOverlaysComponent extends Component
   ) {
     final l = game.l10n;
     final waterTableY = surfaceY + soilHeight * 0.55;
-    final waterPaint = Paint()
-      ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.06);
     canvas.drawRect(
       Rect.fromLTWH(
         backgroundX,
@@ -310,16 +347,13 @@ class ScientificOverlaysComponent extends Component
         backgroundWidth,
         soilHeight * 0.15,
       ),
-      waterPaint,
+      _waterFillPaint,
     );
-    final linePaint = Paint()
-      ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0 / zoom;
+    _waterLinePaint.strokeWidth = 1.0 / zoom;
     canvas.drawLine(
       Offset(backgroundX, waterTableY),
       Offset(backgroundX + backgroundWidth, waterTableY),
-      linePaint,
+      _waterLinePaint,
     );
     // Saturated zone label: right-align it to the visible soil column instead
     // of a fixed logical x that can be clipped or far outside a phone viewport.
@@ -362,6 +396,8 @@ class ScientificOverlaysComponent extends Component
 
   @override
   void onRemove() {
+    _grassPicture?.dispose();
+    _grassPicture = null;
     for (final painter in _textPainters.values) {
       painter.dispose();
     }

@@ -5,7 +5,7 @@
 **Lens, in the order requested:** (1) redundant execution, (2) cache-key consolidation, (3) state-management streamlining.
 **Method:** source reading plus a temporary in-process probe (removed after the run) on the Linux reference host, and — for the memory section — a temporary CDP heap profiler (removed after the run) driving headless Chrome.
 
-**Implementation status (25 Nov 2026):** A1, B1/B2, A10, A5, C4 and A2 are
+**Implementation status (25 Nov 2026):** A1, B1/B2, A10, A5, C4, A2 and A4 are
 implemented; A6 was measured and closed as a non-finding — see §1.1. The remaining
 findings are recommendations. The repository's `PERFORMANCE.md` guardrail (*no raster optimization is
 accepted without a before/after profile on a real target*) still applies before these
@@ -44,7 +44,7 @@ thread or inside `update()` rather than in a draw call.
 | A7 | `ScenarioRepository` has no cache while its sibling repository does | P2 | 4 asset reads + JSON parses per screen visit |
 | A8 | `ModelParameterSet.current` rebuilds and hashes the whole parameter set on every access | P2 | **161 µs per access** |
 | C8 | `retryInitialization()` can double-subscribe the engine tick stream | P2 | two `process()` calls and duplicate snapshots per tick |
-| A4 | Per-frame `Paint`/`Shader`/`Path`/`Random` allocations in three always-visible components | P2 | ~360 gradient shader builds/s at 60 fps |
+| A4 | Per-frame `Paint`/`Shader`/`Path`/`Random` allocations in three always-visible components | P2 (done) | ~360 gradient shader builds/s at 60 fps; removed — measured **1395 → 1358 MB allocated per 20 s** (−2.7%) |
 | A3 | A run-constant process profile is derived 4× per state update | P3 | 3 µs × 4 (CPU small, structurally wrong) |
 | C5 | Five hand-rolled "pending value + microtask" coalescers | P3 | duplication; the source of two subtle hover bugs already fixed by hand |
 
@@ -81,6 +81,7 @@ Second batch (state pushes and session notifications):
 | Session re-selection | `providers/simulation_session_provider.dart` | selecting the same layer twice notified twice; duplicate element selects added two more | duplicate re-selections add **0** notifications (value equality + early return) |
 | A6 equality | measurement only | claimed deep walk of 350 roots per tick | early-exit **<0.01 µs**, forced full walk **4 µs** — not hot, closed |
 | A2 sub-component sync | `components/soil_layer_component.dart` | 3 recursive `query<T>()` scans, a rebuilt hotspot map and a full node re-anchor every call — **22.2 µs/call** | direct-child ion scan, layer-owned tech/rhizosphere lists, geometry-gated re-anchor, and no session/state reads below detail zoom — **8.6 µs/call** common path (6.2–8.6 across runs; 15.3 without the layer caches), 20–38 µs at detail zoom (provider read dominates; noisy) |
+| A4 per-frame paints | `components/soil_layer_component.dart`, `scientific_overlays_component.dart`, `horizon_color_bands_component.dart` | 2 shadow shaders + 3 `Paint`s + a `Random` + up to 10 `Path`s per layer per frame; the grass strip rebuilt (30 `Path`s, 3 `Paint`s, `Random`); a 12-colour list + shader per horizon frame | shadow/crack/selection paints cached on geometry; grass recorded as a `ui.Picture` per soil geometry; band colours/stops static and the shader cached per column rect — **69.8 → 67.9 MB/s allocated** |
 
 Probe: 60 gate requests, a provider listener counting notifications for duplicate
 selections, and 500 timed comparisons on a 350-node plant. The A2 probe built the
@@ -187,8 +188,9 @@ tick — pausing stops it because a static scene stops producing frames — and 
 largest contributors are the CanvasKit glue around each paint operation
 (`canvaskit.js:108`, `fromWireType`, `create`, `Canvas.drawLine`) plus a few minified
 Dart paint paths. A4 (per-frame `Paint`/`Shader`/`Path` construction in three
-always-visible components) is the lever that would reduce it; the simulation state
-itself retains nothing. Caveat: headless SwiftShader ran at ~23 fps versus ~72 fps in
+always-visible components) did reduce the rate when implemented — 69.8 → 67.9 MB/s —
+but the bulk is the per-draw CanvasKit bridge, so the simulation state itself retains
+nothing; the remaining lever is the number of paint operations, not their setup. Caveat: headless SwiftShader ran at ~23 fps versus ~72 fps in
 the integrated browser, so the absolute churn rate is ~3× lower there; the forced-GC
 result is the decisive part.
 
@@ -341,7 +343,7 @@ process overlays.
 
 ---
 
-### A4 — Per-frame allocations in always-visible components · P2
+### A4 — Per-frame allocations in always-visible components · P2 (done)
 
 Not the measured raster bottleneck (`calculateLayerPaint` is **4.0 µs** and already
 throttled), but it is unconditional garbage and shader compilation per frame:
@@ -361,6 +363,32 @@ three layer shadows alone.
 **Fix:** hoist the shadow paints into `_updatePaint()` (the same invalidation path that
 already exists), cache the grass strip as a picture/image, and cache the horizon
 gradient on its rect.
+
+**Implemented (25 Nov):** `SoilLayerComponent` keeps its noise, bio, selection and crack
+paints as fields, builds the two 25 px shadow shaders only when the layer height changes
+(the top one is constant), and caches the deterministic crack paths per layer size while
+the live porosity selects how many of the ten are drawn. `ScientificOverlays` records the
+static grass strip as a `ui.Picture` keyed by the soil geometry and reuses the boundary,
+marker and water paints; `HorizonColorBands` computes its colour/stop lists once and
+rebuilds the band shader only when the column rect changes (pan, zoom, viewport,
+scenario), not every frame.
+
+Measured with the same CDP sampling method as the heap attribution (release bundle at
+460×1100, simulation running, forced GC before and after, 20 s window, collected objects
+included), three runs per build:
+
+| Build | Allocated per 20 s | Rate | Retained after GC |
+|---|---|---|---|
+| before A4 | 1386 / 1405 / 1395 MB | **69.8 MB/s** | +2–3 MB |
+| with A4 | 1350 / 1362 / 1362 MB | **67.9 MB/s** | +2 MB |
+
+That is **−37 MB per 20 s (−1.9 MB/s, −2.7%)**, consistent across runs and outside the
+run-to-run spread (±0.5%). The remaining ~68 MB/s is CanvasKit's per-draw bridge
+(`canvaskit.js:108` 362 MB, `create` 193 MB, `fromWireType` 109 MB per 20 s), allocated
+per canvas call regardless of whether the Dart-side `Paint` is reused: to move the rate
+materially the number of paint operations must drop, not just their setup. A4 is still
+worth keeping — it removes unconditional per-frame garbage and shader builds for no
+cost — but it is not a memory lever on its own.
 
 ---
 

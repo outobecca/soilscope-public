@@ -57,6 +57,23 @@ class HorizonColorBandsComponent extends Component
     },
   ];
 
+  static final List<Color> _bandColors = [
+    for (final h in _horizons) ...[
+      (h['color1'] as Color).withValues(alpha: 0.3),
+      (h['color2'] as Color).withValues(alpha: 0.3),
+    ],
+  ];
+
+  static final List<double> _bandStops = [
+    for (final h in _horizons) ...[
+      (h['start'] as double).clamp(0.0, 1.0),
+      (h['end'] as double).clamp(0.0, 1.0),
+    ],
+  ];
+
+  Paint? _bandPaint;
+  Rect _bandRect = Rect.zero;
+
   @override
   void render(Canvas canvas) {
     if (soilHeight <= 0) return;
@@ -64,31 +81,30 @@ class HorizonColorBandsComponent extends Component
     // One full-column gradient with a stop pair per horizon replaces six
     // full-width wavy paths and six separate shaders per frame. The horizon
     // depths are exact fractions of the column, so the simplified boundary is
-    // also more faithful to the profile than the decorative waves were.
-    final colors = <Color>[];
-    final stops = <double>[];
-    for (final h in _horizons) {
-      colors
-        ..add((h['color1'] as Color).withValues(alpha: 0.3))
-        ..add((h['color2'] as Color).withValues(alpha: 0.3));
-      stops
-        ..add((h['start'] as double).clamp(0.0, 1.0))
-        ..add((h['end'] as double).clamp(0.0, 1.0));
-    }
-
-    final gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: colors,
-      stops: stops,
-    ).createShader(
-      Rect.fromLTWH(backgroundX, surfaceY, backgroundWidth, soilHeight),
+    // also more faithful to the profile than the decorative waves were. The
+    // shader only depends on the column rect, so it is rebuilt when that rect
+    // changes (pan/zoom/viewport), not every frame.
+    final rect = Rect.fromLTWH(
+      backgroundX,
+      surfaceY,
+      backgroundWidth,
+      soilHeight,
     );
+    if (_bandPaint == null || rect != _bandRect) {
+      _bandRect = rect;
+      _bandPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _bandColors,
+          stops: _bandStops,
+        ).createShader(rect);
+    }
 
     drawFullWidthSoilRect(
       canvas,
       Rect.fromLTWH(0, surfaceY, 0, soilHeight),
-      Paint()..shader = gradient,
+      _bandPaint!,
     );
   }
 }
