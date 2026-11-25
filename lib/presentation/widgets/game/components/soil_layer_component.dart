@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
@@ -41,11 +42,33 @@ class SoilLayerComponent extends PositionComponent
 
   late Paint _layerPaint;
   Image? _noiseImage;
-  SoilLayer? _noiseSourceLayer;
+
+  /// Quantized identity of the raster currently displayed. Requests compare
+  /// against it, so a layer whose grain inputs have not visibly changed keeps
+  /// its image even though the solver rewrites those fields every tick.
+  SoilLayerNoiseKey? _noiseKey;
+
+  /// Latest requested raster, coalesced while one is in flight.
+  SoilLayer? _pendingNoiseLayer;
+  SoilLayerNoiseKey? _pendingNoiseKey;
+  bool _noiseRefreshRunning = false;
+  int _noiseGeneration = 0;
   SoilLayer? _paintSourceLayer;
   Size _paintedSize = Size.zero;
   late final math.Random _eventRandom = visualRandom(['soil-layer', layerId]);
   SelectionNodeComponent? _selectionNode;
+
+  /// Technical sampling nodes owned by this layer, captured when they spawn so
+  /// the steady-state sync does not rescan the global overlay (a direct-child
+  /// scan plus list and filter costs ~6.7 µs/call more).
+  final List<ExpandableHotspotNode> _techNodes = [];
+
+  /// Rhizosphere hotspots owned by this layer, keyed by model hotspot id.
+  final Map<String, RhizosphereHotspotComponent> _rhizosphere = {};
+
+  /// Layer geometry the sub-components were last positioned for.
+  Vector2? _syncedPosition;
+  Size _syncedSize = Size.zero;
 
   SoilLayerComponent({
     required this.layerId,
@@ -200,19 +223,12 @@ class SoilLayerComponent extends PositionComponent
   }
 
   void _handleLayerUpdate(SoilLayer next) {
-    final noiseSource = _noiseSourceLayer;
-    final needsNoiseUpdate =
-        noiseSource == null ||
-        noiseSource.sandFraction != next.sandFraction ||
-        noiseSource.clayFraction != next.clayFraction ||
-        noiseSource.aggregateStability != next.aggregateStability ||
-        noiseSource.organicCarbon != next.organicCarbon;
+    final noiseKey = SoilLayerNoiseKey.of(next);
 
     _layer = next;
 
-    if (needsNoiseUpdate) {
-      _noiseSourceLayer = next;
-      _preRenderNoise();
+    if (noiseKey != _noiseKey) {
+      _requestNoiseRefresh(next, noiseKey);
     }
     _syncSubComponents();
   }
@@ -244,6 +260,9 @@ class SoilLayerComponent extends PositionComponent
     if (painted != null &&
         _paintedSize == size.toSize() &&
         painted.waterContent == visualLayer.waterContent &&
+        // The gradient's saturation term is waterContent / porosity, so a
+        // porosity change repaints even when the water content is settled.
+        painted.porosity == visualLayer.porosity &&
         painted.redoxPotential == visualLayer.redoxPotential &&
         painted.temperature == visualLayer.temperature &&
         painted.ph == visualLayer.ph &&
@@ -257,13 +276,22 @@ class SoilLayerComponent extends PositionComponent
   @override
   Future<void> onLoad() async {
     _updatePaint();
-    _preRenderNoise();
-    _noiseSourceLayer = _layer;
+    // The first frame is intentionally rasterized in place: the layer must not
+    // appear without its grain field while an asynchronous image is pending.
+    _noiseKey = SoilLayerNoiseKey.of(_layer);
+    _noiseImage = SoilLayerNoiseEngine.generateNoiseImage(_layer, layerId);
   }
 
   void triggerSubComponentSync() {
     _syncSubComponents();
   }
+
+  /// Applies a layer snapshot through the same path as the state listener.
+  ///
+  /// Lifecycle tests use this to drive add/remove/geometry transitions without
+  /// racing the engine's own ticks, which rewrite the hotspot list.
+  @visibleForTesting
+  void debugHandleLayerUpdate(SoilLayer next) => _handleLayerUpdate(next);
 
   void updateLayerRect(Vector2 nextPosition, Vector2 nextSize) {
     final geometryChanged =
@@ -295,14 +323,61 @@ class SoilLayerComponent extends PositionComponent
     );
   }
 
-  void _preRenderNoise() {
-    _noiseImage?.dispose();
-    _noiseImage = SoilLayerNoiseEngine.generateNoiseImage(_layer, layerId);
+  /// Requests a grain raster for [layer] without blocking the calling frame.
+  ///
+  /// At most one raster is in flight; a newer request replaces the pending one
+  /// and is picked up when the current image lands. The previous image keeps
+  /// drawing in the meantime, matching the texture raster's refresh policy.
+  void _requestNoiseRefresh(SoilLayer layer, SoilLayerNoiseKey key) {
+    if (key == _noiseKey || key == _pendingNoiseKey) return;
+    _pendingNoiseLayer = layer;
+    _pendingNoiseKey = key;
+    if (_noiseRefreshRunning) return;
+    _noiseRefreshRunning = true;
+    unawaited(_refreshNoiseLoop());
+  }
+
+  Future<void> _refreshNoiseLoop() async {
+    while (isMounted) {
+      final layer = _pendingNoiseLayer;
+      final key = _pendingNoiseKey;
+      if (layer == null || key == null) break;
+      _pendingNoiseLayer = null;
+      _pendingNoiseKey = null;
+
+      final generation = ++_noiseGeneration;
+      final Image image;
+      try {
+        image = await SoilLayerNoiseEngine.generateNoiseImageAsync(
+          layer,
+          layerId,
+        );
+      } catch (_) {
+        // A decorative raster must never take the frame loop down; keep the
+        // previous image and let the next key change retry.
+        break;
+      }
+      if (!isMounted || generation != _noiseGeneration) {
+        image.dispose();
+        break;
+      }
+      _noiseImage?.dispose();
+      _noiseImage = image;
+      _noiseKey = key;
+    }
+    _noiseRefreshRunning = false;
   }
 
   @override
   void onRemove() {
     _noiseImage?.dispose();
+    _noiseImage = null;
+    // Discards an in-flight raster so it cannot be adopted after removal.
+    _noiseGeneration++;
+    _pendingNoiseLayer = null;
+    _pendingNoiseKey = null;
+    _techNodes.clear();
+    _rhizosphere.clear();
     super.onRemove();
   }
 
@@ -423,14 +498,17 @@ class SoilLayerComponent extends PositionComponent
 
   void _syncSubComponents() {
     final double zoom = game.camera.viewfinder.zoom;
-    final state = game.displayedState;
-    final session = game.ref.read(simulationSessionProvider);
-    final symbol = session.selectedElementSymbol;
-    final existingIons = children.query<IonComponent>();
+    final bool detailZoom = zoom > SimulationConstants.detailZoomThreshold;
+    // Ions are added directly to this layer, so a direct-child scan is
+    // equivalent to the recursive query and does not walk the subtree.
+    final existingIons = children.whereType<IonComponent>().toList();
+    final symbol = detailZoom
+        ? game.ref.read(simulationSessionProvider).selectedElementSymbol
+        : null;
 
-    if (zoom > SimulationConstants.detailZoomThreshold &&
+    if (detailZoom &&
         symbol != null &&
-        state.plants.isNotEmpty) {
+        game.displayedState.plants.isNotEmpty) {
       if (existingIons.length < 20) {
         final centerX = SceneCoordinateMapper.mapShootPosition(size.x, 0).x;
 
@@ -461,68 +539,83 @@ class SoilLayerComponent extends PositionComponent
       }
     }
 
-    // Tech Nodes Sync (Nutrients, Sensors)
-    final existingHotspots = game.technicalHotspotLayer.children
-        .query<ExpandableHotspotNode>()
-        .where((h) => h.layerId == layerId)
-        .toList();
-
-    // Layer heights change when the scenario or viewport changes. Re-anchor
-    // the existing nodes so a hotspot cannot drift over a neighbouring layer
-    // and open that layer's data.
-    for (final node in existingHotspots) {
-      node.position = Vector2(
-        position.x + node.layerAnchor.x * size.x,
-        position.y + node.layerAnchor.y * size.y,
+    // Tech Nodes Sync (Nutrients, Sensors). The layer captures its nodes at
+    // spawn, so the steady-state sync does not rescan the global overlay.
+    _techNodes.removeWhere((node) => !node.isMounted || node.isRemoving);
+    if (_techNodes.isEmpty) {
+      _techNodes.addAll(
+        spawnLayerHUDNodes(layerId: layerId, state: game.displayedState),
       );
     }
 
-    if (existingHotspots.isEmpty) {
-      spawnLayerHUDNodes(layerId: layerId, state: state);
+    // Layer heights change when the scenario or viewport changes. Re-anchor
+    // the existing nodes so a hotspot cannot drift over a neighbouring layer
+    // and open that layer's data. Their positions are derived from the layer
+    // geometry, so rewriting them is only needed when that geometry changes.
+    final layerSize = size.toSize();
+    final bool geometryChanged =
+        _syncedPosition == null ||
+        _syncedPosition!.x != position.x ||
+        _syncedPosition!.y != position.y ||
+        _syncedSize != layerSize;
+    if (geometryChanged) {
+      for (final node in _techNodes) {
+        node.position = Vector2(
+          position.x + node.layerAnchor.x * size.x,
+          position.y + node.layerAnchor.y * size.y,
+        );
+      }
+      _syncedPosition = position.clone();
+      _syncedSize = layerSize;
     }
 
     // --- RHIZOSPHERE HOTSPOTS SYNC ---
-    final dynamicHotspots = children.query<RhizosphereHotspotComponent>();
-    final Map<String, RhizosphereHotspotComponent> dynamicMap = {
-      for (var h in dynamicHotspots) h.hotspotId: h,
-    };
+    // The layer owns these components; keep the id → component map instead of
+    // rebuilding it from a tree query and a fresh map on every sync.
+    _rhizosphere.removeWhere(
+      (_, component) => !component.isMounted || component.isRemoving,
+    );
 
     final activeHotspotIds = <String>{};
     for (final h in _layer.hotspots) {
       activeHotspotIds.add(h.id);
-      final existing = dynamicMap[h.id];
+      final existing = _rhizosphere[h.id];
 
       // `h.x` is plot-normalised (0.5 = plant collar), not a fraction of the
-      // full decorative column. Mapping it with the shared root transform keeps
-      // the rhizosphere glow on the root that produced it.
-      final Vector2 hotspotPos = Vector2(
-        SceneCoordinateMapper.mapRootX(h.x, size.x),
-        h.z * size.y,
-      );
-
+      // full decorative column. Mapping it with the shared root transform
+      // keeps the rhizosphere glow on the root that produced it. Local
+      // position depends only on the layer size.
       if (existing != null) {
-        existing.position = hotspotPos;
+        if (geometryChanged) {
+          existing.position = Vector2(
+            SceneCoordinateMapper.mapRootX(h.x, size.x),
+            h.z * size.y,
+          );
+        }
         existing.updateIntensity(h.intensity);
       } else {
-        add(
-          RhizosphereHotspotComponent(
-            hotspotId: h.id,
-            layerId: layerId,
-            intensity: h.intensity,
-            type: h.type,
-            position: hotspotPos,
-            radius: h.radius,
+        final hotspot = RhizosphereHotspotComponent(
+          hotspotId: h.id,
+          layerId: layerId,
+          intensity: h.intensity,
+          type: h.type,
+          position: Vector2(
+            SceneCoordinateMapper.mapRootX(h.x, size.x),
+            h.z * size.y,
           ),
+          radius: h.radius,
         );
+        add(hotspot);
+        _rhizosphere[h.id] = hotspot;
       }
     }
 
     // Remove defunct hotspots
-    for (final h in dynamicHotspots) {
-      if (!activeHotspotIds.contains(h.hotspotId)) {
-        h.removeFromParent();
-      }
-    }
+    _rhizosphere.removeWhere((id, component) {
+      if (activeHotspotIds.contains(id)) return false;
+      component.removeFromParent();
+      return true;
+    });
   }
 
   /// Box-Muller transform for Gaussian distribution

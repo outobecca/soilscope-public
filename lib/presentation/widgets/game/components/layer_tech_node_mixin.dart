@@ -28,12 +28,15 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     return z0 * stdDev + mean;
   }
 
-  void spawnLayerHUDNodes({
+  /// Spawns this layer's technical nodes and returns the layer's full node
+  /// list (existing plus newly added) so the owning component can keep it and
+  /// skip the global overlay query on later syncs.
+  List<ExpandableHotspotNode> spawnLayerHUDNodes({
     required String layerId,
     required BiophysicalState state,
   }) {
     final layerIndex = state.profile.layers.indexWhere((l) => l.id == layerId);
-    if (layerIndex == -1) return;
+    if (layerIndex == -1) return const <ExpandableHotspotNode>[];
 
     // Flame does not expose a just-added child in the tree until it mounts.
     // Remember the spawn on the layer itself so two syncs in one frame cannot
@@ -44,7 +47,7 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
         .toList();
     if (_hudNodesSpawned || existingNodes.isNotEmpty) {
       _hudNodesSpawned = true;
-      return;
+      return existingNodes;
     }
 
     final double layerHeight = size.y;
@@ -84,6 +87,7 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
     final allNodes = game.technicalHotspotLayer.children
         .whereType<ExpandableHotspotNode>()
         .toList();
+    final List<ExpandableHotspotNode> addedNodes = [];
 
     // A sampling node must not sit on top of a dynamic rhizosphere marker: the
     // technical overlay wins the tap, so an overlapping node would make the
@@ -209,8 +213,10 @@ mixin LayerTechNodeMixin on PositionComponent, HasGameReference<SoilScopeGame> {
         );
         game.technicalHotspotLayer.add(newNode);
         allNodes.add(newNode);
+        addedNodes.add(newNode);
         _hudNodesSpawned = true;
       }
     }
+    return addedNodes;
   }
 }

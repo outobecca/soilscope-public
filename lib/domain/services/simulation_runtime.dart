@@ -7,6 +7,42 @@ import '../models/biophysical_state.dart';
 import '../solvers/particle_physics_isolate.dart';
 import '../solvers/simulation_isolate.dart';
 
+/// Coalesces UI state pushes into at most one per engine tick.
+///
+/// The engine only reads its state when its own timer fires, so intermediate
+/// pushes during a slider drag are never observed: the last push before the
+/// tick is the one that matters. [request] sends the first update immediately
+/// (keeping the current response latency) and holds later ones until the next
+/// engine frame, where [onEngineFrame] returns the latest. Pure and timer-free
+/// so the policy is testable without an isolate.
+class EngineSyncGate {
+  BiophysicalState? _pending;
+  bool _tickSeen = false;
+
+  /// Returns the state to send now, or null when it must wait for a tick.
+  BiophysicalState? request(BiophysicalState state) {
+    if (!_tickSeen) {
+      _tickSeen = true;
+      return state;
+    }
+    _pending = state;
+    return null;
+  }
+
+  /// Returns the coalesced state to flush after an engine frame, if any.
+  BiophysicalState? onEngineFrame() {
+    _tickSeen = false;
+    final pending = _pending;
+    _pending = null;
+    return pending;
+  }
+
+  void reset() {
+    _pending = null;
+    _tickSeen = false;
+  }
+}
+
 /// Owns the engine and particle isolates, their initialization watchdog and
 /// the engine tick subscription.
 ///
@@ -16,6 +52,7 @@ class SimulationRuntime {
   SimulationRuntime({this.initializationTimeout = const Duration(seconds: 10)});
 
   final SimulationIsolateManager engine = SimulationIsolateManager();
+  final EngineSyncGate _syncGate = EngineSyncGate();
   final ParticlePhysicsIsolateManager particles =
       ParticlePhysicsIsolateManager();
   final Duration initializationTimeout;
@@ -72,8 +109,20 @@ class SimulationRuntime {
     // A watchdog may already have failed the session while spawn was hung.
     if (_disposed || _timedOut) return;
 
+    // A retry can reach this method after the engine has already started.
+    // [SimulationIsolateManager.init] returns immediately once initialized, so
+    // the previous subscription must be torn down explicitly; otherwise every
+    // engine tick would be processed twice.
+    await _subscription?.cancel();
+    _subscription = null;
+
     _subscription = engine.stateStream.listen((newState) {
       if (_disposed) return;
+      // Flush a coalesced UI edit before deciding whether this frame is
+      // accepted: the engine must see the latest controls on its next tick
+      // even if this frame is skipped for scrubbing.
+      final pending = _syncGate.onEngineFrame();
+      if (pending != null) _push(pending);
       final current = readState();
       if (!current.isRunning || isScrubbing()) return;
       onTick(newState);
@@ -83,13 +132,21 @@ class SimulationRuntime {
   }
 
   /// Pushes UI-owned controls to a running engine.
+  ///
+  /// At most one push is sent per engine tick; a burst of slider events
+  /// coalesces into the latest value instead of one isolate message per
+  /// pointer event.
   void sync(BiophysicalState state) {
-    if (state.isRunning) {
-      engine.updateState(
-        state.copyWith(history: const []),
-        state.precipitation,
-      );
-    }
+    if (!state.isRunning) return;
+    final toSend = _syncGate.request(state);
+    if (toSend != null) _push(toSend);
+  }
+
+  void _push(BiophysicalState state) {
+    engine.updateState(
+      state.copyWith(history: const []),
+      state.precipitation,
+    );
   }
 
   /// Pushes a state produced by event handling without changing the controls.
@@ -98,11 +155,13 @@ class SimulationRuntime {
   }
 
   void start() {
+    _syncGate.reset();
     engine.start();
     particles.start(_minX, _maxX, _worldHeight, _surfaceY);
   }
 
   void stop() {
+    _syncGate.reset();
     engine.stop();
     particles.stop();
   }
@@ -125,6 +184,7 @@ class SimulationRuntime {
 
   void dispose() {
     _disposed = true;
+    _syncGate.reset();
     _watchdog?.cancel();
     _watchdog = null;
     _subscription?.cancel();

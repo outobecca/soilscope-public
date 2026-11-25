@@ -39,6 +39,29 @@ class SimulationSessionState {
       viewTime: viewTime ?? this.viewTime,
     );
   }
+
+  /// Value identity matters here: panels watch this state as a whole and a
+  /// tap that re-selects the current layer or element must not invalidate
+  /// them. Without equality every re-select rebuilt the whole control panel.
+  @override
+  bool operator ==(Object other) =>
+      other is SimulationSessionState &&
+      other.selectedLayerId == selectedLayerId &&
+      other.selectedElementSymbol == selectedElementSymbol &&
+      other.selectedInspectorType == selectedInspectorType &&
+      other.isMicroscopeEnabled == isMicroscopeEnabled &&
+      other.isScrubbing == isScrubbing &&
+      other.viewTime == viewTime;
+
+  @override
+  int get hashCode => Object.hash(
+    selectedLayerId,
+    selectedElementSymbol,
+    selectedInspectorType,
+    isMicroscopeEnabled,
+    isScrubbing,
+    viewTime,
+  );
 }
 
 @Riverpod(keepAlive: true)
@@ -51,6 +74,7 @@ class SimulationSession extends _$SimulationSession {
 
   void selectLayer(String? layerId) {
     Future.microtask(() {
+      if (state.selectedLayerId == layerId) return;
       state = state.copyWith(
         selectedLayerId: layerId,
         clearLayerId: layerId == null,
@@ -59,16 +83,19 @@ class SimulationSession extends _$SimulationSession {
   }
 
   void selectElement(String? symbol) {
+    final normalized = (symbol == null || symbol.isEmpty) ? null : symbol;
     Future.microtask(() {
+      if (state.selectedElementSymbol == normalized) return;
       state = state.copyWith(
-        selectedElementSymbol: symbol,
-        clearElementSymbol: symbol == null || symbol.isEmpty,
+        selectedElementSymbol: normalized,
+        clearElementSymbol: normalized == null,
       );
     });
   }
 
   void selectInspector(String? type) {
     Future.microtask(() {
+      if (state.selectedInspectorType == type) return;
       state = state.copyWith(
         selectedInspectorType: type,
         clearInspectorType: type == null,

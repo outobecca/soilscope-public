@@ -4,6 +4,66 @@ import 'package:material_ui/material_ui.dart' hide Image;
 import '../../../../core/biophysics_utils.dart';
 import '../../../../domain/models/soil_layer.dart';
 
+/// Quantized identity of a layer's grain raster.
+///
+/// Every input [SoilLayerNoiseEngine.generateNoisePicture] reads is included:
+/// the three texture fractions (which also select the grain palette and
+/// density), aggregate stability and the organic-carbon patch term. Each value
+/// is bucketed to the smallest change the 1000×500 field can show, so a
+/// continuously drifting solver value does not invalidate the raster every
+/// tick.
+///
+/// The carbon patches saturate at [carbonSaturation]: above it the recorded
+/// picture is identical, so every saturated soil shares one bucket. Organic
+/// carbon is rewritten every nitrogen-cycle step, and real profiles sit far
+/// above the saturation point, so comparing the raw value would discard the
+/// cache on every tick for no visual change.
+class SoilLayerNoiseKey {
+  const SoilLayerNoiseKey._(
+    this.sand,
+    this.silt,
+    this.clay,
+    this.stability,
+    this.carbon,
+  );
+
+  /// `organicCarbon * 25` is clamped to 1.0 by the painter from here up.
+  static const double carbonSaturation = 0.04;
+
+  factory SoilLayerNoiseKey.of(SoilLayer layer) => SoilLayerNoiseKey._(
+    _bucket(layer.sandFraction, 0.005),
+    _bucket(layer.siltFraction, 0.005),
+    _bucket(layer.clayFraction, 0.005),
+    _bucket(layer.aggregateStability, 0.05),
+    layer.organicCarbon >= carbonSaturation
+        ? -1
+        : _bucket(layer.organicCarbon, 0.002),
+  );
+
+  final int sand;
+  final int silt;
+  final int clay;
+  final int stability;
+  final int carbon;
+
+  static int _bucket(double value, double step) {
+    if (!value.isFinite) return 0;
+    return (value / step).round();
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is SoilLayerNoiseKey &&
+      other.sand == sand &&
+      other.silt == silt &&
+      other.clay == clay &&
+      other.stability == stability &&
+      other.carbon == carbon;
+
+  @override
+  int get hashCode => Object.hash(sand, silt, clay, stability, carbon);
+}
+
 /// Logic for generating soil texture noise and grain patterns.
 class SoilLayerNoiseEngine {
   /// Rasterizes the static grain field once. Drawing the retained picture each
@@ -14,6 +74,23 @@ class SoilLayerNoiseEngine {
     final image = picture.toImageSync(1000, 500);
     picture.dispose();
     return image;
+  }
+
+  /// Rasterizes without blocking the calling frame.
+  ///
+  /// Used for refreshes after the first paint: the component keeps drawing its
+  /// previous image until this completes. [generateNoiseImage] stays for the
+  /// initial synchronous raster so the first frame is complete.
+  static Future<Image> generateNoiseImageAsync(
+    SoilLayer layer,
+    String layerId,
+  ) async {
+    final picture = generateNoisePicture(layer, layerId);
+    try {
+      return await picture.toImage(1000, 500);
+    } finally {
+      picture.dispose();
+    }
   }
 
   static Picture generateNoisePicture(SoilLayer layer, String layerId) {

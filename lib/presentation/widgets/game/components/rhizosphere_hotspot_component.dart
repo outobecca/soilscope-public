@@ -101,6 +101,9 @@ class RhizosphereHotspotComponent extends PositionComponent
   }
 
   void updateIntensity(double newIntensity) {
+    // The solver rewrites hotspot intensity every tick; the paint only needs
+    // rebuilding when the value the glow uses actually changed.
+    if (newIntensity == intensity) return;
     intensity = newIntensity;
     _glow.paint.color = _getColor().withValues(alpha: 0.15 * intensity);
   }
